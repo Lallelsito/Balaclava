@@ -5777,13 +5777,13 @@
 
         const ownedLines = lineElsBySkillId[skillId] || [];
         if (ownedLines[0]) {
-          ownedLines[0].setAttribute('stroke', '#38bdf8');
+          ownedLines[0].setAttribute('stroke', '#f59e0b');
           ownedLines[0].setAttribute('stroke-width', '8');
           ownedLines[0].setAttribute('stroke-opacity', '0.38');
           ownedLines[0].removeAttribute('stroke-dasharray');
         }
         if (ownedLines[1]) {
-          ownedLines[1].setAttribute('stroke', '#bae6fd');
+          ownedLines[1].setAttribute('stroke', '#fde68a');
           ownedLines[1].setAttribute('stroke-width', '3.2');
           ownedLines[1].setAttribute('stroke-opacity', '0.96');
           ownedLines[1].removeAttribute('stroke-dasharray');
@@ -5813,13 +5813,13 @@
           }
           const chLines = lineElsBySkillId[ch.id] || [];
           if (chLines[0]) {
-            chLines[0].setAttribute('stroke', '#22c55e');
+            chLines[0].setAttribute('stroke', '#0ea5e9');
             chLines[0].setAttribute('stroke-width', '6');
-            chLines[0].setAttribute('stroke-opacity', '0.30');
+            chLines[0].setAttribute('stroke-opacity', '0.34');
             chLines[0].removeAttribute('stroke-dasharray');
           }
           if (chLines[1]) {
-            chLines[1].setAttribute('stroke', '#86efac');
+            chLines[1].setAttribute('stroke', '#7dd3fc');
             chLines[1].setAttribute('stroke-width', '2.8');
             chLines[1].setAttribute('stroke-dasharray', '7 4');
             chLines[1].setAttribute('stroke-opacity', '0.92');
@@ -5947,11 +5947,11 @@
         const owned = g.unlockedSkills.includes(sk.id);
         const reqMet = !sk.req || g.unlockedSkills.includes(sk.req);
         if (owned) {
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#38bdf8', 8, '', '0.38');
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#bae6fd', 3.2, '', '0.96');
+          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#f59e0b', 8, '', '0.38');
+          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#fde68a', 3.2, '', '0.96');
         } else if (reqMet) {
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#22c55e', 6, '', '0.30');
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#86efac', 2.8, '7 4', '0.92');
+          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#0ea5e9', 6, '', '0.34');
+          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#7dd3fc', 2.8, '7 4', '0.92');
         } else {
           drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#475569', 1.8, '4 7', '0.28');
         }
