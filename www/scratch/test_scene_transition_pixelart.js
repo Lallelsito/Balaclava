@@ -66,6 +66,7 @@ const spritePaths = [
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Resources/Wood/Trees/Tree4.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Tilemap_color1.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Water Foam.png',
+  'assets/tiles/water_profundo.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Buildings/Blue Buildings/House1.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Decorations/Bushes/Bushe1.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Decorations/Rocks/Rock1.png',
@@ -162,6 +163,7 @@ const regMockImg = (key, w, h) => { loadedSprites[key] = { _key: key, complete: 
 ['tree1', 'tree4', 'tile_1', 'water_foam', 'bush1', 'rock1', 'b_house1_blue', 'monk_yellow_idle', 'monk_yellow_run', 'pawn_idle', 'pawn_run'].forEach(k => regMockImg(k, 192, 192));
 regMockImg('sheep_idle', 768, 128);
 regMockImg('sheep_move', 512, 128);
+regMockImg('water_profundo', 80, 16);
 regMockImg('campfireAnim', 96, 16);
 regMockImg('pradera_wall', 16, 32);
 regMockImg('pradera_wallBanner', 16, 32);
@@ -258,7 +260,10 @@ for (const [id, cb] of Array.from(activeRafs.entries())) {
 assert(parseFloat(els['st-loading-bar-fill'].style.width) > 70, 'Progress bar should advance across 5.6s showcase');
 const hasTree1 = canvasOps.some(op => op[0] === 'drawImage' && op[1] === 'tree1' && op[4] >= 96 && op[5] >= 128);
 const hasTile1 = canvasOps.some(op => op[0] === 'drawImage' && op[1] === 'tile_1');
+const waterTiles = canvasOps.filter(op => op[0] === 'drawImage' && op[1] === 'water_profundo' && op[3] >= 214);
+const hasFoam = canvasOps.some(op => op[0] === 'drawImage' && op[1] === 'water_foam');
 assert(hasTree1 && hasTile1, 'Overworld diorama must draw high-resolution tree1 and real tile_1 island');
+assert(waterTiles.length >= 100 && hasFoam, 'Overworld diorama must ground the island in full tiled animated water_profundo ocean + surf');
 
 // Complete midpoint & exit timers (~5.6s hold + 0.65s reveal = 6.25s, within 5-7s range)
 const midTimeout1 = scheduledTimeouts.find(t => !t.cleared && t.ms >= 5000 && t.ms <= 6500);

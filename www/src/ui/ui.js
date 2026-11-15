@@ -1344,6 +1344,7 @@
 
     _renderOverworldDiorama(ctx, t, normP, isSave) {
       const W = 640;
+      const H = 360;
       // 1. Calm stepped atmospheric night ocean sky (zero seam teeth)
       this._drawDitherBands(ctx, W, [
         [0, 44, '#050b16'],
@@ -1386,7 +1387,7 @@
       this._drawPixelCloud(ctx, cloudWrap(372, 3.8), 94, 56, '#162f4b', '#204266', '#102238');
       this._drawPixelCloud(ctx, cloudWrap(208, 2.8), 136, 44, '#1a3857', '#254c73', '#132a44');
 
-      // 5. Distant silhouetted archipelago ridges along horizon
+      // 5. Distant silhouetted archipelago ridges resting on the sea horizon
       ctx.fillStyle = '#0b1e32';
       ctx.fillRect(16, 202, 108, 12);
       ctx.fillRect(32, 194, 68, 8);
@@ -1399,31 +1400,89 @@
       ctx.fillRect(72, 204, 2, 2);
       ctx.fillRect(548, 202, 2, 2);
 
-      // 6. Clean stepped night sea horizon & drifting wave glints
-      this._drawDitherBands(ctx, W, [
-        [214, 240, '#0f2d47'],
-        [240, 278, '#0b2238'],
-        [278, 320, '#081829'],
-        [320, 360, '#06111e']
-      ]);
-      ctx.fillStyle = ((Math.floor(t * 4) & 1) === 0) ? '#8a6835' : '#634926';
-      ctx.fillRect(70, 222, 6, 2);
-      ctx.fillRect(72, 228, 4, 2);
-      ctx.fillRect(546, 220, 6, 2);
-      ctx.fillRect(548, 226, 4, 2);
+      // 6. Living animated ocean plane (y = 214..360) using BALACLAVA water sprites + twilight depth glaze
+      const seaTop = 214;
+      const waterImg = this._getStSprite('water_profundo', 'assets/tiles/water_profundo.png');
+      ctx.fillStyle = '#1f648d';
+      ctx.fillRect(0, seaTop, W, H - seaTop);
 
+      const WT = 32;
+      if (this._isStImgReady(waterImg)) {
+        const wFrames = Math.max(1, Math.floor((waterImg.width || 80) / 16));
+        const wFrame = Math.floor(t * 4.2) % wFrames;
+        for (let wy = seaTop; wy < H; wy += WT) {
+          const dh = Math.min(WT, H - wy);
+          const sh = Math.max(1, Math.floor(dh / 2));
+          for (let wx = 0; wx < W; wx += WT) {
+            this._drawPixelSprite(ctx, waterImg, wFrame * 16, 0, 16, sh, wx, wy, WT, dh);
+          }
+        }
+      } else {
+        const wf = Math.floor(t * 4) % 4;
+        for (let wy = seaTop; wy < H; wy += WT) {
+          const dh = Math.min(WT, H - wy);
+          for (let wx = 0; wx < W; wx += WT) {
+            const alt = (((wx + wy) >> 5) + (wf & 1)) & 1;
+            ctx.fillStyle = alt ? '#236b96' : '#1d5b82';
+            ctx.fillRect(wx, wy, WT, dh);
+            if (dh >= 14) {
+              ctx.fillStyle = '#3b8fb8';
+              ctx.fillRect(wx + 6 + (wf * 3) % 10, wy + 12, 8, 2);
+            }
+          }
+        }
+      }
+
+      // Stepped twilight ocean veil: misty blue-navy at horizon, rich readable ocean around & in front of island
+      ctx.fillStyle = 'rgba(7, 20, 38, 0.48)';
+      ctx.fillRect(0, seaTop, W, 12);
+      ctx.fillStyle = 'rgba(7, 20, 38, 0.39)';
+      ctx.fillRect(0, seaTop + 12, W, 14);
+      ctx.fillStyle = 'rgba(7, 20, 38, 0.31)';
+      ctx.fillRect(0, seaTop + 26, W, 18);
+      ctx.fillStyle = 'rgba(6, 18, 34, 0.25)';
+      ctx.fillRect(0, seaTop + 44, W, 24);
+      ctx.fillStyle = 'rgba(6, 18, 34, 0.19)';
+      ctx.fillRect(0, seaTop + 68, W, H - (seaTop + 68));
+
+      // Crisp horizon line + distant island shoreline shadows & harbor lantern glints
+      ctx.fillStyle = '#2e7aa1';
+      ctx.fillRect(0, seaTop, W, 2);
+      ctx.fillStyle = '#4da3c9';
+      ctx.fillRect(496, seaTop, 112, 2);
+      ctx.fillStyle = 'rgba(6, 18, 34, 0.45)';
+      ctx.fillRect(16, seaTop + 2, 108, 3);
+      ctx.fillRect(488, seaTop + 2, 132, 3);
+
+      // Moonlit shimmer ripples & harbor lantern reflections
+      const moonRipple = Math.round(Math.sin(t * 2.4) * 2);
+      ctx.fillStyle = '#9cd9ed';
+      ctx.fillRect(542 + moonRipple, 219, 14, 2);
+      ctx.fillRect(546 - moonRipple, 224, 10, 2);
+      ctx.fillStyle = '#64b5d4';
+      ctx.fillRect(548 + moonRipple, 230, 8, 2);
+      ctx.fillRect(550, 236, 4, 2);
+
+      ctx.fillStyle = ((Math.floor(t * 4) & 1) === 0) ? '#d99e43' : '#a3732c';
+      ctx.fillRect(71, 219, 4, 2);
+      ctx.fillRect(72, 224, 2, 2);
+      ctx.fillRect(547, 219, 4, 2);
+      ctx.fillRect(548, 224, 2, 2);
+
+      // Drifting surface ocean glints across left, right, horizon & foreground waters
       const waves = [
-        [28, 228, 20, 7.5], [176, 246, 24, 5.5], [328, 234, 16, 8.5], [456, 254, 22, 6.2],
-        [88, 330, 28, 7.8], [268, 340, 24, 5.8], [440, 326, 20, 7.0], [572, 344, 18, 5.2]
+        [24, 226, 12, 7.2], [178, 232, 14, 5.4], [326, 224, 10, 8.1], [442, 236, 12, 6.0],
+        [14, 274, 10, 6.4], [28, 298, 12, 5.2], [602, 268, 10, 6.8], [610, 296, 12, 5.6],
+        [44, 326, 14, 7.6], [164, 336, 12, 5.8], [296, 328, 16, 6.9], [438, 340, 12, 6.1], [568, 332, 14, 5.5]
       ];
       for (let i = 0; i < waves.length; i++) {
         const [bx, by, len, sp] = waves[i];
-        const wx = Math.round((bx + t * sp) % (W + 40)) - 24;
-        ctx.fillStyle = (i % 2 === 0) ? '#326f94' : '#4d92b5';
+        const wx = Math.round((bx + t * sp) % (W + 32)) - 16;
+        ctx.fillStyle = (i % 2 === 0) ? '#78cde8' : '#a8e4f5';
         ctx.fillRect(wx, by, len, 2);
       }
 
-      // 7. Foreground Archipelago Island using real BALACLAVA grass autotiles + animated Water Foam
+      // 7. Foreground Archipelago Island seated directly in the ocean with shoreline surf & water reflection
       const TILE = 48;
       const COLS = 11;
       const ix = 56;
@@ -1431,31 +1490,59 @@
       const foamImg = this._getStSprite('water_foam', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Water Foam.png');
       const tileImg = this._getStSprite('tile_1', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Tilemap_color1.png');
 
+      // Water shadow directly underneath the island shoreline + warm campfire reflection on the ocean
+      ctx.fillStyle = 'rgba(6, 20, 38, 0.24)';
+      ctx.fillRect(ix + 10, 305, iw - 20, 14);
+      ctx.fillStyle = 'rgba(6, 20, 38, 0.34)';
+      ctx.fillRect(ix + 16, 304, iw - 32, 8);
+
+      const fireReflectShift = Math.round(Math.sin(t * 4.5) * 2);
+      ctx.fillStyle = 'rgba(255, 192, 82, 0.62)';
+      ctx.fillRect(415 + fireReflectShift, 315, 16, 2);
+      ctx.fillStyle = 'rgba(255, 164, 58, 0.48)';
+      ctx.fillRect(418 - fireReflectShift, 320, 12, 2);
+      ctx.fillStyle = 'rgba(255, 213, 96, 0.34)';
+      ctx.fillRect(421 + fireReflectShift, 325, 6, 2);
+
+      // Phase-offset rolling ocean surf wrapping smoothly around the island shoreline BEFORE the grass plateau
       if (this._isStImgReady(foamImg)) {
         const foamFrame = Math.floor(t * 7) % 16;
+        ctx.save();
+        ctx.globalAlpha = 0.58;
         for (let col = 0; col < COLS; col++) {
-          this._drawPixelSprite(ctx, foamImg, foamFrame * 192 + 56, 72, 80, 64, ix + col * TILE - 4, 282, TILE + 8, 44);
+          const isLeft = col === 0;
+          const isRight = col === COLS - 1;
+          const colFrame = (foamFrame + col * 5) % 16;
+          const fx = colFrame * 192 + (isLeft ? 48 : 64);
+          const fw = (isLeft || isRight) ? 80 : 64;
+          const dx = isLeft ? (ix - 6) : (ix + col * TILE);
+          const dw = (isLeft || isRight) ? (TILE + 6) : TILE;
+          this._drawPixelSprite(ctx, foamImg, fx, 114, fw, 32, dx, 293, dw, 26);
         }
+        ctx.restore();
       } else {
         const foamPulse = Math.floor(t * 2.5) % 2;
-        ctx.fillStyle = '#5da4c4';
-        ctx.fillRect(ix - 4 - foamPulse * 2, 304, iw + 8 + foamPulse * 4, 3);
+        ctx.fillStyle = 'rgba(138, 220, 242, 0.65)';
+        ctx.fillRect(ix - 4 - foamPulse * 2, 306, iw + 8 + foamPulse * 4, 3);
       }
 
-      // Island elevation cliff skirt beneath shoreline
-      ctx.fillStyle = 'rgba(8, 20, 34, 0.45)';
-      ctx.fillRect(ix + 4, 312, iw - 8, 6);
-      ctx.fillStyle = '#4e342e';
-      ctx.fillRect(ix + 2, 296, iw - 4, 16);
-      ctx.fillStyle = '#5d4037';
-      ctx.fillRect(ix + 2, 296, iw - 4, 8);
+      // Delicate pixel surf lines kissing left, right & front waterlines
+      const surfShift = (Math.floor(t * 3) & 1) ? 2 : 0;
+      ctx.fillStyle = '#9ce7fa';
+      ctx.fillRect(ix - 7 - surfShift, 282, 5, 2);
+      ctx.fillRect(ix + iw + 2 + surfShift, 284, 5, 2);
+      ctx.fillStyle = 'rgba(142, 224, 245, 0.72)';
+      ctx.fillRect(ix + 18 - surfShift, 316, 20, 2);
+      ctx.fillRect(ix + 150 + surfShift, 318, 24, 2);
+      ctx.fillRect(ix + 296 - surfShift, 317, 22, 2);
+      ctx.fillRect(ix + 456 + surfShift, 316, 18, 2);
 
       if (this._isStImgReady(tileImg)) {
-        // Real 9-slice grass island plateau merged cleanly (top shoreline + lower cliff overhang)
+        // Real 9-slice grass island plateau merged cleanly down to its natural dark-green coastal lip
         for (let col = 0; col < COLS; col++) {
           const sx = col === 0 ? 0 : (col === COLS - 1 ? 128 : 64);
           this._drawPixelSprite(ctx, tileImg, sx, 0, 64, 48, ix + col * TILE, 246, TILE, 36);
-          this._drawPixelSprite(ctx, tileImg, sx, 128, 64, 52, ix + col * TILE, 272, TILE, 38);
+          this._drawPixelSprite(ctx, tileImg, sx, 128, 64, 64, ix + col * TILE, 268, TILE, 40);
         }
       } else {
         ctx.fillStyle = '#2d5c2d';
