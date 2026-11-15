@@ -130,6 +130,7 @@
       this.uiDirty = true;
       if (typeof document !== 'undefined' && document.fonts && document.fonts.load) {
         document.fonts.load('16px BalaclavaPixel').catch(() => {});
+        document.fonts.load('18px BalaclavaBodyPixel').catch(() => {});
       }
     }
 
@@ -3952,7 +3953,7 @@
         this.camera.x = this.player.x;
         this.camera.y = this.player.y;
         Balaclava.Audio.play('portal');
-        Balaclava.Audio.setMood('boss', { delayMs: 420, fadeOutMs: 220, fadeInMs: 2400 });
+        Balaclava.Audio.setMood('boss', { delayMs: 650, fadeOutMs: 320, fadeInMs: 4200 });
         this.toast(Balaclava.I18n ? Balaclava.I18n.t('dungeon.enteredFull', { name: this.activeDungeon.def.name }) : `Entraste en ${this.activeDungeon.def.name}. ¡Activa las 2 Runas para abrir la Cámara del Jefe!`, 'info');
         if (!this.dungeonIntroSeen) {
           this.dungeonIntroSeen = true;
@@ -3996,7 +3997,7 @@
         this.laserBeams = [];
         this.resetAmbientParticles();
         Balaclava.Audio.play('portal');
-        if (Balaclava.Audio.setMood) Balaclava.Audio.setMood('meadow', { delayMs: 560, fadeOutMs: 220, fadeInMs: 2800 });
+        if (Balaclava.Audio.setMood) Balaclava.Audio.setMood('meadow', { delayMs: 800, fadeOutMs: 320, fadeInMs: 4800 });
         this.uiDirty = true;
       };
 

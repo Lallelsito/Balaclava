@@ -1189,7 +1189,7 @@
       this.game.paused = false;
       this.game.uiDirty = true;
       if (Balaclava.Audio && typeof Balaclava.Audio.setMood === 'function') {
-        Balaclava.Audio.setMood('meadow', { delayMs: 520, fadeOutMs: 220, fadeInMs: 2800 });
+        Balaclava.Audio.setMood('meadow', { delayMs: 780, fadeOutMs: 300, fadeInMs: 4600 });
       }
       this.updateHUD(true);
       this.lastPlayerInputTime = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
@@ -1227,7 +1227,7 @@
       document.getElementById('hud-root').classList.add('hidden');
       this.triggerTitleIntro();
       if (Balaclava.Audio && typeof Balaclava.Audio.setMood === 'function') {
-        Balaclava.Audio.setMood('title', { delayMs: 360, fadeOutMs: 300, fadeInMs: 2400 });
+        Balaclava.Audio.setMood('title', { delayMs: 480, fadeOutMs: 420, fadeInMs: 4200 });
       }
     }
 

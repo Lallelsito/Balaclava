@@ -121,6 +121,7 @@
       this._outgoingTracks = new Set();
       this._trackSeq = 0;
       this._previewThemeInTitle = false;
+      this._musicSuppressedByFadeOut = false;
       this._hoverStep = 0;
       this._unlockBound = false;
       this._stepParity = 0;
@@ -221,7 +222,7 @@
       if (!AC) {
         this.initialized = true;
         this.applyVolumes();
-        this.startMusic(false, startOpts || { delayMs: 200, fadeOutMs: 0, fadeInMs: 2200 });
+        this.startMusic(false, startOpts || { delayMs: 420, fadeOutMs: 0, fadeInMs: 4200 });
         return;
       }
       try {
@@ -233,13 +234,13 @@
         this.initialized = true;
         this.applyVolumes();
         this.preloadBuffers();
-        this.startMusic(false, startOpts || { delayMs: 200, fadeOutMs: 0, fadeInMs: 2200 });
+        this.startMusic(false, startOpts || { delayMs: 420, fadeOutMs: 0, fadeInMs: 4200 });
       } catch (_) {}
     }
 
     enterTitleMenu() {
       this._previewThemeInTitle = false;
-      const opts = { delayMs: 240, fadeOutMs: 300, fadeInMs: 2400 };
+      const opts = { delayMs: 420, fadeOutMs: 350, fadeInMs: 4200 };
       if (!this.initialized) {
         this.mood = 'title';
         this.init(opts);
@@ -279,7 +280,8 @@
     _easeFadeCurve(t) {
       const clamped = this._clamp01(t);
       const s = 0.5 - 0.5 * Math.cos(Math.PI * clamped);
-      return Math.pow(s, 1.35);
+      // Exponential perceptual dB swell (~50dB rise) so volume emerges smoothly from silence
+      return (Math.pow(300, s) - 1) / 299;
     }
 
     _applyTrackVolumeNow() {
@@ -738,21 +740,56 @@
       this.musicStep++;
     }
 
-    _playSoftChime(freq, duration = 0.075, peakVol = 0.075, delay = 0) {
+    _playSoftChime(freq, duration = 0.065, peakVol = 0.042, delay = 0) {
       if (!this.ctx || !this.sfxGain || this.muted || this.sfxMuted || this.getEffectiveSfxVolume() <= 0) return;
       const now = this.ctx.currentTime + delay;
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq * 1.015, now);
-      osc.frequency.exponentialRampToValueAtTime(Math.max(40, freq), now + 0.022);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.linearRampToValueAtTime(peakVol, now + 0.006);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      osc.connect(gain);
-      gain.connect(this.sfxGain);
-      osc.start(now);
-      osc.stop(now + duration + 0.015);
+      const targetFreq = Math.max(80, Math.min(620, freq));
+
+      const oscMain = this.ctx.createOscillator();
+      const oscSub = this.ctx.createOscillator();
+      const gainMain = this.ctx.createGain();
+      const gainSub = this.ctx.createGain();
+
+      // Velvety upward pitch bloom (warm droplet / felt cushion feel)
+      oscMain.type = 'sine';
+      oscMain.frequency.setValueAtTime(targetFreq * 0.90, now);
+      oscMain.frequency.exponentialRampToValueAtTime(targetFreq, now + 0.018);
+
+      oscSub.type = 'triangle';
+      oscSub.frequency.setValueAtTime(targetFreq * 0.45, now);
+      oscSub.frequency.exponentialRampToValueAtTime(targetFreq * 0.50, now + 0.018);
+
+      // Soft, non-clicky 10ms envelope
+      gainMain.gain.setValueAtTime(0.0001, now);
+      gainMain.gain.linearRampToValueAtTime(peakVol, now + 0.010);
+      gainMain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      gainSub.gain.setValueAtTime(0.0001, now);
+      gainSub.gain.linearRampToValueAtTime(peakVol * 0.34, now + 0.009);
+      gainSub.gain.exponentialRampToValueAtTime(0.0001, now + Math.max(0.032, duration * 0.68));
+
+      oscMain.connect(gainMain);
+      oscSub.connect(gainSub);
+
+      // Warm low-pass rolloff strips all brittle upper harmonics for a creamy hover tick
+      if (typeof this.ctx.createBiquadFilter === 'function') {
+        const lpf = this.ctx.createBiquadFilter();
+        lpf.type = 'lowpass';
+        lpf.Q.setValueAtTime(0.55, now);
+        lpf.frequency.setValueAtTime(840, now);
+        lpf.frequency.exponentialRampToValueAtTime(420, now + duration);
+        gainMain.connect(lpf);
+        gainSub.connect(lpf);
+        lpf.connect(this.sfxGain);
+      } else {
+        gainMain.connect(this.sfxGain);
+        gainSub.connect(this.sfxGain);
+      }
+
+      oscMain.start(now);
+      oscSub.start(now);
+      oscMain.stop(now + duration + 0.015);
+      oscSub.stop(now + duration + 0.015);
     }
 
     play(name) {
@@ -770,7 +807,7 @@
       this._recentVoices = this._recentVoices || [];
       const minGaps = {
         hit: 55, chop: 55, mine: 55, pickup: 45, crit: 70, step: 220,
-        slash: 60, ui: 35, ui_hover: 52, hurt: 90, explosion: 95, cast: 70, thunder: 120
+        slash: 60, ui: 35, ui_hover: 62, hurt: 90, explosion: 95, cast: 70, thunder: 120
       };
       const gap = minGaps[name] || 30;
       if (this._lastPlay[name] && (nowMs - this._lastPlay[name]) < gap) return;
@@ -780,13 +817,11 @@
       this._recentVoices.push(nowMs);
 
       if (name === 'ui_hover') {
-        const notes = [880.0, 987.77, 1046.50, 1174.66];
+        const notes = [311.13, 329.63, 349.23];
         const base = notes[this._hoverStep % notes.length];
         this._hoverStep = (this._hoverStep + 1) % notes.length;
-        const jitter = 1 + (Math.random() * 0.016 - 0.008);
-        const f = base * jitter;
-        this._playSoftChime(f, 0.078, 0.072);
-        this._playSoftChime(f * 2, 0.048, 0.020, 0.007);
+        const jitter = 1 + (Math.random() * 0.014 - 0.007);
+        this._playSoftChime(base * jitter, 0.062, 0.042);
         return;
       }
 
