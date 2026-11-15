@@ -4411,7 +4411,7 @@ input:focus-visible,
   height: 100vh;
   max-width: 100vw;
   max-height: 100vh;
-  background: #060a1c url('../assets/ui/sky_nebula_blue.png') center / cover no-repeat;
+  background: #050814;
   box-shadow: none;
 }
 #modal-box.skills-cosmic-fullscreen .modal-header {
@@ -4419,7 +4419,7 @@ input:focus-visible,
   z-index: 6;
   margin: 0;
   padding: 10px 18px;
-  background: linear-gradient(180deg, rgba(6, 10, 26, 0.90) 0%, rgba(8, 14, 34, 0.72) 100%);
+  background: linear-gradient(180deg, rgba(6, 10, 26, 0.96) 0%, rgba(8, 14, 34, 0.92) 100%);
   border-bottom: 1px solid rgba(128, 216, 255, 0.24);
 }
 #modal-box.skills-cosmic-fullscreen .modal-body {
@@ -4431,7 +4431,6 @@ input:focus-visible,
 #modal-box.skills-cosmic-fullscreen .skill-tree-workspace {
   gap: 0;
   position: relative;
-  image-rendering: pixelated;
 }
 #modal-box.skills-cosmic-fullscreen .skill-board-wrap {
   border: 3px solid #2b3c63;
@@ -4440,11 +4439,14 @@ input:focus-visible,
   border-radius: 0;
   background: #050814;
   box-shadow: inset 0 0 0 2px #02040a;
-  image-rendering: pixelated;
+}
+#modal-box.skills-cosmic-fullscreen .skill-board-wrap.dragging .skill-board {
+  pointer-events: none !important;
 }
 #modal-box.skills-cosmic-fullscreen .skill-board {
   background: transparent;
-  image-rendering: pixelated;
+  will-change: transform;
+  contain: layout style;
 }
 .skill-pixel-sky {
   position: absolute;
@@ -4456,7 +4458,13 @@ input:focus-visible,
   image-rendering: crisp-edges;
   z-index: 0;
 }
+.skill-lines-canvas,
 #modal-box.skills-cosmic-fullscreen .skill-svg-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
   z-index: 1;
 }
 #modal-box.skills-cosmic-fullscreen .skill-tree-topbar {
@@ -4495,57 +4503,39 @@ input:focus-visible,
   box-shadow: inset 0 0 0 1px #050812;
   padding: 5px 10px;
 }
-#modal-box.skills-cosmic-fullscreen {
-  --px-circle: polygon(
-    31.25% 0%, 68.75% 0%, 68.75% 6.25%, 81.25% 6.25%, 81.25% 12.5%, 87.5% 12.5%, 87.5% 18.75%, 93.75% 18.75%, 93.75% 31.25%,
-    100% 31.25%, 100% 68.75%, 93.75% 68.75%, 93.75% 81.25%, 87.5% 81.25%, 87.5% 87.5%, 81.25% 87.5%, 81.25% 93.75%, 68.75% 93.75%,
-    68.75% 100%, 31.25% 100%, 31.25% 93.75%, 18.75% 93.75%, 18.75% 87.5%, 12.5% 87.5%, 12.5% 81.25%, 6.25% 81.25%, 6.25% 68.75%,
-    0% 68.75%, 0% 31.25%, 6.25% 31.25%, 6.25% 18.75%, 12.5% 18.75%, 12.5% 12.5%, 18.75% 12.5%, 18.75% 6.25%, 31.25% 6.25%
-  );
-  --px-star: polygon(
-    43.75% 0%, 56.25% 0%, 56.25% 12.5%, 75% 12.5%, 75% 18.75%, 81.25% 18.75%, 81.25% 25%, 87.5% 25%, 87.5% 43.75%,
-    100% 43.75%, 100% 56.25%, 87.5% 56.25%, 87.5% 75%, 81.25% 75%, 81.25% 81.25%, 75% 81.25%, 75% 87.5%, 56.25% 87.5%,
-    56.25% 100%, 43.75% 100%, 43.75% 87.5%, 25% 87.5%, 25% 81.25%, 18.75% 81.25%, 18.75% 75%, 12.5% 75%, 12.5% 56.25%,
-    0% 56.25%, 0% 43.75%, 12.5% 43.75%, 12.5% 25%, 18.75% 25%, 18.75% 18.75%, 25% 18.75%, 25% 12.5%, 43.75% 12.5%
-  );
-}
 #modal-box.skills-cosmic-fullscreen .skill-legend-hex {
   border-radius: 0;
-  clip-path: var(--px-circle);
+  clip-path: none;
   width: 14px;
   height: 14px;
   border: none;
   box-shadow: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
-#modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-available { background: #38bdf8; }
-#modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-unlocked { background: #fbbf24; }
-#modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-locked { background: #475569; }
 #modal-box.skills-cosmic-fullscreen .skill-core-hub {
   width: 104px;
   height: 104px;
   border-radius: 0;
   clip-path: none;
-  background: transparent;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
   border: none;
   box-shadow: none;
-  filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.55)) drop-shadow(0 3px 0 #02040a);
+  filter: none !important;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 #modal-box.skills-cosmic-fullscreen .skill-core-hub::before,
 #modal-box.skills-cosmic-fullscreen .skill-core-hub::after {
-  content: '';
-  position: absolute;
-  pointer-events: none;
-  clip-path: var(--px-circle);
-}
-#modal-box.skills-cosmic-fullscreen .skill-core-hub::before {
-  inset: 0;
-  background: linear-gradient(180deg, #fef08a 0%, #f59e0b 52%, #b45309 100%);
-  z-index: 0;
-}
-#modal-box.skills-cosmic-fullscreen .skill-core-hub::after {
-  inset: 5px;
-  background: radial-gradient(circle at 50% 35%, #1d2d59 0%, #0b1124 76%);
-  z-index: 1;
+  display: none !important;
+  content: none !important;
 }
 #modal-box.skills-cosmic-fullscreen .skill-core-hub > * {
   position: relative;
@@ -4561,37 +4551,31 @@ input:focus-visible,
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.65);
 }
 
-/* Crisp Pixelated Celestial Orbs & Star Medallions (no boxy square frames) */
+/* Pre-baked Crisp Pixel-Art Celestial Orbs & Star Medallions (zero clip-path / drop-shadow filter overhead) */
 #modal-box.skills-cosmic-fullscreen .tree-node-btn {
   width: 52px !important;
   height: 52px !important;
   border-radius: 0 !important;
   clip-path: none !important;
-  background: transparent !important;
+  background-color: transparent !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
-  filter: drop-shadow(0 2px 0 #02050d) !important;
-  transition: transform 0.1s steps(2, end), filter 0.14s ease !important;
+  filter: none !important;
+  transition: transform 0.08s steps(2, end) !important;
   z-index: 3;
+  contain: layout style;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-btn::before,
 #modal-box.skills-cosmic-fullscreen .tree-node-btn::after {
-  content: '' !important;
-  display: block !important;
-  position: absolute !important;
-  pointer-events: none !important;
-  clip-path: var(--px-circle) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn::before {
-  inset: 0 !important;
-  background: linear-gradient(180deg, #5b6e94 0%, #364563 52%, #1d263b 100%) !important;
-  z-index: 0 !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn::after {
-  inset: 4px !important;
-  background: radial-gradient(circle at 50% 34%, #17213a 0%, #090e1c 76%) !important;
-  z-index: 1 !important;
+  display: none !important;
+  content: none !important;
+  clip-path: none !important;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-btn > img,
 #modal-box.skills-cosmic-fullscreen .tree-node-btn > canvas {
@@ -4605,81 +4589,71 @@ input:focus-visible,
   z-index: 7;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-btn.locked {
-  opacity: 0.78;
+  opacity: 0.85;
 }
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.locked::before {
-  background: linear-gradient(180deg, #435273 0%, #2a344c 52%, #181f30 100%) !important;
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.locked img {
+  filter: none !important;
+  opacity: 0.42;
 }
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.locked::after {
-  background: radial-gradient(circle at 50% 34%, #12182b 0%, #070a14 78%) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.available {
-  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.72)) drop-shadow(0 2px 0 #02050d) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.available::before {
-  background: linear-gradient(180deg, #7dd3fc 0%, #0ea5e9 52%, #0369a1 100%) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.available::after {
-  background: radial-gradient(circle at 50% 34%, #153461 0%, #091830 78%) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.available.can-afford {
-  filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.88)) drop-shadow(0 2px 0 #02050d) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.available.can-afford::before {
-  background: linear-gradient(180deg, #6ee7b7 0%, #10b981 52%, #047857 100%) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.available.can-afford::after {
-  background: radial-gradient(circle at 50% 34%, #124739 0%, #07221a 78%) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked {
-  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.82)) drop-shadow(0 2px 0 #060401) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked::before {
-  background: linear-gradient(180deg, #fef08a 0%, #f59e0b 52%, #b45309 100%) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked::after {
-  background: radial-gradient(circle at 50% 34%, #3d2c0c 0%, #1a1204 78%) !important;
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.available,
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.available.can-afford,
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked,
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone.available,
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone.unlocked {
+  filter: none !important;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone {
   width: 62px !important;
   height: 62px !important;
   transform: translate(-50%, -50%) scale(1.06);
 }
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone::before {
-  clip-path: var(--px-star) !important;
-}
-#modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone::after {
-  inset: 6px !important;
-  clip-path: var(--px-circle) !important;
-}
 #modal-box.skills-cosmic-fullscreen .tree-node-btn.selected-node {
   outline: none !important;
   transform: translate(-50%, -50%) scale(1.18) !important;
-  filter: drop-shadow(0 0 2px #ffffff) drop-shadow(0 0 7px #fef08a) drop-shadow(0 0 13px rgba(251, 191, 36, 0.92)) !important;
+  filter: none !important;
   z-index: 8;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.selected-node::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: -4px !important;
+  background-color: transparent !important;
+  background-image: var(--skill-sel-ring, none) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
+  pointer-events: none !important;
+  z-index: 4 !important;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone.selected-node::before {
+  background-image: var(--skill-keystone-sel-ring, none) !important;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-tier {
   border-radius: 0 !important;
-  clip-path: polygon(16% 0%, 84% 0%, 100% 32%, 100% 68%, 84% 100%, 16% 100%, 0% 68%, 0% 32%);
+  clip-path: none !important;
   background: #080d1b !important;
-  border: none !important;
-  box-shadow: inset 0 0 0 1px #475d8a !important;
+  border: 1px solid #475d8a !important;
+  box-shadow: 0 2px 0 #02050d !important;
   font-family: 'BalaclavaPixel', monospace !important;
   font-size: 11px !important;
-  padding: 2px 6px !important;
+  padding: 1px 5px !important;
   bottom: -6px !important;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-btn.available .tree-node-tier {
-  box-shadow: inset 0 0 0 1px #38bdf8 !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 2px 0 #02050d !important;
   color: #e0f2fe !important;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-btn.available.can-afford .tree-node-tier {
-  box-shadow: inset 0 0 0 1px #34d399 !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 2px 0 #02050d !important;
   color: #d1fae5 !important;
 }
 #modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked .tree-node-tier {
   background: #241906 !important;
-  box-shadow: inset 0 0 0 1px #fbbf24 !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 2px 0 #02050d !important;
   color: #fde68a !important;
 }
 #modal-box.skills-cosmic-fullscreen .btn-skill-hold-activate {

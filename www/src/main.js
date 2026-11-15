@@ -242,15 +242,19 @@
       } catch (err) {
         if (now - _errThrottle > 2000) { _errThrottle = now; console.error('[UPDATE ERROR]', err); }
       }
-      try {
-        game.render();
-      } catch (err) {
-        if (now - _errThrottle > 2000) { _errThrottle = now; console.error('[RENDER ERROR]', err, err.stack); }
-      }
-      try {
-        if (game.started) Balaclava.UI.updateHUD();
-      } catch (err) {
-        if (now - _errThrottle > 2000) { _errThrottle = now; console.error('[HUD ERROR]', err); }
+      const activeModal = Balaclava.UI ? Balaclava.UI.activeModal : null;
+      const opaqueFullscreenModal = activeModal === 'skills' || activeModal === 'map';
+      if (!opaqueFullscreenModal) {
+        try {
+          game.render();
+        } catch (err) {
+          if (now - _errThrottle > 2000) { _errThrottle = now; console.error('[RENDER ERROR]', err, err.stack); }
+        }
+        try {
+          if (game.started) Balaclava.UI.updateHUD();
+        } catch (err) {
+          if (now - _errThrottle > 2000) { _errThrottle = now; console.error('[HUD ERROR]', err); }
+        }
       }
     }
     requestAnimationFrame(loop);

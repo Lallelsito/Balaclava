@@ -7059,13 +7059,315 @@
         }
       }
 
+      const getBiomePattern = (bId) => {
+        if (!this._biomeInnerPatterns) this._biomeInnerPatterns = {};
+        if (this._biomeInnerPatterns[bId] !== undefined) return this._biomeInnerPatterns[bId];
+        const sheet = Balaclava.Assets && Balaclava.Assets.biomeTiles && Balaclava.Assets.biomeTiles[bId];
+        if (!sheet || !sheet.width) return null;
+        const pc = document.createElement('canvas');
+        pc.width = 32;
+        pc.height = 32;
+        const pctx = pc.getContext('2d');
+        pctx.imageSmoothingEnabled = false;
+        // Extract clean interior 32x32 core from center cell (64..128, 64..128) without edge seams
+        pctx.drawImage(sheet, 80, 80, 32, 32, 0, 0, 32, 32);
+        const pat = ctx.createPattern(pc, 'repeat');
+        this._biomeInnerPatterns[bId] = pat;
+        return pat;
+      };
+
+      const BIOME_LAYER_PRIO = {
+        tierras_volcanicas: 1,
+        bosque_oscuro: 2,
+        montanas_heladas: 3,
+        desierto: 4,
+        pradera: 5
+      };
+
+      const drawLavaTile = (tx, ty, px, py) => {
+        const isLava = (lx, ly) => lx >= 0 && ly >= 0 && lx < WORLD_TILES && ly < WORLD_TILES &&
+          this.world.tiles[ly] && this.world.tiles[ly][lx] === 4;
+        const lN = isLava(tx, ty - 1);
+        const lS = isLava(tx, ty + 1);
+        const lW = isLava(tx - 1, ty);
+        const lE = isLava(tx + 1, ty);
+
+        // Surround volcanic basalt ground pad so crater sits visibly sunken below surrounding terrain
+        const vSheet = Balaclava.Assets.biomeTiles.tierras_volcanicas;
+        if (vSheet) {
+          ctx.drawImage(vSheet, 64, 64, 64, 64, px, py, TILE_SIZE, TILE_SIZE);
+        } else {
+          ctx.fillStyle = BIOMES.tierras_volcanicas.color;
+          ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
+        }
+
+        const topLip = lN ? 0 : 12;
+        const botLip = lS ? 0 : 6;
+        const leftLip = lW ? 0 : 7;
+        const rightLip = lE ? 0 : 7;
+        const ix = px + leftLip;
+        const iy = py + topLip;
+        const iw = TILE_SIZE - leftLip - rightLip;
+        const ih = TILE_SIZE - topLip - botLip;
+
+        // Build organic scalloped + corner-beveled crater silhouette path instead of a rigid rectangle
+        const seed = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
+        const rTL = (!lN && !lW) ? 9 : 0;
+        const rTR = (!lN && !lE) ? 9 : 0;
+        const rBR = (!lS && !lE) ? 8 : 0;
+        const rBL = (!lS && !lW) ? 8 : 0;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(ix + rTL, iy);
+        ctx.lineTo(ix + iw - rTR, iy);
+        if (rTR > 0) ctx.lineTo(ix + iw, iy + rTR);
+        ctx.lineTo(ix + iw, iy + ih - rBR);
+        if (rBR > 0) ctx.lineTo(ix + iw - rBR, iy + ih);
+        ctx.lineTo(ix + rBL, iy + ih);
+        if (rBL > 0) ctx.lineTo(ix, iy + ih - rBL);
+        ctx.lineTo(ix, iy + rTL);
+        if (rTL > 0) ctx.lineTo(ix + rTL, iy);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.fillStyle = '#731204';
+        ctx.fillRect(ix, iy, iw, ih);
+
+        // Flowing pixel magma convection currents & glowing yellow veins
+        const tFlow = this.time * 1.15;
+        const pulse = 0.5 + 0.5 * Math.sin(this.time * 2.4 + tx * 0.9 + ty * 0.7);
+        const cell = 5;
+        for (let cy = 0; cy < TILE_SIZE; cy += cell) {
+          const wy = py + cy;
+          if (wy + cell <= iy || wy >= iy + ih) continue;
+          for (let cx = 0; cx < TILE_SIZE; cx += cell) {
+            const wx = px + cx;
+            if (wx + cell <= ix || wx >= ix + iw) continue;
+            const u = (tx * 9 + cx / cell);
+            const v = (ty * 9 + cy / cell);
+            const w1 = Math.sin(u * 0.56 + tFlow + Math.cos(v * 0.44 - tFlow * 0.6));
+            const w2 = Math.cos(v * 0.60 - tFlow * 0.8 + Math.sin((u + v) * 0.36));
+            const heat = (w1 + w2) * 0.5 + pulse * 0.14;
+            if (heat > 0.46) ctx.fillStyle = '#fff59d';
+            else if (heat > 0.22) ctx.fillStyle = '#ffb300';
+            else if (heat > -0.10) ctx.fillStyle = '#f4511e';
+            else if (heat > -0.44) ctx.fillStyle = '#b71c1c';
+            else ctx.fillStyle = '#3b150e';
+            ctx.fillRect(wx, wy, cell, cell);
+            if (heat < -0.44) {
+              ctx.fillStyle = '#5c2618';
+              ctx.fillRect(wx, wy, cell, 2);
+            }
+          }
+        }
+
+        // Deep sunken wall cast shadow along cliff interior so molten pool sits visibly below ground level
+        if (!lN) {
+          ctx.fillStyle = 'rgba(16, 4, 2, 0.54)';
+          ctx.fillRect(ix, iy, iw, 5);
+        }
+        if (!lW) {
+          ctx.fillStyle = 'rgba(16, 4, 2, 0.40)';
+          ctx.fillRect(ix, iy, 4, ih);
+        }
+        if (!lE) {
+          ctx.fillStyle = 'rgba(24, 6, 3, 0.30)';
+          ctx.fillRect(ix + iw - 3, iy, 3, ih);
+        }
+        if (!lS) {
+          ctx.fillStyle = 'rgba(255, 145, 45, 0.28)';
+          ctx.fillRect(ix, iy + ih - 3, iw, 3);
+        }
+
+        // Rising sparks
+        const emSeed = ((tx * 73 + ty * 139) % 11);
+        for (let k = 0; k < 2; k++) {
+          const ph = (this.time * (0.55 + k * 0.22) + (emSeed + k * 3) * 0.19) % 1;
+          const ex = ix + 4 + (((tx * 17 + k * 23 + Math.floor(this.time * 0.4)) % Math.max(8, iw - 10)));
+          const ey = iy + ih - 4 - ph * Math.max(8, ih - 8);
+          ctx.fillStyle = ph < 0.45 ? '#fff59d' : '#ffab40';
+          ctx.globalAlpha = 1 - ph * 0.65;
+          ctx.fillRect(Math.round(ex), Math.round(ey), 2, 2);
+        }
+        ctx.globalAlpha = 1;
+        ctx.restore();
+
+        // Sculpted undulating basalt rock wall ledges (organic rim, no straight square outer border)
+        if (!lN) {
+          const xStart = lW ? 0 : 9;
+          const xEnd = lE ? TILE_SIZE : TILE_SIZE - 9;
+          for (let ox = xStart; ox < xEnd; ox += 8) {
+            const wSeg = Math.min(8, xEnd - ox);
+            const idx = ox >> 3;
+            const outY = 1 + ((seed >> (idx % 6)) & 3); // 1..4px outer jagged basalt silhouette
+            const overhang = 3 + ((seed >> ((idx + 2) % 6)) & 3); // 3..6px inward wall drop
+            ctx.fillStyle = '#472d28';
+            ctx.fillRect(px + ox, py + outY, wSeg, 2);
+            ctx.fillStyle = '#331c1b';
+            ctx.fillRect(px + ox, py + outY + 2, wSeg, 4);
+            ctx.fillStyle = '#211013';
+            ctx.fillRect(px + ox, py + outY + 6, wSeg, 3 + overhang);
+            ctx.fillStyle = '#12080a';
+            ctx.fillRect(px + ox + 1, py + outY + 8 + overhang, Math.max(2, wSeg - 2), 2);
+            if (((seed + ox) & 7) < 4) {
+              ctx.fillStyle = 'rgba(255, 114, 52, 0.36)';
+              ctx.fillRect(px + ox + 1, py + outY + 6 + overhang, Math.max(2, wSeg - 2), 2);
+            }
+          }
+        }
+        if (!lW) {
+          const yStart = lN ? 0 : 9;
+          const yEnd = lS ? TILE_SIZE : TILE_SIZE - 8;
+          for (let oy = yStart; oy < yEnd; oy += 8) {
+            const hSeg = Math.min(8, yEnd - oy);
+            const idx = oy >> 3;
+            const outX = 1 + ((seed >> ((idx + 1) % 6)) & 2);
+            const jw = 2 + ((seed >> ((idx + 4) % 7)) & 3);
+            ctx.fillStyle = '#422925';
+            ctx.fillRect(px + outX, py + oy, 2, hSeg);
+            ctx.fillStyle = '#2e1a19';
+            ctx.fillRect(px + outX + 2, py + oy, 3, hSeg);
+            ctx.fillStyle = '#1c0e11';
+            ctx.fillRect(px + outX + 5, py + oy, jw, hSeg);
+          }
+        }
+        if (!lE) {
+          const yStart = lN ? 0 : 9;
+          const yEnd = lS ? TILE_SIZE : TILE_SIZE - 8;
+          for (let oy = yStart; oy < yEnd; oy += 8) {
+            const hSeg = Math.min(8, yEnd - oy);
+            const idx = oy >> 3;
+            const outX = 1 + ((seed >> ((idx + 3) % 6)) & 2);
+            const jw = 2 + ((seed >> ((idx + 5) % 7)) & 3);
+            ctx.fillStyle = '#422925';
+            ctx.fillRect(px + TILE_SIZE - outX - 2, py + oy, 2, hSeg);
+            ctx.fillStyle = '#2e1a19';
+            ctx.fillRect(px + TILE_SIZE - outX - 5, py + oy, 3, hSeg);
+            ctx.fillStyle = '#1c0e11';
+            ctx.fillRect(px + TILE_SIZE - outX - 5 - jw, py + oy, jw, hSeg);
+          }
+        }
+        if (!lS) {
+          const xStart = lW ? 0 : 9;
+          const xEnd = lE ? TILE_SIZE : TILE_SIZE - 9;
+          for (let ox = xStart; ox < xEnd; ox += 8) {
+            const wSeg = Math.min(8, xEnd - ox);
+            const idx = ox >> 3;
+            const outBot = 1 + ((seed >> ((idx + 2) % 6)) & 2);
+            const jh = 2 + ((seed >> ((idx + 5) % 7)) & 3);
+            ctx.fillStyle = '#2e1a1b';
+            ctx.fillRect(px + ox, py + TILE_SIZE - outBot - 3, wSeg, 3);
+            ctx.fillStyle = '#4e332d';
+            ctx.fillRect(px + ox, py + TILE_SIZE - outBot - 5, wSeg, 2);
+            ctx.fillStyle = '#3d2522';
+            ctx.fillRect(px + ox + 1, py + TILE_SIZE - outBot - 5 - jh, Math.max(2, wSeg - 2), jh + 1);
+          }
+        }
+        // Rounded basalt corner boulders smoothing outer crater corners
+        const drawCornerRock = (cx, cy, dw, dh) => {
+          ctx.fillStyle = '#38211f';
+          ctx.fillRect(cx, cy, dw, dh);
+          ctx.fillStyle = '#1f1012';
+          ctx.fillRect(cx + 2, cy + 2, Math.max(2, dw - 4), Math.max(2, dh - 4));
+        };
+        if (!lN && !lW) drawCornerRock(px + 5, py + 9, 6, 6);
+        if (!lN && !lE) drawCornerRock(px + TILE_SIZE - 11, py + 9, 6, 6);
+        if (!lS && !lW) drawCornerRock(px + 5, py + TILE_SIZE - 9, 6, 5);
+        if (!lS && !lE) drawCornerRock(px + TILE_SIZE - 11, py + TILE_SIZE - 9, 6, 5);
+
+        // Inner diagonal basalt corner pillars when lava wraps an L-bend
+        if (lN && lW && !isLava(tx - 1, ty - 1)) drawCornerRock(px, py, 8, 12);
+        if (lN && lE && !isLava(tx + 1, ty - 1)) drawCornerRock(px + TILE_SIZE - 8, py, 8, 12);
+      };
+
+      const drawBiomeTransitionEdge = (tx, ty, px, py, biome) => {
+        const isLandTile = (nx, ny) => nx >= 0 && ny >= 0 && nx < WORLD_TILES && ny < WORLD_TILES &&
+          this.world.isTileUnlocked(nx, ny) && (this.world.tiles[ny][nx] === 1 || this.world.tiles[ny][nx] === 2);
+        const getVB = (nx, ny) => this.world.getVisualBiomeAtTile
+          ? this.world.getVisualBiomeAtTile(nx, ny)
+          : this.world.plotBiomes[Math.floor(ny / PLOT_TILES)][Math.floor(nx / PLOT_TILES)];
+
+        const nUp = isLandTile(tx, ty - 1) ? getVB(tx, ty - 1) : biome;
+        const nDn = isLandTile(tx, ty + 1) ? getVB(tx, ty + 1) : biome;
+        const nLt = isLandTile(tx - 1, ty) ? getVB(tx - 1, ty) : biome;
+        const nRt = isLandTile(tx + 1, ty) ? getVB(tx + 1, ty) : biome;
+        if (nUp === biome && nDn === biome && nLt === biome && nRt === biome) return;
+
+        const myPrio = BIOME_LAYER_PRIO[biome] || 1;
+        const stampSeamlessOverlap = (nBiome, side) => {
+          // One-way precedence prevents double-sided fighting box outlines across seams
+          const theirPrio = BIOME_LAYER_PRIO[nBiome] || 1;
+          if (theirPrio <= myPrio) return;
+          const pat = getBiomePattern(nBiome);
+          const bColor = BIOMES[nBiome]?.color || '#63ab3f';
+          const bAccent = BIOMES[nBiome]?.accent || bColor;
+          const seed = ((tx * 73856093) ^ (ty * 19349663) ^ (side.charCodeAt(0) * 83492791)) >>> 0;
+
+          ctx.save();
+          ctx.fillStyle = pat || bColor;
+          // Stepped crisp pixel-art turf/sand/snow lobes creeping gently across neighbor seam
+          for (let i = 0; i < 6; i++) {
+            const h = (seed >> (i * 4)) & 15;
+            const reach = 6 + (h % 5) * 3;
+            const span = 8;
+            const pos = i * 8;
+            ctx.globalAlpha = 0.92;
+            const snap = (v) => Math.round(v / 3) * 3;
+            const r1 = snap(reach);
+            const r2 = Math.max(3, r1 - 3);
+            if (side === 'L') {
+              ctx.fillRect(px, py + pos, r2, span);
+              ctx.fillRect(px + r2, py + pos + 2, r1 - r2, Math.max(4, span - 4));
+            } else if (side === 'R') {
+              ctx.fillRect(px + TILE_SIZE - r2, py + pos, r2, span);
+              ctx.fillRect(px + TILE_SIZE - r1, py + pos + 2, r1 - r2, Math.max(4, span - 4));
+            } else if (side === 'T') {
+              ctx.fillRect(px + pos, py, span, r2);
+              ctx.fillRect(px + pos + 2, py + r2, Math.max(4, span - 4), r1 - r2);
+            } else {
+              ctx.fillRect(px + pos, py + TILE_SIZE - r2, span, r2);
+              ctx.fillRect(px + pos + 2, py + TILE_SIZE - r1, Math.max(4, span - 4), r1 - r2);
+            }
+
+            // Scattered 3x3 pixel-art transition specks past lobe tip
+            if (h > 4) {
+              ctx.globalAlpha = 0.70;
+              const d = r1 + 3 + (h % 3) * 3;
+              if (side === 'L') ctx.fillRect(px + d, py + pos + 3, 3, 3);
+              else if (side === 'R') ctx.fillRect(px + TILE_SIZE - d - 3, py + pos + 3, 3, 3);
+              else if (side === 'T') ctx.fillRect(px + pos + 3, py + d, 3, 3);
+              else ctx.fillRect(px + pos + 3, py + TILE_SIZE - d - 3, 3, 3);
+            }
+            if ((h & 3) === 3) {
+              ctx.globalAlpha = 0.50;
+              ctx.fillStyle = bAccent;
+              const d2 = r1 + 6;
+              if (side === 'L') ctx.fillRect(px + d2, py + pos + 4, 2, 2);
+              else if (side === 'R') ctx.fillRect(px + TILE_SIZE - d2 - 2, py + pos + 4, 2, 2);
+              else if (side === 'T') ctx.fillRect(px + pos + 4, py + d2, 2, 2);
+              else ctx.fillRect(px + pos + 4, py + TILE_SIZE - d2 - 2, 2, 2);
+              ctx.fillStyle = pat || bColor;
+            }
+          }
+          ctx.restore();
+        };
+
+        if (nLt !== biome) stampSeamlessOverlap(nLt, 'L');
+        if (nRt !== biome) stampSeamlessOverlap(nRt, 'R');
+        if (nUp !== biome) stampSeamlessOverlap(nUp, 'T');
+        if (nDn !== biome) stampSeamlessOverlap(nDn, 'B');
+      };
+
       const drawLandTile = (tx, ty) => {
         const gx = Math.floor(tx / PLOT_TILES);
         const gy = Math.floor(ty / PLOT_TILES);
         const tile = this.world.tiles[ty][tx];
         const px = tx * TILE_SIZE;
         const py = ty * TILE_SIZE;
-        const biome = this.world.plotBiomes[gy][gx];
+        const biome = (this.world.getVisualBiomeAtTile
+          ? this.world.getVisualBiomeAtTile(tx, ty)
+          : this.world.plotBiomes[gy][gx]);
         const elev = (this.world.plotElevation && this.world.plotElevation[gy] && this.world.plotElevation[gy][gx]) || 0;
 
         if (tile === 0) return;
@@ -7081,27 +7383,15 @@
         }
 
         if (tile === 4) {
-          const ex = Balaclava.Assets && Balaclava.Assets.extraImages;
-          const lavaImg = ex && ex.lava_anim;
-          if (lavaImg && lavaImg.complete && lavaImg.naturalWidth > 0) {
-            const frames = Math.max(1, Math.floor(lavaImg.naturalWidth / 16));
-            const lf = (Math.floor(this.time * 4) + ((tx + ty) % frames)) % frames;
-            ctx.drawImage(lavaImg, lf * 16, 0, 16, 16, px, py, TILE_SIZE, TILE_SIZE);
-          } else {
-            ctx.fillStyle = '#cf3d0c';
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-          }
+          drawLavaTile(tx, ty, px, py);
           return;
         }
 
         const belowUnlocked = this.world.isTileUnlocked(tx, ty + 1);
         const belowTile = belowUnlocked && this.world.tiles[ty + 1] ? this.world.tiles[ty + 1][tx] : 0;
-        const bGx = Math.floor(tx / PLOT_TILES);
-        const bGy = Math.floor((ty + 1) / PLOT_TILES);
-        const belowElev = (belowUnlocked && this.world.plotElevation && this.world.plotElevation[bGy]) ? (this.world.plotElevation[bGy][bGx] || 0) : -1;
 
-        if (belowTile === 0 || belowElev < elev) {
-          const skirtH = belowTile === 0 ? (10 + elev * 4) : ((elev - belowElev) * 8 + 4);
+        if (belowTile === 0) {
+          const skirtH = 10 + elev * 3;
           const cPal = cliffPal[biome] || cliffPal.pradera;
           ctx.fillStyle = cPal.shadow;
           ctx.fillRect(px + 2, py + TILE_SIZE + skirtH - 2, TILE_SIZE - 2, 7);
@@ -7109,12 +7399,6 @@
           ctx.fillRect(px, py + TILE_SIZE - 2, TILE_SIZE, skirtH);
           ctx.fillStyle = cPal.top;
           ctx.fillRect(px, py + TILE_SIZE - 2, TILE_SIZE, Math.max(4, Math.floor(skirtH * 0.5)));
-          if (belowTile !== 0 && belowElev < elev) {
-            ctx.fillStyle = '#b0bec5';
-            ctx.fillRect(px + 8, py + TILE_SIZE - 1, TILE_SIZE - 16, 4);
-            ctx.fillStyle = '#78909c';
-            ctx.fillRect(px + 8, py + TILE_SIZE + 5, TILE_SIZE - 16, 3);
-          }
         }
 
         if (foamImg && this.world.tiles[ty + 1] && this.world.tiles[ty + 1][tx] === 0) {
@@ -7135,6 +7419,8 @@
           ctx.fillStyle = BIOMES[biome].color;
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
         }
+
+        drawBiomeTransitionEdge(tx, ty, px, py, biome);
 
         if (elev > 0 && !up) {
           ctx.fillStyle = 'rgba(255,255,255,0.18)';
@@ -7706,7 +7992,9 @@
 
           const gx = Math.floor(tx / PLOT_TILES);
           const gy = Math.floor(ty / PLOT_TILES);
-          const biome = this.world.plotBiomes[gy] && this.world.plotBiomes[gy][gx];
+          const biome = (this.world.getVisualBiomeAtTile
+            ? this.world.getVisualBiomeAtTile(tx, ty)
+            : (this.world.plotBiomes[gy] && this.world.plotBiomes[gy][gx]));
           if (!biome) continue;
 
           const fl = this.world.getTileFlora(tx, ty, biome);

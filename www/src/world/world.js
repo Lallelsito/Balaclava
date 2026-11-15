@@ -519,6 +519,20 @@
       return null;
     }
 
+    _smoothNoise2D(x, y, seed) {
+      const ix = Math.floor(x);
+      const iy = Math.floor(y);
+      const fx = x - ix;
+      const fy = y - iy;
+      const ux = fx * fx * (3 - 2 * fx);
+      const uy = fy * fy * (3 - 2 * fy);
+      const a = hash2D(ix, iy, seed);
+      const b = hash2D(ix + 1, iy, seed);
+      const c = hash2D(ix, iy + 1, seed);
+      const d = hash2D(ix + 1, iy + 1, seed);
+      return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+    }
+
     generatePlotTerrain(gx, gy) {
       const C = CENTER_PLOT || 4;
       const biome = this.plotBiomes[gy][gx];
@@ -529,59 +543,169 @@
       const hasAltar = !!(this.altarPlots && this.altarPlots[`${gx},${gy}`]);
       const hasEe = !!(this.easterEggPlots && this.easterEggPlots[`${gx},${gy}`]);
       const hasSecret = !!(this.secretChestPlots && this.secretChestPlots[`${gx},${gy}`] !== undefined);
-      const seedBase = (this.worldSeed || 901) + gx * 37 + gy * 101;
+      const hasLandmark = gateHere || hasAltar || hasEe || hasSecret;
+      const worldSeed = this.worldSeed || 901;
+      const seedBase = worldSeed + gx * 37 + gy * 101;
+      const archIdx = Math.floor(hash2D(gx + 31, gy + 47, seedBase) * 6);
       const shapeRoll = hash2D(gx + 13, gy + 29, seedBase);
       const rot = hash2D(gx + 3, gy + 7, seedBase + 19) * Math.PI * 2;
-      const stretchX = 0.84 + hash2D(gx + 5, gy + 11, seedBase + 41) * 0.34;
-      const stretchY = 0.84 + hash2D(gx + 17, gy + 23, seedBase + 67) * 0.34;
-      const coveCorner = Math.floor(hash2D(gx, gy, seedBase + 157) * 4);
-      const hasLagoon = !isCenter && !gateHere && !hasAltar && !hasEe && !hasSecret && shapeRoll > 0.72;
+      const cosR = Math.cos(rot), sinR = Math.sin(rot);
 
+      // Vary island footprint scale, center offset, and aspect ratio dramatically across plots with generous ocean breathing room
+      const scaleRoll = hash2D(gx + 71, gy + 83, seedBase + 11);
+      const sizeScale = archIdx === 0 ? 1.00 + scaleRoll * 0.16
+        : archIdx === 1 ? 0.84 + scaleRoll * 0.18
+        : 0.76 + scaleRoll * 0.22;
+      const shiftX = isCenter ? 0 : (hash2D(gx + 19, gy + 53, seedBase + 29) - 0.5) * 2.2;
+      const shiftY = isCenter ? 0 : (hash2D(gx + 61, gy + 37, seedBase + 59) - 0.5) * 2.2;
+      const stretchX = archIdx === 1 ? 1.14 + hash2D(gx + 5, gy + 11, seedBase + 41) * 0.30
+        : 0.80 + hash2D(gx + 5, gy + 11, seedBase + 41) * 0.36;
+      const stretchY = archIdx === 1 ? 0.66 + hash2D(gx + 17, gy + 23, seedBase + 67) * 0.20
+        : 0.80 + hash2D(gx + 17, gy + 23, seedBase + 67) * 0.36;
+      const coveCorner = Math.floor(hash2D(gx, gy, seedBase + 157) * 4);
+      const coveAngle = hash2D(gx + 9, gy + 15, seedBase + 211) * Math.PI * 2;
+      const hasLagoon = !isCenter && !hasLandmark && (archIdx === 5 || shapeRoll > 0.66);
+
+      // Generate coastline first into local land mask
+      const land = Array.from({ length: PLOT_TILES }, () => new Uint8Array(PLOT_TILES));
       for (let ly = 0; ly < PLOT_TILES; ly++) {
         for (let lx = 0; lx < PLOT_TILES; lx++) {
           const tx = ox + lx;
           const ty = oy + ly;
           const edgeDist = Math.min(lx, ly, PLOT_TILES - 1 - lx, PLOT_TILES - 1 - ly);
-          const n = hash2D(tx, ty, (this.worldSeed || 901) + 77);
+          const n = hash2D(tx, ty, worldSeed + 77);
+          const wFbm = this._smoothNoise2D(tx * 0.26, ty * 0.26, worldSeed + 503) * 0.65
+                     + this._smoothNoise2D(tx * 0.52, ty * 0.52, worldSeed + 809) * 0.35;
 
-          let isLand;
-          const dx = (lx - 5.5) / stretchX;
-          const dy = (ly - 5.5) / stretchY;
-          const cosR = Math.cos(rot), sinR = Math.sin(rot);
-          const rx = dx * cosR - dy * sinR;
-          const ry = dx * sinR + dy * cosR;
-          const ang = Math.atan2(ry, rx);
-          const rad = Math.hypot(rx, ry);
+          let isLand = false;
           if (isCenter) {
-            // Main center island: full generous rounded-square island filling the starter plot cleanly
-            isLand = edgeDist >= 1 && Math.hypot(lx - 5.5, ly - 5.5) <= 6.2;
+            // Starter island: cozy organically fringed plateau leaving clear sea water around shores
+            const dx = lx - 5.5, dy = ly - 5.5;
+            const ang = Math.atan2(dy, dx);
+            const lobe = 5.05 + 0.36 * Math.sin(ang * 3 + rot) + (wFbm - 0.5) * 0.9;
+            isLand = edgeDist >= 1 && Math.hypot(dx, dy) <= lobe;
+            if (lx >= 3 && lx <= 8 && ly >= 3 && ly <= 8) isLand = true;
+          } else if (archIdx === 3) {
+            // Twin / multi-lobe islets joined by a slender sandbar with water inlets on the flanks
+            const ax1 = 3.1 + shiftX * 0.35, ay1 = 3.4 + shiftY * 0.35;
+            const ax2 = 7.9 + shiftX * 0.35, ay2 = 7.6 + shiftY * 0.35;
+            const d1 = Math.hypot((lx - ax1) / 1.02, (ly - ay1) / 0.92);
+            const d2 = Math.hypot((lx - ax2) / 0.92, (ly - ay2) / 1.02);
+            const bridgeD = Math.hypot(lx - 5.5, (ly - 5.5) * 1.3);
+            const wobble = (wFbm - 0.5) * 1.4;
+            isLand = edgeDist >= 1 && (d1 <= 2.75 + wobble || d2 <= 2.75 + wobble || bridgeD <= 1.95 + wobble * 0.4);
           } else {
-            const baseRad = 4.65;
-            const lobe = baseRad + 0.72 * Math.sin(ang * 2 + rot) + 0.55 * Math.cos(ang * 3 - shapeRoll * 6) + (n - 0.5) * 1.15;
-            isLand = rad <= lobe && edgeDist >= 1;
-            if (edgeDist === 0 && n > 0.88 && rad <= lobe + 0.35) isLand = true;
-            // Carve a natural coastal bay on varied seeds
-            if (shapeRoll > 0.35 && shapeRoll < 0.85) {
-              const bx = (coveCorner === 0 || coveCorner === 2) ? 2 : 9;
-              const by = (coveCorner === 0 || coveCorner === 1) ? 2 : 9;
-              if (Math.hypot(lx - bx, ly - by) < 1.85 && edgeDist <= 2) isLand = false;
+            const dx = (lx - (5.5 + shiftX)) / stretchX;
+            const dy = (ly - (5.5 + shiftY)) / stretchY;
+            const rx = dx * cosR - dy * sinR;
+            const ry = dx * sinR + dy * cosR;
+            const ang = Math.atan2(ry, rx);
+            const rad = Math.hypot(rx, ry);
+            const lobeAmp = archIdx === 4 ? 1.05 : 0.68;
+            const baseRad = (archIdx === 0 ? 4.45 : 3.85) * sizeScale;
+            const lobe = baseRad
+              + lobeAmp * Math.sin(ang * 2 + rot)
+              + (archIdx === 4 ? 0.80 : 0.48) * Math.cos(ang * 3 - shapeRoll * 6)
+              + (wFbm - 0.5) * 1.75;
+            isLand = rad <= lobe;
+            // Preserve crisp ocean margins while allowing rare organic capes to extend outward
+            if (edgeDist === 0) {
+              isLand = (archIdx === 0 && rad <= lobe - 0.45 && wFbm > 0.62);
             }
-            // Small interior tidal pool on ~28% of non-landmark plots
-            if (hasLagoon && Math.hypot(lx - 5.5, ly - 5.5) < 1.35) isLand = false;
-            // Keep center spawn pad & cardinal bridge approaches connected
-            if (lx >= 4 && lx <= 7 && ly >= 4 && ly <= 7) isLand = true;
+            // Sculpted coastal cove carving natural sea bays into island flanks
+            if (archIdx === 2 || (shapeRoll > 0.28 && shapeRoll < 0.78 && !hasLandmark)) {
+              const bDist = archIdx === 2 ? 3.2 : 3.9;
+              const bx = 5.5 + Math.cos(coveAngle) * bDist;
+              const by = 5.5 + Math.sin(coveAngle) * bDist;
+              const coveR = archIdx === 2 ? 2.75 : 2.15;
+              if (Math.hypot(lx - bx, ly - by) < coveR + (n - 0.5) * 0.4 && Math.hypot(lx - 5.5, ly - 5.5) > 2.0) {
+                isLand = false;
+              }
+            }
+            // Off-center tidal lagoon
+            if (hasLagoon) {
+              const lagX = 5.5 + ((coveCorner & 1) ? 1.5 : -1.5);
+              const lagY = 5.5 + ((coveCorner & 2) ? 1.5 : -1.5);
+              if (Math.hypot(lx - lagX, ly - lagY) < 1.7) isLand = false;
+            }
           }
 
-          // Keep gate / altar / easter egg / secret chest center organically solid so structures never touch water without squaring off coastlines
-          if ((gateHere || hasAltar || hasEe || hasSecret) && !isCenter && Math.hypot(lx - 5.5, ly - 5.5) <= 3.35) isLand = true;
+          // Safe central pad & landmark / NPC pad guarantee
+          if (lx >= 4 && lx <= 7 && ly >= 4 && ly <= 7) isLand = true;
+          if (hasLandmark && !isCenter && Math.hypot(lx - 5.5, ly - 5.5) <= 2.95) isLand = true;
+          land[ly][lx] = isLand ? 1 : 0;
+        }
+      }
 
-          if (isLand && biome === 'tierras_volcanicas' && edgeDist >= 3 && n < 0.08 && !(lx >= 4 && lx <= 7 && ly >= 3 && ly <= 7)) {
-            this.tiles[ty][tx] = 4; // lava
-          } else {
-            this.tiles[ty][tx] = isLand ? 1 : 0;
+      // Guarantee single connected landmass inside the plot (prune isolated 1-2px specks, bridge larger sandbars to center)
+      const visited = Array.from({ length: PLOT_TILES }, () => new Uint8Array(PLOT_TILES));
+      const q = [[5, 5]];
+      visited[5][5] = 1;
+      for (let qi = 0; qi < q.length; qi++) {
+        const [cx, cy] = q[qi];
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx >= 0 && ny >= 0 && nx < PLOT_TILES && ny < PLOT_TILES && land[ny][nx] && !visited[ny][nx]) {
+            visited[ny][nx] = 1;
+            q.push([nx, ny]);
           }
         }
       }
+      for (let ly = 0; ly < PLOT_TILES; ly++) {
+        for (let lx = 0; lx < PLOT_TILES; lx++) {
+          if (land[ly][lx] && !visited[ly][lx]) land[ly][lx] = 0;
+        }
+      }
+
+      // Paint tiles & build cohesive volcanic lava basins (clustered 2..6 tile molten craters inset from cliffs/paths)
+      for (let ly = 0; ly < PLOT_TILES; ly++) {
+        for (let lx = 0; lx < PLOT_TILES; lx++) {
+          this.tiles[oy + ly][ox + lx] = land[ly][lx] ? 1 : 0;
+        }
+      }
+
+      if (biome === 'tierras_volcanicas') {
+        const poolCount = 1 + Math.floor(hash2D(gx + 17, gy + 71, seedBase + 401) * 2);
+        const setVolTile = (lx, ly, val) => {
+          if (lx >= 1 && ly >= 1 && lx < PLOT_TILES - 1 && ly < PLOT_TILES - 1) {
+            this.tiles[oy + ly][ox + lx] = val;
+          }
+        };
+        for (let p = 0; p < poolCount; p++) {
+          const pAng = hash2D(gx + p * 7, gy + p * 13, seedBase + 419) * Math.PI * 2;
+          const pDist = 2.6 + hash2D(gx + p * 11, gy + p * 19, seedBase + 433) * 1.1;
+          const cx = Math.min(PLOT_TILES - 4, Math.max(2, Math.round(5.5 + Math.cos(pAng) * pDist)));
+          const cy = Math.min(PLOT_TILES - 4, Math.max(2, Math.round(5.5 + Math.sin(pAng) * pDist)));
+          const shapeOpts = [
+            [[cx, cy], [cx + 1, cy], [cx, cy + 1], [cx + 1, cy + 1], [cx + 2, cy + 1]],
+            [[cx, cy], [cx + 1, cy], [cx - 1, cy + 1], [cx, cy + 1], [cx + 1, cy + 1]],
+            [[cx, cy], [cx, cy + 1], [cx + 1, cy + 1], [cx + 1, cy + 2]],
+            [[cx, cy], [cx + 1, cy], [cx + 2, cy], [cx + 1, cy + 1]]
+          ];
+          const chosen = shapeOpts[(gx + gy + p) % shapeOpts.length];
+          const valid = chosen.filter(([lx, ly]) => {
+            if (lx < 2 || ly < 2 || lx >= PLOT_TILES - 2 || ly >= PLOT_TILES - 2) return false;
+            if (lx >= 4 && lx <= 7 && ly >= 4 && ly <= 7) return false;
+            if (hasLandmark && lx >= 3 && lx <= 8 && ly >= 3 && ly <= 8) return false;
+            return true;
+          });
+          if (valid.length >= 3) {
+            // Ensure solid basalt bank framing the crater before carving sunken lava inside
+            for (const [lx, ly] of valid) {
+              for (let oy2 = -1; oy2 <= 1; oy2++) {
+                for (let ox2 = -1; ox2 <= 1; ox2++) {
+                  const nx = lx + ox2, ny = ly + oy2;
+                  if (nx >= 1 && ny >= 1 && nx < PLOT_TILES - 1 && ny < PLOT_TILES - 1 && this.tiles[oy + ny][ox + nx] === 0) {
+                    setVolTile(nx, ny, 1);
+                  }
+                }
+              }
+            }
+            for (const [lx, ly] of valid) this.tiles[oy + ly][ox + lx] = 4;
+          }
+        }
+      }
+
       // Guarantee solid walkable grass pad around any NPC stationed on this plot
       this.ensureNpcLandPads([gx, gy]);
     }
@@ -656,21 +780,48 @@
           return dist >= 2.2;
         });
       }
+
+      // Prune tiny orphan 1-tile or 2-tile lava scraps clipped by landmark pads or borders (keep cohesive >=3-tile calderas)
+      const visitedLava = new Uint8Array(WORLD_TILES * WORLD_TILES);
+      for (let ty = 0; ty < WORLD_TILES; ty++) {
+        for (let tx = 0; tx < WORLD_TILES; tx++) {
+          if (this.tiles[ty][tx] !== 4 || visitedLava[ty * WORLD_TILES + tx]) continue;
+          const comp = [[tx, ty]];
+          visitedLava[ty * WORLD_TILES + tx] = 1;
+          for (let i = 0; i < comp.length; i++) {
+            const [cx, cy] = comp[i];
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const nx = cx + dx, ny = cy + dy;
+              if (nx < 0 || ny < 0 || nx >= WORLD_TILES || ny >= WORLD_TILES) continue;
+              const idx = ny * WORLD_TILES + nx;
+              if (!visitedLava[idx] && this.tiles[ny][nx] === 4) {
+                visitedLava[idx] = 1;
+                comp.push([nx, ny]);
+              }
+            }
+          }
+          if (comp.length < 3) {
+            for (const [cx, cy] of comp) this.tiles[cy][cx] = 1;
+          }
+        }
+      }
     }
 
-    // Seamlessly connect borders between any two adjacent unlocked islands deep into each island spine so zero 1-tile water moats remain.
+    // Seamlessly connect borders between any two adjacent unlocked islands organically (varied continental merges, winding isthmuses, and wooden bridges) so zero repetitive water moats appear.
     stitchUnlockedBorders() {
       this.connectorTiles = new Set();
+      const seed = (this.worldSeed || 901);
       const clearNode = (tx, ty) => {
         this.nodes = this.nodes.filter(n => n.tx !== tx || n.ty !== ty || (n.kind !== 'fish_spot' && n.kind !== 'rock'));
       };
-      const setLandOrConnector = (x, y, asConnectorIfLocked = false) => {
+      const setLandOrConnector = (x, y, asConnectorIfLocked = false, tileVal = 1) => {
         if (!this.tiles[y] || this.tiles[y][x] === undefined) return;
         const pgx = Math.floor(x / PLOT_TILES);
         const pgy = Math.floor(y / PLOT_TILES);
         const unlocked = this.isPlotUnlocked(pgx, pgy);
         if (unlocked) {
-          this.tiles[y][x] = 1;
+          if (tileVal === 3 && this.tiles[y][x] === 1) return;
+          this.tiles[y][x] = tileVal;
           clearNode(x, y);
         } else if (asConnectorIfLocked) {
           this.tiles[y][x] = 1;
@@ -678,31 +829,208 @@
           clearNode(x, y);
         }
       };
+
+      const ensureConnectedWalkable = (sx, sy, ex, ey) => {
+        const minX = Math.max(0, Math.min(sx, ex) - 4);
+        const maxX = Math.min(WORLD_TILES - 1, Math.max(sx, ex) + 4);
+        const minY = Math.max(0, Math.min(sy, ey) - 4);
+        const maxY = Math.min(WORLD_TILES - 1, Math.max(sy, ey) + 4);
+        const canWalk = (tx, ty) => {
+          if (tx < minX || tx > maxX || ty < minY || ty > maxY) return false;
+          if (!this.isTileUnlocked(tx, ty)) return false;
+          const t = this.tiles[ty]?.[tx];
+          return t === 1 || t === 2 || t === 3 || t === 5;
+        };
+        const seen = new Set([`${sx},${sy}`]);
+        const q = [[sx, sy]];
+        for (let i = 0; i < q.length; i++) {
+          const [cx, cy] = q[i];
+          if (cx === ex && cy === ey) return;
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = cx + dx, ny = cy + dy;
+            const k = `${nx},${ny}`;
+            if (!seen.has(k) && canWalk(nx, ny)) {
+              seen.add(k);
+              q.push([nx, ny]);
+            }
+          }
+        }
+        // Carve gentle 2-tile walkway if disconnected
+        let cx = sx, cy = sy;
+        while (cx !== ex || cy !== ey) {
+          setLandOrConnector(cx, cy, false, 1);
+          setLandOrConnector(cx + (sx === ex ? 1 : 0), cy + (sy === ey ? 1 : 0), false, 1);
+          if (cx !== ex) cx += Math.sign(ex - cx);
+          else if (cy !== ey) cy += Math.sign(ey - cy);
+        }
+        setLandOrConnector(ex, ey, false, 1);
+      };
+
       for (let gy = 0; gy < GRID_PLOTS; gy++) {
         for (let gx = 0; gx < GRID_PLOTS; gx++) {
           if (!this.isPlotUnlocked(gx, gy)) continue;
           const ox = gx * PLOT_TILES;
           const oy = gy * PLOT_TILES;
-          // Connect East neighbor with a natural 4-tile-wide tapered land neck (k=4..7)
+
+          // East border merge
           if (this.isPlotUnlocked(gx + 1, gy)) {
-            for (let k = 4; k <= 7; k++) {
-              const y = oy + k;
-              const startD = (k === 5 || k === 6) ? -4 : -2;
-              const endD = (k === 5 || k === 6) ? 3 : 1;
-              for (let d = startD; d <= endD; d++) {
-                setLandOrConnector(ox + PLOT_TILES + d, y, false);
+            const mode = hash2D(gx * 13 + 7, gy * 29 + 11, seed + 303);
+            if (mode < 0.22) {
+              // Selective continental weld leaving northern/southern bays open
+              for (let k = 2; k <= 9; k++) {
+                const y = oy + k;
+                const n = this._smoothNoise2D(gx + 0.5, y * 0.35, seed + 701);
+                const drift = Math.round((this._smoothNoise2D(gx * 1.7 + 0.2, y * 0.45, seed + 719) - 0.5) * 2.2);
+                const edgeTaper = (k <= 2 || k >= 9) ? 1 : 0;
+                const startD = (edgeTaper ? -2 : Math.round(-3 - n)) + drift;
+                const endD = (edgeTaper ? 1 : Math.round(1 + n)) + drift;
+                for (let d = startD; d <= endD; d++) {
+                  setLandOrConnector(ox + PLOT_TILES + d, y, false, 1);
+                }
+              }
+            } else if (mode < 0.68) {
+              // Varied-width, sinuous isthmus keeping open ocean bays on both sides
+              const startK = 2 + Math.floor(hash2D(gx + 3, gy + 17, seed + 331) * 5);
+              const span = 2 + Math.floor(hash2D(gx + 19, gy + 5, seed + 347) * 3);
+              const endK = Math.min(PLOT_TILES - 3, startK + span - 1);
+              const curveDir = hash2D(gx + 7, gy + 31, seed + 353) < 0.5 ? -1 : 1;
+              for (let k = startK; k <= endK; k++) {
+                const y = oy + k;
+                const t = (k - startK) / Math.max(1, endK - startK);
+                const wave = Math.round(Math.sin(t * Math.PI) * curveDir);
+                const w = hash2D(gx * 7 + k, gy * 11, seed + 359);
+                const startD = -2 - (w > 0.55 ? 1 : 0) + wave;
+                const endD = 1 + (w < 0.4 ? 1 : 0) + wave;
+                for (let d = startD; d <= endD; d++) {
+                  setLandOrConnector(ox + PLOT_TILES + d, y, false, 1);
+                }
+              }
+            } else {
+              // Open water channel crossed by a 2-tile wooden plank bridge with tapered shore abutments
+              const by = oy + 3 + Math.floor(hash2D(gx + 41, gy + 23, seed + 373) * 5);
+              for (let ky = by; ky <= by + 1; ky++) {
+                for (let d = -4; d <= -2; d++) setLandOrConnector(ox + PLOT_TILES + d, ky, false, 1);
+                for (let d = 1; d <= 3; d++) setLandOrConnector(ox + PLOT_TILES + d, ky, false, 1);
+                for (let d = -1; d <= 0; d++) {
+                  setLandOrConnector(ox + PLOT_TILES + d, ky, false, 3);
+                }
+              }
+              if (by - 1 >= oy + 1 && hash2D(gx + 5, gy + 13, seed + 383) < 0.5) {
+                setLandOrConnector(ox + PLOT_TILES - 3, by - 1, false, 1);
+                setLandOrConnector(ox + PLOT_TILES + 2, by + 2, false, 1);
+              }
+            }
+            ensureConnectedWalkable(ox + 5, oy + 5, (gx + 1) * PLOT_TILES + 5, oy + 5);
+          }
+
+          // South border merge
+          if (this.isPlotUnlocked(gx, gy + 1)) {
+            const mode = hash2D(gx * 31 + 13, gy * 17 + 23, seed + 409);
+            if (mode < 0.22) {
+              for (let k = 2; k <= 9; k++) {
+                const x = ox + k;
+                const n = this._smoothNoise2D(x * 0.35, gy + 0.5, seed + 739);
+                const drift = Math.round((this._smoothNoise2D(x * 0.45, gy * 1.7 + 0.2, seed + 751) - 0.5) * 2.2);
+                const edgeTaper = (k <= 2 || k >= 9) ? 1 : 0;
+                const startD = (edgeTaper ? -2 : Math.round(-3 - n)) + drift;
+                const endD = (edgeTaper ? 1 : Math.round(1 + n)) + drift;
+                for (let d = startD; d <= endD; d++) {
+                  setLandOrConnector(x, oy + PLOT_TILES + d, false, 1);
+                }
+              }
+            } else if (mode < 0.68) {
+              const startK = 2 + Math.floor(hash2D(gx + 11, gy + 29, seed + 439) * 5);
+              const span = 2 + Math.floor(hash2D(gx + 7, gy + 43, seed + 457) * 3);
+              const endK = Math.min(PLOT_TILES - 3, startK + span - 1);
+              const curveDir = hash2D(gx + 17, gy + 9, seed + 461) < 0.5 ? -1 : 1;
+              for (let k = startK; k <= endK; k++) {
+                const x = ox + k;
+                const t = (k - startK) / Math.max(1, endK - startK);
+                const wave = Math.round(Math.sin(t * Math.PI) * curveDir);
+                const w = hash2D(gx * 13, gy * 9 + k, seed + 467);
+                const startD = -2 - (w > 0.55 ? 1 : 0) + wave;
+                const endD = 1 + (w < 0.4 ? 1 : 0) + wave;
+                for (let d = startD; d <= endD; d++) {
+                  setLandOrConnector(x, oy + PLOT_TILES + d, false, 1);
+                }
+              }
+            } else {
+              const bx = ox + 3 + Math.floor(hash2D(gx + 53, gy + 19, seed + 491) * 5);
+              for (let kx = bx; kx <= bx + 1; kx++) {
+                for (let d = -4; d <= -2; d++) setLandOrConnector(kx, oy + PLOT_TILES + d, false, 1);
+                for (let d = 1; d <= 3; d++) setLandOrConnector(kx, oy + PLOT_TILES + d, false, 1);
+                for (let d = -1; d <= 0; d++) {
+                  setLandOrConnector(kx, oy + PLOT_TILES + d, false, 3);
+                }
+              }
+              if (bx - 1 >= ox + 1 && hash2D(gx + 21, gy + 3, seed + 503) < 0.5) {
+                setLandOrConnector(bx - 1, oy + PLOT_TILES - 3, false, 1);
+                setLandOrConnector(bx + 2, oy + PLOT_TILES + 2, false, 1);
+              }
+            }
+            ensureConnectedWalkable(ox + 5, oy + 5, ox + 5, (gy + 1) * PLOT_TILES + 5);
+          }
+
+          // Preserve organic coastal lagoons at most 2x2 plot corners (~74% water bays of varied shapes, ~26% land fusion)
+          if (gx + 1 < GRID_PLOTS && gy + 1 < GRID_PLOTS) {
+            const uCount = (this.isPlotUnlocked(gx, gy) ? 1 : 0)
+              + (this.isPlotUnlocked(gx + 1, gy) ? 1 : 0)
+              + (this.isPlotUnlocked(gx, gy + 1) ? 1 : 0)
+              + (this.isPlotUnlocked(gx + 1, gy + 1) ? 1 : 0);
+            if (uCount >= 3) {
+              const quadRoll = hash2D(gx * 47 + 3, gy * 61 + 5, seed + 909);
+              if (quadRoll < 0.26) {
+                const cx = ox + PLOT_TILES - 0.5 + (quadRoll - 0.13) * 3.0;
+                const cy = oy + PLOT_TILES - 0.5 + (hash2D(gx, gy, seed + 929) - 0.5) * 1.8;
+                const fillRad = 2.65;
+                for (let dy = -2; dy <= 2; dy++) {
+                  for (let dx = -2; dx <= 2; dx++) {
+                    const tx = ox + PLOT_TILES + dx;
+                    const ty = oy + PLOT_TILES + dy;
+                    if (!this.isTileUnlocked(tx, ty)) continue;
+                    const n = hash2D(tx, ty, seed + 947);
+                    if (Math.hypot(tx - cx, ty - cy) <= fillRad + (n - 0.5) * 0.9) {
+                      setLandOrConnector(tx, ty, false, 1);
+                    }
+                  }
+                }
               }
             }
           }
-          // Connect South neighbor with a natural 4-tile-wide tapered land neck (k=4..7)
-          if (this.isPlotUnlocked(gx, gy + 1)) {
-            for (let k = 4; k <= 7; k++) {
-              const x = ox + k;
-              const startD = (k === 5 || k === 6) ? -4 : -2;
-              const endD = (k === 5 || k === 6) ? 3 : 1;
-              for (let d = startD; d <= endD; d++) {
-                setLandOrConnector(x, oy + PLOT_TILES + d, false);
+        }
+      }
+
+      // Close tiny trapped boxy puddles (<= 6 water tiles completely landlocked inside unlocked clusters)
+      const visitedWater = new Uint8Array(WORLD_TILES * WORLD_TILES);
+      for (let ty = 1; ty < WORLD_TILES - 1; ty++) {
+        for (let tx = 1; tx < WORLD_TILES - 1; tx++) {
+          const k0 = ty * WORLD_TILES + tx;
+          if (visitedWater[k0] || this.tiles[ty][tx] !== 0 || !this.isTileUnlocked(tx, ty)) continue;
+          const comp = [[tx, ty]];
+          visitedWater[k0] = 1;
+          let touchesOpen = false;
+          for (let ci = 0; ci < comp.length; ci++) {
+            const [cx, cy] = comp[ci];
+            const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            for (let di = 0; di < dirs.length; di++) {
+              const nx = cx + dirs[di][0];
+              const ny = cy + dirs[di][1];
+              if (nx < 0 || ny < 0 || nx >= WORLD_TILES || ny >= WORLD_TILES || !this.isTileUnlocked(nx, ny)) {
+                touchesOpen = true;
+                continue;
               }
+              if (this.tiles[ny][nx] !== 0) continue;
+              const nk = ny * WORLD_TILES + nx;
+              if (visitedWater[nk]) continue;
+              visitedWater[nk] = 1;
+              comp.push([nx, ny]);
+              if (comp.length > 6) touchesOpen = true;
+            }
+            if (touchesOpen) break;
+          }
+          if (!touchesOpen && comp.length <= 6) {
+            for (let ci = 0; ci < comp.length; ci++) {
+              this.tiles[comp[ci][1]][comp[ci][0]] = 1;
             }
           }
         }
@@ -760,6 +1088,59 @@
       const gx = Balaclava.Utils.clamp(Math.floor(px / (PLOT_TILES * TILE_SIZE)), 0, GRID_PLOTS - 1);
       const gy = Balaclava.Utils.clamp(Math.floor(py / (PLOT_TILES * TILE_SIZE)), 0, GRID_PLOTS - 1);
       return this.plotBiomes[gy][gx];
+    }
+
+    _rebuildVisualBiomeGrid() {
+      const sig = `${this.worldSeed || 901}:${this.plotBiomes.map(r => r.map(b => (b || 'p')[0]).join('')).join('')}`;
+      const size = WORLD_TILES * WORLD_TILES;
+      const out = new Array(size);
+      const seed = (this.worldSeed || 901);
+      const C = CENTER_PLOT || 4;
+      for (let ty = 0; ty < WORLD_TILES; ty++) {
+        for (let tx = 0; tx < WORLD_TILES; tx++) {
+          const gx = Math.min(GRID_PLOTS - 1, Math.max(0, Math.floor(tx / PLOT_TILES)));
+          const gy = Math.min(GRID_PLOTS - 1, Math.max(0, Math.floor(ty / PLOT_TILES)));
+          const baseBiome = this.plotBiomes[gy]?.[gx] || 'pradera';
+          const lx = tx - gx * PLOT_TILES;
+          const ly = ty - gy * PLOT_TILES;
+          // Preserve central landmark/starter plateau biome cleanly while organically warping outer ~3-tile border ribbons
+          if (gx === C && gy === C && Math.hypot(lx - 5.5, ly - 5.5) <= 4.1) {
+            out[ty * WORLD_TILES + tx] = baseBiome;
+            continue;
+          }
+          const nx0 = this._smoothNoise2D(tx * 0.11, ty * 0.11, seed + 587);
+          const nx1 = this._smoothNoise2D(tx * 0.24, ty * 0.24, seed + 613);
+          const nx2 = this._smoothNoise2D(tx * 0.52, ty * 0.52, seed + 641);
+          const ny0 = this._smoothNoise2D(tx * 0.11, ty * 0.11, seed + 659);
+          const ny1 = this._smoothNoise2D(tx * 0.24, ty * 0.24, seed + 677);
+          const ny2 = this._smoothNoise2D(tx * 0.52, ty * 0.52, seed + 709);
+          const wx = tx + 0.5 + (nx0 - 0.5) * 4.8 + (nx1 - 0.5) * 3.4 + (nx2 - 0.5) * 1.6;
+          const wy = ty + 0.5 + (ny0 - 0.5) * 4.8 + (ny1 - 0.5) * 3.4 + (ny2 - 0.5) * 1.6;
+          const ngx = Math.min(GRID_PLOTS - 1, Math.max(0, Math.floor(wx / PLOT_TILES)));
+          const ngy = Math.min(GRID_PLOTS - 1, Math.max(0, Math.floor(wy / PLOT_TILES)));
+          let picked = this.plotBiomes[ngy]?.[ngx] || baseBiome;
+          // Slight natural pixel dither right along different biome boundaries
+          if (picked !== baseBiome) {
+            const h = hash2D(tx, ty, seed + 787);
+            const dxEdge = Math.abs(wx - Math.round(wx / PLOT_TILES) * PLOT_TILES);
+            const dyEdge = Math.abs(wy - Math.round(wy / PLOT_TILES) * PLOT_TILES);
+            if (Math.min(dxEdge, dyEdge) < 0.85 && h < 0.26) picked = baseBiome;
+          }
+          out[ty * WORLD_TILES + tx] = picked;
+        }
+      }
+      this._visualBiomeGrid = out;
+      this._visualBiomeSig = sig;
+    }
+
+    getVisualBiomeAtTile(tx, ty) {
+      const cx = Math.min(WORLD_TILES - 1, Math.max(0, Math.floor(tx)));
+      const cy = Math.min(WORLD_TILES - 1, Math.max(0, Math.floor(ty)));
+      const sig = `${this.worldSeed || 901}:${this.plotBiomes.map(r => r.map(b => (b || 'p')[0]).join('')).join('')}`;
+      if (!this._visualBiomeGrid || this._visualBiomeSig !== sig) {
+        this._rebuildVisualBiomeGrid();
+      }
+      return this._visualBiomeGrid[cy * WORLD_TILES + cx] || 'pradera';
     }
 
     unlockPlot(gx, gy, isStarter = false) {
@@ -1048,30 +1429,79 @@
       return node;
     }
 
-    getMineralDistanceMultiplier(gx, gy) {
+    getBiomeResourceScaling(gx, gy, explicitBiome = null) {
       const C = CENTER_PLOT || 4;
-      if (gx === C && gy === C) return 1.0;
-      const dx = gx - C;
-      const dy = gy - C;
-      const radialDist = Math.hypot(dx, dy);
-      const manhattanDist = Math.abs(dx) + Math.abs(dy);
-      return Number((1 + radialDist * 0.22 + Math.pow(radialDist, 1.35) * 0.08 + manhattanDist * 0.04).toFixed(3));
+      const biome = explicitBiome || this.plotBiomes?.[gy]?.[gx] || 'pradera';
+      const TIER = {
+        pradera:            { hp: 1.00, drop: 1.00, xp: 1.00 },
+        desierto:           { hp: 1.55, drop: 1.50, xp: 1.35 },
+        montanas_heladas:   { hp: 2.25, drop: 2.00, xp: 1.75 },
+        bosque_oscuro:      { hp: 2.95, drop: 2.55, xp: 2.20 },
+        tierras_volcanicas: { hp: 3.90, drop: 3.25, xp: 2.85 }
+      }[biome] || { hp: 1.00, drop: 1.00, xp: 1.00 };
+
+      if (gx === C && gy === C && biome === 'pradera') {
+        return { hpMult: 1.0, dropMult: 1.0, xpMult: 1.0 };
+      }
+      const radialDist = Math.hypot(gx - C, gy - C);
+      const distBoost = Math.max(0, radialDist - 0.8) * 0.08;
+      const hpMult = Number((TIER.hp * (1 + distBoost)).toFixed(3));
+      const dropMult = Number((TIER.drop * (1 + distBoost * 0.65)).toFixed(3));
+      const xpMult = Number((TIER.xp * (1 + distBoost * 0.7)).toFixed(3));
+      return { hpMult, dropMult, xpMult };
+    }
+
+    getMineralDistanceMultiplier(gx, gy) {
+      return this.getBiomeResourceScaling(gx, gy).hpMult;
+    }
+
+    _scaleNodeDrops(baseDrops, dropMult) {
+      if (!Array.isArray(baseDrops)) return baseDrops;
+      const factor = Math.max(1, dropMult || 1);
+      return baseDrops.map(d => {
+        if (factor <= 1.05) return { ...d };
+        const isRareChance = d.chance !== undefined && d.chance < 0.30;
+        const effective = isRareChance ? (1 + (factor - 1) * 0.35) : factor;
+        const rawMin = d.min || 0;
+        const rawMax = d.max !== undefined ? d.max : rawMin;
+        const newMin = rawMin > 0 ? Math.max(rawMin, Math.round(rawMin * effective)) : 0;
+        let newMax = Math.max(newMin, Math.round(rawMax * effective));
+        if (d.chance === undefined && rawMax > 0 && factor >= 1.4 && newMax <= rawMax) {
+          newMax = rawMax + 1;
+        }
+        const out = { ...d, min: newMin, max: newMax };
+        if (d.chance !== undefined) {
+          out.chance = Number(Math.min(0.96, d.chance * (1 + (factor - 1) * 0.18)).toFixed(3));
+        }
+        return out;
+      });
     }
 
     normalizeMineralNodeHardness() {
       if (!Array.isArray(this.nodes)) return;
       for (const n of this.nodes) {
-        if (!n || n.tool !== 'pico') continue;
+        if (!n || (n.tool !== 'pico' && n.tool !== 'hacha')) continue;
         const plotGx = Math.floor((n.tx || 0) / PLOT_TILES);
         const plotGy = Math.floor((n.ty || 0) / PLOT_TILES);
-        const mult = this.getMineralDistanceMultiplier(plotGx, plotGy);
-        const baseHp = n.baseHp || n.maxHp || n.hp || 16;
-        const targetMaxHp = Math.max(baseHp, Math.round(baseHp * mult));
+        const biome = n.biome || this.plotBiomes?.[plotGy]?.[plotGx] || 'pradera';
+        const { hpMult, dropMult, xpMult } = this.getBiomeResourceScaling(plotGx, plotGy, biome);
+        const baseHp = n.baseHp || n.maxHp || n.hp || 18;
+        const targetMaxHp = Math.max(baseHp, Math.round(baseHp * hpMult));
         const ratio = (n.maxHp && n.maxHp > 0) ? Math.min(1, Math.max(0.05, n.hp / n.maxHp)) : 1;
         n.baseHp = baseHp;
-        n.distanceMult = mult;
+        n.distanceMult = hpMult;
+        n.dropMult = dropMult;
         n.maxHp = targetMaxHp;
         n.hp = Math.max(1, Math.round(targetMaxHp * ratio));
+        if (!n.baseDrops && Array.isArray(n.drops) && !n.dropsScaled) {
+          n.baseDrops = n.drops.map(d => ({ ...d }));
+        }
+        if (Array.isArray(n.baseDrops)) {
+          n.drops = this._scaleNodeDrops(n.baseDrops, dropMult);
+          n.dropsScaled = true;
+        }
+        if (!n.baseXp) n.baseXp = n.xp || 6;
+        n.xp = Math.max(n.baseXp, Math.round(n.baseXp * xpMult));
       }
     }
 
@@ -1138,9 +1568,13 @@
       if (!d) return null;
       const plotGx = Math.floor(tx / PLOT_TILES);
       const plotGy = Math.floor(ty / PLOT_TILES);
-      const isMineral = d.tool === 'pico';
-      const distMult = isMineral ? this.getMineralDistanceMultiplier(plotGx, plotGy) : 1.0;
-      const scaledHp = isMineral ? Math.max(d.hp, Math.round(d.hp * distMult)) : d.hp;
+      const isScaledNode = d.tool === 'pico' || d.tool === 'hacha';
+      const scaling = isScaledNode
+        ? this.getBiomeResourceScaling(plotGx, plotGy, biome)
+        : { hpMult: 1.0, dropMult: 1.0, xpMult: 1.0 };
+      const scaledHp = isScaledNode ? Math.max(d.hp, Math.round(d.hp * scaling.hpMult)) : d.hp;
+      const scaledDrops = isScaledNode ? this._scaleNodeDrops(d.drops, scaling.dropMult) : d.drops;
+      const scaledXp = isScaledNode ? Math.max(d.xp, Math.round(d.xp * scaling.xpMult)) : d.xp;
       const node = {
         id: this.nextNodeId++,
         tx, ty,
@@ -1150,12 +1584,16 @@
         name: (activeNodeNames && activeNodeNames[kind]) || d.name || kind,
         biome,
         baseHp: d.hp,
-        distanceMult: distMult,
+        baseXp: d.xp,
+        distanceMult: scaling.hpMult,
+        dropMult: scaling.dropMult,
         hp: scaledHp,
         maxHp: scaledHp,
         tool: d.tool,
-        drops: d.drops,
-        xp: d.xp,
+        baseDrops: d.drops.map(item => ({ ...item })),
+        drops: scaledDrops,
+        dropsScaled: isScaledNode,
+        xp: scaledXp,
         hitAnim: 0,
         variant: randInt(0, 3)
       };
@@ -1177,20 +1615,28 @@
 
       let tx = -1;
       let ty = -1;
-      for (let attempt = 0; attempt < 6; attempt++) {
+      for (let attempt = 0; attempt < 8; attempt++) {
         const cx = ox + randInt(1, PLOT_TILES - 2);
         const cy = oy + randInt(1, PLOT_TILES - 2);
-        if (isFree(cx, cy)) { tx = cx; ty = cy; break; }
+        if (!isFree(cx, cy)) continue;
+        if (attempt < 6 && this.getVisualBiomeAtTile(cx, cy) !== biome) continue;
+        tx = cx; ty = cy; break;
       }
       if (tx < 0) {
+        const matchedTiles = [];
         const freeTiles = [];
         for (let ly = 1; ly <= PLOT_TILES - 2; ly++) {
           for (let lx = 1; lx <= PLOT_TILES - 2; lx++) {
-            if (isFree(ox + lx, oy + ly)) freeTiles.push([ox + lx, oy + ly]);
+            const fx = ox + lx, fy = oy + ly;
+            if (isFree(fx, fy)) {
+              freeTiles.push([fx, fy]);
+              if (this.getVisualBiomeAtTile(fx, fy) === biome) matchedTiles.push([fx, fy]);
+            }
           }
         }
-        if (freeTiles.length === 0) return false;
-        [tx, ty] = pick(freeTiles);
+        const pickPool = matchedTiles.length > 0 ? matchedTiles : freeTiles;
+        if (pickPool.length === 0) return false;
+        [tx, ty] = pick(pickPool);
       }
 
       // Distance-scaled rarity pools: common trees/rocks near starter plot (4,4), rare gems far away

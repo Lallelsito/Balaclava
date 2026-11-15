@@ -2765,6 +2765,7 @@
       const closingModal = this.activeModal;
       this.hideTooltip();
       if (this._mapCleanup) { this._mapCleanup(); this._mapCleanup = null; }
+      if (this._skillBoardCleanup) { this._skillBoardCleanup(); this._skillBoardCleanup = null; }
       if (this._skillHoldCleanup) { this._skillHoldCleanup(); this._skillHoldCleanup = null; }
       if (this._skillUnlockFxTimer) { clearTimeout(this._skillUnlockFxTimer); this._skillUnlockFxTimer = null; }
       if (this._skillQuakeTimer) { clearTimeout(this._skillQuakeTimer); this._skillQuakeTimer = null; }
@@ -3655,6 +3656,8 @@
     }
 
     renderModal() {
+      if (this._skillBoardCleanup) { this._skillBoardCleanup(); this._skillBoardCleanup = null; }
+      if (this._skillHoldCleanup) { this._skillHoldCleanup(); this._skillHoldCleanup = null; }
       const titleEl = document.getElementById('modal-title');
       const body = document.getElementById('modal-body');
       const headerTools = document.getElementById('modal-header-tools');
@@ -5513,19 +5516,264 @@
       body.appendChild(layout);
     }
 
+    _ensureSkillSpriteStyles() {
+      if (typeof document === 'undefined') return;
+      if (document.getElementById('skill-socket-sprite-css')) return;
+
+      const PALS = {
+        locked: {
+          hi: '#4c5e82', mid: '#2d3952', lo: '#192133',
+          wellTop: '#13192c', wellBot: '#070a14',
+          starDot: 'rgba(148, 163, 184, 0.25)', aura: null
+        },
+        available: {
+          hi: '#7dd3fc', mid: '#0ea5e9', lo: '#0369a1',
+          wellTop: '#153461', wellBot: '#091830',
+          starDot: 'rgba(186, 230, 253, 0.45)', aura: 'rgba(56, 189, 248, 0.44)'
+        },
+        canAfford: {
+          hi: '#6ee7b7', mid: '#10b981', lo: '#047857',
+          wellTop: '#124739', wellBot: '#07221a',
+          starDot: 'rgba(167, 243, 208, 0.52)', aura: 'rgba(52, 211, 153, 0.52)'
+        },
+        unlocked: {
+          hi: '#fef08a', mid: '#f59e0b', lo: '#b45309',
+          wellTop: '#3d2c0c', wellBot: '#1a1204',
+          starDot: 'rgba(254, 240, 138, 0.55)', aura: 'rgba(251, 191, 36, 0.46)'
+        }
+      };
+
+      const parseColor = (col) => {
+        if (!col) return null;
+        if (col[0] === '#') {
+          const hex = col.slice(1);
+          const n = parseInt(hex, 16);
+          return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 255];
+        }
+        const m = col.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)/);
+        if (!m) return [255, 255, 255, 255];
+        return [Math.round(+m[1]), Math.round(+m[2]), Math.round(+m[3]), m[4] !== undefined ? Math.round(+m[4] * 255) : 255];
+      };
+      const putPx = (buf, size, x, y, rgba) => {
+        if (!rgba || x < 0 || y < 0 || x >= size || y >= size) return;
+        const p = (y * size + x) << 2;
+        buf[p] = rgba[0]; buf[p + 1] = rgba[1]; buf[p + 2] = rgba[2]; buf[p + 3] = rgba[3];
+      };
+      const blendPx = (buf, size, x, y, rgba) => {
+        if (!rgba || x < 0 || y < 0 || x >= size || y >= size) return;
+        const p = (y * size + x) << 2;
+        const a = rgba[3] / 255;
+        const dstA = buf[p + 3] / 255;
+        const outA = a + dstA * (1 - a);
+        if (outA <= 0) return;
+        buf[p] = Math.round((rgba[0] * a + buf[p] * dstA * (1 - a)) / outA);
+        buf[p + 1] = Math.round((rgba[1] * a + buf[p + 1] * dstA * (1 - a)) / outA);
+        buf[p + 2] = Math.round((rgba[2] * a + buf[p + 2] * dstA * (1 - a)) / outA);
+        buf[p + 3] = Math.round(outA * 255);
+      };
+
+      const renderPixelSocket = (size, wellR, shapeFn, pal) => {
+        const cvs = document.createElement('canvas');
+        cvs.width = size;
+        cvs.height = size;
+        const ctx = cvs.getContext('2d');
+        const img = ctx.createImageData(size, size);
+        const buf = img.data;
+        const c = (size - 1) / 2;
+        const mask = new Uint8Array(size * size);
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            if (shapeFn(x - c, y - c)) mask[y * size + x] = 1;
+          }
+        }
+        const outline = new Uint8Array(size * size);
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const idx = y * size + x;
+            if (mask[idx]) continue;
+            let touch = false;
+            for (let oy = -1; oy <= 1 && !touch; oy++) {
+              for (let ox = -1; ox <= 1; ox++) {
+                const nx = x + ox, ny = y + oy;
+                if (nx >= 0 && nx < size && ny >= 0 && ny < size && mask[ny * size + nx]) {
+                  touch = true;
+                  break;
+                }
+              }
+            }
+            if (touch) outline[idx] = 1;
+          }
+        }
+        const cShadow = parseColor('rgba(2, 5, 13, 0.85)');
+        const cAura = parseColor(pal.aura);
+        const cContour = parseColor('#040711');
+        const cInner = parseColor('#050814');
+        const cWellTop = parseColor(pal.wellTop);
+        const cWellBot = parseColor(pal.wellBot);
+        const cHi = parseColor(pal.hi);
+        const cMid = parseColor(pal.mid);
+        const cLo = parseColor(pal.lo);
+        const cStarDot = parseColor(pal.starDot);
+
+        const maxR = c || 1;
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const idx = y * size + x;
+            if (outline[idx]) {
+              putPx(buf, size, x, y, cContour);
+              continue;
+            }
+            if (!mask[idx]) {
+              if (x > 0 && y > 0 && outline[(y - 1) * size + (x - 1)]) {
+                putPx(buf, size, x, y, cShadow);
+              } else if (cAura) {
+                const adj = (x > 0 && outline[idx - 1]) || (x + 1 < size && outline[idx + 1]) ||
+                            (y > 0 && outline[idx - size]) || (y + 1 < size && outline[idx + size]);
+                if (adj) putPx(buf, size, x, y, cAura);
+              }
+              continue;
+            }
+            const dx = x - c, dy = y - c;
+            const d = Math.hypot(dx, dy);
+            if (d <= wellR) {
+              putPx(buf, size, x, y, (dy < 0 || d < wellR * 0.58) ? cWellTop : cWellBot);
+            } else if (d <= wellR + 0.95) {
+              putPx(buf, size, x, y, cInner);
+            } else {
+              const shade = (-dx - dy) / (maxR * 1.15);
+              putPx(buf, size, x, y, shade > 0.22 ? cHi : shade > -0.24 ? cMid : cLo);
+            }
+          }
+        }
+        // Subtle pixel starlight sparkles inside socket well
+        blendPx(buf, size, Math.round(c - wellR * 0.42), Math.round(c - wellR * 0.42), cStarDot);
+        blendPx(buf, size, Math.round(c + wellR * 0.38), Math.round(c + wellR * 0.35), cStarDot);
+        ctx.putImageData(img, 0, 0);
+        return cvs.toDataURL();
+      };
+
+      const renderSelectionRing = (size, outerR, starPoints) => {
+        const cvs = document.createElement('canvas');
+        cvs.width = size;
+        cvs.height = size;
+        const ctx = cvs.getContext('2d');
+        const img = ctx.createImageData(size, size);
+        const buf = img.data;
+        const c = (size - 1) / 2;
+        const cWhite = [255, 255, 255, 255];
+        const cGold = parseColor('#fde047');
+        const cGlow = parseColor('rgba(251, 191, 36, 0.55)');
+        for (let y = 0; y < size; y++) {
+          for (let x = 0; x < size; x++) {
+            const dx = x - c, dy = y - c;
+            const ax = Math.abs(dx), ay = Math.abs(dy);
+            const d = Math.hypot(dx, dy);
+            const onCircle = d >= outerR - 0.85 && d <= outerR + 0.35;
+            const onCardinalTick = starPoints && ((ax <= 0.6 && ay >= outerR && ay <= outerR + 2.2) || (ay <= 0.6 && ax >= outerR && ax <= outerR + 2.2));
+            if (onCircle || onCardinalTick) {
+              putPx(buf, size, x, y, d <= outerR - 0.15 ? cWhite : cGold);
+            } else if (d > outerR + 0.35 && d <= outerR + 1.3) {
+              putPx(buf, size, x, y, cGlow);
+            }
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        return cvs.toDataURL();
+      };
+
+      const renderLegendDot = (fillCol) => {
+        const cvs = document.createElement('canvas');
+        cvs.width = 7;
+        cvs.height = 7;
+        const ctx = cvs.getContext('2d');
+        const img = ctx.createImageData(7, 7);
+        const buf = img.data;
+        const cFill = parseColor(fillCol);
+        const cOut = parseColor('#040711');
+        for (let y = 0; y < 7; y++) {
+          for (let x = 0; x < 7; x++) {
+            const d = Math.hypot(x - 3, y - 3);
+            if (d <= 2.35) putPx(buf, 7, x, y, cFill);
+            else if (d <= 3.35) putPx(buf, 7, x, y, cOut);
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+        return cvs.toDataURL();
+      };
+
+      const circleShape = (dx, dy) => Math.hypot(dx, dy) <= 10.6;
+      const keystoneShape = (dx, dy) => {
+        const ax = Math.abs(dx), ay = Math.abs(dy);
+        const d = Math.hypot(dx, dy);
+        return d <= 10.6 || (ax * 2.25 + ay * 0.86 <= 12.2) || (ay * 2.25 + ax * 0.86 <= 12.2) || ((ax + ay) * 0.94 <= 11.4);
+      };
+      const hubShape = (dx, dy) => {
+        const ax = Math.abs(dx), ay = Math.abs(dy);
+        return Math.hypot(dx, dy) <= 22.8 || (ax <= 2.5 && ay <= 24.0) || (ay <= 2.5 && ax <= 24.0);
+      };
+
+      const urls = {};
+      Object.keys(PALS).forEach(k => {
+        urls[`c_${k}`] = renderPixelSocket(26, 7.6, circleShape, PALS[k]);
+        urls[`k_${k}`] = renderPixelSocket(31, 7.8, keystoneShape, PALS[k]);
+      });
+      urls.hub = renderPixelSocket(52, 19.2, hubShape, {
+        hi: '#fef08a', mid: '#f59e0b', lo: '#b45309',
+        wellTop: '#1d2d59', wellBot: '#0b1124',
+        starDot: 'rgba(254, 240, 138, 0.72)', aura: 'rgba(251, 191, 36, 0.5)'
+      });
+      urls.selRing = renderSelectionRing(30, 12.8, false);
+      urls.keystoneSelRing = renderSelectionRing(35, 15.2, true);
+      urls.legAvail = renderLegendDot('#38bdf8');
+      urls.legUnlocked = renderLegendDot('#fbbf24');
+      urls.legLocked = renderLegendDot('#475569');
+
+      const styleEl = document.createElement('style');
+      styleEl.id = 'skill-socket-sprite-css';
+      styleEl.textContent = `
+        #modal-box.skills-cosmic-fullscreen {
+          --skill-sel-ring: url("${urls.selRing}");
+          --skill-keystone-sel-ring: url("${urls.keystoneSelRing}");
+        }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.locked { background-image: url("${urls.c_locked}") !important; }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.available { background-image: url("${urls.c_available}") !important; }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.available.can-afford { background-image: url("${urls.c_canAfford}") !important; }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked { background-image: url("${urls.c_unlocked}") !important; }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone.locked { background-image: url("${urls.k_locked}") !important; }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone.available { background-image: url("${urls.k_available}") !important; }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone.available.can-afford { background-image: url("${urls.k_canAfford}") !important; }
+        #modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone.unlocked { background-image: url("${urls.k_unlocked}") !important; }
+        #modal-box.skills-cosmic-fullscreen .skill-core-hub { background-image: url("${urls.hub}") !important; }
+        #modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-available { background-image: url("${urls.legAvail}"); }
+        #modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-unlocked { background-image: url("${urls.legUnlocked}"); }
+        #modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-locked { background-image: url("${urls.legLocked}"); }
+      `;
+      document.head.appendChild(styleEl);
+    }
+
     _drawSkillPixelSky(canvas, dim) {
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       const pw = canvas.width;
       const ph = canvas.height;
+      const cacheKey = `${pw}x${ph}:${dim.cx}x${dim.cy}`;
+      if (this._cachedSkillSky && this._cachedSkillSkyKey === cacheKey) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(this._cachedSkillSky, 0, 0);
+        return;
+      }
+      const off = document.createElement('canvas');
+      off.width = pw;
+      off.height = ph;
+      const octx = off.getContext('2d');
       const cx = Math.round((dim.cx / dim.width) * pw);
       const cy = Math.round((dim.cy / dim.height) * ph);
-      ctx.imageSmoothingEnabled = false;
+      octx.imageSmoothingEnabled = false;
 
       // Stepped pixel midnight gradient rings (zero smooth gradient blur)
-      ctx.fillStyle = '#040712';
-      ctx.fillRect(0, 0, pw, ph);
+      octx.fillStyle = '#040712';
+      octx.fillRect(0, 0, pw, ph);
       const rings = [
         { r: Math.round(pw * 0.48), col: '#060c1d' },
         { r: Math.round(pw * 0.35), col: '#081128' },
@@ -5533,12 +5781,12 @@
         { r: Math.round(pw * 0.11), col: '#102047' }
       ];
       rings.forEach(rg => {
-        ctx.fillStyle = rg.col;
+        octx.fillStyle = rg.col;
         for (let y = -rg.r; y <= rg.r; y += 2) {
           const span = Math.floor(Math.sqrt(Math.max(0, rg.r * rg.r - y * y)));
           const px = cx - span;
           const py = cy + y;
-          if (py >= 0 && py < ph) ctx.fillRect(px, py, span * 2, 2);
+          if (py >= 0 && py < ph) octx.fillRect(px, py, span * 2, 2);
         }
       });
 
@@ -5546,7 +5794,7 @@
       const branches = Array.isArray(Balaclava.SKILL_BRANCHES) ? Balaclava.SKILL_BRANCHES : [];
       branches.forEach((br, bi) => {
         const ang = typeof br.angle === 'number' ? br.angle : (bi * Math.PI * 2 / Math.max(1, branches.length));
-        ctx.fillStyle = br.color || '#60a5fa';
+        octx.fillStyle = br.color || '#60a5fa';
         for (let step = 34; step <= 215; step += 12) {
           const bx = Math.round(cx + Math.cos(ang) * step);
           const by = Math.round(cy + Math.sin(ang) * step);
@@ -5555,25 +5803,25 @@
               if (((bx + dx + by + dy) & 3) !== 0) continue;
               const d = Math.hypot(dx, dy);
               if (d < 9 && ((dx * 7 + dy * 13 + step) & 3) === 0) {
-                ctx.globalAlpha = 0.08 + (1 - d / 9) * 0.09;
-                ctx.fillRect(bx + dx, by + dy, 2, 2);
+                octx.globalAlpha = 0.08 + (1 - d / 9) * 0.09;
+                octx.fillRect(bx + dx, by + dy, 2, 2);
               }
             }
           }
         }
       });
-      ctx.globalAlpha = 1;
+      octx.globalAlpha = 1;
 
       // Pixel-dotted orbital rings
       [58, 108, 158, 206].forEach((r, idx) => {
-        ctx.fillStyle = idx % 2 === 0 ? 'rgba(96, 165, 250, 0.22)' : 'rgba(148, 163, 184, 0.16)';
+        octx.fillStyle = idx % 2 === 0 ? 'rgba(96, 165, 250, 0.22)' : 'rgba(148, 163, 184, 0.16)';
         const steps = Math.round(r * 1.9);
         for (let i = 0; i < steps; i++) {
           if (i % 3 === 0) continue;
           const a = (i / steps) * Math.PI * 2;
           const rx = Math.round(cx + Math.cos(a) * r);
           const ry = Math.round(cy + Math.sin(a) * r);
-          ctx.fillRect(rx, ry, 1, 1);
+          octx.fillRect(rx, ry, 1, 1);
         }
       });
 
@@ -5588,24 +5836,30 @@
         const sx = Math.floor(rnd() * pw);
         const sy = Math.floor(rnd() * ph);
         const roll = rnd();
-        ctx.fillStyle = starCols[Math.floor(rnd() * starCols.length)];
+        octx.fillStyle = starCols[Math.floor(rnd() * starCols.length)];
         if (roll < 0.72) {
-          ctx.fillRect(sx, sy, 1, 1);
+          octx.fillRect(sx, sy, 1, 1);
         } else if (roll < 0.90) {
-          ctx.fillRect(sx, sy, 2, 2);
+          octx.fillRect(sx, sy, 2, 2);
         } else {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(sx, sy, 1, 1);
-          ctx.fillStyle = roll < 0.96 ? '#93c5fd' : '#fde68a';
-          ctx.fillRect(sx - 1, sy, 1, 1);
-          ctx.fillRect(sx + 1, sy, 1, 1);
-          ctx.fillRect(sx, sy - 1, 1, 1);
-          ctx.fillRect(sx, sy + 1, 1, 1);
+          octx.fillStyle = '#ffffff';
+          octx.fillRect(sx, sy, 1, 1);
+          octx.fillStyle = roll < 0.96 ? '#93c5fd' : '#fde68a';
+          octx.fillRect(sx - 1, sy, 1, 1);
+          octx.fillRect(sx + 1, sy, 1, 1);
+          octx.fillRect(sx, sy - 1, 1, 1);
+          octx.fillRect(sx, sy + 1, 1, 1);
         }
       }
+
+      this._cachedSkillSky = off;
+      this._cachedSkillSkyKey = cacheKey;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(off, 0, 0);
     }
 
     renderSkills(body) {
+      this._ensureSkillSpriteStyles();
       const g = this.game;
       const unlockedCount = g.unlockedSkills.length;
       const allSkills = Object.values(Balaclava.SKILLS);
@@ -5625,6 +5879,15 @@
       this._drawSkillPixelSky(skyCvs, dim);
       board.appendChild(skyCvs);
 
+      // Single GPU-friendly canvas for all orbital rings + constellation lines (replaces 356 SVG vector nodes)
+      const LINE_SCALE = 0.6;
+      const lineCvs = this.el('canvas', {
+        class: 'skill-lines-canvas',
+        width: String(Math.round(dim.width * LINE_SCALE)),
+        height: String(Math.round(dim.height * LINE_SCALE))
+      });
+      board.appendChild(lineCvs);
+
       const viewW = Math.max(760, (typeof window !== 'undefined' ? window.innerWidth : 1280) - 430);
       const viewH = Math.max(520, (typeof window !== 'undefined' ? window.innerHeight : 800) - 140);
       const fitZoom = Balaclava.Utils.clamp(
@@ -5639,20 +5902,32 @@
         this.skillPanY = viewH / 2 - dim.cy * this.skillZoom;
       }
 
-      const zoomLabel = this.el('span', { class: 'skill-zoom-readout' }, `${Math.round(this.skillZoom * 100)}%`);
-      const applyTransform = () => {
-        board.style.transform = `translate(${this.skillPanX.toFixed(1)}px, ${this.skillPanY.toFixed(1)}px) scale(${this.skillZoom.toFixed(3)})`;
-        zoomLabel.textContent = `${Math.round(this.skillZoom * 100)}%`;
+      let lastZoomText = `${Math.round(this.skillZoom * 100)}%`;
+      const zoomLabel = this.el('span', { class: 'skill-zoom-readout' }, lastZoomText);
+      let transformRaf = null;
+      const applyTransformNow = () => {
+        transformRaf = null;
+        board.style.transform = `translate3d(${this.skillPanX.toFixed(1)}px, ${this.skillPanY.toFixed(1)}px, 0) scale(${this.skillZoom.toFixed(3)})`;
+        const nextZoomText = `${Math.round(this.skillZoom * 100)}%`;
+        if (nextZoomText !== lastZoomText) {
+          lastZoomText = nextZoomText;
+          zoomLabel.textContent = nextZoomText;
+        }
+      };
+      const scheduleTransform = () => {
+        if (transformRaf !== null) return;
+        transformRaf = requestAnimationFrame(applyTransformNow);
       };
 
-      const setZoomAround = (nextZoom, anchorX = wrap.clientWidth / 2 || viewW / 2, anchorY = wrap.clientHeight / 2 || viewH / 2) => {
+      const setZoomAround = (nextZoom, anchorX = wrap.clientWidth / 2 || viewW / 2, anchorY = wrap.clientHeight / 2 || viewH / 2, immediate = false) => {
         const clamped = Balaclava.Utils.clamp(nextZoom, 0.25, 1.85);
         const worldX = (anchorX - this.skillPanX) / this.skillZoom;
         const worldY = (anchorY - this.skillPanY) / this.skillZoom;
         this.skillZoom = clamped;
         this.skillPanX = anchorX - worldX * clamped;
         this.skillPanY = anchorY - worldY * clamped;
-        applyTransform();
+        if (immediate) applyTransformNow();
+        else scheduleTransform();
       };
 
       const focusPoint = (wx, wy, z = 1.0) => {
@@ -5661,7 +5936,7 @@
         this.skillZoom = Balaclava.Utils.clamp(z, 0.25, 1.85);
         this.skillPanX = vw / 2 - wx * this.skillZoom;
         this.skillPanY = vh / 2 - wy * this.skillZoom;
-        applyTransform();
+        applyTransformNow();
       };
 
       if (this._skillHoldCleanup) { this._skillHoldCleanup(); this._skillHoldCleanup = null; }
@@ -5673,14 +5948,14 @@
             class: 'btn btn-sm',
             'data-tip-text': tr('skills.zoomOutTip'),
             'aria-label': tr('skills.zoomOutTip'),
-            onclick: () => setZoomAround(this.skillZoom - 0.16)
+            onclick: () => setZoomAround(this.skillZoom - 0.16, undefined, undefined, true)
           }, [this.uiIcon('iconZoomOut', 18)]),
           zoomLabel,
           this.el('button', {
             class: 'btn btn-sm',
             'data-tip-text': tr('skills.zoomInTip'),
             'aria-label': tr('skills.zoomInTip'),
-            onclick: () => setZoomAround(this.skillZoom + 0.16)
+            onclick: () => setZoomAround(this.skillZoom + 0.16, undefined, undefined, true)
           }, [this.uiIcon('iconZoomIn', 18)]),
           this.el('button', { class: 'btn btn-gold btn-sm', onclick: () => focusPoint(dim.cx, dim.cy, fitZoom) }, tr('skills.resetZoom')),
           this.el('button', { class: 'btn btn-primary btn-sm', onclick: () => this.openModal('grimorio') }, tr('skills.grimoireBtn')),
@@ -5709,7 +5984,71 @@
         posById[sk.id] = { x: sk.x, y: sk.y, br };
       });
 
-      const lineElsBySkillId = {};
+      const nodeBtnById = {};
+
+      const drawSkillLines = () => {
+        const lctx = lineCvs.getContext('2d');
+        if (!lctx) return;
+        lctx.setTransform(1, 0, 0, 1, 0, 0);
+        lctx.clearRect(0, 0, lineCvs.width, lineCvs.height);
+        lctx.setTransform(LINE_SCALE, 0, 0, LINE_SCALE, 0, 0);
+        lctx.lineCap = 'round';
+
+        // Decorative dashed cosmic rings
+        lctx.strokeStyle = 'rgba(255, 226, 150, 0.08)';
+        lctx.lineWidth = 1.5;
+        lctx.setLineDash([6, 10]);
+        [155, 295, 435, 580, 725, 865].forEach(rad => {
+          lctx.beginPath();
+          lctx.arc(dim.cx, dim.cy, rad, 0, Math.PI * 2);
+          lctx.stroke();
+        });
+
+        const unlockedSet = new Set(g.unlockedSkills || []);
+        const lockedSegs = [];
+        const availGlowSegs = [];
+        const availCoreSegs = [];
+        const ownedGlowSegs = [];
+        const ownedCoreSegs = [];
+
+        allSkills.forEach(sk => {
+          const p2 = posById[sk.id];
+          if (!p2) return;
+          const p1 = sk.req && posById[sk.req] ? posById[sk.req] : { x: dim.cx, y: dim.cy };
+          if (unlockedSet.has(sk.id)) {
+            ownedGlowSegs.push([p1.x, p1.y, p2.x, p2.y]);
+            ownedCoreSegs.push([p1.x, p1.y, p2.x, p2.y]);
+          } else if (!sk.req || unlockedSet.has(sk.req)) {
+            availGlowSegs.push([p1.x, p1.y, p2.x, p2.y]);
+            availCoreSegs.push([p1.x, p1.y, p2.x, p2.y]);
+          } else {
+            lockedSegs.push([p1.x, p1.y, p2.x, p2.y]);
+          }
+        });
+
+        const strokeBatch = (segs, col, w, alpha, dash) => {
+          if (!segs.length) return;
+          lctx.globalAlpha = alpha;
+          lctx.strokeStyle = col;
+          lctx.lineWidth = w;
+          lctx.setLineDash(dash);
+          lctx.beginPath();
+          for (let i = 0; i < segs.length; i++) {
+            const s = segs[i];
+            lctx.moveTo(s[0], s[1]);
+            lctx.lineTo(s[2], s[3]);
+          }
+          lctx.stroke();
+        };
+
+        strokeBatch(lockedSegs, '#475569', 1.8, 0.28, [4, 7]);
+        strokeBatch(availGlowSegs, '#0ea5e9', 6, 0.34, []);
+        strokeBatch(availCoreSegs, '#7dd3fc', 2.8, 0.92, [7, 4]);
+        strokeBatch(ownedGlowSegs, '#f59e0b', 8, 0.38, []);
+        strokeBatch(ownedCoreSegs, '#fde68a', 3.2, 0.96, []);
+        lctx.globalAlpha = 1;
+        lctx.setLineDash([]);
+      };
 
       const spawnUnlockBurst = (nodeBtn, fxColor) => {
         nodeBtn.querySelectorAll('.skill-fx-burst').forEach(el => {
@@ -5768,32 +6107,17 @@
         }, 820);
       };
 
-      const syncUnlockedBoardNodes = (skillId, fxColor) => {
+      const syncUnlockedBoardNodes = (skillId) => {
         pointsPill.textContent = tr('skills.pointsPill', {
           sp: g.player.skillPoints,
           cur: g.unlockedSkills.length,
           tot: totalCount
         });
 
-        const ownedLines = lineElsBySkillId[skillId] || [];
-        if (ownedLines[0]) {
-          ownedLines[0].setAttribute('stroke', '#f59e0b');
-          ownedLines[0].setAttribute('stroke-width', '8');
-          ownedLines[0].setAttribute('stroke-opacity', '0.38');
-          ownedLines[0].removeAttribute('stroke-dasharray');
-        }
-        if (ownedLines[1]) {
-          ownedLines[1].setAttribute('stroke', '#fde68a');
-          ownedLines[1].setAttribute('stroke-width', '3.2');
-          ownedLines[1].setAttribute('stroke-opacity', '0.96');
-          ownedLines[1].removeAttribute('stroke-dasharray');
-        }
-
-        const unlockedBtn = board.querySelector(`[data-skill-node="${skillId}"]`);
+        const unlockedBtn = nodeBtnById[skillId];
         if (unlockedBtn) {
           unlockedBtn.classList.remove('available', 'can-afford', 'locked');
           unlockedBtn.classList.add('unlocked');
-          unlockedBtn.style.borderColor = '';
           const badge = unlockedBtn.querySelector('.tree-node-tier');
           if (badge) {
             badge.innerHTML = '';
@@ -5803,36 +6127,212 @@
         }
 
         const spNow = g.player.skillPoints || 0;
+        const unlockedSet = new Set(g.unlockedSkills || []);
         allSkills.forEach(ch => {
-          if (ch.req !== skillId || g.unlockedSkills.includes(ch.id)) return;
-          const childBtn = board.querySelector(`[data-skill-node="${ch.id}"]`);
-          if (childBtn) {
-            childBtn.classList.remove('locked');
-            childBtn.classList.add('available');
-            childBtn.classList.toggle('can-afford', spNow >= (ch.cost || 1));
-          }
-          const chLines = lineElsBySkillId[ch.id] || [];
-          if (chLines[0]) {
-            chLines[0].setAttribute('stroke', '#0ea5e9');
-            chLines[0].setAttribute('stroke-width', '6');
-            chLines[0].setAttribute('stroke-opacity', '0.34');
-            chLines[0].removeAttribute('stroke-dasharray');
-          }
-          if (chLines[1]) {
-            chLines[1].setAttribute('stroke', '#7dd3fc');
-            chLines[1].setAttribute('stroke-width', '2.8');
-            chLines[1].setAttribute('stroke-dasharray', '7 4');
-            chLines[1].setAttribute('stroke-opacity', '0.92');
+          if (unlockedSet.has(ch.id)) return;
+          if (ch.req === skillId) {
+            const childBtn = nodeBtnById[ch.id];
+            if (childBtn) {
+              childBtn.classList.remove('locked');
+              childBtn.classList.add('available');
+              childBtn.classList.toggle('can-afford', spNow >= (ch.cost || 1));
+            }
+          } else if (!ch.req || unlockedSet.has(ch.req)) {
+            const oBtn = nodeBtnById[ch.id];
+            if (oBtn) oBtn.classList.toggle('can-afford', spNow >= (ch.cost || 1));
           }
         });
-        // Refresh can-afford class across already-available nodes
-        allSkills.forEach(other => {
-          if (g.unlockedSkills.includes(other.id)) return;
-          if (!other.req || g.unlockedSkills.includes(other.req)) {
-            const oBtn = board.querySelector(`[data-skill-node="${other.id}"]`);
-            if (oBtn) oBtn.classList.toggle('can-afford', spNow >= (other.cost || 1));
+        drawSkillLines();
+      };
+
+      // Right Parchment Inspector (updated in-place without rebuilding all 345 nodes)
+      const inspector = this.el('div', { class: 'parchment-box skill-inspector', style: 'display:flex;flex-direction:column;gap:8px;' });
+
+      const updateInspector = () => {
+        if (this._skillHoldCleanup) { this._skillHoldCleanup(); this._skillHoldCleanup = null; }
+        inspector.innerHTML = '';
+
+        const selSk = Balaclava.SKILLS[this.selectedSkillId] || allSkills[0];
+        const br = Balaclava.SKILL_BRANCHES.find(b => b.id === selSk.branch) || Balaclava.SKILL_BRANCHES[0];
+        const owned = g.unlockedSkills.includes(selSk.id);
+        const reqMet = !selSk.req || g.unlockedSkills.includes(selSk.req);
+        const canBuy = !owned && reqMet && g.player.skillPoints >= selSk.cost;
+
+        const unlocksBox = this.el('div', { style: 'margin-top:8px;' });
+        if (selSk.unlocksBuildings && selSk.unlocksBuildings.length) {
+          unlocksBox.appendChild(this.el('strong', { style: 'font-size:14px;color:#bae6fd;display:block;margin-bottom:5px;' }, tr('skills.unlocksTitle')));
+          selSk.unlocksBuildings.forEach(bid => {
+            const bd = Balaclava.BUILDINGS[bid];
+            if (!bd) return;
+            unlocksBox.appendChild(this.el('div', {
+              style: 'display:flex;align-items:center;gap:8px;background:rgba(30,50,95,0.45);border:1px solid rgba(128,216,255,0.22);padding:5px 7px;border-radius:6px;margin-bottom:5px;'
+            }, [
+              this.makeBuildingThumb(bd, 28),
+              this.el('div', {}, [
+                this.el('div', { style: 'font-weight:700;font-size:14px;color:#f8fafc;' }, bd.name),
+                this.el('div', { style: 'font-size:14px;color:#b8dcff;' }, this._catLabel(bd.category))
+              ])
+            ]));
+          });
+        } else {
+          unlocksBox.appendChild(this.el('div', { style: 'font-size:14px;line-height:1.48;color:#b8dcff;' }, tr('skills.passiveDesc')));
+        }
+
+        const reqText = !selSk.req ? tr('skills.rootReq')
+          : tr('skills.reqLine', {
+            name: Balaclava.SKILLS[selSk.req] ? Balaclava.SKILLS[selSk.req].name : selSk.req,
+            state: g.unlockedSkills.includes(selSk.req) ? tr('skills.reqDone') : tr('skills.reqPending')
+          });
+
+        inspector.appendChild(this.el('div', { class: 'card-head' }, [
+          this.skillIcon(selSk.id, 44),
+          this.el('div', {}, [
+            this.el('strong', { style: 'font-size:17px;color:#ffffff;' }, selSk.name),
+            this.el('div', { style: `font-size:14px;font-weight:800;color:${br.color || '#fde047'}` },
+              `${br.fullName || br.name} · ${tr('common.level')} ${selSk.tier}`)
+          ])
+        ]));
+        inspector.appendChild(this.el('div', { style: 'font-size:15px;line-height:1.48;font-weight:600;color:#eef4fc;' }, selSk.desc));
+        inspector.appendChild(this.el('div', { style: 'font-size:14px;line-height:1.48;color:#b8dcff;' }, reqText));
+        inspector.appendChild(this.el('div', { style: 'font-size:14px;line-height:1.45;color:#cbd5e1;' }, tr('skills.dragHint')));
+        inspector.appendChild(unlocksBox);
+
+        if (owned) {
+          inspector.appendChild(this.el('div', { style: 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(128,216,255,0.25);' }, [
+            this.el('div', { style: 'color:#86efac;font-weight:800;font-size:15px;text-align:center;padding:8px;' }, tr('skills.activated'))
+          ]));
+          return;
+        }
+        if (!reqMet || !canBuy) {
+          inspector.appendChild(this.el('div', { style: 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(128,216,255,0.25);' }, [
+            this.el('button', {
+              class: 'btn btn-stone',
+              style: 'width:100%;',
+              disabled: 'disabled'
+            }, reqMet ? tr('skills.needPoints', { cur: g.player.skillPoints, req: selSk.cost }) : tr('skills.needPrev'))
+          ]));
+          return;
+        }
+
+        // Hold-to-learn button (holds for 2.3 seconds with live progress fill, channeling aura, tone & particle flow)
+        const isEnSk = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+        const holdHintText = isEnSk ? '(Hold)' : '(Mantener)';
+        const fillBar = this.el('div', { class: 'btn-skill-hold-fill' });
+        const baseLabel = tr('skills.activateCost', { cost: selSk.cost, unit: selSk.cost === 1 ? tr('skills.pointOne') : tr('skills.pointMany') });
+        const textSpan = this.el('span', { class: 'btn-skill-hold-text' }, [
+          this.el('span', {}, baseLabel),
+          this.el('span', { style: 'font-size:13px;opacity:0.85;font-weight:normal;' }, holdHintText)
+        ]);
+
+        const holdBtn = this.el('div', {
+          class: 'btn-skill-hold-activate',
+          role: 'button',
+          tabindex: '0'
+        }, [fillBar, textSpan]);
+
+        let holdRaf = null;
+        let holdStartTime = 0;
+        const HOLD_DURATION = 2300;
+        let isHolding = false;
+
+        const startHold = (e) => {
+          if (e.button !== 0 && e.type !== 'touchstart' && e.pointerType === 'mouse' && e.button !== 0) return;
+          if (isHolding) return;
+          isHolding = true;
+          holdStartTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+          holdBtn.classList.add('channeling');
+
+          const targetNode = nodeBtnById[selSk.id];
+          if (targetNode) targetNode.classList.add('skill-node-channeling');
+
+          if (Balaclava.Audio) {
+            Balaclava.Audio.tone(220, 360, 0.2, 'triangle', 0.22);
           }
-        });
+
+          let nextSparkTime = 0;
+          let lastPctStep = 0;
+
+          const onFrame = (now) => {
+            if (!isHolding) return;
+            if (this.activeModal !== 'skills') {
+              stopHold(false);
+              return;
+            }
+            const elapsed = now - holdStartTime;
+            const progress = Math.min(1, elapsed / HOLD_DURATION);
+            fillBar.style.width = `${(progress * 100).toFixed(1)}%`;
+
+            const pctInt = Math.floor(progress * 100);
+            textSpan.innerHTML = `<span>${isEnSk ? 'Channeling...' : 'Canalizando...'}</span> <span style="color:#6ee7b7;font-weight:900;">${pctInt}%</span>`;
+
+            if (targetNode && now > nextSparkTime) {
+              nextSparkTime = now + 130;
+              const spark = document.createElement('div');
+              spark.className = 'skill-channel-spark';
+              const sAngle = Math.random() * Math.PI * 2;
+              const sDist = 34 + Math.random() * 22;
+              spark.style.setProperty('--ox', `${(Math.cos(sAngle) * sDist).toFixed(1)}px`);
+              spark.style.setProperty('--oy', `${(Math.sin(sAngle) * sDist).toFixed(1)}px`);
+              targetNode.appendChild(spark);
+              setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark); }, 650);
+            }
+
+            if (pctInt >= lastPctStep + 20 && Balaclava.Audio) {
+              lastPctStep = pctInt;
+              const freq = 260 + (pctInt * 5);
+              Balaclava.Audio.tone(freq, freq + 40, 0.08, 'sine', 0.18);
+            }
+
+            if (progress >= 1) {
+              stopHold(false);
+              unlockAndAdvance(selSk.id);
+              return;
+            }
+
+            holdRaf = requestAnimationFrame(onFrame);
+          };
+
+          holdRaf = requestAnimationFrame(onFrame);
+        };
+
+        const stopHold = (cancelled = true) => {
+          if (!isHolding) return;
+          isHolding = false;
+          if (holdRaf) {
+            cancelAnimationFrame(holdRaf);
+            holdRaf = null;
+          }
+          holdBtn.classList.remove('channeling');
+          fillBar.style.width = '0%';
+          textSpan.innerHTML = `<span>${baseLabel}</span> <span style="font-size:13px;opacity:0.85;font-weight:normal;">${holdHintText}</span>`;
+
+          const targetNode = nodeBtnById[selSk.id];
+          if (targetNode) targetNode.classList.remove('skill-node-channeling');
+
+          if (cancelled && Balaclava.Audio) {
+            Balaclava.Audio.play('cancel');
+          }
+        };
+        this._skillHoldCleanup = () => stopHold(false);
+
+        holdBtn.addEventListener('pointerdown', startHold);
+        holdBtn.addEventListener('pointerup', () => stopHold(true));
+        holdBtn.addEventListener('pointerleave', () => stopHold(true));
+        holdBtn.addEventListener('pointercancel', () => stopHold(true));
+        holdBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        inspector.appendChild(this.el('div', { style: 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(128,216,255,0.25);' }, [holdBtn]));
+      };
+
+      const selectSkillNode = (skId) => {
+        const prevId = this.selectedSkillId;
+        if (prevId === skId) return;
+        const prevBtn = nodeBtnById[prevId];
+        if (prevBtn) prevBtn.classList.remove('selected-node');
+        this.selectedSkillId = skId;
+        const nextBtn = nodeBtnById[skId];
+        if (nextBtn) nextBtn.classList.add('selected-node');
+        updateInspector();
       };
 
       const unlockAndAdvance = (skillId) => {
@@ -5844,7 +6344,7 @@
         if (fxPos) focusPoint(fxPos.x, fxPos.y, Math.max(0.95, this.skillZoom));
 
         // Update node & child nodes immediately so consecutive unlocks stay responsive during animation
-        syncUnlockedBoardNodes(skillId, fxColor);
+        syncUnlockedBoardNodes(skillId);
 
         // Crisp micro-impact shake without overlapping stale timers
         if (this._skillQuakeTimer) {
@@ -5866,7 +6366,6 @@
           workspace.classList.remove('cosmic-quake-active');
         }, 300);
 
-        // Sound effects: levelup + cosmic skill sound + deep seismic thud + celestial chord
         if (Balaclava.Audio) {
           Balaclava.Audio.play('levelup');
           Balaclava.Audio.play('unlock_skill');
@@ -5875,11 +6374,9 @@
           Balaclava.Audio.tone(659.25, 1318.5, 0.42, 'sine', 0.25, 0.1);
         }
 
-        // Staged pixel burst on the unlocked node
-        const nodeBtn = board.querySelector(`[data-skill-node="${skillId}"]`);
+        const nodeBtn = nodeBtnById[skillId];
         if (nodeBtn) spawnUnlockBurst(nodeBtn, fxColor);
 
-        // Replace any previous floating banner cleanly on rapid consecutive unlocks
         workspace.querySelectorAll('.skill-unlock-celebration').forEach(el => {
           if (el.parentNode) el.parentNode.removeChild(el);
         });
@@ -5891,72 +6388,22 @@
         `;
         workspace.appendChild(banner);
 
-        // Keep the newly unlocked skill selected instead of jumping away to another skill
+        // Keep the newly unlocked skill selected and refresh inspector in-place (zero board teardown)
+        const prevBtn = nodeBtnById[this.selectedSkillId];
+        if (prevBtn && this.selectedSkillId !== skillId) prevBtn.classList.remove('selected-node');
         this.selectedSkillId = skillId;
+        if (nodeBtn) nodeBtn.classList.add('selected-node');
+        updateInspector();
 
         if (this._skillUnlockFxTimer) clearTimeout(this._skillUnlockFxTimer);
         this._skillUnlockFxTimer = setTimeout(() => {
           this._skillUnlockFxTimer = null;
           if (this.activeModal !== 'skills') return;
-          if (fxPos) {
-            const nextPos = fxPos;
-            if (nextPos) focusPoint(nextPos.x, nextPos.y, Math.max(0.95, this.skillZoom));
-          }
-          this.renderModal();
+          if (fxPos) focusPoint(fxPos.x, fxPos.y, Math.max(0.95, this.skillZoom));
         }, 900);
       };
 
-      // Decorative cosmic rings + glowing constellation lines
-      const svgNS = 'http://www.w3.org/2000/svg';
-      const svg = document.createElementNS(svgNS, 'svg');
-      svg.setAttribute('class', 'skill-svg-lines');
-      svg.setAttribute('viewBox', `0 0 ${dim.width} ${dim.height}`);
-
-      [155, 295, 435, 580, 725, 865].forEach(rad => {
-        const ring = document.createElementNS(svgNS, 'circle');
-        ring.setAttribute('cx', String(dim.cx));
-        ring.setAttribute('cy', String(dim.cy));
-        ring.setAttribute('r', String(rad));
-        ring.setAttribute('fill', 'none');
-        ring.setAttribute('stroke', 'rgba(255, 226, 150, 0.08)');
-        ring.setAttribute('stroke-width', '1.5');
-        ring.setAttribute('stroke-dasharray', '6 10');
-        svg.appendChild(ring);
-      });
-
-      const drawLine = (skillId, x1, y1, x2, y2, stroke, width, dash = '', opacity = '1') => {
-        const ln = document.createElementNS(svgNS, 'line');
-        ln.setAttribute('x1', x1.toFixed(1));
-        ln.setAttribute('y1', y1.toFixed(1));
-        ln.setAttribute('x2', x2.toFixed(1));
-        ln.setAttribute('y2', y2.toFixed(1));
-        ln.setAttribute('stroke', stroke);
-        ln.setAttribute('stroke-width', String(width));
-        ln.setAttribute('stroke-opacity', opacity);
-        ln.setAttribute('stroke-linecap', 'round');
-        if (dash) ln.setAttribute('stroke-dasharray', dash);
-        svg.appendChild(ln);
-        if (!lineElsBySkillId[skillId]) lineElsBySkillId[skillId] = [];
-        lineElsBySkillId[skillId].push(ln);
-      };
-
-      allSkills.forEach(sk => {
-        const p2 = posById[sk.id];
-        if (!p2) return;
-        const p1 = sk.req && posById[sk.req] ? posById[sk.req] : { x: dim.cx, y: dim.cy };
-        const owned = g.unlockedSkills.includes(sk.id);
-        const reqMet = !sk.req || g.unlockedSkills.includes(sk.req);
-        if (owned) {
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#f59e0b', 8, '', '0.38');
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#fde68a', 3.2, '', '0.96');
-        } else if (reqMet) {
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#0ea5e9', 6, '', '0.34');
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#7dd3fc', 2.8, '7 4', '0.92');
-        } else {
-          drawLine(sk.id, p1.x, p1.y, p2.x, p2.y, '#475569', 1.8, '4 7', '0.28');
-        }
-      });
-      board.appendChild(svg);
+      drawSkillLines();
 
       // Center Core Emblem
       const hub = this.el('div', {
@@ -5969,21 +6416,23 @@
       board.appendChild(hub);
 
       // Constellation labels positioned outside the outer T8 orbital ring so no star overlaps
+      const metaFrag = document.createDocumentFragment();
       Balaclava.SKILL_BRANCHES.forEach(br => {
         const lx = dim.cx + Math.cos(br.angle) * 1065;
         const ly = dim.cy + Math.sin(br.angle) * 1015;
-        board.appendChild(this.el('div', {
+        metaFrag.appendChild(this.el('div', {
           class: 'skill-branch-tag',
           style: `left:${lx.toFixed(1)}px;top:${ly.toFixed(1)}px;color:${br.color};`
         }, br.fullName || br.name));
       });
+      board.appendChild(metaFrag);
 
-      // Drag-to-Pan & Mouse-Wheel Zoom
+      // Drag-to-Pan & Mouse-Wheel Zoom (rAF-coalesced + zero hover hit-testing while dragging)
       let dragging = false;
       let dragMoved = false;
       let startX = 0, startY = 0, origPanX = 0, origPanY = 0;
 
-      wrap.addEventListener('pointerdown', (e) => {
+      const onPointerDown = (e) => {
         if (e.button !== 0) return;
         dragging = true;
         dragMoved = false;
@@ -5991,37 +6440,55 @@
         startY = e.clientY;
         origPanX = this.skillPanX;
         origPanY = this.skillPanY;
-        wrap.classList.add('dragging');
-      });
-      wrap.addEventListener('pointermove', (e) => {
+      };
+      const onPointerMove = (e) => {
         if (!dragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        if (Math.hypot(dx, dy) > 5) dragMoved = true;
+        if (!dragMoved && Math.hypot(dx, dy) > 4) {
+          dragMoved = true;
+          wrap.classList.add('dragging');
+        }
         this.skillPanX = origPanX + dx;
         this.skillPanY = origPanY + dy;
-        applyTransform();
-      });
+        scheduleTransform();
+      };
       const endDrag = () => {
+        if (!dragging) return;
         dragging = false;
         wrap.classList.remove('dragging');
       };
-      wrap.addEventListener('pointerup', endDrag);
-      wrap.addEventListener('pointerleave', endDrag);
-      wrap.addEventListener('wheel', (e) => {
+      const onWheel = (e) => {
         e.preventDefault();
         const rect = wrap.getBoundingClientRect();
         const factor = e.deltaY < 0 ? 1.14 : 0.88;
         setZoomAround(this.skillZoom * factor, e.clientX - rect.left, e.clientY - rect.top);
-      }, { passive: false });
+      };
 
-      // All 150 Constellation Star Nodes
+      wrap.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', endDrag);
+      window.addEventListener('pointercancel', endDrag);
+      window.addEventListener('blur', endDrag);
+      wrap.addEventListener('wheel', onWheel, { passive: false });
+
+      this._skillBoardCleanup = () => {
+        if (transformRaf !== null) { cancelAnimationFrame(transformRaf); transformRaf = null; }
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', endDrag);
+        window.removeEventListener('pointercancel', endDrag);
+        window.removeEventListener('blur', endDrag);
+      };
+
+      // All Constellation Star Nodes appended in a single fragment
       const curSp = g.player.skillPoints || 0;
+      const unlockedSet = new Set(g.unlockedSkills || []);
+      const nodeFrag = document.createDocumentFragment();
       allSkills.forEach(sk => {
         const pos = posById[sk.id];
         if (!pos) return;
-        const owned = g.unlockedSkills.includes(sk.id);
-        const reqMet = !sk.req || g.unlockedSkills.includes(sk.req);
+        const owned = unlockedSet.has(sk.id);
+        const reqMet = !sk.req || unlockedSet.has(sk.req);
         const avail = !owned && reqMet;
         const canAfford = avail && curSp >= (sk.cost || 1);
         const isSel = this.selectedSkillId === sk.id;
@@ -6036,21 +6503,22 @@
           style: `left:${pos.x.toFixed(1)}px;top:${pos.y.toFixed(1)}px;`,
           title: `${sk.name} — ${sk.desc}`,
           onclick: () => {
-            if (dragMoved) return;
-            this.selectedSkillId = sk.id;
-            this.renderModal();
+            if (dragMoved) { dragMoved = false; return; }
+            selectSkillNode(sk.id);
           },
           ondblclick: () => {
-            if (!owned) unlockAndAdvance(sk.id);
+            if (!unlockedSet.has(sk.id)) unlockAndAdvance(sk.id);
           }
         }, [
           this.skillIcon(sk.id, sk.keystone ? 28 : 24),
           this.el('span', { class: 'tree-node-tier' }, owned ? this.uiIcon('iconCheck', 13) : `T${sk.tier}`)
         ]);
-        board.appendChild(btn);
+        nodeBtnById[sk.id] = btn;
+        nodeFrag.appendChild(btn);
       });
+      board.appendChild(nodeFrag);
 
-      applyTransform();
+      applyTransformNow();
       wrap.appendChild(board);
       wrap.appendChild(this.el('div', { class: 'skill-tree-legend' }, [
         this.el('span', { class: 'skill-legend-item' }, [
@@ -6067,182 +6535,7 @@
         ])
       ]));
       workspace.appendChild(wrap);
-
-      // Right Parchment Inspector
-      const selSk = Balaclava.SKILLS[this.selectedSkillId] || allSkills[0];
-      const br = Balaclava.SKILL_BRANCHES.find(b => b.id === selSk.branch) || Balaclava.SKILL_BRANCHES[0];
-      const owned = g.unlockedSkills.includes(selSk.id);
-      const reqMet = !selSk.req || g.unlockedSkills.includes(selSk.req);
-      const canBuy = !owned && reqMet && g.player.skillPoints >= selSk.cost;
-
-      const unlocksBox = this.el('div', { style: 'margin-top:8px;' });
-      if (selSk.unlocksBuildings && selSk.unlocksBuildings.length) {
-        unlocksBox.appendChild(this.el('strong', { style: 'font-size:14px;color:#bae6fd;display:block;margin-bottom:5px;' }, tr('skills.unlocksTitle')));
-        selSk.unlocksBuildings.forEach(bid => {
-          const bd = Balaclava.BUILDINGS[bid];
-          if (!bd) return;
-          unlocksBox.appendChild(this.el('div', {
-            style: 'display:flex;align-items:center;gap:8px;background:rgba(30,50,95,0.45);border:1px solid rgba(128,216,255,0.22);padding:5px 7px;border-radius:6px;margin-bottom:5px;'
-          }, [
-            this.makeBuildingThumb(bd, 28),
-            this.el('div', {}, [
-              this.el('div', { style: 'font-weight:700;font-size:14px;color:#f8fafc;' }, bd.name),
-              this.el('div', { style: 'font-size:14px;color:#b8dcff;' }, this._catLabel(bd.category))
-            ])
-          ]));
-        });
-      } else {
-        unlocksBox.appendChild(this.el('div', { style: 'font-size:14px;line-height:1.48;color:#b8dcff;' }, tr('skills.passiveDesc')));
-      }
-
-      const reqText = !selSk.req ? tr('skills.rootReq')
-        : tr('skills.reqLine', {
-          name: Balaclava.SKILLS[selSk.req] ? Balaclava.SKILLS[selSk.req].name : selSk.req,
-          state: g.unlockedSkills.includes(selSk.req) ? tr('skills.reqDone') : tr('skills.reqPending')
-        });
-
-      const inspector = this.el('div', { class: 'parchment-box skill-inspector', style: 'display:flex;flex-direction:column;gap:8px;' }, [
-        this.el('div', { class: 'card-head' }, [
-          this.skillIcon(selSk.id, 44),
-          this.el('div', {}, [
-            this.el('strong', { style: 'font-size:17px;color:#ffffff;' }, selSk.name),
-            this.el('div', { style: `font-size:14px;font-weight:800;color:${br.color || '#fde047'}` },
-              `${br.fullName || br.name} · ${tr('common.level')} ${selSk.tier}`)
-          ])
-        ]),
-        this.el('div', { style: 'font-size:15px;line-height:1.48;font-weight:600;color:#eef4fc;' }, selSk.desc),
-        this.el('div', { style: 'font-size:14px;line-height:1.48;color:#b8dcff;' }, reqText),
-        this.el('div', { style: 'font-size:14px;line-height:1.45;color:#cbd5e1;' }, tr('skills.dragHint')),
-        unlocksBox,
-        (() => {
-          if (owned) {
-            return this.el('div', { style: 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(128,216,255,0.25);' }, [
-              this.el('div', { style: 'color:#86efac;font-weight:800;font-size:15px;text-align:center;padding:8px;' }, tr('skills.activated'))
-            ]);
-          }
-          if (!reqMet || !canBuy) {
-            return this.el('div', { style: 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(128,216,255,0.25);' }, [
-              this.el('button', {
-                class: 'btn btn-stone',
-                style: 'width:100%;',
-                disabled: 'disabled'
-              }, reqMet ? tr('skills.needPoints', { cur: g.player.skillPoints, req: selSk.cost }) : tr('skills.needPrev'))
-            ]);
-          }
-
-          // Hold-to-learn button (holds for 2.3 seconds with live progress fill, channeling aura, tone & particle flow)
-          const isEnSk = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
-          const holdHintText = isEnSk ? '(Hold)' : '(Mantener)';
-          const fillBar = this.el('div', { class: 'btn-skill-hold-fill' });
-          const baseLabel = tr('skills.activateCost', { cost: selSk.cost, unit: selSk.cost === 1 ? tr('skills.pointOne') : tr('skills.pointMany') });
-          const textSpan = this.el('span', { class: 'btn-skill-hold-text' }, [
-            this.el('span', {}, baseLabel),
-            this.el('span', { style: 'font-size:13px;opacity:0.85;font-weight:normal;' }, holdHintText)
-          ]);
-
-          const holdBtn = this.el('div', {
-            class: 'btn-skill-hold-activate',
-            role: 'button',
-            tabindex: '0'
-          }, [fillBar, textSpan]);
-
-          let holdRaf = null;
-          let holdStartTime = 0;
-          const HOLD_DURATION = 2300; // 2.3 seconds
-          let isHolding = false;
-
-          const startHold = (e) => {
-            if (e.button !== 0 && e.type !== 'touchstart' && e.pointerType === 'mouse' && e.button !== 0) return;
-            if (isHolding) return;
-            isHolding = true;
-            holdStartTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-            holdBtn.classList.add('channeling');
-
-            const targetNode = board.querySelector(`[data-skill-node="${selSk.id}"]`);
-            if (targetNode) targetNode.classList.add('skill-node-channeling');
-
-            if (Balaclava.Audio) {
-              Balaclava.Audio.tone(220, 360, 0.2, 'triangle', 0.22);
-            }
-
-            let nextSparkTime = 0;
-            let lastPctStep = 0;
-
-            const onFrame = (now) => {
-              if (!isHolding) return;
-              if (this.activeModal !== 'skills') {
-                stopHold(false);
-                return;
-              }
-              const elapsed = now - holdStartTime;
-              const progress = Math.min(1, elapsed / HOLD_DURATION);
-              fillBar.style.width = `${(progress * 100).toFixed(1)}%`;
-
-              const pctInt = Math.floor(progress * 100);
-              textSpan.innerHTML = `<span>${isEnSk ? 'Channeling...' : 'Canalizando...'}</span> <span style="color:#6ee7b7;font-weight:900;">${pctInt}%</span>`;
-
-              // Emit converging astral sparks to the node on board
-              if (targetNode && now > nextSparkTime) {
-                nextSparkTime = now + 130;
-                const spark = document.createElement('div');
-                spark.className = 'skill-channel-spark';
-                const sAngle = Math.random() * Math.PI * 2;
-                const sDist = 34 + Math.random() * 22;
-                spark.style.setProperty('--ox', `${(Math.cos(sAngle) * sDist).toFixed(1)}px`);
-                spark.style.setProperty('--oy', `${(Math.sin(sAngle) * sDist).toFixed(1)}px`);
-                targetNode.appendChild(spark);
-                setTimeout(() => { if (spark.parentNode) spark.parentNode.removeChild(spark); }, 650);
-              }
-
-              // Pitch climbing audio clicks every 20%
-              if (pctInt >= lastPctStep + 20 && Balaclava.Audio) {
-                lastPctStep = pctInt;
-                const freq = 260 + (pctInt * 5);
-                Balaclava.Audio.tone(freq, freq + 40, 0.08, 'sine', 0.18);
-              }
-
-              if (progress >= 1) {
-                stopHold(false);
-                unlockAndAdvance(selSk.id);
-                return;
-              }
-
-              holdRaf = requestAnimationFrame(onFrame);
-            };
-
-            holdRaf = requestAnimationFrame(onFrame);
-          };
-
-          const stopHold = (cancelled = true) => {
-            if (!isHolding) return;
-            isHolding = false;
-            if (holdRaf) {
-              cancelAnimationFrame(holdRaf);
-              holdRaf = null;
-            }
-            holdBtn.classList.remove('channeling');
-            fillBar.style.width = '0%';
-            textSpan.innerHTML = `<span>${baseLabel}</span> <span style="font-size:13px;opacity:0.85;font-weight:normal;">${holdHintText}</span>`;
-
-            const targetNode = board.querySelector(`[data-skill-node="${selSk.id}"]`);
-            if (targetNode) targetNode.classList.remove('skill-node-channeling');
-
-            if (cancelled && Balaclava.Audio) {
-              Balaclava.Audio.play('cancel');
-            }
-          };
-          this._skillHoldCleanup = () => stopHold(false);
-
-          holdBtn.addEventListener('pointerdown', startHold);
-          holdBtn.addEventListener('pointerup', () => stopHold(true));
-          holdBtn.addEventListener('pointerleave', () => stopHold(true));
-          holdBtn.addEventListener('pointercancel', () => stopHold(true));
-          holdBtn.addEventListener('contextmenu', (e) => e.preventDefault());
-
-          return this.el('div', { style: 'margin-top:8px;padding-top:8px;border-top:1px solid rgba(128,216,255,0.25);' }, [holdBtn]);
-        })()
-      ]);
-
+      updateInspector();
       workspace.appendChild(inspector);
       body.appendChild(workspace);
     }
@@ -6716,6 +7009,18 @@
 
         const terraformedSet = new Set((g.world.terraformedTiles || []).map(p => `${p[0]},${p[1]}`));
 
+        const maxTiles = (typeof WORLD_TILES !== 'undefined' ? WORLD_TILES : GRID_PLOTS * PLOT_TILES);
+        const cliffColors = {
+          pradera:            { top: '#5d4037', mid: '#4e342e', shadow: 'rgba(10,30,45,0.45)' },
+          desierto:           { top: '#8d6e3f', mid: '#6d4c23', shadow: 'rgba(10,30,45,0.45)' },
+          bosque_oscuro:      { top: '#4a3f5c', mid: '#2f243d', shadow: 'rgba(8,12,24,0.48)' },
+          montanas_heladas:   { top: '#607d8b', mid: '#37474f', shadow: 'rgba(10,25,40,0.50)' },
+          tierras_volcanicas: { top: '#5c261f', mid: '#33120e', shadow: 'rgba(8,6,12,0.55)' }
+        };
+        const getMapVisualBiome = (tx, ty, fallbackBiome) => (
+          g.world.getVisualBiomeAtTile ? g.world.getVisualBiomeAtTile(tx, ty) : fallbackBiome
+        );
+
         for (let gy = 0; gy < GRID_PLOTS; gy++) {
           for (let gx = 0; gx < GRID_PLOTS; gx++) {
             const unlocked = g.world.isPlotUnlocked(gx, gy);
@@ -6730,9 +7035,6 @@
 
             if (unlocked) {
               const bColor = biome?.color || '#5c9e31';
-              const bWater = biome?.waterColor || '#236585';
-              const bSheet = Balaclava.Assets && Balaclava.Assets.biomeTiles && Balaclava.Assets.biomeTiles[biomeId];
-              const maxTiles = (typeof WORLD_TILES !== 'undefined' ? WORLD_TILES : GRID_PLOTS * PLOT_TILES);
 
               const isLand = (x, y) => {
                 if (x < 0 || y < 0 || x >= maxTiles || y >= maxTiles) return false;
@@ -6742,15 +7044,6 @@
                 const tVal = g.world.tiles[y]?.[x];
                 return tVal === 1 || tVal === 2 || tVal === 3 || tVal === 4;
               };
-
-              const cliffColors = {
-                pradera:            { top: '#5d4037', mid: '#4e342e', shadow: 'rgba(10,30,45,0.45)' },
-                desierto:           { top: '#8d6e3f', mid: '#6d4c23', shadow: 'rgba(10,30,45,0.45)' },
-                bosque_oscuro:      { top: '#4a3f5c', mid: '#2f243d', shadow: 'rgba(8,12,24,0.48)' },
-                montanas_heladas:   { top: '#607d8b', mid: '#37474f', shadow: 'rgba(10,25,40,0.50)' },
-                tierras_volcanicas: { top: '#5c261f', mid: '#33120e', shadow: 'rgba(8,6,12,0.55)' }
-              };
-              const cPal = cliffColors[biomeId] || cliffColors.pradera;
 
               for (let ly = 0; ly < PLOT_TILES; ly++) {
                 for (let lx = 0; lx < PLOT_TILES; lx++) {
@@ -6763,16 +7056,14 @@
                   const rh = Math.ceil(tilePx) + 0.5;
 
                   if (t === 0) {
-                    // Ocean & Coastal Shallows
-                    ctx.fillStyle = bWater || '#19577a';
-                    ctx.fillRect(rx, ry, rw, rh);
+                    // Unified ocean canvas underneath — only add crisp coastal shallows foam hugging land
                     const isShallow = isLand(tx, ty - 1) || isLand(tx, ty + 1) || isLand(tx - 1, ty) || isLand(tx + 1, ty);
                     if (isShallow) {
-                      ctx.fillStyle = 'rgba(164, 226, 240, 0.28)';
+                      ctx.fillStyle = 'rgba(135, 218, 240, 0.20)';
                       ctx.fillRect(rx, ry, rw, rh);
                       if (isLand(tx, ty - 1)) {
-                        ctx.fillStyle = 'rgba(235, 250, 255, 0.65)';
-                        ctx.fillRect(rx, ry, rw, 1.5);
+                        ctx.fillStyle = 'rgba(220, 246, 255, 0.52)';
+                        ctx.fillRect(rx, ry, rw, 1.4);
                       }
                     }
                   } else if (t === 3) {
@@ -6790,27 +7081,22 @@
                       ctx.fillRect(rx, ry, rw, rh);
                       ctx.fillStyle = '#5d4037';
                       ctx.fillRect(rx, ry + rh * 0.45, rw, rh * 0.15);
-                      ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 0.8;
-                      ctx.strokeRect(rx, ry, rw, rh);
                     }
                   } else if (t === 4) {
-                    // Lava
-                    const lavaImg = Balaclava.Assets && Balaclava.Assets.extraImages && Balaclava.Assets.extraImages.lava_anim;
-                    if (lavaImg && lavaImg.complete && lavaImg.naturalWidth > 0) {
-                      try {
-                        ctx.drawImage(lavaImg, 0, 0, 16, 16, rx, ry, rw, rh);
-                      } catch (e) {
-                        ctx.fillStyle = '#d84315';
-                        ctx.fillRect(rx, ry, rw, rh);
-                      }
-                    } else {
-                      ctx.fillStyle = '#d84315';
-                      ctx.fillRect(rx, ry, rw, rh);
-                      ctx.fillStyle = '#ff9800';
-                      ctx.fillRect(rx + rw * 0.2, ry + rh * 0.2, rw * 0.6, rh * 0.6);
-                    }
+                    // Sunken volcanic caldera lava tile on map
+                    ctx.fillStyle = '#3b2421';
+                    ctx.fillRect(rx, ry, rw, rh);
+                    ctx.fillStyle = '#180a0c';
+                    ctx.fillRect(rx + 1, ry + 1, rw - 2, rh - 2);
+                    ctx.fillStyle = '#c62828';
+                    ctx.fillRect(rx + 1.5, ry + 2.2, rw - 3, rh - 3.5);
+                    ctx.fillStyle = '#ff8f00';
+                    ctx.fillRect(rx + rw * 0.28, ry + rh * 0.36, rw * 0.44, rh * 0.34);
                   } else {
-                    // Authentic in-game 9-slice grass tileset
+                    const tBiome = getMapVisualBiome(tx, ty, biomeId);
+                    const tSheet = Balaclava.Assets && Balaclava.Assets.biomeTiles && Balaclava.Assets.biomeTiles[tBiome];
+                    const tcPal = cliffColors[tBiome] || cliffColors.pradera;
+                    const tbColor = (BIOMES[tBiome] && BIOMES[tBiome].color) || bColor;
                     const up = isLand(tx, ty - 1);
                     const dn = isLand(tx, ty + 1);
                     const lt = isLand(tx - 1, ty);
@@ -6818,31 +7104,24 @@
                     const sx = !lt ? 0 : !rt ? 128 : 64;
                     const sy = !up ? 0 : !dn ? 128 : 64;
 
-                    // If perimeter tile touches water, draw base water underneath so rounded grass corners look natural
-                    if (!up || !dn || !lt || !rt) {
-                      ctx.fillStyle = bWater || '#19577a';
-                      ctx.fillRect(rx, ry, rw, rh);
-                    }
-
-                    // Authentic southern cliff skirt under the grass
+                    // Coastal southern cliff skirt directly over unified sea
                     if (!dn) {
-                      ctx.fillStyle = cPal.mid;
+                      ctx.fillStyle = tcPal.mid;
                       ctx.fillRect(rx, ry + rh - 1.5, rw, 3.2);
-                      ctx.fillStyle = cPal.shadow;
+                      ctx.fillStyle = tcPal.shadow;
                       ctx.fillRect(rx, ry + rh + 1, rw, 1.8);
                     }
 
-                    // Draw the REAL in-game grass texture
-                    const canDrawSheet = bSheet && (bSheet.width > 0 && bSheet.height > 0);
+                    const canDrawSheet = tSheet && (tSheet.width > 0 && tSheet.height > 0);
                     if (canDrawSheet) {
                       try {
-                        ctx.drawImage(bSheet, sx, sy, 64, 64, rx, ry, rw, rh);
+                        ctx.drawImage(tSheet, sx, sy, 64, 64, rx, ry, rw, rh);
                       } catch (e) {
-                        ctx.fillStyle = bColor;
+                        ctx.fillStyle = tbColor;
                         ctx.fillRect(rx, ry, rw, rh);
                       }
                     } else {
-                      ctx.fillStyle = bColor;
+                      ctx.fillStyle = tbColor;
                       ctx.fillRect(rx, ry, rw, rh);
                     }
 
@@ -6983,29 +7262,52 @@
               }
 
               const isCenter = gx === (CENTER_PLOT || 4) && gy === (CENTER_PLOT || 4);
-              ctx.strokeStyle = isCenter ? 'rgba(255, 213, 79, 0.72)' : 'rgba(255, 246, 220, 0.25)';
-              ctx.lineWidth = (isCenter ? 2.4 : 1.0) / this.mapZoom;
-              ctx.strokeRect(px0 + 0.5, py0 + 0.5, plotPx - 1, plotPx - 1);
+              if (isCenter) {
+                ctx.strokeStyle = 'rgba(255, 213, 79, 0.65)';
+                ctx.lineWidth = 2.0 / this.mapZoom;
+                ctx.strokeRect(px0 + 0.5, py0 + 0.5, plotPx - 1, plotPx - 1);
+              }
             } else {
-              ctx.fillStyle = biome.color;
-              ctx.globalAlpha = 0.16;
-              ctx.fillRect(px0 + 1, py0 + 1, plotPx - 2, plotPx - 2);
-              ctx.globalAlpha = 1;
-
+              // Locked plot: render true fogged island silhouette over the uniform ocean (no flat solid squares)
               const adj = (g.economy && typeof g.economy.isPlotAdjacentlyReachable === 'function')
                 ? g.economy.isPlotAdjacentlyReachable(g, gx, gy)
                 : false;
+              ctx.save();
+              ctx.globalAlpha = adj ? 0.42 : 0.28;
+              for (let ly = 0; ly < PLOT_TILES; ly++) {
+                const ry = Math.round(py0 + ly * tilePx);
+                const rh = Math.max(1, Math.round(py0 + (ly + 1) * tilePx) - ry);
+                for (let lx = 0; lx < PLOT_TILES; lx++) {
+                  const tx = gx * PLOT_TILES + lx;
+                  const ty = gy * PLOT_TILES + ly;
+                  const t = g.world.tiles[ty]?.[tx] ?? 0;
+                  if (t === 0) continue;
+                  const rx = Math.round(px0 + lx * tilePx);
+                  const rw = Math.max(1, Math.round(px0 + (lx + 1) * tilePx) - rx);
+                  const tBiome = getMapVisualBiome(tx, ty, biomeId);
+                  const belowT = g.world.tiles[ty + 1]?.[tx] ?? 0;
+                  if (belowT === 0) {
+                    const tcPal = cliffColors[tBiome] || cliffColors.pradera;
+                    ctx.fillStyle = tcPal.mid;
+                    ctx.fillRect(rx, ry + rh, rw, 2);
+                  }
+                  ctx.fillStyle = t === 4 ? '#8e240c' : ((BIOMES[tBiome] && BIOMES[tBiome].color) || biome.color);
+                  ctx.fillRect(rx, ry, rw, rh);
+                }
+              }
+              ctx.restore();
+
               const plotBiomeLock = (g.economy && typeof g.economy.getBiomeLockStatus === 'function')
                 ? g.economy.getBiomeLockStatus(g, gx, gy)
                 : { lockedByBiome: false };
               const price = adj ? g.economy.getPlotPrice(g, gx, gy) : 0;
               const canAfford = adj && !plotBiomeLock.lockedByBiome && g.coins >= price;
 
-              ctx.strokeStyle = adj
-                ? (plotBiomeLock.lockedByBiome ? 'rgba(148, 163, 184, 0.60)' : (canAfford ? '#ffd54f' : '#ef5350'))
-                : 'rgba(180, 210, 235, 0.22)';
-              ctx.lineWidth = (adj ? 2.2 : 1.0) / this.mapZoom;
-              ctx.strokeRect(px0 + 1, py0 + 1, plotPx - 2, plotPx - 2);
+              if (adj && !plotBiomeLock.lockedByBiome) {
+                ctx.strokeStyle = canAfford ? 'rgba(255, 213, 79, 0.85)' : 'rgba(239, 83, 80, 0.72)';
+                ctx.lineWidth = 1.8 / this.mapZoom;
+                ctx.strokeRect(px0 + 1, py0 + 1, plotPx - 2, plotPx - 2);
+              }
 
               if (adj) {
                 const bw = plotBiomeLock.lockedByBiome ? 106 : 88;

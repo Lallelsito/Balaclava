@@ -311,6 +311,11 @@
       if (typeof game.syncEncyclopedia === 'function') game.syncEncyclopedia();
       if (data.stats) game.stats = { ...game.makeInitialStats(), ...data.stats };
       game.buildings = (data.buildings || []).map(b => ({ ...b, storage: b.storage || {}, queue: b.queue || [] }));
+      for (const b of game.buildings) {
+        if (b && Number.isFinite(b.tx) && Number.isFinite(b.ty) && game.world.tiles[b.ty] && game.world.tiles[b.ty][b.tx] === 0) {
+          game.world.tiles[b.ty][b.tx] = 1;
+        }
+      }
       // Safety net for old/aborted saves: if the stored position is not standable in the
       // overworld (e.g. it was captured while inside a dungeon), snap to the nearest safe
       // tile so the hero can never load stuck on water, void or a building. This also
