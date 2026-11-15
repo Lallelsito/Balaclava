@@ -261,22 +261,26 @@
     </div>
   </div>
 
-  <!-- Death Overlay (Blocks gameplay & HUD clicks cleanly until respawn or menu exit) -->
+  <!-- Death Overlay (Full-Screen Pixel Art Sanctuary Panorama + Crisp Pixel HUD) -->
   <div id="death-overlay" class="death-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="death-title">
-    <div class="death-card">
-      <div class="death-crest">
-        <img class="pixel-img" src="assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/07_Items/Monster_Drops/skull.png" width="44" height="44" alt="" />
+    <canvas id="death-pixel-canvas" class="death-pixel-canvas" width="640" height="360"></canvas>
+    <div class="death-stage">
+      <div class="death-header">
+        <img class="pixel-img death-title-icon" src="assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/07_Items/Monster_Drops/skull.png" width="24" height="24" alt="" />
+        <h2 id="death-title" class="death-title" data-i18n="death.bannerTitle">YOU FELL IN BATTLE</h2>
+        <img class="pixel-img death-title-icon" src="assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/07_Items/Monster_Drops/skull.png" width="24" height="24" alt="" />
       </div>
-      <h2 id="death-title" class="death-title" data-i18n="death.bannerTitle">YOU FELL IN BATTLE</h2>
       <p class="death-sub" data-i18n="death.keepSub">You keep your gear, relics, minerals, and unlocked islands</p>
-      <div id="death-stats-pill" class="death-stats-pill">Level 1 · Day 1 · Kills: 0 · Islands: 1</div>
-      <div class="death-bar-track">
-        <div id="death-bar-fill" class="death-bar-fill" style="width:100%"></div>
+      <div id="death-stats-pill" class="death-stats-row">Level 1 · Day 1 · Kills: 0 · Islands: 1</div>
+      <div class="death-bar-wrap">
+        <div class="death-bar-track">
+          <div id="death-bar-fill" class="death-bar-fill" style="width:100%"></div>
+        </div>
+        <div id="death-countdown" class="death-countdown">Respawning at camp in 10.0s...</div>
       </div>
-      <div id="death-countdown" class="death-countdown">Respawning at camp in 10.0s...</div>
-      <div class="death-actions">
-        <button id="btn-death-main-menu" type="button" class="btn btn-danger death-menu-btn" data-i18n="death.mainMenu">Main Menu</button>
-      </div>
+    </div>
+    <div class="death-actions">
+      <button id="btn-death-main-menu" type="button" class="btn btn-danger death-menu-btn" data-i18n="death.mainMenu">Main Menu</button>
     </div>
   </div>
 

@@ -4403,90 +4403,123 @@ input:focus-visible,
   50% { transform: translateX(-50%) translateY(-7px) scale(1.04); }
 }
 
-/* Death Screen Overlay (8-bit Crimson & Brass Card) */
+/* Death Screen Overlay (Full-Screen Pixel Art Sanctuary Panorama matching Boot/Loading Aesthetic) */
 .death-overlay {
   position: fixed;
   inset: 0;
   z-index: 95;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 20px;
+  justify-content: flex-start;
+  overflow: hidden;
   pointer-events: auto;
-  background: radial-gradient(circle at center, rgba(36, 8, 14, 0.25) 12%, rgba(8, 2, 4, 0.72) 100%);
+  background: #09040c;
+  image-rendering: pixelated;
   font-family: 'BalaclavaPixel', monospace;
 }
 .death-overlay.hidden {
   display: none !important;
 }
-.death-card {
-  position: relative;
-  width: min(560px, calc(100vw - 32px));
-  padding: 40px 26px 24px;
-  text-align: center;
-  background: linear-gradient(180deg, rgba(54, 18, 25, 0.98) 0%, rgba(34, 11, 17, 0.98) 55%, rgba(20, 7, 11, 0.99) 100%);
-  border: 3px solid #d4a64a;
-  box-shadow:
-    inset 0 0 0 2px #14080d,
-    inset 0 0 0 4px #ef5350,
-    0 16px 40px rgba(0, 0, 0, 0.85);
-}
-.death-crest {
+.death-pixel-canvas {
   position: absolute;
-  top: -28px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  background: #18090d;
-  border: 3px solid #d4a64a;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center bottom;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  z-index: 1;
+}
+.death-stage {
+  position: relative;
+  z-index: 5;
+  margin-top: clamp(32px, 8.5vh, 88px);
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 7px;
+  width: min(620px, 92vw);
+  padding: 0 16px;
+  image-rendering: pixelated;
+}
+.death-header {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+  gap: 12px;
+  max-width: 100%;
+}
+.death-title-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
 }
 .death-title {
-  margin: 4px 0 8px;
-  font-size: 30px;
-  line-height: 1.1;
-  letter-spacing: 1px;
-  color: #ff8a80;
-  text-shadow: 0 3px 0 #14080d;
+  margin: 0;
+  font-family: 'BalaclavaTitlePixel', 'BalaclavaPixel', monospace;
+  font-size: clamp(24px, 3.6vw, 40px);
+  line-height: 1.08;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #f6d8d2;
+  text-shadow: 2px 2px 0 #16050b, -1px -1px 0 #16050b;
 }
 .death-sub {
-  margin: 0 0 12px;
-  font-size: 16px;
-  color: #efebe9;
-  line-height: 1.35;
+  margin: 0;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 18px;
+  line-height: 1.25;
+  color: #cbb0bb;
+  text-shadow: 1px 1px 0 #09040c;
+  max-width: 100%;
 }
-.death-stats-pill {
-  margin: 0 auto 14px;
-  padding: 6px 12px;
-  font-size: 15px;
-  color: #ffe082;
-  background: rgba(18, 8, 12, 0.78);
-  border: 1px solid rgba(212, 166, 74, 0.45);
+.death-stats-row {
+  margin: 2px 0 0;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 16px;
+  line-height: 1.2;
+  color: #ebbd6c;
+  text-shadow: 1px 1px 0 #09040c;
+  letter-spacing: 0.4px;
+}
+.death-bar-wrap {
+  width: clamp(230px, 32vw, 330px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
 }
 .death-bar-track {
   width: 100%;
-  height: 16px;
-  background: #0d0508;
-  border: 2px solid #ffd54f;
-  padding: 2px;
-  margin-bottom: 10px;
+  height: 8px;
+  background: #14080e;
+  border: 1px solid #6b3b42;
+  padding: 1px;
+  box-sizing: border-box;
 }
 .death-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #c62828 0%, #ff7043 100%);
-  transition: width 0.08s linear;
+  background: #d44d3a;
+  border-top: 1px solid #ff9a76;
+  box-sizing: border-box;
 }
 .death-countdown {
-  font-size: 17px;
-  color: #ffe082;
-  margin-bottom: 16px;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 16px;
+  color: #ead0c8;
+  text-shadow: 1px 1px 0 #09040c;
 }
 .death-actions {
+  position: relative;
+  z-index: 6;
+  margin-top: auto;
+  margin-bottom: clamp(18px, 4.2vh, 36px);
   display: flex;
   justify-content: center;
 }

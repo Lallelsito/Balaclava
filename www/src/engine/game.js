@@ -4118,6 +4118,7 @@
         this.player.hp = 0;
         this.player.deadTimer = this.player.deadMax || 10.0;
         this.player.invuln = (this.player.deadMax || 10.0) + 1.2;
+        this.player.deathSeed = Math.floor((this.time || 0) * 60) % 997;
         this.clearTransientInputs();
         this.resetAltarNotifications();
         this.paused = false;
@@ -4126,8 +4127,14 @@
           Balaclava.UI.closeModal();
           if (Balaclava.UI.hideTooltip) Balaclava.UI.hideTooltip();
         }
-        this.shake(0.45, 8);
-        this.spawnParticles(this.player.x, this.player.y, '#ef5350', 22);
+        if (Balaclava.Audio && typeof Balaclava.Audio.tone === 'function') {
+          Balaclava.Audio.tone(246.94, 196.0, 0.22, 'triangle', 0.18, 0.04);
+          Balaclava.Audio.tone(196.0, 130.81, 0.34, 'triangle', 0.16, 0.19);
+          Balaclava.Audio.tone(130.81, 87.31, 0.44, 'sine', 0.18, 0.36);
+        }
+        this.shake(0.38, 7);
+        this.spawnParticles(this.player.x, this.player.y, '#e53935', 14);
+        this.spawnParticles(this.player.x, this.player.y - 8, '#b2ebf2', 10);
         this.showWarning(Balaclava.I18n ? Balaclava.I18n.t('toast.deathWarning') : 'Has caído en combate. Reapareciendo en 10s...', 5.0);
         if (Balaclava.UI) Balaclava.UI.updateHUD(true);
       }
@@ -5710,18 +5717,47 @@
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         const tNow = performance.now() * 0.001;
-        const vg = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.14, w / 2, h / 2, Math.max(w, h) * 0.76);
-        vg.addColorStop(0, 'rgba(38, 6, 12, 0.45)');
-        vg.addColorStop(1, 'rgba(8, 2, 4, 0.84)');
-        ctx.fillStyle = vg;
-        ctx.fillRect(0, 0, w, h);
+        const maxD = this.player.deadMax || 10.0;
+        const elapsed = Math.max(0, maxD - this.player.deadTimer);
 
-        // Drifting spectral embers across the defeat screen behind #death-overlay
-        for (let ei = 0; ei < 22; ei++) {
-          const ex = ((ei * 137 + Math.sin(tNow * 1.4 + ei) * 32) % w + w) % w;
-          const ey = (h - ((tNow * (28 + (ei % 5) * 9) + ei * 67) % h));
-          ctx.fillStyle = ei % 3 === 0 ? 'rgba(255, 213, 79, 0.42)' : 'rgba(239, 83, 80, 0.36)';
-          ctx.fillRect(ex, ey, ei % 2 === 0 ? 4 : 3, ei % 2 === 0 ? 4 : 3);
+        // Stepped retro crimson impact flash on frames 0..2
+        if (elapsed < 0.16) {
+          const hitStep = Math.floor(elapsed * 18) & 1;
+          ctx.fillStyle = hitStep === 0 ? 'rgba(136, 18, 30, 0.34)' : 'rgba(24, 6, 14, 0.28)';
+          ctx.fillRect(0, 0, w, h);
+        } else {
+          // Stepped 16-bit pixel border bands + 4-stage Bayer 2x2 checkerboard wipe (zero radial gradients)
+          const bw = Math.max(24, Math.round(w * 0.08));
+          const bh = Math.max(18, Math.round(h * 0.08));
+          ctx.fillStyle = 'rgba(12, 5, 11, 0.56)';
+          ctx.fillRect(0, 0, w, bh);
+          ctx.fillRect(0, h - bh, w, bh);
+          ctx.fillRect(0, bh, bw, h - bh * 2);
+          ctx.fillRect(w - bw, bh, bw, h - bh * 2);
+
+          const stage = elapsed < 0.42 ? 1 : (elapsed < 0.64 ? 2 : (elapsed < 0.82 ? 3 : 4));
+          const cell = 6;
+          const bayerOrder = [0, 2, 3, 1]; // 2x2 Bayer thresholds
+          ctx.fillStyle = stage >= 4 ? 'rgba(9, 4, 12, 0.92)' : 'rgba(9, 4, 12, 0.72)';
+          for (let cy = 0; cy < h; cy += cell) {
+            const by = Math.floor(cy / cell) & 1;
+            for (let cx = 0; cx < w; cx += cell) {
+              const bx = Math.floor(cx / cell) & 1;
+              if (bayerOrder[by * 2 + bx] < stage) {
+                ctx.fillRect(cx, cy, cell, cell);
+              }
+            }
+          }
+        }
+
+        // Crisp quantized integer-pixel embers & pale soul motes
+        const tick = Math.floor(tNow * 12);
+        for (let ei = 0; ei < 20; ei++) {
+          const ex = Math.round(((ei * 137 + Math.sin(tick * 0.2 + ei) * 26) % w + w) % w);
+          const ey = Math.round(h - ((tick * (2 + (ei % 4)) + ei * 67) % h));
+          const sz = (ei & 1) ? 3 : 2;
+          ctx.fillStyle = ei % 4 === 0 ? '#b2ebf2' : (ei % 3 === 0 ? '#ffb74d' : '#ef5350');
+          ctx.fillRect(ex, ey, sz, sz);
         }
         ctx.restore();
       }
@@ -7541,18 +7577,76 @@
       }
 
       ctx.save();
-      ctx.translate(p.x, p.y);
+      ctx.translate(Math.round(p.x), Math.round(p.y));
+      if (p.deadTimer > 0) {
+        ctx.imageSmoothingEnabled = false;
+        const elapsed = Math.max(0, (p.deadMax || 10.0) - p.deadTimer);
+        // Quantized pixel shadow + fallen ash mound
+        ctx.fillStyle = 'rgba(10, 4, 8, 0.48)';
+        ctx.fillRect(-14, 9, 28, 6);
+        ctx.fillRect(-10, 7, 20, 2);
+
+        if (elapsed >= 0.22) {
+          ctx.fillStyle = '#3d282c';
+          ctx.fillRect(-14, 5, 28, 4);
+          ctx.fillStyle = '#5c3f45';
+          ctx.fillRect(-10, 3, 20, 2);
+          ctx.fillStyle = '#26181c';
+          ctx.fillRect(-6, 1, 12, 2);
+        }
+
+        const staggerX = elapsed < 0.20 ? Math.round(((Math.floor(elapsed * 30) & 1) ? 3 : -3)) : 0;
+        const stepIdx = elapsed < 0.14 ? 0 : Math.min(3, Math.floor((elapsed - 0.10) / 0.08));
+        const stepAngles = [0, 0.34, 0.72, 1.0];
+        const tilt = stepAngles[stepIdx] * (Math.PI / 2);
+        const dropY = Math.round(stepAngles[stepIdx] * 6);
+
+        ctx.save();
+        ctx.translate(staggerX, dropY);
+        ctx.rotate(-tilt * p.facing);
+        if (elapsed < 0.16 && (Math.floor(elapsed * 24) & 1) === 0) {
+          ctx.fillStyle = 'rgba(255, 232, 224, 0.72)';
+          ctx.fillRect(-14, -28, 28, 32);
+        }
+        ctx.globalAlpha = elapsed >= 0.55 ? 0.85 : 1.0;
+        ctx.scale(p.facing, 1);
+        if (sheet) {
+          ctx.drawImage(sheet, frame * 192, sourceY, 192, 192, -48, -56, 96, 96);
+        } else {
+          ctx.fillStyle = '#42a5f5';
+          ctx.fillRect(-12, -24, 24, 28);
+        }
+        ctx.restore();
+
+        // Stepped 16-bit Soul Wisp ascending from fallen hero
+        if (elapsed >= 0.14) {
+          const wispAge = elapsed - 0.14;
+          const rise = Math.min(44, Math.floor(wispAge * 46));
+          const bobX = Math.round(Math.sin(Math.floor(elapsed * 8) * 0.9) * 3);
+          const bobY = (Math.floor(elapsed * 6) & 1) ? -1 : 0;
+          const wx = bobX;
+          const wy = -14 - rise + bobY;
+          ctx.fillStyle = '#15303f';
+          ctx.fillRect(wx - 4, wy - 7, 8, 10);
+          ctx.fillStyle = '#4dd0e1';
+          ctx.fillRect(wx - 3, wy - 6, 6, 8);
+          ctx.fillRect(wx - 1, wy - 8, 2, 2);
+          ctx.fillStyle = '#e0f7fa';
+          ctx.fillRect(wx - 2, wy - 4, 4, 4);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(wx - 1, wy - 3, 2, 2);
+          ctx.fillStyle = '#80deea';
+          ctx.fillRect(wx - 2 + (Math.floor(elapsed * 9) & 1), wy + 4, 2, 2);
+          ctx.fillRect(wx + 2 - (Math.floor(elapsed * 7) & 1), wy + 7, 1, 2);
+        }
+        ctx.restore();
+        return;
+      }
+
       ctx.fillStyle = 'rgba(0,0,0,0.28)';
       ctx.beginPath();
       ctx.ellipse(0, 12, 14, 6, 0, 0, Math.PI * 2);
       ctx.fill();
-
-      if (p.deadTimer > 0) {
-        const elapsed = Math.max(0, (p.deadMax || 10.0) - p.deadTimer);
-        const tilt = Math.min(1, elapsed * 3.5) * (Math.PI / 2);
-        ctx.rotate(-tilt * p.facing);
-        ctx.globalAlpha = 0.72;
-      }
 
       ctx.scale(p.facing, 1);
       if (sheet) {

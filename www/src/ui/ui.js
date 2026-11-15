@@ -1778,6 +1778,271 @@
       }
     }
 
+    _drawDitherSeam(ctx, w, y, color, step = 4, size = 2) {
+      ctx.fillStyle = color;
+      const ry = Math.round(y);
+      for (let x = 0; x < w; x += step) {
+        ctx.fillRect(x, ry, size, size);
+      }
+    }
+
+    _startDeathDiorama() {
+      if (this._deathDioramaState && this._deathDioramaState.active) return;
+      const canvas = document.getElementById('death-pixel-canvas');
+      if (!canvas || typeof canvas.getContext !== 'function') return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const startMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const state = { active: true, rafId: null, startMs };
+      this._deathDioramaState = state;
+
+      const getRecovery = () => {
+        const p = this.game && this.game.player;
+        if (!p || !(p.deadTimer > 0)) return 1;
+        const maxD = p.deadMax || 10.0;
+        return Math.max(0, Math.min(1, 1 - (p.deadTimer / maxD)));
+      };
+
+      const step = (nowTs) => {
+        if (!state.active || this._deathDioramaState !== state) return;
+        const now = (typeof nowTs === 'number') ? nowTs : Date.now();
+        const t = Math.max(0, (now - state.startMs) / 1000);
+        this._renderDeathDiorama(ctx, t, getRecovery());
+        if (typeof requestAnimationFrame === 'function') {
+          state.rafId = requestAnimationFrame(step);
+        }
+      };
+
+      this._renderDeathDiorama(ctx, 0, getRecovery());
+      if (typeof requestAnimationFrame === 'function') {
+        state.rafId = requestAnimationFrame(step);
+      }
+    }
+
+    _stopDeathDiorama() {
+      const state = this._deathDioramaState;
+      if (!state) return;
+      state.active = false;
+      if (state.rafId !== null && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(state.rafId);
+      }
+      this._deathDioramaState = null;
+    }
+
+    _renderDeathDiorama(ctx, t, recovery = 0) {
+      const W = 640;
+      const H = 360;
+      const TS = 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/';
+      const FDA = 'assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/';
+      ctx.imageSmoothingEnabled = false;
+
+      // 1. Dusk Astral Sky Bands + Horizontal 2px Checker Seams
+      this._drawDitherBands(ctx, W, [
+        [0, 56, '#09040c'],
+        [56, 108, '#110815'],
+        [108, 154, '#1a0b1a'],
+        [154, 194, '#25101e'],
+        [194, 224, '#321623']
+      ]);
+      this._drawDitherSeam(ctx, W, 55, '#110815');
+      this._drawDitherSeam(ctx, W, 107, '#1a0b1a');
+      this._drawDitherSeam(ctx, W, 153, '#25101e');
+      this._drawDitherSeam(ctx, W, 193, '#321623');
+
+      // Outer sky stars (leaving central HUD text zone calm & uncluttered)
+      const starCoords = [
+        [34, 22], [72, 48], [116, 18], [148, 72], [58, 96], [96, 126],
+        [496, 26], [534, 86], [584, 34], [608, 104], [468, 120], [568, 138]
+      ];
+      const twinkleTick = Math.floor(t * 2.5);
+      for (let s = 0; s < starCoords.length; s++) {
+        const bright = ((twinkleTick + s) % 4) === 0;
+        ctx.fillStyle = bright ? '#f2dfcc' : '#857094';
+        ctx.fillRect(starCoords[s][0], starCoords[s][1], bright ? 2 : 1, bright ? 2 : 1);
+      }
+
+      // Crisp pixel Crescent Moon upper-right (integer fillRect silhouette)
+      const moonRows = [
+        [2, 5], [1, 4], [0, 3], [0, 3], [0, 3], [0, 3], [0, 4], [1, 5], [2, 6]
+      ];
+      for (let mr = 0; mr < moonRows.length; mr++) {
+        ctx.fillStyle = (mr === 0 || mr === moonRows.length - 1) ? '#bda999' : '#f2e4cc';
+        ctx.fillRect(540 + moonRows[mr][0] * 2, 34 + mr * 2, moonRows[mr][1] * 2, 2);
+      }
+
+      // Drifting dark dusk clouds & distant horizon islets
+      const cOff1 = Math.round((t * 4) % (W + 120)) - 90;
+      const cOff2 = Math.round((t * 2.6 + 260) % (W + 140)) - 100;
+      this._drawPixelCloud(ctx, cOff1, 146, 56, '#1b0e22', '#261530', '#120818');
+      this._drawPixelCloud(ctx, cOff2, 166, 68, '#1f1024', '#2c1732', '#140919');
+
+      ctx.fillStyle = '#150914';
+      ctx.fillRect(18, 206, 92, 18);
+      ctx.fillRect(36, 198, 48, 10);
+      ctx.fillRect(528, 208, 94, 16);
+      ctx.fillRect(552, 200, 44, 10);
+      ctx.fillStyle = '#d9823b';
+      ctx.fillRect(58, 200, 2, 2);
+      ctx.fillRect(574, 202, 2, 2);
+
+      // 2. Twilight Archipelago Ocean + Stepped Water Shimmer
+      this._drawDitherBands(ctx, W, [
+        [224, 248, '#0b1420'],
+        [248, 286, '#0f1b2b'],
+        [286, 330, '#0b1522'],
+        [330, H, '#070e18']
+      ]);
+      this._drawDitherSeam(ctx, W, 247, '#0f1b2b');
+      this._drawDitherSeam(ctx, W, 285, '#0b1522');
+      this._drawDitherSeam(ctx, W, 329, '#070e18');
+
+      // Twilight dusk wave shimmer dashes (subtle pixel surface ripples, no harsh daytime tiles)
+      const waveTick = Math.floor(t * 3);
+      for (let wv = 0; wv < 20; wv++) {
+        const rx = Math.round(((wv * 53 + waveTick * ((wv & 1) ? 2 : 1)) % (W - 28)) + 8);
+        const ry = 230 + (wv % 7) * 18;
+        const wLen = 10 + (wv % 3) * 6;
+        ctx.fillStyle = (wv % 3 === 0) ? '#264463' : '#182c42';
+        ctx.fillRect(rx, ry, wLen, 2);
+      }
+
+      // Warm campfire reflection shimmer below island in twilight water
+      for (let r = 0; r < 5; r++) {
+        const refX = 310 + Math.round(Math.sin(Math.floor(t * 6) + r * 1.4) * 5) - Math.max(0, 8 - r);
+        const refY = 296 + r * 8;
+        ctx.fillStyle = (r & 1) ? '#5e3120' : '#854929';
+        ctx.fillRect(refX, refY, Math.max(6, 20 - r * 3), 2);
+      }
+
+      // 3. Sanctuary Shrine Isle Grounded in Dusk-Tinted Animated Water Foam
+      const foamImg = this._getStSprite('water_foam', TS + 'Terrain/Tileset/Water Foam.png');
+      const tileImg = this._getStSprite('tile_1', TS + 'Terrain/Tileset/Tilemap_color1.png');
+      const ISLE_X = 96;
+      const ISLE_W = 448;
+
+      if (this._isStImgReady(foamImg)) {
+        const fFr = Math.floor(t * 7) % 16;
+        for (let fx = ISLE_X - 4; fx <= ISLE_X + ISLE_W - 28; fx += 32) {
+          this._drawPixelSprite(ctx, foamImg, fFr * 192 + 56, 72, 80, 64, fx, 266, 40, 26);
+        }
+        ctx.fillStyle = 'rgba(11, 20, 32, 0.46)';
+        ctx.fillRect(ISLE_X - 8, 266, ISLE_W + 18, 28);
+      }
+      ctx.fillStyle = 'rgba(5, 10, 18, 0.62)';
+      ctx.fillRect(ISLE_X + 2, 286, ISLE_W - 4, 4);
+
+      // Organic stepped earthen cliff strata (asymmetric rock bricks)
+      ctx.fillStyle = '#3b2926';
+      ctx.fillRect(ISLE_X, 264, ISLE_W, 9);
+      ctx.fillStyle = '#281b1c';
+      ctx.fillRect(ISLE_X, 273, ISLE_W, 8);
+      ctx.fillStyle = '#191114';
+      ctx.fillRect(ISLE_X, 281, ISLE_W, 5);
+      for (let rx = ISLE_X + 10; rx < ISLE_X + ISLE_W - 18; rx += 22) {
+        const odd = (Math.floor(rx / 22)) & 1;
+        ctx.fillStyle = odd ? '#241819' : '#4a342e';
+        ctx.fillRect(rx, odd ? 267 : 269, 10, 3);
+        ctx.fillStyle = '#170f12';
+        ctx.fillRect(rx + 6, odd ? 276 : 274, 8, 3);
+      }
+      ctx.fillStyle = '#1d2d20';
+      ctx.fillRect(ISLE_X, 263, ISLE_W, 2);
+
+      // Top grass terrain tiles + dusk shade wash
+      for (let tx = ISLE_X; tx < ISLE_X + ISLE_W; tx += 32) {
+        const sx = tx === ISLE_X ? 0 : (tx + 32 >= ISLE_X + ISLE_W ? 128 : 64);
+        if (this._isStImgReady(tileImg)) {
+          this._drawPixelSprite(ctx, tileImg, sx, 0, 64, 64, tx, 240, 32, 26);
+        } else {
+          ctx.fillStyle = '#334d36';
+          ctx.fillRect(tx, 240, 32, 26);
+        }
+      }
+      ctx.fillStyle = 'rgba(14, 10, 26, 0.44)';
+      ctx.fillRect(ISLE_X, 240, ISLE_W, 25);
+
+      // 4. Sanctuary Props & Ambient Shrine Lights
+      const deadTree = this._getStSprite('st_dead_tree_big', FDA + '10_Overworld/Dark_Forest/dead_tree_big_32x48.png');
+      const darkPine = this._getStSprite('st_dark_pine', FDA + '10_Overworld/Dark_Forest/dark_pine_32x40.png');
+      const colImg = this._getStSprite('st_broken_column', FDA + '10_Overworld/Ruins/broken_column_16x48.png');
+      const grave1 = this._getStSprite('st_gravestone_1', FDA + '10_Overworld/Graveyard/gravestone_1.png');
+      const grave3 = this._getStSprite('st_gravestone_3', FDA + '10_Overworld/Graveyard/gravestone_3.png');
+      const rubbleImg = this._getStSprite('st_rubble_1', FDA + '10_Overworld/Ruins/rubble_1.png');
+      const skullImg = this._getStSprite('st_skull_drop', FDA + '07_Items/Monster_Drops/skull.png');
+      const shrineImg = this._getStSprite('st_sanctuary_shrine', FDA + '02_Props/Altars_Shrines/shrine_32x32_anim_4f.png');
+      const brazierImg = this._getStSprite('brazier_orange', FDA + '02_Props/Lights/brazier_orange_16x32_anim_6f.png');
+      const candlesImg = this._getStSprite('st_candles_group', FDA + '02_Props/Lights/candles_group_anim_4f.png');
+      const fireImg = this._getStSprite('campfireAnim', FDA + '10_Overworld/Campsite/campfire_anim_6f.png');
+
+      this._drawPixelSprite(ctx, deadTree, 0, 0, 32, 48, 108, 162, 64, 96);
+      this._drawPixelSprite(ctx, colImg, 0, 0, 16, 48, 172, 166, 32, 96);
+      this._drawPixelSprite(ctx, grave3, 0, 0, 16, 16, 148, 228, 26, 26);
+      this._drawPixelSprite(ctx, skullImg, 0, 0, 16, 16, 186, 242, 16, 16);
+      this._drawPixelSprite(ctx, darkPine, 0, 0, 32, 40, 456, 178, 64, 80);
+      this._drawPixelSprite(ctx, grave1, 0, 0, 16, 16, 408, 228, 26, 26);
+      this._drawPixelSprite(ctx, rubbleImg, 0, 0, 16, 16, 492, 240, 22, 22);
+
+      // Central Sanctuary Shrine
+      this._drawDitherLight(ctx, 274, 226, 28, 16, 'rgba(77, 208, 225, 0.14)', 'rgba(178, 235, 242, 0.18)');
+      if (this._isStImgReady(shrineImg)) {
+        const shF = Math.floor(t * 4) % 4;
+        this._drawPixelSprite(ctx, shrineImg, shF * 32, 0, 32, 32, 242, 194, 64, 64);
+      }
+
+      // Flanking Orange Braziers & Central Campfire Light Pools
+      const fFr = Math.floor(t * 8) % 6;
+      const pulse = (fFr & 1) ? 4 : 0;
+      this._drawDitherLight(ctx, 220, 220, 26 + pulse, 16, 'rgba(255, 138, 44, 0.14)', 'rgba(255, 195, 72, 0.22)');
+      this._drawDitherLight(ctx, 442, 220, 26 - pulse, 16, 'rgba(255, 138, 44, 0.14)', 'rgba(255, 195, 72, 0.22)');
+      this._drawDitherLight(ctx, 320, 250, 56 + pulse, 22, 'rgba(255, 138, 44, 0.16)', 'rgba(255, 213, 79, 0.26)');
+
+      this._drawPixelSprite(ctx, brazierImg, ((fFr + 1) % 6) * 16, 0, 16, 32, 204, 196, 32, 64);
+      this._drawPixelSprite(ctx, brazierImg, ((fFr + 4) % 6) * 16, 0, 16, 32, 426, 196, 32, 64);
+      if (this._isStImgReady(candlesImg)) {
+        const caF = Math.floor(t * 6) % 4;
+        this._drawPixelSprite(ctx, candlesImg, caF * 16, 0, 16, 16, 280, 234, 24, 24);
+      }
+      if (this._isStImgReady(fireImg)) {
+        this._drawPixelSprite(ctx, fireImg, fFr * 16, 0, 16, 16, 304, 228, 32, 32);
+      }
+
+      // Rising hearth embers
+      for (let e = 0; e < 6; e++) {
+        const eLife = (t * 20 + e * 7) % 34;
+        const ex = 319 + Math.round(Math.sin(t * 3 + e * 1.9) * 5);
+        const ey = Math.round(234 - eLife);
+        ctx.fillStyle = (e & 1) ? '#ffe082' : '#ff7043';
+        ctx.fillRect(ex, ey, 2, 2);
+      }
+
+      // 5. Player Skin Resting by Fire + Descending Soul Wisp Returning Before Respawn
+      ctx.fillStyle = 'rgba(10, 6, 16, 0.48)';
+      ctx.fillRect(368, 253, 28, 5);
+      const skin = this._resolveTransitionHeroSkin();
+      const heroImg = this._getStSprite(skin.idle || 'monk_yellow_idle', TS + 'Units/Blue Units/Pawn/Pawn_Idle.png');
+      if (this._isStImgReady(heroImg)) {
+        const hFrames = Math.max(1, Math.floor(heroImg.width / 192));
+        const hf = Math.floor(t * 5) % hFrames;
+        this._drawPixelSprite(ctx, heroImg, hf * 192, 0, 192, 192, 334, 195, 96, 96, true);
+      }
+
+      // Soul Wisp arcs back from Shrine toward Hero as recovery progresses 0 -> 1
+      const rec = Math.max(0, Math.min(1, recovery));
+      const arcLift = Math.round(Math.sin(rec * Math.PI) * 26);
+      const wx = Math.round(274 + (382 - 274) * rec + Math.sin(Math.floor(t * 7) * 0.7) * 2);
+      const wy = Math.round(182 + (238 - 182) * rec - arcLift + ((Math.floor(t * 6) & 1) ? -1 : 0));
+      ctx.fillStyle = '#163442';
+      ctx.fillRect(wx - 4, wy - 5, 8, 10);
+      ctx.fillStyle = '#4dd0e1';
+      ctx.fillRect(wx - 3, wy - 4, 6, 8);
+      ctx.fillRect(wx - 1, wy - 6, 2, 2);
+      ctx.fillStyle = '#e0f7fa';
+      ctx.fillRect(wx - 2, wy - 2, 4, 4);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(wx - 1, wy - 1, 2, 2);
+    }
+
     triggerTitleIntro() {
       const titleScreen = document.getElementById('title-screen');
       if (!titleScreen) return;
@@ -1796,6 +2061,7 @@
     }
 
     hideTitleScreen() {
+      this._stopDeathDiorama();
       if (this._titleIntroTimer) {
         clearTimeout(this._titleIntroTimer);
         this._titleIntroTimer = null;
@@ -1830,6 +2096,7 @@
       this.hideControlsHelper(true);
       const deathOverlay = document.getElementById('death-overlay');
       if (deathOverlay) deathOverlay.classList.add('hidden');
+      this._stopDeathDiorama();
       const altarStack = document.getElementById('altar-blessing-stack');
       if (altarStack) {
         altarStack.classList.add('hidden');
@@ -2349,14 +2616,18 @@
       const deathOverlay = document.getElementById('death-overlay');
       const isDead = Boolean(g && g.started && g.isPlayerDead && g.isPlayerDead());
       if (deathOverlay) {
-        deathOverlay.classList.toggle('hidden', !isDead);
-        if (isDead && g.player) {
-          const maxD = g.player.deadMax || 10.0;
+        const maxD = (g && g.player && g.player.deadMax) || 10.0;
+        const elapsedDead = isDead && g.player ? Math.max(0, maxD - g.player.deadTimer) : 0;
+        const showDeathScreen = isDead && (elapsedDead >= 0.88 || maxD < 1.2);
+        deathOverlay.classList.toggle('hidden', !showDeathScreen);
+        if (showDeathScreen && g.player) {
+          this._startDeathDiorama();
           const pctLeft = Math.max(0, Math.min(100, (g.player.deadTimer / maxD) * 100));
+          const snappedPct = Math.round(pctLeft / 2) * 2;
           const fillEl = document.getElementById('death-bar-fill');
           const cdEl = document.getElementById('death-countdown');
           const stEl = document.getElementById('death-stats-pill');
-          if (fillEl) fillEl.style.width = `${pctLeft.toFixed(1)}%`;
+          if (fillEl) fillEl.style.width = `${snappedPct}%`;
           if (cdEl) cdEl.textContent = tr('death.respawnCount', { sec: Math.max(0.1, g.player.deadTimer).toFixed(1) });
           if (stEl) stEl.textContent = tr('toast.statSummary', {
             level: g.player.level || 1,
@@ -2364,6 +2635,8 @@
             kills: (g.stats && g.stats.kills) || 0,
             plots: (g.unlockedPlots && g.unlockedPlots.length) || 1
           });
+        } else {
+          this._stopDeathDiorama();
         }
       }
       if (!g.started) return;
