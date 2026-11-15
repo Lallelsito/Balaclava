@@ -309,21 +309,27 @@ UI.game = {
 sandbox.window.Balaclava.game = UI.game;
 sandbox.window.Balaclava.I18n.init();
 
-// Phase A: elapsed = 0.0s -> in-world collapse plays, #death-overlay MUST stay hidden
+// Phase A: elapsed = 0.0s & 1.5s -> in-world slow collapse & Bayer wipe play (~2.35s), #death-overlay MUST stay hidden
 UI.updateHUD(true);
-assert(els['death-overlay'].classList.contains('hidden'), '#death-overlay must wait ~0.88s so in-world pixel collapse plays first');
+assert(els['death-overlay'].classList.contains('hidden'), '#death-overlay must wait ~2.35s so in-world pixel collapse & fade-out play first');
 assert(!UI._deathDioramaState, 'Death diorama rAF must not start while hidden');
 assert.strictEqual(activeRafs.size, 0, 'Zero rAFs active during collapse window');
 
-// Phase B: elapsed = 1.6s (deadTimer = 8.4s) -> #death-overlay appears & renders pixel diorama
-UI.game.player.deadTimer = 8.4;
-simNow = 3600;
+UI.game.player.deadTimer = 8.5; // elapsed = 1.5s (still fading out before 2.35s)
+simNow = 3500;
 UI.updateHUD(true);
-assert(!els['death-overlay'].classList.contains('hidden'), '#death-overlay should become visible once collapse finishes');
+assert(els['death-overlay'].classList.contains('hidden'), '#death-overlay must remain hidden at 1.5s during slow fade-out');
+assert.strictEqual(activeRafs.size, 0, 'Zero rAFs active before 2.35s fade-out completes');
+
+// Phase B: elapsed = 2.6s (deadTimer = 7.4s) -> #death-overlay appears & renders pixel diorama
+UI.game.player.deadTimer = 7.4;
+simNow = 4600;
+UI.updateHUD(true);
+assert(!els['death-overlay'].classList.contains('hidden'), '#death-overlay should become visible once 2.35s collapse & fade-out finish');
 assert(UI._deathDioramaState && UI._deathDioramaState.active, 'Death diorama rAF should become active');
 assert.strictEqual(activeRafs.size, 1, 'Expected exactly 1 active death rAF');
-assert.strictEqual(els['death-bar-fill'].style.width, '84%', 'Bar fill should snap in crisp 2% pixel steps');
-assert(els['death-countdown'].textContent.includes('8.4s'), 'Countdown text must update');
+assert.strictEqual(els['death-bar-fill'].style.width, '74%', 'Bar fill should snap in crisp 2% pixel steps');
+assert(els['death-countdown'].textContent.includes('7.4s'), 'Countdown text must update');
 assert(els['death-stats-pill'].textContent.includes('4') && els['death-stats-pill'].textContent.includes('14'), 'Stats row must display player stats');
 
 // Verify integer-only pixel rendering & hero/shrine sprites + optional preview dump

@@ -131,6 +131,14 @@
       this._controlsHelperEl = null;
       this._lastMouseClientX = 0;
       this._lastMouseClientY = 0;
+      this._cmdOpen = false;
+      this._cmdEl = null;
+      this._cmdLogEl = null;
+      this._cmdInputEl = null;
+      this._cmdHistory = [];
+      this._cmdHistIdx = -1;
+      this._cmdTapTimes = [];
+      this._cmdLogs = [];
     }
 
     formatKeyCode(code) {
@@ -2093,6 +2101,7 @@
       this.hideTooltip();
       this.closeMenuDropdown();
       this.closeModal();
+      this.closeSecretConsole();
       this.hideControlsHelper(true);
       const deathOverlay = document.getElementById('death-overlay');
       if (deathOverlay) deathOverlay.classList.add('hidden');
@@ -2172,6 +2181,21 @@
         });
       }
 
+      const lvlBadge = document.getElementById('lvl-text');
+      if (lvlBadge) {
+        lvlBadge.addEventListener('click', (e) => {
+          if (!g || !g.started) return;
+          e.stopPropagation();
+          const now = Date.now();
+          this._cmdTapTimes = (this._cmdTapTimes || []).filter(t => now - t <= 2500);
+          this._cmdTapTimes.push(now);
+          if (this._cmdTapTimes.length >= 7) {
+            this._cmdTapTimes = [];
+            this.toggleSecretConsole();
+          }
+        });
+      }
+
       document.addEventListener('click', (e) => {
         if (!this.menuOpen) return;
         const wrap = document.getElementById('hud-menu-wrap');
@@ -2242,6 +2266,30 @@
 
       window.addEventListener('keydown', (e) => {
         this.recordPlayerActivity();
+        if (!this.rebindingAction && e.code === 'F9' && e.shiftKey && !e.altKey && g && g.started) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.toggleSecretConsole();
+          return;
+        }
+        if (this._cmdOpen && e.code === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closeSecretConsole();
+          return;
+        }
+        const evtTarget = e.target;
+        const isTypingTarget = Boolean(
+          evtTarget && (
+            evtTarget.tagName === 'INPUT' ||
+            evtTarget.tagName === 'TEXTAREA' ||
+            evtTarget.tagName === 'SELECT' ||
+            evtTarget.isContentEditable
+          )
+        );
+        if (this._cmdOpen && (isTypingTarget || (evtTarget && typeof evtTarget.closest === 'function' && evtTarget.closest('#bal-cmd-shell')))) {
+          return;
+        }
         if (this.game && this.game.introCinematic && this.game.introCinematic.active) {
           if (e.code === 'Escape') {
             e.preventDefault();
@@ -2269,15 +2317,6 @@
           return;
         }
 
-        const evtTarget = e.target;
-        const isTypingTarget = Boolean(
-          evtTarget && (
-            evtTarget.tagName === 'INPUT' ||
-            evtTarget.tagName === 'TEXTAREA' ||
-            evtTarget.tagName === 'SELECT' ||
-            evtTarget.isContentEditable
-          )
-        );
         if (isTypingTarget) {
           if (e.code === 'Escape') {
             if (typeof evtTarget.blur === 'function') evtTarget.blur();
@@ -2618,7 +2657,7 @@
       if (deathOverlay) {
         const maxD = (g && g.player && g.player.deadMax) || 10.0;
         const elapsedDead = isDead && g.player ? Math.max(0, maxD - g.player.deadTimer) : 0;
-        const showDeathScreen = isDead && (elapsedDead >= 0.88 || maxD < 1.2);
+        const showDeathScreen = isDead && (elapsedDead >= 2.35 || maxD < 2.6);
         deathOverlay.classList.toggle('hidden', !showDeathScreen);
         if (showDeathScreen && g.player) {
           this._startDeathDiorama();
@@ -8692,6 +8731,772 @@
           }
         }, ready ? tr('npc.completeBtn') : tr('npc.pendingBtn'))
       ]));
+    }
+
+    _normCmdStr(str) {
+      return String(str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    _ensureSecretConsole() {
+      if (this._cmdEl && typeof document !== 'undefined' && document.body && document.body.contains(this._cmdEl)) {
+        return this._cmdEl;
+      }
+      if (typeof document === 'undefined' || !document.body) return null;
+
+      const shell = this.el('div', { id: 'bal-cmd-shell', class: 'bal-cmd-shell hidden' });
+      const closeBtn = this.el('button', {
+        type: 'button',
+        class: 'bal-cmd-close',
+        onclick: () => this.closeSecretConsole()
+      }, 'X');
+      const hdr = this.el('div', { class: 'bal-cmd-hdr' }, [
+        this.el('span', {}, '[DEV] CONSOLA'),
+        this.el('span', { class: 'bal-cmd-hint' }, 'Tab: completar · ↑↓: historial · Esc: cerrar'),
+        closeBtn
+      ]);
+
+      const logEl = this.el('div', { id: 'bal-cmd-log', class: 'bal-cmd-log' });
+      const inputEl = this.el('input', {
+        id: 'bal-cmd-input',
+        class: 'bal-cmd-input',
+        type: 'text',
+        autocomplete: 'off',
+        spellcheck: 'false',
+        placeholder: '/help'
+      });
+
+      const form = this.el('form', {
+        class: 'bal-cmd-form',
+        onsubmit: (ev) => {
+          ev.preventDefault();
+          const val = inputEl.value;
+          inputEl.value = '';
+          this.executeSecretCommand(val);
+        }
+      }, [
+        this.el('span', { class: 'bal-cmd-prompt' }, '>'),
+        inputEl
+      ]);
+
+      inputEl.addEventListener('keydown', (ev) => {
+        if (ev.code === 'Tab') {
+          ev.preventDefault();
+          this._autocompleteSecretCommand();
+        } else if (ev.code === 'ArrowUp') {
+          ev.preventDefault();
+          if (!this._cmdHistory.length) return;
+          if (this._cmdHistIdx < 0) this._cmdHistIdx = this._cmdHistory.length - 1;
+          else if (this._cmdHistIdx > 0) this._cmdHistIdx--;
+          inputEl.value = this._cmdHistory[this._cmdHistIdx] || '';
+        } else if (ev.code === 'ArrowDown') {
+          ev.preventDefault();
+          if (!this._cmdHistory.length || this._cmdHistIdx < 0) {
+            inputEl.value = '';
+            return;
+          }
+          if (this._cmdHistIdx < this._cmdHistory.length - 1) {
+            this._cmdHistIdx++;
+            inputEl.value = this._cmdHistory[this._cmdHistIdx] || '';
+          } else {
+            this._cmdHistIdx = -1;
+            inputEl.value = '';
+          }
+        } else if (ev.code === 'Escape') {
+          ev.preventDefault();
+          ev.stopPropagation();
+          this.closeSecretConsole();
+        }
+      });
+
+      shell.appendChild(hdr);
+      shell.appendChild(logEl);
+      shell.appendChild(form);
+      document.body.appendChild(shell);
+
+      this._cmdEl = shell;
+      this._cmdLogEl = logEl;
+      this._cmdInputEl = inputEl;
+
+      if (!this._cmdLogs.length) {
+        this._pushCmdLog('Consola privada lista. Escribe /help para ver comandos.', 'warn');
+      } else {
+        this._cmdLogs.forEach(entry => {
+          logEl.appendChild(this.el('div', { class: `bal-cmd-line is-${entry.kind}` }, entry.text));
+        });
+      }
+      return shell;
+    }
+
+    _pushCmdLog(text, kind = 'info') {
+      const msg = String(text || '');
+      if (!this._cmdLogs) this._cmdLogs = [];
+      this._cmdLogs.push({ text: msg, kind });
+      if (this._cmdLogs.length > 100) this._cmdLogs.shift();
+      if (this._cmdLogEl) {
+        this._cmdLogEl.appendChild(this.el('div', { class: `bal-cmd-line is-${kind}` }, msg));
+        while (this._cmdLogEl.children.length > 100) {
+          this._cmdLogEl.removeChild(this._cmdLogEl.firstChild);
+        }
+        this._cmdLogEl.scrollTop = this._cmdLogEl.scrollHeight;
+      }
+    }
+
+    openSecretConsole() {
+      const g = this.game;
+      if (!g || !g.started) return false;
+      const shell = this._ensureSecretConsole();
+      if (!shell) return false;
+      this._cmdOpen = true;
+      shell.classList.remove('hidden');
+      if (typeof g.clearTransientInputs === 'function') g.clearTransientInputs();
+      if (this._cmdInputEl && typeof this._cmdInputEl.focus === 'function') {
+        this._cmdInputEl.focus();
+      }
+      return true;
+    }
+
+    closeSecretConsole() {
+      this._cmdOpen = false;
+      if (this._cmdInputEl && typeof this._cmdInputEl.blur === 'function') {
+        this._cmdInputEl.blur();
+      }
+      if (this._cmdEl) this._cmdEl.classList.add('hidden');
+    }
+
+    toggleSecretConsole() {
+      if (this._cmdOpen) {
+        this.closeSecretConsole();
+        return false;
+      }
+      return this.openSecretConsole();
+    }
+
+    _getSecretStatMap() {
+      return {
+        maxhp:        { key: 'maxHp', pct: false },
+        hp:           { key: 'maxHp', pct: false },
+        vida:         { key: 'maxHp', pct: false },
+        health:       { key: 'maxHp', pct: false },
+        maxenergy:    { key: 'maxEnergy', pct: false },
+        energy:       { key: 'maxEnergy', pct: false },
+        energia:      { key: 'maxEnergy', pct: false },
+        mana:         { key: 'maxEnergy', pct: false },
+        dmgbonus:     { key: 'dmgBonus', pct: true },
+        dmg:          { key: 'dmgBonus', pct: true },
+        damage:       { key: 'dmgBonus', pct: true },
+        dano:         { key: 'dmgBonus', pct: true },
+        ataque:       { key: 'dmgBonus', pct: true },
+        atk:          { key: 'dmgBonus', pct: true },
+        fuerza:       { key: 'dmgBonus', pct: true },
+        bossdmg:      { key: 'bossDmg', pct: true },
+        boss:         { key: 'bossDmg', pct: true },
+        jefes:        { key: 'bossDmg', pct: true },
+        spellpower:   { key: 'spellPower', pct: true },
+        spell:        { key: 'spellPower', pct: true },
+        magic:        { key: 'spellPower', pct: true },
+        magia:        { key: 'spellPower', pct: true },
+        hechizo:      { key: 'spellPower', pct: true },
+        movespeed:    { key: 'moveSpeed', pct: true },
+        speed:        { key: 'moveSpeed', pct: true },
+        velocidad:    { key: 'moveSpeed', pct: true },
+        vel:          { key: 'moveSpeed', pct: true },
+        spd:          { key: 'moveSpeed', pct: true },
+        def:          { key: 'def', pct: false },
+        defense:      { key: 'def', pct: false },
+        defensa:      { key: 'def', pct: false },
+        critchance:   { key: 'critChance', pct: true },
+        crit:         { key: 'critChance', pct: true },
+        critico:      { key: 'critChance', pct: true },
+        attackspeed:  { key: 'attackSpeed', pct: true },
+        atkspd:       { key: 'attackSpeed', pct: true },
+        as:           { key: 'attackSpeed', pct: true },
+        luckbonus:    { key: 'luckBonus', pct: true },
+        luck:         { key: 'luckBonus', pct: true },
+        suerte:       { key: 'luckBonus', pct: true },
+        gatherpower:  { key: 'gatherPower', pct: true },
+        gather:       { key: 'gatherPower', pct: true },
+        recoleccion:  { key: 'gatherPower', pct: true },
+        minespeed:    { key: 'mineSpeed', pct: true },
+        minar:        { key: 'mineSpeed', pct: true },
+        chopspeed:    { key: 'chopSpeed', pct: true },
+        talar:        { key: 'chopSpeed', pct: true },
+        regen:        { key: 'regen', pct: false },
+        hpregen:      { key: 'regen', pct: false },
+        energyregen:  { key: 'energyRegen', pct: false },
+        enregen:      { key: 'energyRegen', pct: false },
+        dodgechance:  { key: 'dodgeChance', pct: true },
+        dodge:        { key: 'dodgeChance', pct: true },
+        esquiva:      { key: 'dodgeChance', pct: true },
+        xpbonus:      { key: 'xpBonus', pct: true },
+        coindropbonus:{ key: 'coinDropBonus', pct: true },
+        coinbonus:    { key: 'coinDropBonus', pct: true },
+        magnetbonus:  { key: 'magnetBonus', pct: false },
+        magnet:       { key: 'magnetBonus', pct: false },
+        iman:         { key: 'magnetBonus', pct: false },
+        lightradius:  { key: 'lightRadius', pct: false },
+        energysave:   { key: 'energySave', pct: true },
+        manasave:     { key: 'manaSave', pct: true },
+        spellcdred:   { key: 'spellCdRed', pct: true },
+        thorns:       { key: 'thorns', pct: true },
+        espinas:      { key: 'thorns', pct: true },
+        killheal:     { key: 'killHeal', pct: false },
+        lifesteal:    { key: 'killHeal', pct: false }
+      };
+    }
+
+    _autocompleteSecretCommand() {
+      if (!this._cmdInputEl) return;
+      const raw = this._cmdInputEl.value || '';
+      const hasTrailSpace = /\s$/.test(raw);
+      const parts = raw.trim().split(/\s+/).filter(Boolean);
+      const cmds = ['/help', '/give', '/tool', '/armor', '/money', '/xp', '/level', '/sp', '/godmode', '/heal', '/stat', '/unlock', '/time', '/tp', '/clear'];
+
+      if (parts.length <= 1 && !hasTrailSpace) {
+        const prefix = (parts[0] || '/').replace(/^\/?/, '/').toLowerCase();
+        const matches = cmds.filter(c => c.startsWith(prefix));
+        if (matches.length === 1) {
+          this._cmdInputEl.value = `${matches[0]} `;
+        } else if (matches.length > 1) {
+          this._pushCmdLog(matches.join('  '), 'info');
+        }
+        return;
+      }
+
+      const cmd = parts[0].replace(/^\/+/, '').toLowerCase();
+      const argIdx = hasTrailSpace ? parts.length : parts.length - 1;
+      const cur = hasTrailSpace ? '' : this._normCmdStr(parts[parts.length - 1]);
+      let candidates = [];
+
+      if (cmd === 'give' && argIdx === 1) {
+        candidates = ['all', 'kit', ...Object.keys(Balaclava.ITEMS || {})];
+      } else if (cmd === 'tool') {
+        candidates = argIdx === 1
+          ? ['all', ...Object.keys(Balaclava.TOOLS || {})]
+          : (Balaclava.TOOL_TIERS || []);
+      } else if (cmd === 'armor') {
+        candidates = argIdx === 1
+          ? ['all', ...Object.keys(Balaclava.ARMORS || {})]
+          : (Balaclava.TOOL_TIERS || []);
+      } else if (cmd === 'money' || cmd === 'coins' || cmd === 'gold' || cmd === 'eco') {
+        candidates = argIdx === 1 ? ['give', 'add', 'set', 'take'] : [];
+      } else if (cmd === 'xp' || cmd === 'sp') {
+        candidates = argIdx === 1 ? ['give', 'add', 'set'] : [];
+      } else if (cmd === 'level' || cmd === 'lvl' || cmd === 'nivel') {
+        candidates = argIdx === 1 ? ['set', 'add'] : [];
+      } else if (cmd === 'godmode' || cmd === 'god' || cmd === 'inmortal') {
+        candidates = argIdx === 1 ? ['on', 'off', 'toggle'] : [];
+      } else if (cmd === 'stat' || cmd === 'stats' || cmd === 'buff') {
+        if (argIdx === 1) candidates = ['add', 'set', 'reset', 'list'];
+        else if (argIdx === 2) {
+          candidates = ['maxHp', 'maxEnergy', 'dmgBonus', 'spellPower', 'moveSpeed', 'def', 'critChance', 'attackSpeed', 'luckBonus', 'gatherPower', 'regen', 'energyRegen', 'dodgeChance', 'xpBonus', 'coinDropBonus', 'bossDmg', 'thorns', 'killHeal', 'magnetBonus'];
+        }
+      } else if (cmd === 'unlock') {
+        candidates = argIdx === 1 ? ['all', 'plots', 'skills', 'spells'] : [];
+      } else if (cmd === 'time' || cmd === 'hora') {
+        candidates = argIdx === 1 ? ['dawn', 'day', 'dusk', 'night'] : [];
+      } else if (cmd === 'tp') {
+        candidates = argIdx === 1 ? ['camp'] : [];
+      }
+
+      const matches = candidates.filter(c => this._normCmdStr(c).startsWith(cur));
+      if (!matches.length) return;
+      if (matches.length === 1) {
+        const prefixParts = hasTrailSpace ? parts : parts.slice(0, -1);
+        this._cmdInputEl.value = `${[...prefixParts, matches[0]].join(' ')} `;
+      } else {
+        this._pushCmdLog(matches.slice(0, 12).join('  '), 'info');
+      }
+    }
+
+    executeSecretCommand(rawCmd) {
+      const raw = String(rawCmd || '').trim();
+      if (!raw) return { ok: false, message: 'Comando vacío.' };
+      const g = this.game;
+      if (!g || !g.started || !g.player) {
+        this._pushCmdLog('Inicia o carga una partida primero.', 'err');
+        return { ok: false, message: 'No active game' };
+      }
+
+      if (this._cmdHistory[this._cmdHistory.length - 1] !== raw) {
+        this._cmdHistory.push(raw);
+        if (this._cmdHistory.length > 50) this._cmdHistory.shift();
+      }
+      this._cmdHistIdx = -1;
+      this._pushCmdLog(`> ${raw}`, 'cmd');
+
+      const tokens = raw.split(/\s+/);
+      const cmd = tokens[0].replace(/^\/+/, '').toLowerCase();
+      const args = tokens.slice(1);
+      const fail = (msg) => {
+        this._pushCmdLog(msg, 'err');
+        return { ok: false, message: msg };
+      };
+      const succeed = (msg, kind = 'ok') => {
+        this._pushCmdLog(msg, kind);
+        g.uiDirty = true;
+        this.updateHUD(true);
+        if (this.hasOpenModal()) this.renderModal();
+        return { ok: true, message: msg };
+      };
+
+      const calcNextXp = (lv) => Math.round(22 + lv * 18 + Math.pow(lv, 1.5) * 10);
+
+      if (cmd === 'help' || cmd === '?' || cmd === 'cmds') {
+        [
+          '/give <item|all|kit> [cant]  - Dar items o kit completo',
+          '/tool <id|all> [tier]       - Desbloquear/subir herramientas (ej. celestial)',
+          '/armor <slot|all> [tier]    - Equipar casco/armadura/escudo/botas',
+          '/money <give|set|take> <n>  - Modificar monedas (/coins, /gold)',
+          '/xp <give|set> <n>          - Dar o fijar experiencia',
+          '/level <set|add> <n>        - Subir o fijar nivel (/lvl)',
+          '/sp <give|set> <n>          - Puntos de Constelación',
+          '/godmode [on|off]           - Inmortalidad y energía infinita (/god)',
+          '/heal                       - Curar HP/Energía al máximo y revivir',
+          '/stat <add|set|reset|list> <stat> [val] - Modificar stats (ej. 50% o 200)',
+          '/unlock <plots|skills|spells|all> - Desbloquear islas, árbol o hechizos',
+          '/time <dawn|day|dusk|night|0..1>  - Cambiar hora del día',
+          '/tp <camp | tx ty>          - Teletransporte a campamento o tile',
+          '/clear                      - Limpiar pantalla'
+        ].forEach(line => this._pushCmdLog(line, 'info'));
+        return { ok: true, message: 'help' };
+      }
+
+      if (cmd === 'clear' || cmd === 'cls') {
+        this._cmdLogs = [];
+        if (this._cmdLogEl) this._cmdLogEl.innerHTML = '';
+        return { ok: true, message: 'cleared' };
+      }
+
+      if (cmd === 'give') {
+        if (!args.length) return fail('Uso: /give <item|all|kit> [cantidad]');
+        const ITEMS = Balaclava.ITEMS || {};
+        let qty = 1;
+        let queryParts = args;
+        if (args.length >= 2 && /^\d+$/.test(args[args.length - 1])) {
+          qty = Math.max(1, Math.min(999999, parseInt(args[args.length - 1], 10)));
+          queryParts = args.slice(0, -1);
+        }
+        const queryRaw = queryParts.join(' ');
+        const q = this._normCmdStr(queryRaw);
+
+        if (q === 'all' || q === 'todo') {
+          const allQty = args.length >= 2 && /^\d+$/.test(args[1]) ? qty : 50;
+          const ids = Object.keys(ITEMS);
+          ids.forEach(id => g.addItem(id, allQty));
+          return succeed(`Añadidos ${ids.length} tipos de items (x${allQty}).`);
+        }
+
+        if (q === 'kit') {
+          const kitMap = {
+            madera: 250, piedra: 250, tablon: 150, carbon: 120,
+            lingote_cobre: 100, lingote_hierro: 100, lingote_plata: 80, lingote_oro: 80,
+            lingote_platino: 60, lingote_acero: 60, lingote_titanio: 50,
+            lingote_adamantita: 50, lingote_oricalco: 50, lingote_celestial: 40,
+            diamantes: 30, esmeraldas: 30, amatista: 30, rubi: 30,
+            gema_alma: 20, polvo_estelar: 20, flecha: 200
+          };
+          let count = 0;
+          Object.entries(kitMap).forEach(([id, kQty]) => {
+            if (ITEMS[id]) {
+              g.addItem(id, kQty);
+              count++;
+            }
+          });
+          g.addCoins(5000);
+          return succeed(`Kit entregado (${count} stacks de recursos + 5000 oro).`);
+        }
+
+        const keys = Object.keys(ITEMS);
+        let targetId = ITEMS[queryRaw] ? queryRaw : keys.find(k => this._normCmdStr(k) === q);
+        if (!targetId) {
+          targetId = keys.find(k => this._normCmdStr(ITEMS[k].name) === q);
+        }
+        if (!targetId) {
+          const matches = keys.filter(k => {
+            const nk = this._normCmdStr(k);
+            const nn = this._normCmdStr(ITEMS[k].name);
+            return nk.includes(q) || nn.includes(q);
+          });
+          if (matches.length === 1) {
+            targetId = matches[0];
+          } else if (matches.length > 1) {
+            const exactStart = matches.filter(k => this._normCmdStr(k).startsWith(q));
+            if (exactStart.length === 1) targetId = exactStart[0];
+            else return fail(`Coincidencias (${matches.length}): ${matches.slice(0, 6).join(', ')}`);
+          }
+        }
+        if (!targetId || !ITEMS[targetId]) {
+          return fail(`Item no encontrado: "${queryRaw}"`);
+        }
+        g.addItem(targetId, qty);
+        return succeed(`+${qty} ${ITEMS[targetId].name} (${targetId}).`);
+      }
+
+      if (cmd === 'tool' || cmd === 'tools' || cmd === 'herramienta') {
+        if (!args.length) return fail('Uso: /tool <id|all> [tier=celestial]');
+        const TOOLS = Balaclava.TOOLS || {};
+        const TIERS = Balaclava.TOOL_TIERS || [];
+        const who = this._normCmdStr(args[0]);
+        let tier = 'celestial';
+        if (args[1]) {
+          const tRaw = this._normCmdStr(args[1]);
+          if (/^\d+$/.test(tRaw)) {
+            const idx = Math.max(0, Math.min(TIERS.length - 1, parseInt(tRaw, 10) - 1));
+            tier = TIERS[idx] || tier;
+          } else {
+            const foundTier = TIERS.find(t => this._normCmdStr(t) === tRaw || this._normCmdStr(t).startsWith(tRaw));
+            if (!foundTier) return fail(`Tier desconocido "${args[1]}". Tiers: ${TIERS.join(', ')}`);
+            tier = foundTier;
+          }
+        }
+        const toolKeys = Object.keys(TOOLS);
+        const targetTools = (who === 'all' || who === 'todas')
+          ? toolKeys
+          : [toolKeys.find(k => this._normCmdStr(k) === who || this._normCmdStr(TOOLS[k].name).includes(who))].filter(Boolean);
+        if (!targetTools.length) return fail(`Herramienta desconocida. Opciones: ${toolKeys.join(', ')}, all`);
+        targetTools.forEach(tid => {
+          const had = Boolean(g.toolTiers[tid]);
+          g.toolTiers[tid] = tier;
+          if (!had && typeof g.placeInNearestAvailableHotbarSlot === 'function') {
+            if (Array.isArray(g.hotbar)) {
+              for (let i = 0; i < g.hotbar.length; i++) {
+                const s = g.hotbar[i];
+                if (s && s.kind === 'tool' && s.id === tid) g.hotbar[i] = null;
+              }
+            }
+            g.placeInNearestAvailableHotbarSlot('tool', tid, true);
+          }
+          if (tid === 'arco') {
+            if (typeof g.getArrowCount === 'function' && g.getArrowCount() <= 0) g.addItem('flecha', 24);
+            g.player.bowLoaded = true;
+            g.player.bowReloadTimer = 0;
+            g.player.bowNeedsAutoReload = false;
+          }
+        });
+        g.recomputeModifiers();
+        return succeed(`Herramienta(s) [${targetTools.join(', ')}] ajustada(s) a tier "${tier}".`);
+      }
+
+      if (cmd === 'armor' || cmd === 'armadura') {
+        if (!args.length) return fail('Uso: /armor <helm|armor|shield|boots|all> [tier=celestial]');
+        const ARMORS = Balaclava.ARMORS || {};
+        const TIERS = Balaclava.TOOL_TIERS || [];
+        const aliasMap = {
+          helm: 'helm', helmet: 'helm', casco: 'helm',
+          armor: 'armor', armadura: 'armor', pecho: 'armor', chest: 'armor',
+          shield: 'shield', escudo: 'shield',
+          boots: 'boots', botas: 'boots'
+        };
+        const slotReq = this._normCmdStr(args[0]);
+        let tierIdx = TIERS.length - 1;
+        if (args[1]) {
+          const tRaw = this._normCmdStr(args[1]);
+          if (/^\d+$/.test(tRaw)) {
+            tierIdx = Math.max(0, Math.min(TIERS.length - 1, parseInt(tRaw, 10) - 1));
+          } else {
+            const foundIdx = TIERS.findIndex(t => this._normCmdStr(t) === tRaw || this._normCmdStr(t).startsWith(tRaw));
+            if (foundIdx < 0) return fail(`Tier desconocido "${args[1]}".`);
+            tierIdx = foundIdx;
+          }
+        }
+        const slots = (slotReq === 'all' || slotReq === 'todas' || slotReq === 'todo')
+          ? Object.keys(ARMORS)
+          : (aliasMap[slotReq] ? [aliasMap[slotReq]] : []);
+        if (!slots.length) return fail('Slot inválido. Usa helm, armor, shield, boots o all.');
+        slots.forEach(sl => {
+          const chain = ARMORS[sl];
+          if (!chain || !chain.tiers.length) return;
+          const itemId = chain.tiers[Math.min(chain.tiers.length - 1, tierIdx)];
+          if (typeof g.autoEquipCraftedArmor === 'function') {
+            g.autoEquipCraftedArmor(sl, itemId, null);
+          } else {
+            g.equipped[sl] = itemId;
+          }
+        });
+        g.recomputeModifiers();
+        return succeed(`Armadura equipada (${slots.join(', ')}) en rango ${tierIdx + 1}.`);
+      }
+
+      if (cmd === 'money' || cmd === 'coins' || cmd === 'gold' || cmd === 'eco') {
+        if (!args.length) return fail('Uso: /money <give|add|set|take> <cantidad>');
+        let mode = 'give';
+        let numRaw = args[0];
+        if (['give', 'add', 'set', 'take', 'remove'].includes(this._normCmdStr(args[0]))) {
+          mode = this._normCmdStr(args[0]);
+          numRaw = args[1];
+        }
+        const amt = Number(numRaw);
+        if (!Number.isFinite(amt) || amt < 0) return fail('Cantidad inválida.');
+        const val = Math.min(1000000000, Math.floor(amt));
+        if (mode === 'set') {
+          g.coins = val;
+        } else if (mode === 'take' || mode === 'remove') {
+          g.coins = Math.max(0, g.coins - val);
+        } else {
+          g.coins += val;
+          if (g.stats) g.stats.coinsEarned = (g.stats.coinsEarned || 0) + val;
+          if (val > 0 && typeof g.addFloatingText === 'function') {
+            g.addFloatingText(g.player.x + 14, g.player.y - 24, `+${val}g`, '#ffd54f');
+          }
+        }
+        return succeed(`Oro actual: ${g.coins}.`);
+      }
+
+      if (cmd === 'xp') {
+        if (!args.length) return fail('Uso: /xp <give|add|set> <cantidad>');
+        let mode = 'give';
+        let numRaw = args[0];
+        if (['give', 'add', 'set'].includes(this._normCmdStr(args[0]))) {
+          mode = this._normCmdStr(args[0]);
+          numRaw = args[1];
+        }
+        const amt = Number(numRaw);
+        if (!Number.isFinite(amt) || amt < 0) return fail('Cantidad de XP inválida.');
+        const val = Math.floor(amt);
+        if (mode === 'set') {
+          g.player.xp = val;
+          while (g.player.xp >= g.player.nextXp) {
+            g.player.xp -= g.player.nextXp;
+            g.player.level++;
+            g.player.skillPoints += 1;
+            g.player.nextXp = calcNextXp(g.player.level);
+            g.recomputeModifiers();
+            g.player.hp = g.player.maxHp;
+            g.player.energy = g.player.maxEnergy;
+          }
+        } else {
+          if (val > 0) g.gainXp(val);
+        }
+        return succeed(`Nivel ${g.player.level} · XP ${g.player.xp}/${g.player.nextXp}.`);
+      }
+
+      if (cmd === 'level' || cmd === 'lvl' || cmd === 'nivel') {
+        if (!args.length) return fail('Uso: /level <set|add> <nivel>');
+        let mode = 'set';
+        let numRaw = args[0];
+        if (['set', 'add', 'give'].includes(this._normCmdStr(args[0]))) {
+          mode = this._normCmdStr(args[0]);
+          numRaw = args[1];
+        }
+        const amt = Number(numRaw);
+        if (!Number.isFinite(amt)) return fail('Nivel inválido.');
+        const oldLv = g.player.level;
+        const target = mode === 'add' || mode === 'give'
+          ? oldLv + Math.floor(amt)
+          : Math.floor(amt);
+        const clamped = Math.max(1, Math.min(999, target));
+        if (clamped > oldLv) g.player.skillPoints += (clamped - oldLv);
+        g.player.level = clamped;
+        g.player.xp = 0;
+        g.player.nextXp = calcNextXp(clamped);
+        g.recomputeModifiers();
+        g.player.hp = g.player.maxHp;
+        g.player.energy = g.player.maxEnergy;
+        return succeed(`Nivel establecido a ${g.player.level} (SP: ${g.player.skillPoints}).`);
+      }
+
+      if (cmd === 'sp') {
+        if (!args.length) return fail('Uso: /sp <give|add|set> <cantidad>');
+        let mode = 'give';
+        let numRaw = args[0];
+        if (['give', 'add', 'set'].includes(this._normCmdStr(args[0]))) {
+          mode = this._normCmdStr(args[0]);
+          numRaw = args[1];
+        }
+        const amt = Number(numRaw);
+        if (!Number.isFinite(amt) || amt < 0) return fail('Cantidad inválida.');
+        const val = Math.floor(amt);
+        g.player.skillPoints = mode === 'set' ? val : g.player.skillPoints + val;
+        return succeed(`Puntos de Constelación: ${g.player.skillPoints}.`);
+      }
+
+      if (cmd === 'godmode' || cmd === 'god' || cmd === 'inmortal') {
+        const arg = args[0] ? this._normCmdStr(args[0]) : 'toggle';
+        let next = !g.player.godMode;
+        if (['on', '1', 'true', 'si', 'yes'].includes(arg)) next = true;
+        else if (['off', '0', 'false', 'no'].includes(arg)) next = false;
+        g.player.godMode = next;
+        g.player.invuln = 0;
+        if (next) {
+          g.player.deadTimer = 0;
+          g.player.hp = g.player.maxHp;
+          g.player.energy = g.player.maxEnergy;
+          g.warningBanner = null;
+          if (typeof g.addFloatingText === 'function') {
+            g.addFloatingText(g.player.x, g.player.y - 30, 'GODMODE ON', '#ffd54f');
+          }
+        }
+        return succeed(`Godmode ${next ? 'ACTIVADO (inmortal + energía infinita)' : 'DESACTIVADO'}.`, next ? 'warn' : 'ok');
+      }
+
+      if (cmd === 'heal' || cmd === 'curar' || cmd === 'revive') {
+        g.player.deadTimer = 0;
+        g.player.invuln = 0.8;
+        g.player.hp = g.player.maxHp;
+        g.player.energy = g.player.maxEnergy;
+        g.warningBanner = null;
+        if (typeof g.addFloatingText === 'function') {
+          g.addFloatingText(g.player.x, g.player.y - 28, '+MAX HP/EN', '#81c784');
+        }
+        return succeed(`Salud (${g.player.hp}/${g.player.maxHp}) y Energía (${g.player.energy}/${g.player.maxEnergy}) restauradas.`);
+      }
+
+      if (cmd === 'stat' || cmd === 'stats' || cmd === 'buff') {
+        if (!g.player.bonusStats) g.player.bonusStats = {};
+        const sub = args[0] ? this._normCmdStr(args[0]) : 'list';
+        const statMap = this._getSecretStatMap();
+
+        if (sub === 'list') {
+          const active = Object.entries(g.player.bonusStats);
+          const summary = active.length
+            ? active.map(([k, v]) => `${k}=${v}`).join(', ')
+            : 'ninguno';
+          return succeed(`Bonus activos: ${summary} | Claves: maxHp, maxEnergy, dmgBonus, spellPower, moveSpeed, def, critChance, attackSpeed, luckBonus, gatherPower, regen, energyRegen`, 'info');
+        }
+
+        if (sub === 'reset') {
+          if (args[1]) {
+            const entry = statMap[this._normCmdStr(args[1])];
+            if (!entry) return fail(`Stat desconocida: "${args[1]}"`);
+            delete g.player.bonusStats[entry.key];
+            g.recomputeModifiers();
+            return succeed(`Bonus "${entry.key}" reiniciado.`);
+          }
+          g.player.bonusStats = {};
+          g.recomputeModifiers();
+          return succeed('Todos los bonus de estadísticas reiniciados.');
+        }
+
+        if ((sub !== 'add' && sub !== 'set') || args.length < 3) {
+          return fail('Uso: /stat <add|set|reset|list> <stat> [valor]');
+        }
+        const entry = statMap[this._normCmdStr(args[1])];
+        if (!entry) return fail(`Stat desconocida "${args[1]}". Usa /stat list.`);
+
+        const rawVal = String(args[2]).trim();
+        const isPctInput = rawVal.endsWith('%');
+        const numParsed = Number(isPctInput ? rawVal.slice(0, -1) : rawVal);
+        if (!Number.isFinite(numParsed)) return fail(`Valor numérico inválido: "${args[2]}"`);
+        const delta = isPctInput ? (numParsed / 100) : numParsed;
+
+        if (sub === 'set') {
+          g.player.bonusStats[entry.key] = +delta.toFixed(4);
+        } else {
+          g.player.bonusStats[entry.key] = +((g.player.bonusStats[entry.key] || 0) + delta).toFixed(4);
+        }
+        g.recomputeModifiers();
+        if (entry.key === 'maxHp' && g.player.bonusStats.maxHp > 0) g.player.hp = g.player.maxHp;
+        if (entry.key === 'maxEnergy' && g.player.bonusStats.maxEnergy > 0) g.player.energy = g.player.maxEnergy;
+        return succeed(`Stat ${entry.key} bonus = ${g.player.bonusStats[entry.key]} (total mod: ${+(g.mods[entry.key] || 0).toFixed(3)}).`);
+      }
+
+      if (cmd === 'unlock') {
+        const target = args[0] ? this._normCmdStr(args[0]) : '';
+        if (!['plots', 'skills', 'spells', 'all'].includes(target)) {
+          return fail('Uso: /unlock <plots|skills|spells|all>');
+        }
+        const done = [];
+        if (target === 'plots' || target === 'all') {
+          let unlockedCount = 0;
+          if (g.world) {
+            for (let gy = 0; gy < GRID_PLOTS; gy++) {
+              for (let gx = 0; gx < GRID_PLOTS; gx++) {
+                if (!g.world.plotUnlocked[gy] || !g.world.plotUnlocked[gy][gx]) {
+                  g.world.unlockPlot(gx, gy, false);
+                  unlockedCount++;
+                }
+                if (!g.unlockedPlots.some(p => p[0] === gx && p[1] === gy)) {
+                  g.unlockedPlots.push([gx, gy]);
+                }
+              }
+            }
+          }
+          done.push(`islas +${unlockedCount}`);
+        }
+        if (target === 'skills' || target === 'all') {
+          const allSkills = Object.keys(Balaclava.SKILLS || {});
+          let added = 0;
+          allSkills.forEach(sid => {
+            if (!g.unlockedSkills.includes(sid)) {
+              g.unlockedSkills.push(sid);
+              added++;
+            }
+          });
+          g.recomputeModifiers();
+          done.push(`constelaciones +${added}`);
+        }
+        if (target === 'spells' || target === 'all') {
+          const allSpells = Object.keys(Balaclava.SPELLS || {});
+          if (!Array.isArray(g.unlockedSpells)) g.unlockedSpells = [];
+          if (!Array.isArray(g.spellSlots)) g.spellSlots = [null, null, null, null];
+          let added = 0;
+          allSpells.forEach(spId => {
+            if (!g.unlockedSpells.includes(spId)) {
+              g.unlockedSpells.push(spId);
+              added++;
+            }
+            const emptySlot = g.spellSlots.findIndex(s => !s);
+            if (emptySlot !== -1 && !g.spellSlots.includes(spId)) g.spellSlots[emptySlot] = spId;
+          });
+          done.push(`hechizos +${added}`);
+        }
+        return succeed(`Desbloqueado: ${done.join(', ')}.`);
+      }
+
+      if (cmd === 'time' || cmd === 'hora') {
+        if (!args.length) return fail('Uso: /time <dawn|day|dusk|night|0..1>');
+        const tArg = this._normCmdStr(args[0]);
+        const preset = {
+          dawn: 0.02, amanecer: 0.02,
+          day: 0.25, dia: 0.25,
+          dusk: 0.69, atardecer: 0.69,
+          night: 0.80, noche: 0.80
+        };
+        if (Object.prototype.hasOwnProperty.call(preset, tArg)) {
+          g.dayTime = preset[tArg];
+        } else {
+          const num = Number(tArg);
+          if (!Number.isFinite(num)) return fail('Hora inválida. Usa dawn, day, dusk, night o un número 0..1.');
+          g.dayTime = ((num % 1) + 1) % 1;
+        }
+        return succeed(`Hora ajustada (${g.getDayPhase ? g.getDayPhase().label : g.dayTime}).`);
+      }
+
+      if (cmd === 'tp') {
+        if (!args.length) return fail('Uso: /tp <camp | tx ty>');
+        const dst = this._normCmdStr(args[0]);
+        if (dst === 'camp' || dst === 'home' || dst === 'base') {
+          if (g.activeDungeon && typeof g.exitDungeon === 'function') g.exitDungeon(true);
+          const C = CENTER_PLOT || 4;
+          const cx = (C * PLOT_TILES + 6.5) * TILE_SIZE;
+          const cy = (C * PLOT_TILES + 6.5) * TILE_SIZE;
+          const spawn = typeof g.findSafeOverworldSpawn === 'function'
+            ? g.findSafeOverworldSpawn(cx, cy, { maxRadius: 8 })
+            : { x: cx, y: cy };
+          g.player.x = spawn.x;
+          g.player.y = spawn.y;
+          g.camera.x = g.player.x;
+          g.camera.y = g.player.y;
+          return succeed(`Teletransportado al campamento (${Math.round(g.player.x / TILE_SIZE)}, ${Math.round(g.player.y / TILE_SIZE)}).`);
+        }
+        if (args.length < 2) return fail('Uso: /tp <camp | tx ty>');
+        const tx = Number(args[0]);
+        const ty = Number(args[1]);
+        if (!Number.isFinite(tx) || !Number.isFinite(ty)) return fail('Coordenadas de tile inválidas.');
+        const clampedX = Math.max(1, Math.min(WORLD_TILES - 2, tx));
+        const clampedY = Math.max(1, Math.min(WORLD_TILES - 2, ty));
+        g.player.x = (clampedX + 0.5) * TILE_SIZE;
+        g.player.y = (clampedY + 0.5) * TILE_SIZE;
+        g.camera.x = g.player.x;
+        g.camera.y = g.player.y;
+        return succeed(`Teletransportado al tile (${clampedX}, ${clampedY}).`);
+      }
+
+      return fail(`Comando desconocido "/${cmd}". Escribe /help.`);
     }
 
   }

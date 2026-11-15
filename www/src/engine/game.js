@@ -157,6 +157,8 @@
         deadMax: 10.0,
         animTimer: 0,
         moving: false,
+        godMode: false,
+        bonusStats: {},
         skinId: (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || 'monk_yellow'
       };
     }
@@ -448,9 +450,18 @@
         m.moveSpeed += 0.25;
       }
 
+      if (this.player && this.player.bonusStats) {
+        Object.entries(this.player.bonusStats).forEach(([statKey, statVal]) => {
+          const num = Number(statVal);
+          if (Number.isFinite(num) && num !== 0) {
+            m[statKey] = (m[statKey] || 0) + num;
+          }
+        });
+      }
+
       this.mods = m;
-      this.player.maxHp = 85 + m.maxHp + (this.player.level - 1) * 4;
-      this.player.maxEnergy = 100 + m.maxEnergy + (this.player.level - 1) * 4;
+      this.player.maxHp = Math.max(10, 85 + m.maxHp + (this.player.level - 1) * 4);
+      this.player.maxEnergy = Math.max(10, 100 + m.maxEnergy + (this.player.level - 1) * 4);
       this.player.hp = Math.min(this.player.hp, this.player.maxHp);
       this.player.energy = Math.min(this.player.energy, this.player.maxEnergy);
     }
@@ -2586,15 +2597,15 @@
         this.selectedEnemy = hovered.entity;
       }
 
-      const energyCost = Math.max(0.8, (bStats.energyCost || 3.0) * (1 - (this.mods.energySave || 0)));
-      if (this.player.energy < energyCost) {
+      const energyCost = this.player.godMode ? 0 : Math.max(0.8, (bStats.energyCost || 3.0) * (1 - (this.mods.energySave || 0)));
+      if (!this.player.godMode && this.player.energy < energyCost) {
         if ((this.time - (this._lastLowEnWarn || -99)) >= 1.35) {
           this._lastLowEnWarn = this.time;
           this.addFloatingText(this.player.x, this.player.y - 24, Balaclava.I18n ? Balaclava.I18n.t('toast.lowEnergyEat') : '¡Sin energía! Come bayas/pan', '#ff8a65');
         }
         return;
       }
-      this.player.energy = Math.max(0, this.player.energy - energyCost);
+      if (energyCost > 0) this.player.energy = Math.max(0, this.player.energy - energyCost);
       const aimX = hovered && hovered.inReach ? hovered.x : wx;
       const aimY = hovered && hovered.inReach ? hovered.y : wy;
       const ang = Math.atan2(aimY - this.player.y, aimX - this.player.x);
@@ -2690,17 +2701,19 @@
       if (this.isPlayerDead() || this.player.swingTimer > 0) return false;
       const st = itemDef.isStaffWeapon ? itemDef.staffStats : itemDef.rangedStats;
       if (!st) return false;
-      const eCost = itemDef.isStaffWeapon
-        ? Math.max(1, (st.energyCost || 3) * (1 - Math.min(0.45, (this.mods.manaSave || 0) + (this.mods.energySave || 0))))
-        : Math.max(0.8, 2.0 * (1 - (this.mods.energySave || 0)));
-      if (this.player.energy < eCost) {
+      const eCost = this.player.godMode
+        ? 0
+        : (itemDef.isStaffWeapon
+          ? Math.max(1, (st.energyCost || 3) * (1 - Math.min(0.45, (this.mods.manaSave || 0) + (this.mods.energySave || 0))))
+          : Math.max(0.8, 2.0 * (1 - (this.mods.energySave || 0))));
+      if (!this.player.godMode && this.player.energy < eCost) {
         if ((this.time - (this._lastLowEnWarn || -99)) >= 1.35) {
           this._lastLowEnWarn = this.time;
           this.addFloatingText(this.player.x, this.player.y - 24, Balaclava.I18n ? Balaclava.I18n.t('toast.noEnergy') : '¡Sin energía!', '#ff8a65');
         }
         return false;
       }
-      this.player.energy = Math.max(0, this.player.energy - eCost);
+      if (eCost > 0) this.player.energy = Math.max(0, this.player.energy - eCost);
       const ang = Math.atan2(wy - this.player.y, wx - this.player.x);
       this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
       this.player.swingAngle = ang;
@@ -2779,13 +2792,13 @@
         return false;
       }
       const manaSave = Math.min(0.45, (this.mods.manaSave || 0) + (this.mods.energySave || 0) * 0.4);
-      const cost = Math.max(2, Math.round((sp.cost || 10) * (1 - manaSave)));
-      if (this.player.energy < cost) {
+      const cost = this.player.godMode ? 0 : Math.max(2, Math.round((sp.cost || 10) * (1 - manaSave)));
+      if (!this.player.godMode && this.player.energy < cost) {
         this.addFloatingText(this.player.x, this.player.y - 26, `${Balaclava.I18n ? Balaclava.I18n.t('toast.noEnergy') : '¡Sin energía!'} (${cost})`, '#ff8a65');
         Balaclava.Audio.play('error');
         return false;
       }
-      this.player.energy = Math.max(0, this.player.energy - cost);
+      if (cost > 0) this.player.energy = Math.max(0, this.player.energy - cost);
       const cdRed = Math.min(0.75, this.mods.spellCdRed || 0);
       this.spellCooldowns[spellId] = Math.max(3.0, (sp.cooldown || 20.0) * (1 - cdRed));
 
@@ -3051,15 +3064,15 @@
         return;
       }
 
-      const energyCost = Math.max(0.5, stats.energyCost * (1 - (this.mods.energySave || 0)));
-      if (this.player.energy < energyCost) {
+      const energyCost = this.player.godMode ? 0 : Math.max(0.5, stats.energyCost * (1 - (this.mods.energySave || 0)));
+      if (!this.player.godMode && this.player.energy < energyCost) {
         if ((this.time - (this._lastLowEnWarn || -99)) >= 1.35) {
           this._lastLowEnWarn = this.time;
           this.addFloatingText(this.player.x, this.player.y - 24, Balaclava.I18n ? Balaclava.I18n.t('toast.lowEnergyEat') : '¡Sin energía! Come bayas/pan', '#ff8a65');
         }
         return;
       }
-      this.player.energy = Math.max(0, this.player.energy - energyCost);
+      if (energyCost > 0) this.player.energy = Math.max(0, this.player.energy - energyCost);
 
       const aimX = (hovered && hovered.inReach) ? hovered.x : wx;
       const aimY = (hovered && hovered.inReach) ? hovered.y : wy;
@@ -4072,6 +4085,13 @@
     }
 
     damagePlayer(raw, opts = null) {
+      if (this.player.godMode) {
+        if ((this.time - (this._lastGodImmuneFx || -99)) >= 0.45) {
+          this._lastGodImmuneFx = this.time;
+          this.addFloatingText(this.player.x, this.player.y - 24, 'INMUNE', '#ffd54f');
+        }
+        return;
+      }
       if (this.player.deadTimer > 0 || this.player.invuln > 0 || this.player.dashTimer > 0) return;
       const dodgeChance = Math.min(0.45, this.mods.dodgeChance || 0);
       if (dodgeChance > 0 && Math.random() < dodgeChance) {
@@ -4543,14 +4563,14 @@
       if ((this.laserCooldown || 0) > 0) return false;
 
       const st = itemDef.laserStats;
-      const energyCost = Math.max(0.5, st.energyCost * (1 - (this.mods.energySave || 0)));
-      if (this.player.energy < energyCost) {
+      const energyCost = this.player.godMode ? 0 : Math.max(0.5, st.energyCost * (1 - (this.mods.energySave || 0)));
+      if (!this.player.godMode && this.player.energy < energyCost) {
         this.laserCooldown = 0.25;
         this.addFloatingText(this.player.x, this.player.y - 26, Balaclava.I18n ? Balaclava.I18n.t('toast.noEnergy') : '¡Sin energía!', '#ff8a65');
         return false;
       }
 
-      this.player.energy = Math.max(0, this.player.energy - energyCost);
+      if (energyCost > 0) this.player.energy = Math.max(0, this.player.energy - energyCost);
       this.laserCooldown = st.cooldown;
 
       const ang = Math.atan2(wy - (this.player.y - 4), wx - this.player.x);
@@ -4807,6 +4827,12 @@
         if (this.introCinematic.bands <= 0) {
           this.introCinematic = null;
         }
+      }
+
+      if (this.player.godMode) {
+        if (this.player.deadTimer > 0) this.player.deadTimer = 0;
+        this.player.hp = this.player.maxHp;
+        this.player.energy = this.player.maxEnergy;
       }
 
       if (this.player.deadTimer > 0) {
@@ -5720,13 +5746,13 @@
         const maxD = this.player.deadMax || 10.0;
         const elapsed = Math.max(0, maxD - this.player.deadTimer);
 
-        // Stepped retro crimson impact flash on frames 0..2
-        if (elapsed < 0.16) {
-          const hitStep = Math.floor(elapsed * 18) & 1;
-          ctx.fillStyle = hitStep === 0 ? 'rgba(136, 18, 30, 0.34)' : 'rgba(24, 6, 14, 0.28)';
+        // Stepped retro crimson impact flash on opening hit frames
+        if (elapsed < 0.22) {
+          const hitStep = Math.floor(elapsed * 16) & 1;
+          ctx.fillStyle = hitStep === 0 ? 'rgba(136, 18, 30, 0.36)' : 'rgba(24, 6, 14, 0.30)';
           ctx.fillRect(0, 0, w, h);
         } else {
-          // Stepped 16-bit pixel border bands + 4-stage Bayer 2x2 checkerboard wipe (zero radial gradients)
+          // Stepped 16-bit pixel border bands + 4-stage Bayer 2x2 checkerboard wipe (~2.35s slow fade-out)
           const bw = Math.max(24, Math.round(w * 0.08));
           const bh = Math.max(18, Math.round(h * 0.08));
           ctx.fillStyle = 'rgba(12, 5, 11, 0.56)';
@@ -5735,10 +5761,11 @@
           ctx.fillRect(0, bh, bw, h - bh * 2);
           ctx.fillRect(w - bw, bh, bw, h - bh * 2);
 
-          const stage = elapsed < 0.42 ? 1 : (elapsed < 0.64 ? 2 : (elapsed < 0.82 ? 3 : 4));
+          const stage = elapsed < 0.78 ? 1 : (elapsed < 1.32 ? 2 : (elapsed < 1.85 ? 3 : 4));
           const cell = 6;
           const bayerOrder = [0, 2, 3, 1]; // 2x2 Bayer thresholds
-          ctx.fillStyle = stage >= 4 ? 'rgba(9, 4, 12, 0.92)' : 'rgba(9, 4, 12, 0.72)';
+          const stageAlphas = [0.42, 0.62, 0.80, 0.94];
+          ctx.fillStyle = `rgba(9, 4, 12, ${stageAlphas[stage - 1]})`;
           for (let cy = 0; cy < h; cy += cell) {
             const by = Math.floor(cy / cell) & 1;
             for (let cx = 0; cx < w; cx += cell) {
@@ -7586,7 +7613,7 @@
         ctx.fillRect(-14, 9, 28, 6);
         ctx.fillRect(-10, 7, 20, 2);
 
-        if (elapsed >= 0.22) {
+        if (elapsed >= 0.34) {
           ctx.fillStyle = '#3d282c';
           ctx.fillRect(-14, 5, 28, 4);
           ctx.fillStyle = '#5c3f45';
@@ -7595,8 +7622,8 @@
           ctx.fillRect(-6, 1, 12, 2);
         }
 
-        const staggerX = elapsed < 0.20 ? Math.round(((Math.floor(elapsed * 30) & 1) ? 3 : -3)) : 0;
-        const stepIdx = elapsed < 0.14 ? 0 : Math.min(3, Math.floor((elapsed - 0.10) / 0.08));
+        const staggerX = elapsed < 0.28 ? Math.round(((Math.floor(elapsed * 26) & 1) ? 3 : -3)) : 0;
+        const stepIdx = elapsed < 0.20 ? 0 : Math.min(3, Math.floor((elapsed - 0.16) / 0.12));
         const stepAngles = [0, 0.34, 0.72, 1.0];
         const tilt = stepAngles[stepIdx] * (Math.PI / 2);
         const dropY = Math.round(stepAngles[stepIdx] * 6);
@@ -7604,11 +7631,11 @@
         ctx.save();
         ctx.translate(staggerX, dropY);
         ctx.rotate(-tilt * p.facing);
-        if (elapsed < 0.16 && (Math.floor(elapsed * 24) & 1) === 0) {
+        if (elapsed < 0.22 && (Math.floor(elapsed * 20) & 1) === 0) {
           ctx.fillStyle = 'rgba(255, 232, 224, 0.72)';
           ctx.fillRect(-14, -28, 28, 32);
         }
-        ctx.globalAlpha = elapsed >= 0.55 ? 0.85 : 1.0;
+        ctx.globalAlpha = elapsed >= 0.85 ? 0.85 : 1.0;
         ctx.scale(p.facing, 1);
         if (sheet) {
           ctx.drawImage(sheet, frame * 192, sourceY, 192, 192, -48, -56, 96, 96);
@@ -7619,9 +7646,9 @@
         ctx.restore();
 
         // Stepped 16-bit Soul Wisp ascending from fallen hero
-        if (elapsed >= 0.14) {
-          const wispAge = elapsed - 0.14;
-          const rise = Math.min(44, Math.floor(wispAge * 46));
+        if (elapsed >= 0.26) {
+          const wispAge = elapsed - 0.26;
+          const rise = Math.min(58, Math.floor(wispAge * 28));
           const bobX = Math.round(Math.sin(Math.floor(elapsed * 8) * 0.9) * 3);
           const bobY = (Math.floor(elapsed * 6) & 1) ? -1 : 0;
           const wx = bobX;
