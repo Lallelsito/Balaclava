@@ -349,6 +349,7 @@
 
     fadeOutMusic(fadeOutMs = 600) {
       this._trackSeq += 1;
+      this._musicSuppressedByFadeOut = true;
       this._cancelMusicTimers();
       this._pendingAutoplayFade = null;
       const prev = this._musicTrack;
@@ -361,14 +362,7 @@
 
     _animateFadeIn(track, fadeInMs, seq) {
       if (!track || this._musicTrack !== track || seq !== this._trackSeq) return;
-      if (this._fadeInRaf && typeof cancelAnimationFrame === 'function') {
-        cancelAnimationFrame(this._fadeInRaf);
-        this._fadeInRaf = null;
-      }
-      if (this._fadeInTimer) {
-        clearInterval(this._fadeInTimer);
-        this._fadeInTimer = null;
-      }
+      this._cancelFadeInLoop();
 
       if (fadeInMs <= 20) {
         this._musicFade = 1;
@@ -378,30 +372,53 @@
 
       this._musicFade = 0;
       this._applyTrackVolumeNow();
-      const startTs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      let elapsedMs = 0;
+      let fadeStarted = false;
+      let lastTickTs = (typeof performance !== 'undefined' ? performance.now() : Date.now());
       const tick = () => {
         if (this._musicTrack !== track || seq !== this._trackSeq) {
           this._cancelFadeInLoop();
           return;
         }
         const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-        const t = Math.min(1, (now - startTs) / fadeInMs);
+        // Wait until media stream has data & begins advancing so buffer/decode stalls cannot skip silence
+        const isTrackAudible = (typeof track.readyState !== 'number')
+          ? !track.paused
+          : (!track.paused && (Number(track.currentTime) > 0.005 || track.readyState >= 3));
+        if (!isTrackAudible) {
+          lastTickTs = now;
+          this._musicFade = 0;
+          this._applyTrackVolumeNow();
+          return;
+        }
+        if (!fadeStarted) {
+          fadeStarted = true;
+          lastTickTs = now;
+        } else {
+          const stepMs = Math.min(60, Math.max(0, now - lastTickTs));
+          lastTickTs = now;
+          elapsedMs += stepMs;
+        }
+        const t = Math.min(1, elapsedMs / fadeInMs);
         this._musicFade = this._easeFadeCurve(t);
         this._applyTrackVolumeNow();
         if (t >= 1) {
           this._musicFade = 1;
           this._applyTrackVolumeNow();
           this._cancelFadeInLoop();
-          return;
         }
-        if (typeof requestAnimationFrame === 'function') {
-          this._fadeInRaf = requestAnimationFrame(tick);
+      };
+      this._fadeInTimer = setInterval(tick, 45);
+      const stepRaf = () => {
+        this._fadeInRaf = null;
+        tick();
+        if (this._fadeInTimer !== null && typeof requestAnimationFrame === 'function') {
+          this._fadeInRaf = requestAnimationFrame(stepRaf);
         }
       };
       if (typeof requestAnimationFrame === 'function') {
-        this._fadeInRaf = requestAnimationFrame(tick);
+        this._fadeInRaf = requestAnimationFrame(stepRaf);
       }
-      this._fadeInTimer = setInterval(tick, 45);
     }
 
     _cancelFadeInLoop() {
@@ -454,10 +471,10 @@
     }
 
     _resumePendingMusic() {
-      if (!this._musicTrack || this._pendingStart || this._musicTrack._playPending) return;
+      if (!this._musicTrack || this._pendingStart || this._fadeDelayTimer || this._musicTrack._playPending) return;
       if (this.getEffectiveMusicVolume() <= 0) return;
       if (!this._musicTrack.paused) return;
-      const fadeMs = (this._pendingAutoplayFade && this._pendingAutoplayFade.fadeInMs) || 2000;
+      const fadeMs = (this._pendingAutoplayFade && this._pendingAutoplayFade.fadeInMs) || 4000;
       const seq = this._trackSeq;
       this._beginTrackPlayback(this._musicTrack, fadeMs, seq);
     }
@@ -472,9 +489,10 @@
           }
         } else {
           this._applyTrackVolumeNow();
-          if (this.initialized && !this._pendingStart && this._musicTrack.paused) {
+          if (this.initialized && !this._pendingStart && !this._fadeDelayTimer && this._musicTrack.paused) {
             const seq = this._trackSeq;
-            this._beginTrackPlayback(this._musicTrack, 950, seq);
+            const fadeMs = (this._pendingAutoplayFade && this._pendingAutoplayFade.fadeInMs) || 3800;
+            this._beginTrackPlayback(this._musicTrack, fadeMs, seq);
           }
         }
       }
@@ -561,11 +579,12 @@
         }
       }
 
-      const fadeOutMs = (opts && typeof opts.fadeOutMs === 'number') ? opts.fadeOutMs : 380;
-      const delayMs = (opts && typeof opts.delayMs === 'number') ? opts.delayMs : 280;
-      const fadeInMs = (opts && typeof opts.fadeInMs === 'number') ? opts.fadeInMs : 2300;
+      const fadeOutMs = (opts && typeof opts.fadeOutMs === 'number') ? opts.fadeOutMs : 420;
+      const delayMs = (opts && typeof opts.delayMs === 'number') ? opts.delayMs : 480;
+      const fadeInMs = (opts && typeof opts.fadeInMs === 'number') ? opts.fadeInMs : 4200;
 
       const seq = ++this._trackSeq;
+      this._musicSuppressedByFadeOut = false;
       this._cancelMusicTimers();
       this._pendingAutoplayFade = null;
 
@@ -577,6 +596,7 @@
 
       try {
         const el = new Audio(targetUrl);
+        el.preload = 'auto';
         el.loop = true;
         el.volume = 0;
         this._musicTrack = el;
@@ -607,7 +627,7 @@
         this._previewThemeInTitle = true;
       }
       if (this.mood !== 'dungeon' && this.mood !== 'boss') {
-        this.startMusic(true, { delayMs: 240, fadeOutMs: 360, fadeInMs: 2200 });
+        this.startMusic(true, { delayMs: 320, fadeOutMs: 420, fadeInMs: 3600 });
       }
     }
 
@@ -620,6 +640,7 @@
     }
 
     setMood(mood, forceOrOpts = false) {
+      this._musicSuppressedByFadeOut = false;
       const normalizedMood = mood || 'overworld';
       const opts = (forceOrOpts && typeof forceOrOpts === 'object') ? forceOrOpts : null;
       const force = opts ? !!opts.force : !!forceOrOpts;
@@ -641,13 +662,15 @@
       let transitionOpts = opts;
       if (!transitionOpts) {
         if ((prevMood === 'dungeon' || prevMood === 'boss') && normalizedMood !== 'dungeon' && normalizedMood !== 'boss') {
-          transitionOpts = { delayMs: 520, fadeOutMs: 420, fadeInMs: 2600 };
+          transitionOpts = { delayMs: 800, fadeOutMs: 420, fadeInMs: 4800 };
         } else if (prevMood === 'title' && normalizedMood !== 'title') {
-          transitionOpts = { delayMs: 460, fadeOutMs: 380, fadeInMs: 2600 };
+          transitionOpts = { delayMs: 750, fadeOutMs: 380, fadeInMs: 4600 };
         } else if (normalizedMood === 'title') {
-          transitionOpts = { delayMs: 360, fadeOutMs: 360, fadeInMs: 2300 };
+          transitionOpts = { delayMs: 480, fadeOutMs: 420, fadeInMs: 4200 };
         } else if (normalizedMood === 'dungeon' || normalizedMood === 'boss') {
-          transitionOpts = { delayMs: 340, fadeOutMs: 380, fadeInMs: 2200 };
+          transitionOpts = { delayMs: 600, fadeOutMs: 380, fadeInMs: 4200 };
+        } else {
+          transitionOpts = { delayMs: 520, fadeOutMs: 420, fadeInMs: 4200 };
         }
       }
       this.startMusic(force, transitionOpts);
@@ -715,7 +738,9 @@
 
     update(dt) {
       if (!this.ctx || this.muted || this.musicMuted || this.getEffectiveMusicVolume() <= 0) return;
+      if (this._musicSuppressedByFadeOut) return;
       if (this._outgoingTracks && this._outgoingTracks.size > 0) return;
+      if (typeof Audio === 'function' && (this._musicTrack || this._targetUrl)) return;
       if (this._musicTrack && (!this._musicTrack.paused || this._pendingStart || this._musicTrack._playPending || this._pendingAutoplayFade)) return;
       this.musicTimer -= dt;
       if (this.musicTimer > 0) return;

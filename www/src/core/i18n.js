@@ -695,6 +695,9 @@
       'transition.newWorldSub': 'Forging a new world across the archipelago...',
       'transition.savingExit': 'Saving and exiting...',
       'transition.backMenu': 'Returning to main menu...',
+      'transition.statusOverworld': 'Sailing across the archipelago...',
+      'transition.statusDungeon': 'Unsealing ancient catacombs...',
+      'transition.statusSave': 'Inscribing island chronicle...',
 
       'hud.hpTitle': 'Health (HP): restore by eating food, potions, or near campfires/fountains.',
       'hud.enTitle': 'Energy: consumed when mining, chopping, tilling, and fighting; regenerates over time or eating.',
@@ -1803,6 +1806,9 @@
       'transition.newWorldSub': 'Forjando nuevo mundo en el archipiélago...',
       'transition.savingExit': 'Guardando y saliendo...',
       'transition.backMenu': 'Volviendo al menú principal...',
+      'transition.statusOverworld': 'Navegando el archipiélago...',
+      'transition.statusDungeon': 'Descendiendo a las catacumbas...',
+      'transition.statusSave': 'Registrando crónica de la isla...',
 
       'hud.hpTitle': 'Vida (HP): recupérala comiendo alimentos, pociones o junto a fogatas/fuentes.',
       'hud.enTitle': 'Energía: se consume al picar, talar, arar y combatir; regenera sola o al comer.',

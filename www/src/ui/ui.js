@@ -1070,6 +1070,14 @@
         clearTimeout(this._sceneTransitionEndTimer);
         this._sceneTransitionEndTimer = null;
       }
+      this._stopTransitionDiorama();
+
+      const inferredSave = (!opts.kind && label && /guard|sav|salv/i.test(label));
+      const sceneKind = opts.kind === 'dungeon' ? 'dungeon' : ((opts.kind === 'save' || inferredSave) ? 'save' : 'overworld');
+
+      overlay.classList.toggle('is-dungeon', sceneKind === 'dungeon');
+      overlay.classList.toggle('is-save', sceneKind === 'save');
+
       const lblEl = document.getElementById('scene-transition-label');
       if (lblEl) lblEl.textContent = label || 'BALACLAVA';
 
@@ -1086,12 +1094,25 @@
         iconEl.src = opts.icon || 'assets/icons/balaclava_core.png';
       }
 
+      const statusEl = document.getElementById('st-loading-text');
+      if (statusEl) {
+        const trFn = (k, fb) => (Balaclava.I18n && Balaclava.I18n.t) ? Balaclava.I18n.t(k) : fb;
+        if (sceneKind === 'dungeon') statusEl.textContent = trFn('transition.statusDungeon', 'Unsealing ancient catacombs...');
+        else if (sceneKind === 'save') statusEl.textContent = trFn('transition.statusSave', 'Inscribing island chronicle...');
+        else statusEl.textContent = trFn('transition.statusOverworld', 'Sailing across the archipelago...');
+      }
+
+      const barFillEl = document.getElementById('st-loading-bar-fill');
+      const pctEl = document.getElementById('st-loading-pct');
+      if (barFillEl) barFillEl.style.width = '0%';
+      if (pctEl) pctEl.textContent = '0%';
+
       const tipEl = document.getElementById('scene-transition-tip-text');
       if (tipEl) {
         if (opts.tip) {
           tipEl.textContent = opts.tip;
         } else {
-          const isEn = Balaclava.I18n && Balaclava.I18n.lang === 'en';
+          const isEn = Boolean(Balaclava.I18n && ((Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') || Balaclava.I18n.lang === 'en'));
           const tipsEs = [
             'Construye una Mesa de Artesanía para forjar herramientas de mayor rango.',
             'Explora los bordes del archipiélago para desbloquear nuevas islas con monedas.',
@@ -1119,23 +1140,28 @@
         }
       }
 
-      // Audio cue for atmospheric retro curtain closing
+      // Audio cue for atmospheric transition
       if (Balaclava.Audio) {
         Balaclava.Audio.play('portal');
-        if (opts.kind === 'dungeon') {
+        if (sceneKind === 'dungeon') {
           Balaclava.Audio.tone(130, 60, 0.65, 'sawtooth', 0.35);
         } else {
           Balaclava.Audio.tone(260, 130, 0.45, 'triangle', 0.25);
         }
       }
 
+      const HOLD_MS = 1750;
+      const EXIT_MS = 650;
       this._transitioning = true;
       overlay.classList.remove('hidden', 'is-opening', 'is-closing');
       void overlay.offsetWidth;
       overlay.classList.add('is-closing');
 
-      // 650ms to close + 1050ms holding display time to read & enjoy pixel art
+      this._startTransitionDiorama(sceneKind, HOLD_MS);
+
       this._sceneTransitionTimer = setTimeout(() => {
+        if (barFillEl) barFillEl.style.width = '100%';
+        if (pctEl) pctEl.textContent = '100%';
         try {
           if (typeof onMidpoint === 'function') onMidpoint();
         } finally {
@@ -1145,13 +1171,515 @@
             Balaclava.Audio.tone(196, 440, 0.45, 'sine', 0.22, 0.05);
           }
           this._sceneTransitionEndTimer = setTimeout(() => {
-            overlay.classList.remove('is-opening', 'is-closing');
+            this._stopTransitionDiorama();
+            overlay.classList.remove('is-opening', 'is-closing', 'is-dungeon', 'is-save');
             overlay.classList.add('hidden');
             this._transitioning = false;
             if (typeof onDone === 'function') onDone();
-          }, 700);
+          }, EXIT_MS);
         }
-      }, 1700);
+      }, HOLD_MS);
+    }
+
+    _getStSprite(key, fallbackPath) {
+      const a = Balaclava.Assets;
+      if (a) {
+        const found = (a.get && a.get(key))
+          || (a.extraImages && a.extraImages[key])
+          || (a.dungeonImages && a.dungeonImages[key])
+          || (a.chestImages && a.chestImages[key])
+          || (a.enemyImages && a.enemyImages[key]);
+        if (found) return found;
+      }
+      if (!fallbackPath || typeof Image === 'undefined') return null;
+      this._stSpriteCache = this._stSpriteCache || {};
+      let img = this._stSpriteCache[key];
+      if (!img) {
+        img = new Image();
+        const root = (typeof window !== 'undefined' && window.BALACLAVA_ROOT_BASE) ? window.BALACLAVA_ROOT_BASE : '';
+        img.src = encodeURI(root + fallbackPath);
+        this._stSpriteCache[key] = img;
+      }
+      return img;
+    }
+
+    _isStImgReady(img) {
+      return Boolean(img && img.complete !== false && (img.naturalWidth === undefined || img.naturalWidth > 0) && (img.width === undefined || img.width > 0));
+    }
+
+    _drawPixelSprite(ctx, img, sx, sy, sw, sh, dx, dy, dw, dh, flipX = false) {
+      if (!this._isStImgReady(img)) return false;
+      const rx = Math.round(dx);
+      const ry = Math.round(dy);
+      const rw = Math.round(dw);
+      const rh = Math.round(dh);
+      ctx.imageSmoothingEnabled = false;
+      if (!flipX) {
+        ctx.drawImage(img, sx, sy, sw, sh, rx, ry, rw, rh);
+      } else {
+        ctx.save();
+        ctx.translate(rx + rw, ry);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, rw, rh);
+        ctx.restore();
+      }
+      return true;
+    }
+
+    _drawDitherBands(ctx, w, bands) {
+      for (let i = 0; i < bands.length; i++) {
+        const b = bands[i];
+        ctx.fillStyle = b[2];
+        ctx.fillRect(0, b[0], w, b[1] - b[0]);
+        if (i > 0) {
+          const prevColor = bands[i - 1][2];
+          const seam = b[0];
+          ctx.fillStyle = prevColor;
+          for (let x = 0; x < w; x += 2) {
+            ctx.fillRect(x, seam, 1, 1);
+          }
+          ctx.fillStyle = b[2];
+          for (let x = 1; x < w; x += 2) {
+            ctx.fillRect(x, seam - 1, 1, 1);
+          }
+        }
+      }
+    }
+
+    _drawDitherLight(ctx, cx, cy, rx, ry, outerCol, coreCol) {
+      const ix = Math.round(cx);
+      const iy = Math.round(cy);
+      const minY = Math.round(iy - ry);
+      const maxY = Math.round(iy + ry);
+      for (let py = minY; py <= maxY; py += 2) {
+        const ny = (py - iy) / Math.max(1, ry);
+        const span = Math.floor(rx * Math.sqrt(Math.max(0, 1 - ny * ny)));
+        if (span <= 0) continue;
+        const innerSpan = Math.floor(span * 0.55);
+        if (coreCol && innerSpan > 1 && Math.abs(py - iy) <= ry * 0.6) {
+          ctx.fillStyle = coreCol;
+          ctx.fillRect(ix - innerSpan, py, innerSpan * 2, 2);
+        }
+        ctx.fillStyle = outerCol;
+        const startX = ix - span;
+        const endX = ix + span;
+        for (let px = startX; px <= endX; px += 2) {
+          if (coreCol && Math.abs(px - ix) <= innerSpan && Math.abs(py - iy) <= ry * 0.55) continue;
+          const phase = ((px >> 1) + (py >> 1)) & 1;
+          ctx.fillRect(px + phase, py, 1, 1);
+        }
+      }
+    }
+
+    _drawPixelCloud(ctx, x, y, w, cBase, cLit, cShade) {
+      const rx = Math.round(x);
+      const ry = Math.round(y);
+      ctx.fillStyle = cShade;
+      ctx.fillRect(rx, ry + 5, w, 4);
+      ctx.fillStyle = cBase;
+      ctx.fillRect(rx + 2, ry + 3, w - 4, 5);
+      ctx.fillRect(rx + Math.round(w * 0.2), ry + 1, Math.round(w * 0.45), 3);
+      ctx.fillStyle = cLit;
+      ctx.fillRect(rx + Math.round(w * 0.26), ry, Math.round(w * 0.28), 2);
+    }
+
+    _resolveTransitionHeroSkin() {
+      const skins = Balaclava.SKINS || [];
+      let skinId = Balaclava.game && Balaclava.game.player && Balaclava.game.player.skinId;
+      if (!skinId && typeof window !== 'undefined' && window.localStorage) {
+        try { skinId = window.localStorage.getItem('balaclava_player_skin'); } catch (_) {}
+      }
+      return skins.find(s => s.id === skinId) || skins[0] || {
+        id: 'monk_yellow',
+        idle: 'monk_yellow_idle',
+        run: 'monk_yellow_run'
+      };
+    }
+
+    _startTransitionDiorama(sceneKind, durationMs) {
+      this._stopTransitionDiorama();
+      const canvas = document.getElementById('st-pixel-canvas');
+      if (!canvas || typeof canvas.getContext !== 'function') return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const startMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      const dur = Math.max(400, durationMs || 1750);
+      const state = { active: true, rafId: null, kind: sceneKind, startMs, dur };
+      this._stDioramaState = state;
+
+      const barFillEl = document.getElementById('st-loading-bar-fill');
+      const pctEl = document.getElementById('st-loading-pct');
+
+      const step = (nowTs) => {
+        if (!state.active || this._stDioramaState !== state) return;
+        const now = (typeof nowTs === 'number') ? nowTs : Date.now();
+        const elapsed = Math.max(0, now - state.startMs);
+        const t = elapsed / 1000;
+        const rawNorm = Math.min(1, elapsed / state.dur);
+        const eased = Math.min(1, 0.24 * rawNorm + 0.76 * (1 - Math.pow(1 - rawNorm, 2.2)));
+
+        if (barFillEl) barFillEl.style.width = (eased * 100).toFixed(1) + '%';
+        if (pctEl) pctEl.textContent = Math.min(100, Math.round(eased * 100)) + '%';
+
+        this._renderTransitionFrame(ctx, state.kind, t, eased);
+
+        if (typeof requestAnimationFrame === 'function') {
+          state.rafId = requestAnimationFrame(step);
+        }
+      };
+
+      this._renderTransitionFrame(ctx, state.kind, 0, 0);
+      if (typeof requestAnimationFrame === 'function') {
+        state.rafId = requestAnimationFrame(step);
+      }
+    }
+
+    _stopTransitionDiorama() {
+      const state = this._stDioramaState;
+      if (!state) return;
+      state.active = false;
+      if (state.rafId !== null && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(state.rafId);
+      }
+      this._stDioramaState = null;
+    }
+
+    _renderTransitionFrame(ctx, sceneKind, t, normP) {
+      ctx.imageSmoothingEnabled = false;
+      if (sceneKind === 'dungeon') {
+        this._renderDungeonDiorama(ctx, t, normP);
+      } else {
+        this._renderOverworldDiorama(ctx, t, normP, sceneKind === 'save');
+      }
+    }
+
+    _renderOverworldDiorama(ctx, t, normP, isSave) {
+      const W = 320;
+      // 1. Stepped Bayer-dithered night ocean sky
+      this._drawDitherBands(ctx, W, [
+        [0, 20, '#050b16'],
+        [20, 44, '#081324'],
+        [44, 68, '#0c1d33'],
+        [68, 90, '#112945'],
+        [90, 108, '#173656']
+      ]);
+
+      // 2. Crisp 1px pixel stars with two-state stepped twinkle
+      const stars = [
+        [18, 12], [44, 24], [76, 8], [104, 32], [136, 14], [168, 22], [202, 10], [234, 28], [292, 16],
+        [30, 52], [62, 42], [92, 60], [128, 48], [184, 46], [218, 56], [250, 40], [306, 54],
+        [14, 78], [52, 74], [116, 82], [206, 76], [282, 80], [298, 68]
+      ];
+      const tick = Math.floor(t * 2.2);
+      for (let i = 0; i < stars.length; i++) {
+        const [sx, sy] = stars[i];
+        const bright = ((i + tick) % 5) === 0;
+        ctx.fillStyle = bright ? '#f5ebd6' : ((i % 2 === 0) ? '#7fa2c2' : '#4a6f91');
+        ctx.fillRect(sx, sy, 1, 1);
+      }
+
+      // 3. Hand-pixeled crescent moon in upper-right sky
+      const mx = 272;
+      const my = 18;
+      ctx.fillStyle = '#f3e7c2';
+      ctx.fillRect(mx + 2, my, 4, 1);
+      ctx.fillRect(mx + 1, my + 1, 3, 1);
+      ctx.fillRect(mx, my + 2, 3, 4);
+      ctx.fillRect(mx + 1, my + 6, 3, 1);
+      ctx.fillRect(mx + 2, my + 7, 4, 1);
+      ctx.fillStyle = '#c8b88e';
+      ctx.fillRect(mx + 5, my + 1, 1, 1);
+      ctx.fillRect(mx + 5, my + 6, 1, 1);
+
+      // 4. Slow drifting pixel clouds
+      const cloudWrap = (base, speed) => ((Math.round(base + t * speed)) % (W + 70)) - 55;
+      this._drawPixelCloud(ctx, cloudWrap(26, 3.2), 28, 36, '#132840', '#1c3857', '#0d1d30');
+      this._drawPixelCloud(ctx, cloudWrap(186, 2.2), 48, 28, '#162f4b', '#204266', '#102238');
+      this._drawPixelCloud(ctx, cloudWrap(105, 1.6), 70, 22, '#1a3857', '#254c73', '#132a44');
+
+      // 5. Distant silhouetted archipelago ridges along sea horizon
+      ctx.fillStyle = '#0b1e32';
+      ctx.fillRect(8, 102, 54, 6);
+      ctx.fillRect(16, 98, 34, 4);
+      ctx.fillRect(24, 94, 14, 4);
+      ctx.fillStyle = '#0e263d';
+      ctx.fillRect(244, 101, 66, 7);
+      ctx.fillRect(256, 96, 40, 5);
+      ctx.fillRect(268, 92, 16, 4);
+      ctx.fillStyle = '#f2b84b';
+      ctx.fillRect(36, 103, 1, 1);
+      ctx.fillRect(274, 102, 1, 1);
+
+      // 6. Stepped ocean horizon & pixel glints
+      this._drawDitherBands(ctx, W, [
+        [108, 120, '#0f2d47'],
+        [120, 140, '#0b2238'],
+        [140, 160, '#081829'],
+        [160, 180, '#06111e']
+      ]);
+      // Distant island lantern water reflections
+      ctx.fillStyle = ((Math.floor(t * 4) & 1) === 0) ? '#8a6835' : '#634926';
+      ctx.fillRect(35, 111, 3, 1);
+      ctx.fillRect(36, 114, 2, 1);
+      ctx.fillRect(273, 110, 3, 1);
+      ctx.fillRect(274, 113, 2, 1);
+
+      // Drifting horizontal 1px ocean wave glints
+      const waves = [
+        [14, 114, 10, 4], [88, 124, 12, 3], [164, 118, 8, 5], [228, 128, 11, 3.5],
+        [44, 166, 14, 4.5], [134, 170, 12, 3.2], [220, 164, 10, 4.0], [286, 173, 9, 3.0]
+      ];
+      for (let i = 0; i < waves.length; i++) {
+        const [bx, by, len, sp] = waves[i];
+        const wx = Math.round((bx + t * sp) % (W + 20)) - 12;
+        ctx.fillStyle = (i % 2 === 0) ? '#326f94' : '#4d92b5';
+        ctx.fillRect(wx, by, len, 1);
+      }
+
+      // 7. Foreground mossy archipelago island promontory (integer crisp pixel layers)
+      const ix = 26;
+      const iw = 268;
+      // Shoreline surf foam pulse
+      const foamPulse = Math.floor(t * 2.5) % 2;
+      ctx.fillStyle = '#5da4c4';
+      ctx.fillRect(ix - 2 - foamPulse, 152, iw + 4 + foamPulse * 2, 2);
+      ctx.fillStyle = '#97d6ed';
+      ctx.fillRect(ix + 12, 152, 42, 1);
+      ctx.fillRect(ix + 118, 153, 56, 1);
+      ctx.fillRect(ix + 204, 152, 38, 1);
+
+      // Cliff face & grass terrace
+      ctx.fillStyle = '#15201c';
+      ctx.fillRect(ix - 1, 134, iw + 2, 18);
+      ctx.fillStyle = '#4a3125';
+      ctx.fillRect(ix + 2, 141, iw - 4, 10);
+      ctx.fillStyle = '#634333';
+      ctx.fillRect(ix + 6, 141, iw - 12, 6);
+      ctx.fillStyle = '#2d5c2d';
+      ctx.fillRect(ix + 1, 137, iw - 2, 5);
+      ctx.fillStyle = '#4c8f40';
+      ctx.fillRect(ix + 4, 134, iw - 8, 5);
+      ctx.fillStyle = '#68b34c';
+      ctx.fillRect(ix + 8, 133, iw - 16, 3);
+      // Grass blade pixel accents
+      ctx.fillStyle = '#87cf63';
+      for (let gx = ix + 18; gx < ix + iw - 18; gx += 17) {
+        ctx.fillRect(gx, 132, 2, 1);
+      }
+
+      // 8. World props from BALACLAVA assets
+      const treeImg = this._getStSprite('tree1', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Resources/Wood/Trees/Tree1.png');
+      const houseImg = this._getStSprite('b_house1_blue', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Buildings/Blue Buildings/House1.png');
+      const bushImg = this._getStSprite('bush1', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Decorations/Bushes/Bushe1.png');
+      const rockImg = this._getStSprite('rock1', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Decorations/Rocks/Rock1.png');
+      const fireImg = this._getStSprite('campfireAnim', 'assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/10_Overworld/Campsite/campfire_anim_6f.png');
+
+      if (this._isStImgReady(treeImg)) {
+        const tFrame = Math.floor(t * 3.5) % 8;
+        this._drawPixelSprite(ctx, treeImg, tFrame * 192, 0, 192, 256, 32, 66, 52, 70);
+      }
+      if (this._isStImgReady(houseImg)) {
+        this._drawPixelSprite(ctx, houseImg, 0, 0, houseImg.width, houseImg.height, 74, 86, 34, 50);
+        // Warm cabin window glint
+        ctx.fillStyle = '#ffd54f';
+        ctx.fillRect(89, 118, 3, 3);
+      }
+      if (this._isStImgReady(bushImg)) {
+        const bFrame = Math.floor(t * 2.5) % 8;
+        this._drawPixelSprite(ctx, bushImg, bFrame * 128, 0, 128, 128, 248, 112, 26, 26);
+      }
+      if (this._isStImgReady(rockImg)) {
+        this._drawPixelSprite(ctx, rockImg, 0, 0, rockImg.width, rockImg.height, 272, 121, 16, 16);
+      }
+
+      // 9. Campfire & quantized Bayer dithered warm island light pool
+      const firePulse = ((Math.floor(t * 8)) & 1) ? 2 : 0;
+      this._drawDitherLight(ctx, 222, 134, 24 + firePulse, 9, 'rgba(255, 166, 61, 0.16)', 'rgba(255, 213, 79, 0.24)');
+      if (this._isStImgReady(fireImg)) {
+        const cFrame = Math.floor(t * 9) % 6;
+        this._drawPixelSprite(ctx, fireImg, cFrame * 16, 0, 16, 16, 213, 118, 18, 18);
+      } else {
+        ctx.fillStyle = '#ff9800';
+        ctx.fillRect(219, 126, 6, 8);
+        ctx.fillStyle = '#ffe082';
+        ctx.fillRect(221, 124, 2, 6);
+      }
+      // Rising crisp 1px campfire sparks
+      for (let e = 0; e < 4; e++) {
+        const phase = (t * 14 + e * 5) % 18;
+        const ex = 221 + Math.round(Math.sin(t * 3 + e * 2.1) * 3);
+        const ey = Math.round(120 - phase);
+        ctx.fillStyle = (e & 1) ? '#ffe082' : '#ff7043';
+        ctx.fillRect(ex, ey, 1, 1);
+      }
+
+      // 10. Active Player Skin Hero + Sheep on island trail
+      const skin = this._resolveTransitionHeroSkin();
+      const useIdle = Boolean(isSave);
+      const heroKey = useIdle ? (skin.idle || 'monk_yellow_idle') : (skin.run || 'monk_yellow_run');
+      const heroImg = this._getStSprite(heroKey, 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Run.png');
+      const sheepKey = useIdle ? 'sheep_idle' : 'sheep_move';
+      const sheepImg = this._getStSprite(sheepKey, 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Resources/Meat/Sheep/Sheep_Move.png');
+
+      const heroX = useIdle ? 164 : Math.round(108 + normP * 54);
+      const sheepX = useIdle ? 132 : (heroX - 30);
+
+      if (this._isStImgReady(sheepImg)) {
+        const sFrames = useIdle ? Math.max(1, Math.floor(sheepImg.width / 128)) : 4;
+        const sf = Math.floor(t * (useIdle ? 4 : 7)) % sFrames;
+        this._drawPixelSprite(ctx, sheepImg, sf * 128, 0, 128, 128, sheepX, 110, 32, 32);
+      }
+      if (this._isStImgReady(heroImg)) {
+        const hFrames = Math.max(1, Math.floor(heroImg.width / 192));
+        const hf = Math.floor(t * (useIdle ? 6 : 10)) % hFrames;
+        this._drawPixelSprite(ctx, heroImg, hf * 192, 0, 192, 192, heroX, 94, 56, 56);
+      }
+    }
+
+    _renderDungeonDiorama(ctx, t, normP) {
+      const W = 320;
+      const FDA = 'assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/';
+
+      // 1. Subterranean cavernous vault backdrop
+      this._drawDitherBands(ctx, W, [
+        [0, 32, '#07050b'],
+        [32, 64, '#0c0914'],
+        [64, 92, '#130e1e'],
+        [92, 180, '#09070e']
+      ]);
+
+      // Subtle floating dust pixels in upper cavern air
+      const dustTick = Math.floor(t * 6);
+      for (let d = 0; d < 12; d++) {
+        const dx = (28 + d * 26 + ((dustTick + d) % 7)) % W;
+        const dy = 24 + ((d * 19 + Math.round(t * 2)) % 56);
+        ctx.fillStyle = (d % 3 === 0) ? '#544666' : '#31283d';
+        ctx.fillRect(dx, dy, 1, 1);
+      }
+
+      // 2. Load real FantasyDungeonAdventure tiles & props
+      const wallImg = this._getStSprite('pradera_wall', FDA + '01_Dungeon_Tiles/Stone_Dungeon/Walls/Faces_16x32/face_mid.png');
+      const bannerImg = this._getStSprite('pradera_wallBanner', FDA + '01_Dungeon_Tiles/Stone_Dungeon/Walls/Faces_16x32/face_banner_red.png');
+      const floorImg = this._getStSprite('pradera_floor1', FDA + '01_Dungeon_Tiles/Stone_Dungeon/Floors/floor_1.png');
+      const floorCrack = this._getStSprite('pradera_floor2', FDA + '01_Dungeon_Tiles/Stone_Dungeon/Floors/floor_cracked.png');
+      const doorClosed = this._getStSprite('st_stone_door_closed', FDA + '01_Dungeon_Tiles/Stone_Dungeon/Walls/Faces_16x32/door_iron_closed.png');
+      const doorOpen = this._getStSprite('st_stone_door_open', FDA + '01_Dungeon_Tiles/Stone_Dungeon/Walls/Faces_16x32/door_iron_open.png');
+      const pillarImg = this._getStSprite('pradera_pillar', FDA + '02_Props/Statues_Pillars/pillar_stone_16x48.png');
+      const torchImg = this._getStSprite('torch_orange', FDA + '02_Props/Lights/wall_torch_orange_anim_6f.png');
+      const brazierImg = this._getStSprite('brazier_orange', FDA + '02_Props/Lights/brazier_orange_16x32_anim_6f.png');
+      const statueImg = this._getStSprite('statue_knight', FDA + '02_Props/Statues_Pillars/statue_knight_16x32.png');
+      const chestImg = this._getStSprite('st_fda_chest_gold', FDA + '02_Props/Chests/chest_gold_closed.png');
+      const webTL = this._getStSprite('st_cobweb_tl', FDA + '02_Props/Bones_Webs_Chains/cobweb_TL.png');
+      const webTR = this._getStSprite('st_cobweb_tr', FDA + '02_Props/Bones_Webs_Chains/cobweb_TR.png');
+      const skelImg = this._getStSprite('skeleton', 'assets/sprites_extra/enemies/skeleton_warrior_rogue_48px_4f.png');
+
+      // Stone cornice ridge above corridor wall
+      ctx.fillStyle = '#1b1626';
+      ctx.fillRect(0, 78, W, 6);
+      ctx.fillStyle = '#292238';
+      ctx.fillRect(0, 82, W, 2);
+
+      // 3. Corridor wall tiles (10 columns x 32px = 320px wide, 64px tall)
+      for (let col = 0; col < 10; col++) {
+        const wx = col * 32;
+        if (this._isStImgReady(wallImg)) {
+          this._drawPixelSprite(ctx, wallImg, 0, 0, 16, 32, wx, 84, 32, 64);
+        } else {
+          ctx.fillStyle = '#2b2638';
+          ctx.fillRect(wx, 84, 31, 64);
+        }
+        if ((col === 2 || col === 7) && this._isStImgReady(bannerImg)) {
+          this._drawPixelSprite(ctx, bannerImg, 0, 0, 16, 32, wx, 84, 32, 64);
+        }
+      }
+
+      // 4. Flagstone floor rows (2 rows x 32px, y: 146..178 + foreground obsidian slab)
+      for (let row = 0; row < 2; row++) {
+        const fy = 146 + row * 24;
+        for (let col = 0; col < 10; col++) {
+          const fx = col * 32;
+          const fSrc = ((col + row) % 3 === 1 && this._isStImgReady(floorCrack)) ? floorCrack : floorImg;
+          if (this._isStImgReady(fSrc)) {
+            this._drawPixelSprite(ctx, fSrc, 0, 0, 16, 16, fx, fy, 32, 24);
+          } else {
+            ctx.fillStyle = (col + row) & 1 ? '#1e1a28' : '#252030';
+            ctx.fillRect(fx, fy, 32, 24);
+          }
+        }
+      }
+      ctx.fillStyle = '#07050a';
+      ctx.fillRect(0, 170, W, 10);
+
+      // Subtle quantized darkness along outer edges so central hall glows authentically
+      ctx.fillStyle = 'rgba(6, 4, 12, 0.52)';
+      ctx.fillRect(0, 84, 52, 86);
+      ctx.fillRect(268, 84, 52, 86);
+
+      // 5. Central Iron Archway Gate (clicks open cleanly at midpoint)
+      const isGateOpen = normP >= 0.56;
+      const gateImg = isGateOpen ? doorOpen : doorClosed;
+      if (this._isStImgReady(gateImg)) {
+        this._drawPixelSprite(ctx, gateImg, 0, 0, 16, 32, 144, 84, 32, 64);
+      } else {
+        ctx.fillStyle = isGateOpen ? '#050408' : '#3a3548';
+        ctx.fillRect(146, 92, 28, 56);
+      }
+      if (isGateOpen) {
+        this._drawDitherLight(ctx, 160, 134, 18, 8, 'rgba(130, 177, 255, 0.14)', 'rgba(179, 136, 255, 0.18)');
+      }
+
+      // 6. Wall Cobwebs, Knight Statue, Chest & Carved Pillars
+      if (this._isStImgReady(webTL)) this._drawPixelSprite(ctx, webTL, 0, 0, 16, 16, 0, 84, 24, 24);
+      if (this._isStImgReady(webTR)) this._drawPixelSprite(ctx, webTR, 0, 0, 16, 16, W - 24, 84, 24, 24);
+      if (this._isStImgReady(pillarImg)) {
+        this._drawPixelSprite(ctx, pillarImg, 0, 0, 16, 48, 28, 72, 26, 78);
+        this._drawPixelSprite(ctx, pillarImg, 0, 0, 16, 48, 266, 72, 26, 78);
+      }
+      if (this._isStImgReady(statueImg)) {
+        this._drawPixelSprite(ctx, statueImg, 0, 0, 16, 32, 60, 102, 24, 48);
+      }
+      if (this._isStImgReady(chestImg)) {
+        this._drawPixelSprite(ctx, chestImg, 0, 0, chestImg.width, chestImg.height, 244, 130, 20, 20);
+      }
+
+      // 7. Flickering Wall Torches, Standing Braziers & Quantized Bayer Light Pools
+      const torchFr = Math.floor(t * 9) % 6;
+      const pulse = (torchFr & 1) ? 2 : 0;
+      this._drawDitherLight(ctx, 114, 128, 34 + pulse, 18, 'rgba(255, 128, 32, 0.16)', 'rgba(255, 195, 72, 0.24)');
+      this._drawDitherLight(ctx, 206, 128, 34 - pulse, 18, 'rgba(255, 128, 32, 0.16)', 'rgba(255, 195, 72, 0.24)');
+
+      if (this._isStImgReady(torchImg)) {
+        this._drawPixelSprite(ctx, torchImg, torchFr * 16, 0, 16, 16, 116, 98, 18, 18);
+        this._drawPixelSprite(ctx, torchImg, ((torchFr + 2) % 6) * 16, 0, 16, 16, 186, 98, 18, 18);
+      }
+      if (this._isStImgReady(brazierImg)) {
+        this._drawPixelSprite(ctx, brazierImg, ((torchFr + 1) % 6) * 16, 0, 16, 32, 95, 110, 20, 40);
+        this._drawPixelSprite(ctx, brazierImg, ((torchFr + 4) % 6) * 16, 0, 16, 32, 205, 110, 20, 40);
+      }
+
+      // Rising 1px torch sparks
+      for (let s = 0; s < 6; s++) {
+        const bx = (s & 1) ? 105 : 215;
+        const life = (t * 16 + s * 6) % 16;
+        ctx.fillStyle = (s % 2 === 0) ? '#ffd54f' : '#ff7043';
+        ctx.fillRect(bx + Math.round(Math.sin(t * 4 + s) * 2), Math.round(112 - life), 1, 1);
+      }
+
+      // 8. Lurking skeleton warrior in far right shadow + Player striding toward gate
+      if (this._isStImgReady(skelImg)) {
+        const sf = Math.floor(t * 5) % 4;
+        this._drawPixelSprite(ctx, skelImg, sf * 48, 0, 48, 48, 272, 116, 36, 36, true);
+      }
+
+      const skin = this._resolveTransitionHeroSkin();
+      const heroImg = this._getStSprite(skin.run || 'monk_yellow_run', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Run.png');
+      if (this._isStImgReady(heroImg)) {
+        const hFrames = Math.max(1, Math.floor(heroImg.width / 192));
+        const hf = Math.floor(t * 10) % hFrames;
+        const heroX = Math.round(48 + normP * 84);
+        this._drawPixelSprite(ctx, heroImg, hf * 192, 0, 192, 192, heroX, 100, 56, 56);
+      }
     }
 
     triggerTitleIntro() {
@@ -1670,7 +2198,7 @@
       this.lastPlayerInputTime = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
       if (closingModal === 'title_settings' && (!this.game || !this.game.started) &&
           Balaclava.Audio && Balaclava.Audio._previewThemeInTitle && typeof Balaclava.Audio.setMood === 'function') {
-        Balaclava.Audio.setMood('title', { delayMs: 260, fadeOutMs: 360, fadeInMs: 2200 });
+        Balaclava.Audio.setMood('title', { delayMs: 360, fadeOutMs: 420, fadeInMs: 4200 });
       }
       if (this.game) {
         this.game.paused = false;

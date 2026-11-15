@@ -4853,7 +4853,7 @@ input:focus-visible,
   image-rendering: pixelated;
 }
 
-/* Match Enter / Exit Scene Transition Curtain (Cinematic Pixel Art with Real Animated Sprites) */
+/* Scene Transition Overlay (Full-Screen Pixel Art Panorama matching Boot Aesthetic) */
 .scene-transition {
   position: fixed;
   inset: 0;
@@ -4861,265 +4861,228 @@ input:focus-visible,
   pointer-events: all;
   overflow: hidden;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  background: #060d18;
+  opacity: 0;
+  transition: opacity 0.42s ease-out;
   image-rendering: pixelated;
 }
 
-.scene-transition .st-curtain {
+.scene-transition.is-dungeon {
+  background: #08060c;
+}
+
+.scene-transition .st-pixel-canvas {
   position: absolute;
-  left: 0;
+  inset: 0;
   width: 100%;
-  height: 0%;
-  background-color: #070a14;
-  background-image: url('../assets/ui/sky_starfield.png');
-  background-repeat: repeat;
-  background-size: 256px 256px;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center bottom;
   image-rendering: pixelated;
-  transition: height 0.65s cubic-bezier(0.2, 0.85, 0.25, 1);
-  overflow: visible;
-}
-
-.scene-transition .st-top {
-  top: 0;
-  border-bottom: 3px solid #ffd54f;
-  box-shadow: 0 4px 0 #3e2723, 0 10px 36px rgba(0, 0, 0, 0.95), 0 0 14px rgba(255, 213, 79, 0.4);
-}
-
-.scene-transition .st-bottom {
-  bottom: 0;
-  border-top: 3px solid #ffd54f;
-  box-shadow: 0 -4px 0 #3e2723, 0 -10px 36px rgba(0, 0, 0, 0.95), 0 0 14px rgba(255, 213, 79, 0.4);
+  image-rendering: crisp-edges;
+  z-index: 1;
 }
 
 .scene-transition .st-stage {
   position: relative;
-  z-index: 10;
+  z-index: 5;
+  margin-top: clamp(40px, 11vh, 108px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  width: min(480px, 92vw);
-  padding: 20px 24px 18px;
-  background: #0f1423;
-  border: 3px solid #ffd54f;
-  box-shadow: 0 0 0 2px #3e2723, 0 12px 42px rgba(0, 0, 0, 0.96), inset 0 0 20px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  gap: 8px;
+  width: min(580px, 90vw);
+  padding: 0 16px;
   opacity: 0;
-  transform: scale(0.86);
-  transition: opacity 0.32s ease, transform 0.36s cubic-bezier(0.2, 0.85, 0.3, 1);
+  transform: translateY(6px);
+  transition: opacity 0.34s ease-out 0.08s, transform 0.34s ease-out 0.08s;
   image-rendering: pixelated;
 }
 
 .st-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-}
-
-.st-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.st-header .st-icon {
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
-  background: #161c30;
-  border: 2px solid #ffd54f;
-  box-shadow: 0 0 0 2px #070a14, 0 0 12px rgba(255, 213, 79, 0.35);
-}
-
-.st-badge .st-icon {
-  width: 40px;
-  height: 40px;
   image-rendering: pixelated;
-  animation: stIconPulse 1.6s ease-in-out infinite alternate;
-}
-
-@keyframes stIconPulse {
-  0% { transform: scale(0.92); filter: drop-shadow(0 0 3px rgba(255, 213, 79, 0.5)); }
-  100% { transform: scale(1.06); filter: drop-shadow(0 0 10px rgba(255, 213, 79, 0.9)); }
-}
-
-.st-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
 }
 
 .scene-transition .st-label {
-  font-family: 'BalaclavaPixel', monospace;
-  font-size: 20px;
-  color: #ffd54f;
-  letter-spacing: 2px;
-  text-shadow: 2px 2px 0 #1b120c, -1px -1px 0 #1b120c, 1px -1px 0 #1b120c, -1px 1px 0 #1b120c;
+  font-family: 'BalaclavaTitlePixel', 'BalaclavaPixel', monospace;
+  font-size: clamp(24px, 3.6vw, 40px);
+  color: #f6eedc;
+  letter-spacing: 3px;
+  text-shadow: 2px 2px 0 #050a14, -1px -1px 0 #050a14;
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.scene-transition.is-dungeon .st-label {
+  color: #f2dfd0;
+  text-shadow: 2px 2px 0 #09060d, -1px -1px 0 #09060d;
+}
+
 .scene-transition .st-sub {
-  font-family: 'BalaclavaPixel', monospace;
-  font-size: 13px;
-  color: #93c5fd;
-  letter-spacing: 0.6px;
-  text-shadow: 1px 1px 0 #000;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 18px;
+  line-height: 1.25;
+  color: #b7cee2;
+  letter-spacing: 0.4px;
+  text-shadow: 1px 1px 0 #050a14;
+  max-width: 100%;
 }
 
-/* Mascot Parade Track */
-.st-parade-track {
-  width: 100%;
-  height: 72px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  margin: 6px 0 2px;
+.scene-transition.is-dungeon .st-sub {
+  color: #d6baa2;
+  text-shadow: 1px 1px 0 #09060d;
 }
 
-.st-runner-wrap {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 2px;
-}
-
-.st-sprite-pawn {
-  width: 64px;
-  height: 64px;
-  background-image: url('../assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Run Pickaxe.png');
-  background-size: 384px 64px;
-  background-repeat: no-repeat;
-  animation: stPawnRun 0.65s steps(6) infinite;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
-}
-
-@keyframes stPawnRun {
-  from { background-position: 0px 0px; }
-  to { background-position: -384px 0px; }
-}
-
-.st-sprite-sheep {
-  width: 48px;
-  height: 48px;
-  background-image: url('../assets/packs/Tiny Swords/Tiny Swords (Update 010)/Resources/Sheep/HappySheep_Bouncing.png');
-  background-size: 288px 48px;
-  background-repeat: no-repeat;
-  animation: stSheepBounce 0.65s steps(6) infinite;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
-}
-
-@keyframes stSheepBounce {
-  from { background-position: 0px 0px; }
-  to { background-position: -288px 0px; }
-}
-
-.st-parade-ground {
-  width: 100%;
-  height: 4px;
-  background: #334155;
-  border-top: 2px solid #64748b;
-  border-bottom: 1px solid #0f172a;
-  position: relative;
-}
-
-/* Pixel Loading Bar */
+/* Minimalist Pixel Loading Bar (cohesive with boot screen) */
 .st-loading-bar-wrap {
-  width: 100%;
+  width: clamp(220px, 32vw, 320px);
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .st-loading-bar-frame {
   width: 100%;
-  height: 14px;
-  background: #080c16;
-  border: 2px solid #ffd54f;
-  box-shadow: 0 0 0 1px #1a1005, inset 0 2px 4px rgba(0, 0, 0, 0.8);
-  padding: 2px;
+  height: 8px;
+  background: #07101d;
+  border: 1px solid #35587a;
+  padding: 1px;
   box-sizing: border-box;
+}
+
+.scene-transition.is-dungeon .st-loading-bar-frame {
+  background: #0d0912;
+  border-color: #6b4b3e;
 }
 
 .st-loading-bar-fill {
   height: 100%;
-  width: 100%;
-  background: linear-gradient(90deg, #2e7d32 0%, #4caf50 60%, #ffd54f 100%);
-  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
-  animation: stBarPulse 1.4s ease-in-out infinite alternate;
+  width: 0%;
+  background: #e6b450;
+  border-top: 1px solid #fae39c;
+  box-sizing: border-box;
 }
 
-@keyframes stBarPulse {
-  0% { filter: brightness(0.9); }
-  100% { filter: brightness(1.15) drop-shadow(0 0 4px #ffd54f); }
+.scene-transition.is-dungeon .st-loading-bar-fill {
+  background: #d96b38;
+  border-top-color: #ffbd6b;
 }
 
 .st-loading-status {
   display: flex;
   justify-content: space-between;
-  font-family: 'BalaclavaPixel', monospace;
-  font-size: 11px;
-  color: #cbd5e1;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  align-items: baseline;
+  gap: 12px;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 16px;
+  color: #8fb1cd;
+  text-shadow: 1px 1px 0 #050a14;
 }
 
-.st-loading-dots {
-  color: #ffd54f;
+.scene-transition.is-dungeon .st-loading-status {
+  color: #bfa08a;
+  text-shadow: 1px 1px 0 #09060d;
 }
 
-/* Tip Box */
-.st-tip-box {
-  width: 100%;
-  box-sizing: border-box;
-  background: rgba(8, 12, 22, 0.9);
-  border: 1px solid #334155;
-  border-left: 3px solid #ffd54f;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-.st-tip-icon {
-  font-size: 14px;
+.st-loading-pct {
+  color: #f4d27a;
   flex-shrink: 0;
 }
 
-.st-tip-text {
-  font-family: 'BalaclavaPixel', monospace;
-  font-size: 12px;
-  color: #e2e8f0;
-  line-height: 1.35;
-  letter-spacing: 0.4px;
+.scene-transition.is-dungeon .st-loading-pct {
+  color: #ffb56b;
 }
 
-/* Transition Animations */
-.scene-transition.is-closing .st-curtain {
-  height: 51%;
+/* Quiet Bottom Tip Row */
+.st-tip-box {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(14px, 3.2vh, 28px);
+  transform: translateX(-50%);
+  z-index: 6;
+  width: min(640px, 90vw);
+  box-sizing: border-box;
+  background: rgba(6, 13, 24, 0.84);
+  border: 1px solid rgba(90, 132, 168, 0.42);
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  opacity: 0;
+  transition: opacity 0.34s ease-out 0.12s;
+  image-rendering: pixelated;
+}
+
+.scene-transition.is-dungeon .st-tip-box {
+  background: rgba(12, 9, 17, 0.88);
+  border-color: rgba(132, 94, 72, 0.48);
+}
+
+.st-tip-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.st-tip-text {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 18px;
+  color: #dbe9f4;
+  line-height: 1.2;
+  letter-spacing: 0.3px;
+  text-shadow: 1px 1px 0 #040912;
+  text-align: center;
+}
+
+.scene-transition.is-dungeon .st-tip-text {
+  color: #ead8c9;
+  text-shadow: 1px 1px 0 #09060d;
+}
+
+/* Transition Envelope */
+.scene-transition.is-closing {
+  opacity: 1;
 }
 
 .scene-transition.is-closing .st-stage {
   opacity: 1;
-  transform: scale(1);
+  transform: translateY(0);
 }
 
-.scene-transition.is-opening .st-curtain {
-  height: 0%;
-  transition: height 0.65s cubic-bezier(0.55, 0.08, 0.4, 1);
+.scene-transition.is-closing .st-tip-box {
+  opacity: 1;
 }
 
-.scene-transition.is-opening .st-stage {
+.scene-transition.is-opening {
   opacity: 0;
-  transform: scale(1.06);
+  transition: opacity 0.62s ease-in;
+}
+
+.scene-transition.is-opening .st-stage,
+.scene-transition.is-opening .st-tip-box {
+  opacity: 0;
+  transition: opacity 0.25s ease-in;
 }
 
 /* === TEXTURED PIXEL RPG FLOATING TOOLTIP (#balaclava-tooltip) === */

@@ -296,47 +296,31 @@
     </div>
   </div>
 
-  <!-- Scene Transition Overlay (Retro Pixel Art Cinematic) -->
+  <!-- Scene Transition Overlay (Full-Screen Pixel Art Panorama) -->
   <div id="balaclava-tooltip" class="balaclava-tooltip hidden" role="tooltip" aria-hidden="true"></div>
   <div id="scene-transition" class="scene-transition hidden" aria-hidden="true">
-    <div class="st-curtain st-top"></div>
-    <div class="st-curtain st-bottom"></div>
+    <canvas id="st-pixel-canvas" class="st-pixel-canvas" width="320" height="180"></canvas>
     <div class="st-stage">
       <div class="st-header">
-        <div class="st-badge">
-          <img id="scene-transition-icon" class="pixel-img st-icon" src="assets/icons/balaclava_core.png" width="44" height="44" alt="" />
-        </div>
-        <div class="st-titles">
-          <div id="scene-transition-label" class="st-label">BALACLAVA</div>
-          <div id="scene-transition-sub" class="st-sub hidden"></div>
-        </div>
+        <img id="scene-transition-icon" class="pixel-img st-icon" src="assets/icons/balaclava_core.png" width="24" height="24" alt="" />
+        <div id="scene-transition-label" class="st-label">BALACLAVA</div>
       </div>
+      <div id="scene-transition-sub" class="st-sub hidden"></div>
 
-      <!-- Animated pixel sprites: Hero running with pickaxe and happy bouncing sheep -->
-      <div class="st-parade-track">
-        <div class="st-runner-wrap">
-          <div class="st-sprite-sheep"></div>
-          <div class="st-sprite-pawn"></div>
-        </div>
-        <div class="st-parade-ground"></div>
-      </div>
-
-      <!-- Pixel Art Loading Bar -->
       <div class="st-loading-bar-wrap">
         <div class="st-loading-bar-frame">
-          <div class="st-loading-bar-fill"></div>
+          <div id="st-loading-bar-fill" class="st-loading-bar-fill"></div>
         </div>
         <div class="st-loading-status">
-          <span class="st-loading-text">Cargando archipiélago</span>
-          <span class="st-loading-dots">...</span>
+          <span id="st-loading-text" class="st-loading-text">Navegando el archipiélago...</span>
+          <span id="st-loading-pct" class="st-loading-pct">0%</span>
         </div>
       </div>
+    </div>
 
-      <!-- Charming Rotating Pixel Tip -->
-      <div id="scene-transition-tip" class="st-tip-box">
-        <span class="st-tip-icon">💡</span>
-        <span id="scene-transition-tip-text" class="st-tip-text">Construye una Mesa de Artesanía para forjar herramientas de mayor rango.</span>
-      </div>
+    <div id="scene-transition-tip" class="st-tip-box">
+      <img class="pixel-img st-tip-icon" src="assets/icons/scroll_map.png" width="16" height="16" alt="" />
+      <span id="scene-transition-tip-text" class="st-tip-text">Construye una Mesa de Artesanía para forjar herramientas de mayor rango.</span>
     </div>
   </div>
 
