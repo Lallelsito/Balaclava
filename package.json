@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prepare-dist": "node scripts/prepare_dist.cjs",
     "dev": "tauri dev",
     "build": "tauri build",
     "test": "echo \"Error: no test specified\" && exit 1"

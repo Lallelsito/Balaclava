@@ -50,7 +50,7 @@
       descKey: 'settings.musicThemeAdvDesc',
       name: 'Aventura',
       nameEn: 'Adventure',
-      file: 'assets/audio/music/overworld_glory.ogg'
+      file: 'assets/audio/music/overworld_glory.m4a'
     },
     chill: {
       id: 'chill',
@@ -58,7 +58,7 @@
       descKey: 'settings.musicThemeChillDesc',
       name: 'Full Chill',
       nameEn: 'Full Chill',
-      file: 'assets/audio/music/peaceful_wholesome.ogg'
+      file: 'assets/audio/music/peaceful_wholesome.m4a'
     },
     lofi: {
       id: 'lofi',
@@ -66,7 +66,7 @@
       descKey: 'settings.musicThemeLofiDesc',
       name: 'Lo-Fi',
       nameEn: 'Lo-Fi',
-      file: 'assets/audio/music/lofi_full_loop.ogg'
+      file: 'assets/audio/music/lofi_full_loop.m4a'
     },
     meadow: {
       id: 'meadow',
@@ -79,16 +79,16 @@
   };
 
   const MUSIC_PATHS = {
-    overworld: 'assets/audio/music/overworld_glory.ogg',
-    meadow: 'assets/audio/music/overworld_glory.ogg',
-    desert: 'assets/audio/music/overworld_glory.ogg',
-    dark_forest: 'assets/audio/music/overworld_glory.ogg',
-    ice_mountains: 'assets/audio/music/overworld_glory.ogg',
-    volcanic: 'assets/audio/music/overworld_glory.ogg',
-    night: 'assets/audio/music/overworld_glory.ogg',
-    title: 'assets/audio/music/moonlight_beach.mp3',
-    dungeon: 'assets/audio/music/dungeon_epic.ogg',
-    boss: 'assets/audio/music/dungeon_epic.ogg'
+    overworld: 'assets/audio/music/overworld_glory.m4a',
+    meadow: 'assets/audio/music/overworld_glory.m4a',
+    desert: 'assets/audio/music/overworld_glory.m4a',
+    dark_forest: 'assets/audio/music/overworld_glory.m4a',
+    ice_mountains: 'assets/audio/music/overworld_glory.m4a',
+    volcanic: 'assets/audio/music/overworld_glory.m4a',
+    night: 'assets/audio/music/overworld_glory.m4a',
+    title: 'assets/audio/music/moonlight_beach.m4a',
+    dungeon: 'assets/audio/music/dungeon_epic.m4a',
+    boss: 'assets/audio/music/dungeon_epic.m4a'
   };
 
   class SoundEngine {

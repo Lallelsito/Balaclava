@@ -8,6 +8,9 @@ src-tauri/gen/schemas/
 # Archivo comprimido de respaldo local (excede límite de tamaño de GitHub)
 /www.zip
 
+# Distribución minimalista autogenerada para compilación Tauri
+/dist/
+
 # Archivos temporales, cachés, logs y respaldos
 *.tmp
 *.temp

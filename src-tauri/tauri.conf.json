@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.vicestudios.balaclava",
   "build": {
-    "beforeBuildCommand": "",
+    "beforeBuildCommand": "node scripts/prepare_dist.cjs",
     "beforeDevCommand": "",
     "devUrl": "http://localhost:1420",
-    "frontendDist": "../www"
+    "frontendDist": "../dist"
   },
   "app": {
     "withGlobalTauri": true,
