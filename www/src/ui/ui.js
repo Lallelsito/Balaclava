@@ -1097,6 +1097,20 @@
         else subEl.classList.add('hidden');
       }
 
+      const briefEl = document.getElementById('scene-transition-dungeon');
+      if (briefEl) {
+        if (sceneKind === 'dungeon' && opts.dungeonMeta) {
+          briefEl.innerHTML = '';
+          this._renderDungeonTransitionBrief(briefEl, opts.dungeonMeta);
+          briefEl.classList.remove('hidden');
+          overlay.classList.add('has-dungeon-brief');
+        } else {
+          briefEl.innerHTML = '';
+          briefEl.classList.add('hidden');
+          overlay.classList.remove('has-dungeon-brief');
+        }
+      }
+
       const iconEl = document.getElementById('scene-transition-icon');
       if (iconEl) {
         iconEl.src = opts.icon || 'assets/icons/balaclava_core.png';
@@ -1180,13 +1194,173 @@
           }
           this._sceneTransitionEndTimer = setTimeout(() => {
             this._stopTransitionDiorama();
-            overlay.classList.remove('is-opening', 'is-closing', 'is-dungeon', 'is-save');
+            overlay.classList.remove('is-opening', 'is-closing', 'is-dungeon', 'is-save', 'has-dungeon-brief');
             overlay.classList.add('hidden');
             this._transitioning = false;
             if (typeof onDone === 'function') onDone();
           }, EXIT_MS);
         }
       }, HOLD_MS);
+    }
+
+    _drawTransitionThumb(canvas, meta, fallbackPath) {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const paint = (img, sx, sy, sw, sh) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.imageSmoothingEnabled = false;
+        const aspect = sw / Math.max(1, sh);
+        let dw = canvas.width;
+        let dh = canvas.height;
+        if (aspect > 1) dh = Math.round(dw / aspect);
+        else dw = Math.round(dh * aspect);
+        const dx = Math.round((canvas.width - dw) / 2);
+        const dy = Math.round((canvas.height - dh) / 2);
+        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+      };
+      const assets = Balaclava.Assets;
+      let img = (meta && meta.bossKey && assets && assets.bossImages && assets.bossImages[meta.bossKey]) || null;
+      if (!img && meta && meta.key) img = this._getStSprite(meta.key, fallbackPath);
+      if (img && this._isStImgReady(img)) {
+        paint(img, meta.sx || 0, meta.sy || 0, meta.sw || img.naturalWidth || 32, meta.sh || img.naturalHeight || 32);
+      } else if (img) {
+        img.addEventListener('load', () => {
+          paint(img, meta.sx || 0, meta.sy || 0, meta.sw || img.naturalWidth || 32, meta.sh || img.naturalHeight || 32);
+        }, { once: true });
+      }
+    }
+
+    _renderDungeonTransitionBrief(container, meta) {
+      const isEn = Boolean(Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en');
+      const top = document.createElement('div');
+      top.className = 'st-db-top';
+
+      const badges = document.createElement('div');
+      badges.className = 'st-db-badges';
+
+      const addBadge = (cls, text) => {
+        const b = document.createElement('span');
+        b.className = 'st-db-badge' + (cls ? ' ' + cls : '');
+        b.textContent = text;
+        badges.appendChild(b);
+      };
+      addBadge('', `${meta.biomeName || 'Archipiélago'} · ${isEn ? 'Depth' : 'Nv.'} ${meta.tier || 1}/24`);
+      addBadge('is-rec', `${isEn ? 'Rec. Level' : 'Nivel Rec.'} ${meta.recLevel || 2}+`);
+      addBadge('is-lvl', `${isEn ? 'Mobs Lv.' : 'Mobs Nv.'}${meta.mobLevelMin || 2}+ · ${isEn ? 'Guardian Lv.' : 'Guardián Nv.'}${meta.miniLevel || 4}`);
+      top.appendChild(badges);
+
+      const floors = document.createElement('div');
+      floors.className = 'st-db-floors';
+      floors.textContent = isEn
+        ? '4 Sectors: Entry Hall · Rune Wings · Guardian Chamber · Boss Sanctum'
+        : (meta.floorsDesc || '4 Sectores: Atrio · Alas Rúnicas · Guardián · Santuario del Jefe');
+      top.appendChild(floors);
+      container.appendChild(top);
+
+      const grid = document.createElement('div');
+      grid.className = 'st-db-grid';
+
+      const mobPanel = document.createElement('div');
+      mobPanel.className = 'st-db-panel';
+      const mobTitle = document.createElement('div');
+      mobTitle.className = 'st-db-panel-title';
+      mobTitle.textContent = isEn ? 'Enemies Inside' : 'Enemigos en esta Mazmorra';
+      mobPanel.appendChild(mobTitle);
+
+      const mobWrap = document.createElement('div');
+      mobWrap.className = 'st-db-mobs';
+      const ePaths = Balaclava.ENEMY_SPRITE_PATHS || {};
+      const list = Array.isArray(meta.enemies) ? meta.enemies.slice(0, 6) : [];
+      list.forEach(em => {
+        const chip = document.createElement('div');
+        chip.className = 'st-db-mob-chip';
+        const cvs = document.createElement('canvas');
+        cvs.className = 'st-db-mob-canvas';
+        cvs.width = 28;
+        cvs.height = 28;
+        const sprMeta = ePaths[em.type];
+        if (sprMeta) {
+          this._drawTransitionThumb(cvs, {
+            key: em.type,
+            sx: 0,
+            sy: 0,
+            sw: sprMeta.fw || 32,
+            sh: sprMeta.fh || 32
+          }, sprMeta.path);
+        }
+        chip.appendChild(cvs);
+
+        const info = document.createElement('div');
+        info.className = 'st-db-mob-info';
+        const nm = document.createElement('div');
+        nm.className = 'st-db-mob-name';
+        nm.textContent = em.name || em.type;
+        const sub = document.createElement('div');
+        sub.className = 'st-db-mob-sub';
+        sub.textContent = `${isEn ? 'Lv.' : 'Nv.'}${em.level || meta.mobLevelMin || 2} · ${em.ranged ? (isEn ? 'Ranged' : 'A distancia') : (isEn ? 'Melee' : 'Cuerpo a cuerpo')}`;
+        info.appendChild(nm);
+        info.appendChild(sub);
+        chip.appendChild(info);
+        mobWrap.appendChild(chip);
+      });
+      mobPanel.appendChild(mobWrap);
+      grid.appendChild(mobPanel);
+
+      const bossPanel = document.createElement('div');
+      bossPanel.className = 'st-db-panel';
+      const bossTitle = document.createElement('div');
+      bossTitle.className = 'st-db-panel-title';
+      bossTitle.textContent = isEn ? 'Chamber Boss' : 'Jefe de la Cámara';
+      bossPanel.appendChild(bossTitle);
+
+      const bossBox = document.createElement('div');
+      bossBox.className = 'st-db-boss-box';
+      const bMetaMap = Balaclava.BOSS_SPRITE_PATHS || {};
+      const bMeta = meta.id ? bMetaMap[meta.id] : null;
+      if (bMeta) {
+        const bCvs = document.createElement('canvas');
+        bCvs.className = 'st-db-boss-icon';
+        bCvs.width = 38;
+        bCvs.height = 38;
+        this._drawTransitionThumb(bCvs, {
+          key: 'boss_' + meta.id,
+          bossKey: meta.id,
+          sx: bMeta.sx || 0,
+          sy: bMeta.sy || 0,
+          sw: bMeta.sw || bMeta.fw || 48,
+          sh: bMeta.sh || bMeta.fh || 48
+        }, bMeta.path);
+        bossBox.appendChild(bCvs);
+      } else {
+        const bImg = document.createElement('img');
+        bImg.className = 'st-db-boss-icon';
+        bImg.src = 'assets/icons/skull_death.png';
+        bImg.alt = '';
+        bossBox.appendChild(bImg);
+      }
+
+      const bInfo = document.createElement('div');
+      bInfo.className = 'st-db-boss-info';
+      const bName = document.createElement('div');
+      bName.className = 'st-db-boss-name';
+      bName.textContent = (meta.boss && meta.boss.name) || (isEn ? 'Ancient Guardian' : 'Guardián Ancestral');
+      const bStats = document.createElement('div');
+      bStats.className = 'st-db-boss-stats';
+      bStats.textContent = meta.boss ? `HP ${meta.boss.hp} · ${isEn ? 'ATK' : 'ATQ'} ${meta.boss.dmg}` : (isEn ? 'Boss Encounter' : 'Desafío de Jefe');
+      bInfo.appendChild(bName);
+      bInfo.appendChild(bStats);
+      if (meta.boss && meta.boss.relicName) {
+        const bRel = document.createElement('div');
+        bRel.className = 'st-db-boss-relic';
+        bRel.textContent = `${isEn ? 'Relic' : 'Reliquia'}: ${meta.boss.relicName}`;
+        bInfo.appendChild(bRel);
+      }
+      bossBox.appendChild(bInfo);
+      bossPanel.appendChild(bossBox);
+      grid.appendChild(bossPanel);
+
+      container.appendChild(grid);
     }
 
     _getStSprite(key, fallbackPath) {
@@ -4416,6 +4590,38 @@
       }, rows);
     }
 
+    _renderUpgradeComparisonPanel({ title, subtitle, accent = '#ffd54f', curColLabel, nextColLabel, rows }) {
+      const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+      const box = this.el('div', { class: 'upgrade-cmp-panel', style: `--cmp-accent:${accent};` });
+      const head = this.el('div', { class: 'upgrade-cmp-head' }, [
+        this.el('div', { class: 'upgrade-cmp-title' }, title),
+        subtitle ? this.el('div', { class: 'upgrade-cmp-sub' }, subtitle) : null
+      ]);
+      box.appendChild(head);
+
+      const grid = this.el('div', { class: 'upgrade-cmp-table' });
+      const hasCur = Boolean(curColLabel);
+      const colCls = hasCur ? '' : ' is-3col';
+      grid.appendChild(this.el('div', { class: `upgrade-cmp-row is-header${colCls}` }, [
+        this.el('span', { class: 'cmp-col-stat' }, isEn ? 'Stat' : 'Atributo'),
+        hasCur ? this.el('span', { class: 'cmp-col-cur' }, curColLabel) : null,
+        this.el('span', { class: 'cmp-col-next' }, nextColLabel || (isEn ? 'New' : 'Nuevo')),
+        this.el('span', { class: 'cmp-col-delta' }, isEn ? 'Delta' : 'Cambio')
+      ]));
+
+      rows.forEach((r, idx) => {
+        const deltaCls = r.deltaType === 'pos' ? 'is-pos' : (r.deltaType === 'neg' ? 'is-neg' : 'is-flat');
+        grid.appendChild(this.el('div', { class: `upgrade-cmp-row${colCls} ${idx % 2 === 1 ? 'is-alt' : ''}` }, [
+          this.el('span', { class: 'cmp-stat-label' }, r.label),
+          hasCur ? this.el('span', { class: 'cmp-val-cur' }, `${r.cur}`) : null,
+          this.el('span', { class: 'cmp-val-next' }, `${r.next}`),
+          this.el('span', { class: `cmp-delta-pill ${deltaCls}` }, r.deltaText || '=')
+        ]));
+      });
+      box.appendChild(grid);
+      return box;
+    }
+
     _buildToolUpgradeComparisonBox(toolId, curTier, nextTier) {
       if (!Balaclava.getToolStats || !curTier || !nextTier) return null;
       const curS = Balaclava.getToolStats(toolId, curTier);
@@ -4431,28 +4637,47 @@
       const rareNext = Math.round((nextS.rareBonus || 0) * 100);
       const rareDiff = rareNext - rareCur;
 
-      const makeRow = (label, curVal, nextVal, diffStr) => this.el('div', {
-        style: 'display:flex;justify-content:space-between;align-items:center;font-size:13px;line-height:1.4;'
-      }, [
-        this.el('span', { style: 'color:#cbd5e1;' }, label),
-        this.el('span', { style: 'font-weight:700;color:#f8fafc;' }, [
-          `${curVal} -> `,
-          this.el('span', { style: 'color:#ffd54f;' }, `${nextVal}`),
-          diffStr ? this.el('span', { style: 'color:#86efac;margin-left:4px;' }, `(${diffStr})`) : null
-        ])
-      ]);
+      const rows = [
+        {
+          label: isEn ? 'Power' : 'Poder / Daño',
+          cur: curS.power,
+          next: nextS.power,
+          deltaText: pDiff > 0 ? `+${pDiff}` : '=',
+          deltaType: pDiff > 0 ? 'pos' : 'flat'
+        },
+        {
+          label: isEn ? 'Speed' : 'Velocidad',
+          cur: `${curS.speed.toFixed(2)}x`,
+          next: `${nextS.speed.toFixed(2)}x`,
+          deltaText: spdDiff > 0 ? `+${spdDiff}x` : '=',
+          deltaType: spdDiff > 0 ? 'pos' : 'flat'
+        },
+        {
+          label: isEn ? 'Reach' : 'Alcance',
+          cur: `${rCur}u`,
+          next: `${rNext}u`,
+          deltaText: rDiff > 0 ? `+${rDiff}` : '=',
+          deltaType: rDiff > 0 ? 'pos' : 'flat'
+        }
+      ];
+      if (rareCur > 0 || rareNext > 0) {
+        rows.push({
+          label: isEn ? 'Rare Find' : 'Hallazgo Raro',
+          cur: `${rareCur}%`,
+          next: `${rareNext}%`,
+          deltaText: rareDiff > 0 ? `+${rareDiff}%` : '=',
+          deltaType: rareDiff > 0 ? 'pos' : 'flat'
+        });
+      }
 
-      return this.el('div', {
-        class: 'tool-upgrade-compare-box',
-        style: 'background:rgba(15,23,42,0.76);border:1px solid rgba(255,213,79,0.32);border-radius:6px;padding:6px 8px;margin:4px 0;display:flex;flex-direction:column;gap:2px;'
-      }, [
-        this.el('div', { style: 'font-size:12px;font-weight:800;color:#ffd54f;margin-bottom:2px;' },
-          isEn ? `UPGRADE PREVIEW: ${nextS.tierName}` : `MEJORA A: ${nextS.tierName}`),
-        makeRow(isEn ? 'Power / Damage' : 'Poder / Daño', curS.power, nextS.power, pDiff > 0 ? `+${pDiff}` : ''),
-        makeRow(isEn ? 'Action Speed' : 'Velocidad', `${curS.speed.toFixed(2)}x`, `${nextS.speed.toFixed(2)}x`, spdDiff > 0 ? `+${spdDiff}x` : ''),
-        makeRow(isEn ? 'Reach' : 'Alcance', `${rCur}`, `${rNext}`, rDiff > 0 ? `+${rDiff}` : ''),
-        rareDiff > 0 ? makeRow(isEn ? 'Rare Find Bonus' : 'Hallazgo Raro', `${rareCur}%`, `${rareNext}%`, `+${rareDiff}%`) : null
-      ]);
+      return this._renderUpgradeComparisonPanel({
+        title: isEn ? `UPGRADE -> ${nextS.tierName}` : `MEJORA -> ${nextS.tierName}`,
+        subtitle: `${curS.tierName}  »  ${nextS.tierName}`,
+        accent: nextS.tierColor || '#ffd54f',
+        curColLabel: isEn ? 'Current' : 'Actual',
+        nextColLabel: isEn ? 'Next' : 'Mejora',
+        rows
+      });
     }
 
     _buildArmorComparisonBox(curItem, nextItem, customHeader = null) {
@@ -4464,15 +4689,15 @@
       const fields = [
         { label: isEn ? 'Defense' : 'Defensa', cur: curSt.def || 0, next: nextSt.def || 0, suffix: '' },
         { label: isEn ? 'Max HP' : 'Vida Máx.', cur: curSt.maxHp || 0, next: nextSt.maxHp || 0, suffix: '' },
-        { label: isEn ? 'Max Energy' : 'Energía Máx.', cur: curSt.maxEnergy || 0, next: nextSt.maxEnergy || 0, suffix: '' },
+        { label: isEn ? 'Max Energy' : 'Energía', cur: curSt.maxEnergy || 0, next: nextSt.maxEnergy || 0, suffix: '' },
         {
-          label: isEn ? 'Damage Bonus' : 'Bono Daño',
+          label: isEn ? 'Damage' : 'Daño',
           cur: Math.round(((curSt.dmgPct || curSt.dmgBonus) || 0) * 100),
           next: Math.round(((nextSt.dmgPct || nextSt.dmgBonus) || 0) * 100),
           suffix: '%'
         },
         {
-          label: isEn ? 'Move Speed' : 'Velocidad',
+          label: isEn ? 'Speed' : 'Velocidad',
           cur: Math.round(((curSt.speedPct || curSt.moveSpeed) || 0) * 100),
           next: Math.round(((nextSt.speedPct || nextSt.moveSpeed) || 0) * 100),
           suffix: '%'
@@ -4487,32 +4712,28 @@
 
       if (!fields.length) return null;
 
-      return this.el('div', {
-        class: 'armor-upgrade-compare-box',
-        style: 'background:rgba(15,23,42,0.76);border:1px solid rgba(134,239,172,0.32);border-radius:6px;padding:6px 8px;margin:4px 0;display:flex;flex-direction:column;gap:2px;'
-      }, [
-        this.el('div', { style: 'font-size:12px;font-weight:800;color:#86efac;margin-bottom:2px;' },
-          customHeader || (curItem
-            ? (isEn ? `COMPARE: ${curItem.name} -> ${nextItem.name}` : `COMPARATIVA: ${curItem.name} -> ${nextItem.name}`)
-            : (isEn ? `ATTRIBUTES: ${nextItem.name}` : `ATRIBUTOS: ${nextItem.name}`))),
-        ...fields.map(f => {
-          const diff = f.next - f.cur;
-          const sign = diff > 0 ? '+' : '';
-          const diffColor = diff > 0 ? '#86efac' : (diff < 0 ? '#fca5a5' : '#94a3b8');
-          return this.el('div', {
-            style: 'display:flex;justify-content:space-between;align-items:center;font-size:13px;line-height:1.4;'
-          }, [
-            this.el('span', { style: 'color:#cbd5e1;' }, f.label),
-            curItem
-              ? this.el('span', { style: 'font-weight:700;color:#f8fafc;' }, [
-                  `${f.cur}${f.suffix} -> `,
-                  this.el('span', { style: 'color:#ffd54f;' }, `${f.next}${f.suffix}`),
-                  diff !== 0 ? this.el('span', { style: `color:${diffColor};margin-left:4px;` }, `(${sign}${diff}${f.suffix})`) : null
-                ])
-              : this.el('span', { style: 'font-weight:700;color:#86efac;' }, `+${f.next}${f.suffix}`)
-          ]);
-        })
-      ]);
+      const rows = fields.map(f => {
+        const diff = f.next - f.cur;
+        const sign = diff > 0 ? '+' : '';
+        return {
+          label: f.label,
+          cur: `${f.cur}${f.suffix}`,
+          next: `${f.next}${f.suffix}`,
+          deltaText: curItem ? (diff !== 0 ? `${sign}${diff}${f.suffix}` : '=') : `+${f.next}${f.suffix}`,
+          deltaType: !curItem || diff > 0 ? 'pos' : (diff < 0 ? 'neg' : 'flat')
+        };
+      });
+
+      return this._renderUpgradeComparisonPanel({
+        title: customHeader || (curItem
+          ? (isEn ? 'EQUIPMENT COMPARISON' : 'COMPARATIVA DE MEJORA')
+          : (isEn ? `NEW STATS: ${nextItem.name}` : `ATRIBUTOS: ${nextItem.name}`)),
+        subtitle: curItem ? `${curItem.name}  »  ${nextItem.name}` : nextItem.name,
+        accent: '#86efac',
+        curColLabel: curItem ? (isEn ? 'Current' : 'Actual') : null,
+        nextColLabel: isEn ? 'Upgraded' : 'Mejorado',
+        rows
+      });
     }
 
     _describeItemExtras(item) {
@@ -4971,7 +5192,7 @@
         const armorCmp = this._buildArmorComparisonBox(curItem, nextItem);
         if (armorCmp) card.appendChild(armorCmp);
         const cDiv = this.el('div', { style: 'font-size:14px;line-height:1.48;' }, [
-          this.el('div', { style: 'color:#bfe2ff;font-size:13px;margin-bottom:2px;' }, `${nextItem.name}: ${this._describeItemExtras(nextItem)}`),
+          !armorCmp && nextItem.desc ? this.el('div', { style: 'color:#bfe2ff;font-size:13px;margin-bottom:2px;' }, `${nextItem.name}: ${nextItem.desc}`) : null,
           ...(mat && mat.items ? Object.entries(mat.items).map(([id, q]) =>
             this.el('div', { style: `color:${(g.inventory[id] || 0) >= q ? '#81c784' : '#ff8a65'}` },
               `${Balaclava.ITEMS[id] ? Balaclava.ITEMS[id].name : id}: ${g.inventory[id] || 0}/${q}`)
@@ -5292,6 +5513,98 @@
       body.appendChild(layout);
     }
 
+    _drawSkillPixelSky(canvas, dim) {
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const pw = canvas.width;
+      const ph = canvas.height;
+      const cx = Math.round((dim.cx / dim.width) * pw);
+      const cy = Math.round((dim.cy / dim.height) * ph);
+      ctx.imageSmoothingEnabled = false;
+
+      // Stepped pixel midnight gradient rings (zero smooth gradient blur)
+      ctx.fillStyle = '#040712';
+      ctx.fillRect(0, 0, pw, ph);
+      const rings = [
+        { r: Math.round(pw * 0.48), col: '#060c1d' },
+        { r: Math.round(pw * 0.35), col: '#081128' },
+        { r: Math.round(pw * 0.22), col: '#0b1735' },
+        { r: Math.round(pw * 0.11), col: '#102047' }
+      ];
+      rings.forEach(rg => {
+        ctx.fillStyle = rg.col;
+        for (let y = -rg.r; y <= rg.r; y += 2) {
+          const span = Math.floor(Math.sqrt(Math.max(0, rg.r * rg.r - y * y)));
+          const px = cx - span;
+          const py = cy + y;
+          if (py >= 0 && py < ph) ctx.fillRect(px, py, span * 2, 2);
+        }
+      });
+
+      // Subtle dithered branch nebula clusters along each constellation arm
+      const branches = Array.isArray(Balaclava.SKILL_BRANCHES) ? Balaclava.SKILL_BRANCHES : [];
+      branches.forEach((br, bi) => {
+        const ang = typeof br.angle === 'number' ? br.angle : (bi * Math.PI * 2 / Math.max(1, branches.length));
+        ctx.fillStyle = br.color || '#60a5fa';
+        for (let step = 34; step <= 215; step += 12) {
+          const bx = Math.round(cx + Math.cos(ang) * step);
+          const by = Math.round(cy + Math.sin(ang) * step);
+          for (let dx = -10; dx <= 10; dx += 2) {
+            for (let dy = -10; dy <= 10; dy += 2) {
+              if (((bx + dx + by + dy) & 3) !== 0) continue;
+              const d = Math.hypot(dx, dy);
+              if (d < 9 && ((dx * 7 + dy * 13 + step) & 3) === 0) {
+                ctx.globalAlpha = 0.08 + (1 - d / 9) * 0.09;
+                ctx.fillRect(bx + dx, by + dy, 2, 2);
+              }
+            }
+          }
+        }
+      });
+      ctx.globalAlpha = 1;
+
+      // Pixel-dotted orbital rings
+      [58, 108, 158, 206].forEach((r, idx) => {
+        ctx.fillStyle = idx % 2 === 0 ? 'rgba(96, 165, 250, 0.22)' : 'rgba(148, 163, 184, 0.16)';
+        const steps = Math.round(r * 1.9);
+        for (let i = 0; i < steps; i++) {
+          if (i % 3 === 0) continue;
+          const a = (i / steps) * Math.PI * 2;
+          const rx = Math.round(cx + Math.cos(a) * r);
+          const ry = Math.round(cy + Math.sin(a) * r);
+          ctx.fillRect(rx, ry, 1, 1);
+        }
+      });
+
+      // Deterministic pixel stars & 4-point cross sparkles
+      let seed = 918273;
+      const rnd = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+      const starCols = ['#94a3b8', '#cbd5e1', '#bae6fd', '#fde68a', '#e9d5ff'];
+      for (let i = 0; i < 310; i++) {
+        const sx = Math.floor(rnd() * pw);
+        const sy = Math.floor(rnd() * ph);
+        const roll = rnd();
+        ctx.fillStyle = starCols[Math.floor(rnd() * starCols.length)];
+        if (roll < 0.72) {
+          ctx.fillRect(sx, sy, 1, 1);
+        } else if (roll < 0.90) {
+          ctx.fillRect(sx, sy, 2, 2);
+        } else {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(sx, sy, 1, 1);
+          ctx.fillStyle = roll < 0.96 ? '#93c5fd' : '#fde68a';
+          ctx.fillRect(sx - 1, sy, 1, 1);
+          ctx.fillRect(sx + 1, sy, 1, 1);
+          ctx.fillRect(sx, sy - 1, 1, 1);
+          ctx.fillRect(sx, sy + 1, 1, 1);
+        }
+      }
+    }
+
     renderSkills(body) {
       const g = this.game;
       const unlockedCount = g.unlockedSkills.length;
@@ -5304,6 +5617,13 @@
         class: 'skill-board',
         style: `width:${dim.width}px;height:${dim.height}px;`
       });
+      const skyCvs = this.el('canvas', {
+        class: 'skill-pixel-sky',
+        width: String(Math.max(320, Math.round(dim.width / 3))),
+        height: String(Math.max(240, Math.round(dim.height / 3)))
+      });
+      this._drawSkillPixelSky(skyCvs, dim);
+      board.appendChild(skyCvs);
 
       const viewW = Math.max(760, (typeof window !== 'undefined' ? window.innerWidth : 1280) - 430);
       const viewH = Math.max(520, (typeof window !== 'undefined' ? window.innerHeight : 800) - 140);
@@ -5571,23 +5891,15 @@
         `;
         workspace.appendChild(banner);
 
-        const sp = g.player.skillPoints || 0;
-        const pool = allSkills.filter(s => !g.unlockedSkills.includes(s.id) && (!s.req || g.unlockedSkills.includes(s.req)));
-        const affordable = pool.filter(s => sp >= (s.cost || 1));
-        const candidates = affordable.length ? affordable : pool;
-        const curBranch = Balaclava.SKILLS[skillId] && Balaclava.SKILLS[skillId].branch;
-        const nextSk = candidates.find(s => s.req === skillId)
-          || candidates.find(s => s.branch === curBranch)
-          || candidates[0];
-
-        if (nextSk) this.selectedSkillId = nextSk.id;
+        // Keep the newly unlocked skill selected instead of jumping away to another skill
+        this.selectedSkillId = skillId;
 
         if (this._skillUnlockFxTimer) clearTimeout(this._skillUnlockFxTimer);
         this._skillUnlockFxTimer = setTimeout(() => {
           this._skillUnlockFxTimer = null;
           if (this.activeModal !== 'skills') return;
-          if (nextSk) {
-            const nextPos = posById[nextSk.id];
+          if (fxPos) {
+            const nextPos = fxPos;
             if (nextPos) focusPoint(nextPos.x, nextPos.y, Math.max(0.95, this.skillZoom));
           }
           this.renderModal();
@@ -5732,7 +6044,7 @@
             if (!owned) unlockAndAdvance(sk.id);
           }
         }, [
-          this.skillIcon(sk.id, sk.keystone ? 26 : 21),
+          this.skillIcon(sk.id, sk.keystone ? 28 : 24),
           this.el('span', { class: 'tree-node-tier' }, owned ? this.uiIcon('iconCheck', 13) : `T${sk.tier}`)
         ]);
         board.appendChild(btn);
@@ -5819,11 +6131,13 @@
           }
 
           // Hold-to-learn button (holds for 2.3 seconds with live progress fill, channeling aura, tone & particle flow)
+          const isEnSk = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+          const holdHintText = isEnSk ? '(Hold)' : '(Mantener)';
           const fillBar = this.el('div', { class: 'btn-skill-hold-fill' });
           const baseLabel = tr('skills.activateCost', { cost: selSk.cost, unit: selSk.cost === 1 ? tr('skills.pointOne') : tr('skills.pointMany') });
           const textSpan = this.el('span', { class: 'btn-skill-hold-text' }, [
             this.el('span', {}, baseLabel),
-            this.el('span', { style: 'font-size:13px;opacity:0.85;font-weight:normal;' }, '(Mantener)')
+            this.el('span', { style: 'font-size:13px;opacity:0.85;font-weight:normal;' }, holdHintText)
           ]);
 
           const holdBtn = this.el('div', {
@@ -5865,7 +6179,7 @@
               fillBar.style.width = `${(progress * 100).toFixed(1)}%`;
 
               const pctInt = Math.floor(progress * 100);
-              textSpan.innerHTML = `<span>Canalizando...</span> <span style="color:#6ee7b7;font-weight:900;">${pctInt}%</span>`;
+              textSpan.innerHTML = `<span>${isEnSk ? 'Channeling...' : 'Canalizando...'}</span> <span style="color:#6ee7b7;font-weight:900;">${pctInt}%</span>`;
 
               // Emit converging astral sparks to the node on board
               if (targetNode && now > nextSparkTime) {
@@ -5908,7 +6222,7 @@
             }
             holdBtn.classList.remove('channeling');
             fillBar.style.width = '0%';
-            textSpan.innerHTML = `<span>${baseLabel}</span> <span style="font-size:13px;opacity:0.85;font-weight:normal;">(Mantener)</span>`;
+            textSpan.innerHTML = `<span>${baseLabel}</span> <span style="font-size:13px;opacity:0.85;font-weight:normal;">${holdHintText}</span>`;
 
             const targetNode = board.querySelector(`[data-skill-node="${selSk.id}"]`);
             if (targetNode) targetNode.classList.remove('skill-node-channeling');
@@ -8522,6 +8836,94 @@
       body.appendChild(stack);
     }
 
+    _buildBuildingUpgradePerksCard(b, def) {
+      const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+      const lvl = Math.max(1, Number(b && b.level) || 1);
+      const rows = [];
+
+      if (def.opensPanel === 'enchant') {
+        rows.push({ lv: 1, text: isEn ? 'Tier I enchantments unlocked.' : 'Encantamientos Grado I disponibles.' });
+        rows.push({ lv: 2, text: isEn ? 'Unlocks Tier II enchantments.' : 'Desbloquea encantamientos Grado II.' });
+        rows.push({ lv: 3, text: isEn ? 'Unlocks Tier III (Master) enchantments.' : 'Desbloquea encantamientos Grado III (Maestros).' });
+      } else if (def.station) {
+        rows.push({ lv: 1, text: isEn ? `Unlocks base ${def.name} recipes.` : `Desbloquea recetas base de ${def.name}.` });
+        rows.push({ lv: 2, text: isEn ? '+35% crafting/forging speed · +20% Craft XP.' : '+35% velocidad de crafteo/forja · +20% EXP obtenida.' });
+        rows.push({ lv: 3, text: isEn ? '+75% speed · +40% XP · 25% double output (x2) · 20% Material Echo.' : '+75% velocidad · +40% EXP · 25% doble producción (x2) · 20% Eco de materiales.' });
+      }
+
+      const hasAura = Boolean(def.auraDmg || def.auraSpeed || def.auraLuck || def.xpBonus || def.auraXp || def.auraSpellPower);
+      if (hasAura) {
+        const auraTags = [];
+        if (def.auraDmg) auraTags.push(isEn ? `+${Math.round(def.auraDmg * 100)}% DMG` : `+${Math.round(def.auraDmg * 100)}% Daño`);
+        if (def.auraSpeed) auraTags.push(isEn ? `+${Math.round(def.auraSpeed * 100)}% SPD` : `+${Math.round(def.auraSpeed * 100)}% Vel.`);
+        if (def.auraLuck) auraTags.push(isEn ? `+${Math.round(def.auraLuck * 100)}% Luck` : `+${Math.round(def.auraLuck * 100)}% Suerte`);
+        if (def.xpBonus || def.auraXp) auraTags.push(`+${Math.round(((def.xpBonus || 0) + (def.auraXp || 0)) * 100)}% XP`);
+        if (def.auraSpellPower) auraTags.push(isEn ? `+${Math.round(def.auraSpellPower * 100)}% Spells` : `+${Math.round(def.auraSpellPower * 100)}% Hechizos`);
+        const baseStr = auraTags.join(' · ');
+        if (!def.station) rows.push({ lv: 1, text: isEn ? `Base aura: ${baseStr}.` : `Aura base: ${baseStr}.` });
+        rows.push({ lv: 2, text: isEn ? `Empowered aura (+45%): x1.45 (${baseStr}).` : `Aura potenciada (+45%): bonos x1.45 (${baseStr}).` });
+        rows.push({ lv: 3, text: isEn ? `Supreme aura (+90%): x1.90 (${baseStr}).` : `Aura suprema (+90%): bonos x1.90 (${baseStr}).` });
+      }
+
+      if (def.isTurret) {
+        const baseDmg = def.turretDmg || 28;
+        rows.push({ lv: 1, text: isEn ? `Base turret (${baseDmg} DMG per shot).` : `Torreta base (${baseDmg} daño por disparo).` });
+        rows.push({ lv: 2, text: isEn ? `+45% damage (${Math.round(baseDmg * 1.45)}) · +25% fire rate.` : `+45% daño (${Math.round(baseDmg * 1.45)}) · +25% cadencia de tiro.` });
+        rows.push({ lv: 3, text: isEn ? `+90% damage (${Math.round(baseDmg * 1.90)}) · +50% fire rate.` : `+90% daño (${Math.round(baseDmg * 1.90)}) · +50% cadencia de tiro.` });
+      }
+
+      if (def.machineSpeedBonus) {
+        rows.push({ lv: 2, text: isEn ? `+35% machine accelerator efficiency (+${Math.round(def.machineSpeedBonus * 135)}%).` : `+35% eficacia al acelerador de máquinas (+${Math.round(def.machineSpeedBonus * 135)}%).` });
+        rows.push({ lv: 3, text: isEn ? `+70% machine accelerator efficiency (+${Math.round(def.machineSpeedBonus * 170)}%).` : `+70% eficacia al acelerador de máquinas (+${Math.round(def.machineSpeedBonus * 170)}%).` });
+      }
+
+      if (def.autoCycle && !def.autoWaterRadius && !def.cropBoost) {
+        if (def.autoCoins || def.autoXp) {
+          rows.push({ lv: 1, text: isEn ? `Auto generation every ${def.autoCycle}s.` : `Generación automática cada ${def.autoCycle}s.` });
+          rows.push({ lv: 2, text: isEn ? '+45% speed · +50% coins / +40% XP.' : '+45% velocidad · +50% monedas / +40% EXP.' });
+          rows.push({ lv: 3, text: isEn ? '+90% speed · +100% coins / +80% XP.' : '+90% velocidad · +100% monedas / +80% EXP.' });
+        } else if (def.autoMine || def.autoProduce) {
+          rows.push({ lv: 1, text: isEn ? `Auto production every ${def.autoCycle}s.` : `Producción automática cada ${def.autoCycle}s.` });
+          rows.push({ lv: 2, text: isEn ? '+35% speed · 35% higher-purity ore chance.' : '+35% velocidad · 35% prob. mineral de mayor pureza.' });
+          rows.push({ lv: 3, text: isEn ? '+70% speed · Double output per cycle (x2).' : '+70% velocidad · Doble producción por ciclo (x2).' });
+        }
+      }
+
+      if (def.autoWaterRadius) {
+        rows.push({ lv: 1, text: isEn ? `Auto watering in ${def.autoWaterRadius}px radius.` : `Riego automático en radio ${def.autoWaterRadius}px.` });
+        rows.push({ lv: 2, text: isEn ? '+20% range radius and faster cycles.' : '+20% radio de alcance y ciclos más frecuentes.' });
+        rows.push({ lv: 3, text: isEn ? '+40% range covering the entire garden.' : '+40% radio de alcance sobre toda la huerta.' });
+      }
+
+      if (!rows.length) return null;
+
+      // Deduplicate by tier level (merge multiple perks on the same tier cleanly)
+      const byTier = { 1: [], 2: [], 3: [] };
+      rows.forEach(r => { if (byTier[r.lv]) byTier[r.lv].push(r.text); });
+      const tiers = [1, 2, 3].filter(t => byTier[t].length > 0);
+      if (!tiers.length) return null;
+
+      const lvShort = isEn ? 'Lv.' : 'Nv.';
+      const card = this.el('div', { class: 'bldg-perks-card' }, [
+        this.el('div', { class: 'bldg-perks-header' }, [
+          this.el('span', { class: 'bldg-perks-title' }, isEn ? 'LEVEL UPGRADE PERKS' : 'BENEFICIOS DE MEJORA POR NIVEL'),
+          this.el('span', { class: 'bldg-perks-badge' }, lvl >= 3 ? (isEn ? 'MAX LEVEL (3/3)' : 'NIVEL MÁXIMO (3/3)') : (isEn ? `CURRENT: Lv.${lvl}/3` : `ACTUAL: Nv.${lvl}/3`))
+        ]),
+        this.el('div', { class: 'bldg-perks-list' }, tiers.map(lv => {
+          const isUnlocked = lv <= lvl;
+          const isNext = lv === lvl + 1;
+          const cls = isUnlocked ? 'is-unlocked' : (isNext ? 'is-next' : '');
+          const status = isUnlocked ? (isEn ? 'ACTIVE' : 'ACTIVO') : (isNext ? (isEn ? 'NEXT' : 'SIGUIENTE') : (isEn ? 'LOCKED' : 'BLOQUEADO'));
+          return this.el('div', { class: `bldg-perk-tier ${cls}` }, [
+            this.el('span', { class: 'bldg-perk-lv' }, `${lvShort}${lv}`),
+            this.el('span', { style: 'flex:1;' }, byTier[lv].join(' ')),
+            this.el('span', { class: 'bldg-perk-status' }, status)
+          ]);
+        }))
+      ]);
+      return card;
+    }
+
     renderBuildingInspector(titleEl, body, b) {
       const g = this.game;
       const def = Balaclava.BUILDINGS[b.type];
@@ -8531,22 +8933,52 @@
         this.el('div', { style: 'font-size:15px;line-height:1.48;' }, def.desc)
       ]));
 
+      const perksCard = this._buildBuildingUpgradePerksCard(b, def);
+      if (perksCard) body.appendChild(perksCard);
+
       this._renderCraftQueueBanner(body);
+
+      const appendFooter = () => {
+        const foot = this.el('div', { style: 'display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;' });
+        if (b.level < 3) {
+          const nxt = b.level + 1;
+          foot.appendChild(this.el('button', {
+            class: 'btn btn-gold',
+            onclick: () => { g.automation.upgradeBuilding(g, b); this.renderModal(); }
+          }, tr('bldg.upgradeToCost', { lvl: nxt, coins: nxt * 85, gears: nxt === 2 ? 2 : 4 })));
+        }
+        foot.appendChild(this.el('button', {
+          class: 'btn btn-danger',
+          onclick: () => {
+            g.automation.collectFromBuilding(g, b);
+            g.buildings = g.buildings.filter(x => x !== b);
+            Object.entries(def.cost).forEach(([id, q]) => g.addItem(id, Math.max(1, Math.floor(q * 0.5))));
+            g.recomputeModifiers();
+            this.closeModal();
+            g.toast(tr('bldg.demolishToast', { name: def.name }), 'info');
+          }
+        }, tr('bldg.demolishBtn')));
+        body.appendChild(foot);
+      };
 
       if (def.opensPanel === 'market') {
         this.renderMarket(body);
+        appendFooter();
         return;
       }
       if (def.opensPanel === 'crafting') {
         this.renderCrafting(body, { onlyStation: 'mano' });
+        appendFooter();
         return;
       }
       if (def.opensPanel === 'achievements') {
         this.renderAchievements(body);
+        appendFooter();
         return;
       }
       if (def.opensPanel === 'enchant') {
         this.renderEnchanting(body);
+        appendFooter();
         return;
       }
       if (def.opensPanel === 'portal') {
@@ -8632,26 +9064,7 @@
         }
       }
 
-      const foot = this.el('div', { style: 'display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;' });
-      if (b.level < 3) {
-        const nxt = b.level + 1;
-        foot.appendChild(this.el('button', {
-          class: 'btn btn-gold',
-          onclick: () => { g.automation.upgradeBuilding(g, b); this.renderModal(); }
-        }, tr('bldg.upgradeToCost', { lvl: nxt, coins: nxt * 85, gears: nxt === 2 ? 2 : 4 })));
-      }
-      foot.appendChild(this.el('button', {
-        class: 'btn btn-danger',
-        onclick: () => {
-          g.automation.collectFromBuilding(g, b);
-          g.buildings = g.buildings.filter(x => x !== b);
-          Object.entries(def.cost).forEach(([id, q]) => g.addItem(id, Math.max(1, Math.floor(q * 0.5))));
-          g.recomputeModifiers();
-          this.closeModal();
-          g.toast(tr('bldg.demolishToast', { name: def.name }), 'info');
-        }
-      }, tr('bldg.demolishBtn')));
-      body.appendChild(foot);
+      appendFooter();
     }
 
     renderNpcDialog(titleEl, body, npc) {

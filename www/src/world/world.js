@@ -1090,14 +1090,14 @@
       }
 
       const defs = {
-        tree:           { hp: 14, tool: 'hacha', drops: [{ id: 'madera', min: 2, max: 4 }, { id: 'bayas', min: 0, max: 1, chance: 0.35 }, { id: 'manzana_roja', min: 1, max: 1, chance: 0.24 }], xp: 6 },
-        giant_tree:     { hp: 28, tool: 'hacha', drops: [{ id: 'madera', min: 4, max: 7 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.25 }, { id: 'manzana_roja', min: 1, max: 2, chance: 0.32 }], xp: 14 },
-        cactus:         { hp: 12, tool: 'hacha', drops: [{ id: 'cactus', min: 1, max: 2 }, { id: 'fibra_vegetal', min: 1, max: 3 }], xp: 7 },
-        bush:           { hp: 6,  tool: 'guadana', drops: [{ id: 'bayas', min: 1, max: 3 }, { id: 'fibra_vegetal', min: 1, max: 2 }], xp: 4 },
-        herb_patch:     { hp: 4,  tool: 'guadana', drops: [{ id: 'hierba', min: 2, max: 3 }, { id: 'semillas', min: 1, max: 2, chance: 0.7 }], xp: 3 },
+        tree:           { hp: 22, tool: 'hacha', drops: [{ id: 'madera', min: 2, max: 4 }, { id: 'bayas', min: 0, max: 1, chance: 0.35 }, { id: 'manzana_roja', min: 1, max: 1, chance: 0.24 }], xp: 6 },
+        giant_tree:     { hp: 46, tool: 'hacha', drops: [{ id: 'madera', min: 4, max: 7 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.25 }, { id: 'manzana_roja', min: 1, max: 2, chance: 0.32 }], xp: 14 },
+        cactus:         { hp: 18, tool: 'hacha', drops: [{ id: 'cactus', min: 1, max: 2 }, { id: 'fibra_vegetal', min: 1, max: 3 }], xp: 7 },
+        bush:           { hp: 7,  tool: 'guadana', drops: [{ id: 'bayas', min: 1, max: 3 }, { id: 'fibra_vegetal', min: 1, max: 2 }], xp: 4 },
+        herb_patch:     { hp: 5,  tool: 'guadana', drops: [{ id: 'hierba', min: 2, max: 3 }, { id: 'semillas', min: 1, max: 2, chance: 0.7 }], xp: 3 },
         wild_crop_patch:{ hp: 6,  tool: 'guadana', drops: [{ id: 'semillas_tomate', min: 1, max: 2, chance: 0.6 }, { id: 'semillas_maiz', min: 1, max: 2, chance: 0.5 }, { id: 'semillas_fresa', min: 1, max: 1, chance: 0.3 }], xp: 8 },
-        mushroom_node:  { hp: 8,  tool: 'guadana', drops: [{ id: 'hongo_luminoso', min: 1, max: 2 }, { id: 'esporas_toxicas', min: 1, max: 2, chance: 0.55 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.2 }], xp: 8 },
-        rock:           { hp: 16, tool: 'pico', drops: [{ id: 'piedra', min: 2, max: 4 }, { id: 'carbon', min: 1, max: 1, chance: 0.3 }], xp: 6 },
+        mushroom_node:  { hp: 9,  tool: 'guadana', drops: [{ id: 'hongo_luminoso', min: 1, max: 2 }, { id: 'esporas_toxicas', min: 1, max: 2, chance: 0.55 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.2 }], xp: 8 },
+        rock:           { hp: 20, tool: 'pico', drops: [{ id: 'piedra', min: 2, max: 4 }, { id: 'carbon', min: 1, max: 1, chance: 0.3 }], xp: 6 },
         coal_vein:      { hp: 18, tool: 'pico', drops: [{ id: 'carbon', min: 2, max: 3 }, { id: 'piedra', min: 1, max: 2 }], xp: 8 },
         copper_vein:    { hp: 22, tool: 'pico', drops: [{ id: 'cobre', min: 2, max: 3 }, { id: 'piedra', min: 1, max: 1 }], xp: 10 },
         tin_vein:       { hp: 22, tool: 'pico', drops: [{ id: 'estano', min: 2, max: 3 }, { id: 'piedra', min: 1, max: 1 }], xp: 10 },

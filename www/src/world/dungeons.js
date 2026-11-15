@@ -1702,6 +1702,12 @@
       if (typeof game.spawnParticles === 'function') {
         game.spawnParticles((c.tx + 0.5) * TILE_SIZE, (c.ty + 0.5) * TILE_SIZE, '#ffd54f', 16);
       }
+      if (typeof game.spawnFx === 'function') {
+        const cxp = (c.tx + 0.5) * TILE_SIZE;
+        const cyp = (c.ty + 0.5) * TILE_SIZE;
+        game.spawnFx('px_treasure_burst', cxp, cyp - 6, 0, 0.72, 1.3, 1.0, { blend: 'lighter' });
+        game.spawnFx('pvfx_treasure_glint', cxp, cyp - 12, 0, 0.85, 1.2, 0.96, { blend: 'lighter' });
+      }
       if (typeof game.addFloatingText === 'function') {
         game.addFloatingText((c.tx + 0.5) * TILE_SIZE, c.ty * TILE_SIZE, `+${coins}`, '#ffd54f');
       }
@@ -1898,65 +1904,10 @@
         game.damagePlayer(this.def.boss.dmg * 0.45);
       }
 
-      // Active ground hazard zones (meteors, elemental pools, cross fissures)
+      // Active ground hazard zones (meteors, bombs, pillars, elemental pools, cross fissures)
       if (!Array.isArray(this.hazardZones)) this.hazardZones = [];
-      for (let hi = this.hazardZones.length - 1; hi >= 0; hi--) {
-        const z = this.hazardZones[hi];
-        if (!z) { this.hazardZones.splice(hi, 1); continue; }
-        z.timer = (z.timer || 0) + dt;
-        const pPx = game.player.x;
-        const pPy = game.player.y;
-        if (z.kind === 'fissure') {
-          if (z.timer >= (z.delay || 0.85) && z.timer < (z.duration || 1.75)) {
-            if (!z.erupted) {
-              z.erupted = true;
-              if (Balaclava.Audio) Balaclava.Audio.play('bomb');
-              if (game.shake) game.shake(0.22, 6);
-            }
-            z.tickCd = (z.tickCd || 0) - dt;
-            if (z.tickCd <= 0) {
-              z.tickCd = 0.35;
-              const vx = z.x2 - z.x;
-              const vy = z.y2 - z.y;
-              const len2 = (vx * vx + vy * vy) || 1;
-              const projT = Math.max(0, Math.min(1, ((pPx - z.x) * vx + (pPy - z.y) * vy) / len2));
-              const distSeg = Math.hypot(pPx - (z.x + projT * vx), pPy - (z.y + projT * vy));
-              if (distSeg <= (z.halfW || 18) + 12) {
-                game.damagePlayer(Math.round(z.dmg || this.def.boss.dmg), { isMagic: true });
-              }
-            }
-          }
-          if (z.timer >= (z.duration || 1.75)) this.hazardZones.splice(hi, 1);
-        } else if (z.kind === 'meteor') {
-          if (!z.detonated && z.timer >= (z.delay || 1.0)) {
-            z.detonated = true;
-            if (Balaclava.Audio) Balaclava.Audio.play('meteor');
-            if (game.spawnShockwave) game.spawnShockwave(z.x, z.y, (z.radius || 60) + 18, z.color || '#ff5252');
-            if (game.spawnFx) game.spawnFx('fx_vfx_magma', z.x, z.y, 0, 0.55, 1.05, 0.9);
-            if (game.shake) game.shake(0.20, 5);
-            if (Balaclava.Utils.dist(pPx, pPy, z.x, z.y) <= (z.radius || 60)) {
-              game.damagePlayer(Math.round(z.dmg || this.def.boss.dmg * 1.15), { isMagic: true });
-            }
-          } else if (z.detonated) {
-            z.tickCd = (z.tickCd || 0) - dt;
-            if (z.tickCd <= 0) {
-              z.tickCd = 0.45;
-              if (Balaclava.Utils.dist(pPx, pPy, z.x, z.y) <= (z.radius || 60) * 0.85) {
-                game.damagePlayer(Math.max(4, Math.round((z.dmg || this.def.boss.dmg) * 0.35)), { isMagic: true });
-              }
-            }
-          }
-          if (z.timer >= (z.duration || 3.0)) this.hazardZones.splice(hi, 1);
-        } else {
-          z.tickCd = (z.tickCd || 0) - dt;
-          if (z.tickCd <= 0) {
-            z.tickCd = 0.45;
-            if (Balaclava.Utils.dist(pPx, pPy, z.x, z.y) <= (z.radius || 44)) {
-              game.damagePlayer(Math.max(4, Math.round((z.dmg || this.def.boss.dmg) * 0.32)), { isMagic: true });
-            }
-          }
-          if (z.timer >= (z.duration || 2.5)) this.hazardZones.splice(hi, 1);
-        }
+      if (Balaclava.EnemyAttacks && Balaclava.EnemyAttacks.updateHazards) {
+        Balaclava.EnemyAttacks.updateHazards(game, this.hazardZones, (wx, wy) => this.isTileWalkable(Math.floor(wx / TILE_SIZE), Math.floor(wy / TILE_SIZE)), dt);
       }
 
       // Point 8: Intentional Puzzle Logic (Wing Seals + Readable Sequence Puzzle with Edge-Triggered Pads)
@@ -2074,6 +2025,16 @@
         const e = this.enemies[i];
         if (e.hitFlash > 0) e.hitFlash -= dt;
         if (e.slowTimer > 0) e.slowTimer = Math.max(0, e.slowTimer - dt);
+        if (e.stunTimer > 0) e.stunTimer = Math.max(0, e.stunTimer - dt);
+        if (e.poisonTimer > 0) {
+          e.poisonTimer = Math.max(0, e.poisonTimer - dt);
+          e._poisonTick = (e._poisonTick || 0) + dt;
+          if (e._poisonTick >= 0.7) {
+            e._poisonTick -= 0.7;
+            game.combat.damageEnemy(game, e, Math.max(3, Math.round((e.maxHp || 60) * 0.032)), 0, false, false);
+            if (e._dead || e.hp <= 0) continue;
+          }
+        }
         if (e.burnTimer > 0) {
           e.burnTimer = Math.max(0, e.burnTimer - dt);
           e._burnTick = (e._burnTick || 0) + dt;
@@ -2083,7 +2044,18 @@
             if (e._dead || e.hp <= 0) continue;
           }
         }
-        const spdScale = e.slowTimer > 0 ? 0.45 : 1;
+        if (game.spawnFx && ((e.burnTimer || 0) > 0 || (e.slowTimer || 0) > 0 || (e.poisonTimer || 0) > 0 || (e.stunTimer || 0) > 0)) {
+          e._statusFxCd = (e._statusFxCd || 0) - dt;
+          if (e._statusFxCd <= 0) {
+            e._statusFxCd = 0.52;
+            const stKey = e.stunTimer > 0 ? 'st_stun'
+              : e.burnTimer > 0 ? 'st_burn'
+              : e.poisonTimer > 0 ? 'st_poisonbubble'
+              : 'st_freeze';
+            game.spawnFx(stKey, e.x, e.y - 12, 0, 0.48, 0.75, 0.9, { follow: e, offY: -12, blend: 'lighter' });
+          }
+        }
+        const spdScale = e.stunTimer > 0 ? 0 : (e.slowTimer > 0 ? 0.45 : 1);
         const d = Balaclava.Utils.dist(e.x, e.y, game.player.x, game.player.y);
 
         if (!e.state) e.state = 'chase';
@@ -2097,6 +2069,7 @@
           e.speed = Math.round(e.speed * 1.22);
           e.dmg = Math.round(e.dmg * 1.15);
           if (game.spawnShockwave) game.spawnShockwave(e.x, e.y, 112, '#ff5252');
+          if (game.spawnFx) game.spawnFx('pvfx_fire_nova', e.x, e.y, 0, 0.65, 1.35, 0.96, { blend: 'lighter' });
           if (game.addFloatingText) game.addFloatingText(e.x, e.y - 42, 'GUARDIAN ENFURECIDO', '#ff5252');
           if (this.enemies.length < 18) {
             const stx = Math.floor(e.x / TILE_SIZE);
@@ -2110,184 +2083,22 @@
           }
         }
 
-        // Mini-boss telegraphed special execution
-        if (e.isMiniBoss && e.telegraph > 0) {
-          e.telegraph -= dt;
-          e.facing = game.player.x >= e.x ? 1 : -1;
-          if (e.telegraph <= 0) {
-            const tMode = e.telegraphMode || 'miniboss_fan';
-            const tAng = e.targetAngle !== undefined ? e.targetAngle : Math.atan2(game.player.y - e.y, game.player.x - e.x);
-            e.telegraphMode = null;
-            if (tMode === 'miniboss_fan') {
-              if (game.spawnShockwave) game.spawnShockwave(e.x, e.y, 84, this.def.accentColor);
-              if (Balaclava.Audio) Balaclava.Audio.play('magic');
-              const count = e.enraged ? 7 : 5;
-              const half = Math.floor(count / 2);
-              for (let k = -half; k <= half; k++) {
-                const a = tAng + k * 0.21;
-                game.spawnEnemyProjectile(e.x, e.y, Math.cos(a) * 245, Math.sin(a) * 245, Math.round(e.dmg * 0.88), this.def.accentColor);
-              }
-            } else if (tMode === 'miniboss_leap') {
-              e.state = 'leap';
-              e.leapProg = 0;
-              e.leapDur = 0.52;
-              e.leapRadius = 86;
-              e.leapRadials = e.enraged ? 8 : 6;
-              e.leapStartX = e.x; e.leapStartY = e.y;
-              e.leapTargetX = e.targetX !== undefined ? e.targetX : game.player.x;
-              e.leapTargetY = e.targetY !== undefined ? e.targetY : game.player.y;
-            } else if (tMode === 'miniboss_dash') {
-              this.hazardZones.push({ kind: 'pool', x: e.x, y: e.y, radius: 38, duration: 2.6, timer: 0, dmg: e.dmg, color: this.def.accentColor });
-              e.state = 'dash';
-              e.dashTimer = 0.42;
-              e.dashVx = Math.cos(tAng) * e.speed * 3.8;
-              e.dashVy = Math.sin(tAng) * e.speed * 3.8;
-              e._leavePoolOnEnd = true;
-            }
-          }
-          continue;
-        }
-
-        const isCharger = /wolf|hound|boar|orc|spider|lancer|spearman|swordsman|raider|giant|cobra|scorpion|rat/i.test(e.type);
-        const isLeaper = /slime|jelly|golem|frog|toad|mushroom|rock_golem/i.test(e.type);
-
-        if (e.state === 'windup') {
-          e.windupTimer = (e.windupTimer || 0.40) - dt;
-          if (e.windupTimer <= 0) {
-            if (e.attackKind === 'leap') {
-              e.state = 'leap';
-              e.leapProg = 0;
-              e.leapDur = 0.58;
-              e.leapRadius = 58;
-              e.leapRadials = this.tier >= 7 ? 4 : 0;
-              e.leapStartX = e.x; e.leapStartY = e.y;
-              e.leapTargetX = e.targetX !== undefined ? e.targetX : game.player.x;
-              e.leapTargetY = e.targetY !== undefined ? e.targetY : game.player.y;
-            } else {
-              e.state = 'dash';
-              e.dashTimer = 0.40;
-              const dAng = e.targetAngle !== undefined ? e.targetAngle : Math.atan2(game.player.y - e.y, game.player.x - e.x);
-              e.dashVx = Math.cos(dAng) * e.speed * 3.6;
-              e.dashVy = Math.sin(dAng) * e.speed * 3.6;
-            }
-          }
-        } else if (e.state === 'dash') {
-          e.dashTimer -= dt;
-          const nx = e.x + (e.dashVx || 0) * spdScale * dt;
-          const ny = e.y + (e.dashVy || 0) * spdScale * dt;
-          if (canWalkPx(nx, e.y)) e.x = nx;
-          if (canWalkPx(e.x, ny)) e.y = ny;
-          if (d < 38 && e.atkCd <= 0) {
-            e.atkCd = 0.95;
-            game.damagePlayer(Math.round(e.dmg * 1.35));
-            if (game.spawnShockwave) game.spawnShockwave(e.x, e.y, 44, this.def.accentColor || '#ff5252');
-            game.spawnParticles(game.player.x, game.player.y, '#ff5252', 10);
-          }
-          if (e.dashTimer <= 0) {
-            if (e._leavePoolOnEnd) {
-              e._leavePoolOnEnd = false;
-              this.hazardZones.push({ kind: 'pool', x: e.x, y: e.y, radius: 42, duration: 2.6, timer: 0, dmg: e.dmg, color: this.def.accentColor });
-            }
-            e.state = 'chase';
-            e.specialAtkCd = 3.0;
-          }
-        } else if (e.state === 'leap') {
-          const prevProg = e.leapProg || 0;
-          e.leapProg = Math.min(1, prevProg + dt / (e.leapDur || 0.58));
-          const frac = e.leapProg - prevProg;
-          const stepX = ((e.leapTargetX || e.x) - (e.leapStartX || e.x)) * (frac / Math.max(0.01, 1 - prevProg));
-          const stepY = ((e.leapTargetY || e.y) - (e.leapStartY || e.y)) * (frac / Math.max(0.01, 1 - prevProg));
-          const nx = e.x + stepX;
-          const ny = e.y + stepY;
-          if (canWalkPx(nx, e.y)) e.x = nx;
-          if (canWalkPx(e.x, ny)) e.y = ny;
-          if (e.leapProg >= 1) {
-            e.state = 'chase';
-            e.specialAtkCd = 3.4;
-            const slamRad = e.leapRadius || 58;
-            if (game.spawnShockwave) game.spawnShockwave(e.x, e.y, slamRad, this.def.accentColor || '#ff5252');
-            if (Balaclava.Audio) Balaclava.Audio.play('bomb');
-            if (Balaclava.Utils.dist(e.x, e.y, game.player.x, game.player.y) < slamRad) {
-              game.damagePlayer(Math.round(e.dmg * 1.32));
-            }
-            const rCount = e.leapRadials || 0;
-            if (rCount > 0) {
-              for (let k = 0; k < rCount; k++) {
-                const ra = (k / rCount) * Math.PI * 2;
-                game.spawnEnemyProjectile(e.x, e.y, Math.cos(ra) * 200, Math.sin(ra) * 200, Math.round(e.dmg * 0.78), this.def.accentColor);
-              }
-            }
-          }
-        } else if (d < 400) {
-          const ang = Math.atan2(game.player.y - e.y, game.player.x - e.x);
-          e.facing = game.player.x >= e.x ? 1 : -1;
-
-          if (!e.isMiniBoss && e.specialAtkCd <= 0 && d > 48 && d < 220) {
-            if (isCharger) {
-              e.state = 'windup';
-              e.attackKind = 'charge';
-              e.windupTimer = 0.40;
-              e.targetAngle = ang;
-              e.targetX = game.player.x;
-              e.targetY = game.player.y;
-            } else if (isLeaper) {
-              e.state = 'windup';
-              e.attackKind = 'leap';
-              e.windupTimer = 0.45;
-              e.targetX = game.player.x;
-              e.targetY = game.player.y;
-            }
-          }
-
-          const desiredDist = e.ranged ? 155 : 22;
-          if (e.ranged && d < 86) {
-            // Casters kite backwards when crowded
-            const kiteAng = ang + Math.PI;
-            const kx = e.x + Math.cos(kiteAng) * e.speed * 0.85 * spdScale * dt;
-            const ky = e.y + Math.sin(kiteAng) * e.speed * 0.85 * spdScale * dt;
-            e.animVx = Math.cos(kiteAng) * e.speed * 0.85 * spdScale;
-            e.animVy = Math.sin(kiteAng) * e.speed * 0.85 * spdScale;
-            if (canWalkPx(kx, e.y)) e.x = kx;
-            if (canWalkPx(e.x, ky)) e.y = ky;
-          } else if (d > desiredDist) {
-            const seedVal = typeof e.id === 'number' ? e.id : (Number(e.seed) || (this.enemies.indexOf(e) * 3));
-            const flank = Math.sin(this.enemies.indexOf(e) * 1.7 + seedVal) * 0.34;
-            const finalAng = ang + flank;
-            const nx = e.x + Math.cos(finalAng) * e.speed * spdScale * dt;
-            const ny = e.y + Math.sin(finalAng) * e.speed * spdScale * dt;
-            e.animVx = Math.cos(finalAng) * e.speed * spdScale;
-            e.animVy = Math.sin(finalAng) * e.speed * spdScale;
-            if (canWalkPx(nx, e.y)) e.x = nx;
-            if (canWalkPx(e.x, ny)) e.y = ny;
-          }
-          if (e.ranged && d < 360 && d > 52 && e.atkCd <= 0) {
-            e.atkCd = this.tier >= 10 ? 1.20 : 1.40;
-            const pSpd = 228 + Math.min(70, this.tier * 3);
-            if (this.tier >= 5) {
-              for (let k = -1; k <= 1; k++) {
-                const a = ang + k * 0.21;
-                game.spawnEnemyProjectile(e.x, e.y, Math.cos(a) * pSpd, Math.sin(a) * pSpd, Math.round(e.dmg * 0.85), this.def.accentColor);
-              }
-            } else {
-              game.spawnEnemyProjectile(e.x, e.y, Math.cos(ang) * pSpd, Math.sin(ang) * pSpd, Math.round(e.dmg * 0.90), this.def.accentColor);
-            }
-          } else if (d < 34 && e.atkCd <= 0) {
-            e.atkCd = 0.88;
-            game.damagePlayer(e.dmg);
-          }
-
-          if (e.isMiniBoss) {
-            e.specialCd = (e.specialCd || 2.5) - dt;
-            if (e.specialCd <= 0 && d < 340) {
-              e.miniCycle = (e.miniCycle || 0) + 1;
-              e.specialCd = e.enraged ? 2.1 : 2.8;
-              const mModes = ['miniboss_fan', 'miniboss_leap', 'miniboss_dash'];
-              e.telegraphMode = mModes[e.miniCycle % mModes.length];
-              e.telegraph = e.telegraphMode === 'miniboss_leap' ? 0.50 : 0.45;
-              e.targetAngle = ang;
-              e.targetX = game.player.x;
-              e.targetY = game.player.y;
-            }
+        const enemyApi = Balaclava.EnemyAttacks;
+        if (enemyApi && enemyApi.stepMobAI) {
+          const aiStep = enemyApi.stepMobAI(game, e, dt, {
+            isDungeon: true,
+            enemies: this.enemies,
+            hazards: this.hazardZones,
+            canWalkPx,
+            bossTheme: enemyApi.getBossTheme ? enemyApi.getBossTheme(this.id) : null
+          });
+          e.animVx = (aiStep.moveVx || 0) * spdScale;
+          e.animVy = (aiStep.moveVy || 0) * spdScale;
+          if (!aiStep.handledMove) {
+            const nx = e.x + (aiStep.moveVx || 0) * spdScale * dt;
+            const ny = e.y + (aiStep.moveVy || 0) * spdScale * dt;
+            if (Number.isFinite(nx) && canWalkPx(nx, e.y)) e.x = nx;
+            if (Number.isFinite(ny) && canWalkPx(e.x, ny)) e.y = ny;
           }
         }
       }
@@ -2301,6 +2112,30 @@
         const bMinX = (this.bossRoomMinX || 34) + 3;
         const bMaxX = Math.max(bMinX + 6, this.width - 5);
         const isBossWalkable = (wx, wy) => Number.isFinite(wx) && Number.isFinite(wy) && Math.floor(wx / TILE_SIZE) >= bMinX - 1 && this.isTileWalkable(Math.floor(wx / TILE_SIZE), Math.floor(wy / TILE_SIZE));
+        const enemyApi = Balaclava.EnemyAttacks;
+        const theme = (enemyApi && enemyApi.getBossTheme)
+          ? enemyApi.getBossTheme(this.id)
+          : {
+              color: this.def.accentColor || '#ff5252',
+              phaseVfx: 'pvfx_fire_nova',
+              slamVfx: 'pvfx_ground_slam',
+              leapVfx: 'pvfx_meteor_strike',
+              fissureVfx: 'pvfx_fire_pillar',
+              meteorVfx: 'pvfx_meteor_strike',
+              dashVfx: 'pvfx_sword_combo',
+              castVfx: 'pvfx_magic_circle',
+              projVfx: 'aw_arcane_missile',
+              projAltVfx: 'px_energy_bolt',
+              projImpactVfx: 'pvfx_hit_spark',
+              pillarVfx: 'pvfx_fire_pillar',
+              status: null
+            };
+        const bossCol = theme.color || this.def.accentColor || '#ff5252';
+        const projCfg = (alt = false, extra = null) => Object.assign({
+          vfxKey: alt ? theme.projAltVfx : theme.projVfx,
+          impactVfx: theme.projImpactVfx,
+          status: theme.status || null
+        }, extra || {});
         if (b.hitFlash > 0) b.hitFlash -= dt;
         const pct = b.hp / b.maxHp;
         if (pct < 0.66 && b.phase === 1) {
@@ -2323,10 +2158,10 @@
           Balaclava.Audio.play('thunder');
           Balaclava.Audio.play('meteor');
           game.shake(0.55, 11);
-          game.spawnShockwave(b.x, b.y, 175, '#ffab40');
-          game.spawnFx('fx_vfx_explosion', b.x, b.y - 6, 0, 0.9, 1.55, 1.0);
-          game.spawnFx('fx_vfx_elden_ring', b.x, b.y + 4, 0, 1.0, 1.75, 0.9);
-          game.spawnParticles(b.x, b.y, '#ffd54f', 28);
+          game.spawnShockwave(b.x, b.y, 175, bossCol);
+          game.spawnFx(theme.phaseVfx || 'pvfx_fire_nova', b.x, b.y - 6, 0, 0.85, 1.5, 1.0, { blend: 'lighter' });
+          game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y + 4, 0, 0.95, 1.6, 0.9, { blend: 'lighter' });
+          game.spawnParticles(b.x, b.y, bossCol, 28);
           game.addFloatingText(b.x, b.y - 56, T('dungeon.phase2Float'), '#ffd54f');
           const ay = this.bossArenaCenter ? this.bossArenaCenter.ty : 19;
           this.enemies.push(this.makeMob(this.def.enemyTypes[0], bMinX + 2, ay - 5, 1.2));
@@ -2352,10 +2187,11 @@
           Balaclava.Audio.play('meteor');
           Balaclava.Audio.play('levelup');
           game.shake(0.75, 14);
-          game.spawnShockwave(b.x, b.y, 215, '#ff5252');
-          game.spawnFx('fx_vfx_magma', b.x, b.y - 6, 0, 1.0, 1.85, 1.0);
-          game.spawnFx('fx_vfx_elden_ring', b.x, b.y + 4, 0, 1.15, 1.95, 0.95);
-          game.spawnParticles(b.x, b.y, '#ff5252', 36);
+          game.spawnShockwave(b.x, b.y, 215, bossCol);
+          game.spawnFx(theme.phaseVfx || 'pvfx_big_explosion', b.x, b.y - 6, 0, 0.95, 1.7, 1.0, { blend: 'lighter' });
+          game.spawnFx(theme.pillarVfx || 'pvfx_fire_pillar', b.x, b.y - 12, 0, 0.9, 1.45, 0.96, { blend: 'lighter' });
+          game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y + 4, 0, 1.05, 1.85, 0.95, { blend: 'lighter' });
+          game.spawnParticles(b.x, b.y, bossCol, 36);
           game.addFloatingText(b.x, b.y - 62, T('dungeon.phase3Float'), '#ff5252');
           const ay = this.bossArenaCenter ? this.bossArenaCenter.ty : 19;
           this.enemies.push(this.makeMob(this.def.enemyTypes[1 % this.def.enemyTypes.length], bMaxX - 1, ay - 5, 1.35));
@@ -2375,11 +2211,13 @@
           if (isBossWalkable(b.x, ny)) b.y = ny;
           if (Balaclava.Utils.dist(b.x, b.y, game.player.x, game.player.y) < 58 && b._dashHitCd <= 0) {
             b._dashHitCd = 0.45;
-            game.damagePlayer(Math.round(b.dmg * 1.28));
-            game.spawnParticles(game.player.x, game.player.y, '#ff5252', 12);
+            game.spawnFx(theme.dashVfx || 'pvfx_sword_combo', b.x, b.y - 6, Math.atan2(b.dashVy || 0, b.dashVx || 1), 0.35, 1.15, 0.98, { blend: 'lighter' });
+            game.damagePlayer(Math.round(b.dmg * 1.28), { status: theme.status || null });
+            game.spawnParticles(game.player.x, game.player.y, bossCol, 12);
           }
           if (b.dashTimer <= 0) {
-            game.spawnShockwave(b.x, b.y, 92, '#ff8a65');
+            game.spawnShockwave(b.x, b.y, 92, bossCol);
+            game.spawnFx(theme.slamVfx || 'pvfx_ground_slam', b.x, b.y, 0, 0.45, 1.05, 0.95, { blend: 'lighter' });
             if ((b.dashCharges || 0) > 0) {
               b.dashCharges -= 1;
               b.telegraph = 0.28;
@@ -2402,16 +2240,17 @@
             b.leapProg = 0;
             Balaclava.Audio.play('bomb');
             game.shake(0.35, 9);
-            game.spawnFx('fx_vfx_explosion', b.x, b.y, 0, 0.7, 1.3, 0.9);
-            game.spawnShockwave(b.x, b.y, 122, this.def.accentColor);
+            game.spawnFx(theme.leapVfx || 'pvfx_meteor_strike', b.x, b.y - 6, 0, 0.65, 1.35, 0.98, { blend: 'lighter' });
+            game.spawnFx(theme.slamVfx || 'pvfx_ground_slam', b.x, b.y + 4, 0, 0.5, 1.2, 0.92, { blend: 'lighter' });
+            game.spawnShockwave(b.x, b.y, 122, bossCol);
             if (Balaclava.Utils.dist(b.x, b.y, game.player.x, game.player.y) < 115) {
-              game.damagePlayer(Math.round(b.dmg * 1.42));
+              game.damagePlayer(Math.round(b.dmg * 1.42), { status: theme.status || null });
             }
             for (let k = 0; k < 8; k++) {
               const a = (k / 8) * Math.PI * 2;
-              game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 235, Math.sin(a) * 235, Math.round(b.dmg * 0.85), this.def.accentColor);
+              game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 235, Math.sin(a) * 235, Math.round(b.dmg * 0.85), bossCol, projCfg(false));
             }
-            this.hazardZones.push({ kind: 'pool', x: b.x, y: b.y, radius: 52, duration: 2.5, timer: 0, dmg: b.dmg, color: this.def.accentColor });
+            this.hazardZones.push({ kind: 'pool', x: b.x, y: b.y, radius: 52, duration: 2.5, timer: 0, dmg: b.dmg, color: bossCol, vfxKey: theme.pillarVfx, status: theme.status || null });
           }
         } else if (b.telegraph > 0) {
           b.telegraph -= dt;
@@ -2421,26 +2260,28 @@
             b.telegraphMode = null;
             if (mode === 'slam') {
               const r = b.phase === 3 ? 156 : b.phase === 2 ? 136 : 120;
-              game.spawnShockwave(b.x, b.y, r, this.def.accentColor);
+              game.spawnShockwave(b.x, b.y, r, bossCol);
+              game.spawnFx(theme.slamVfx || 'pvfx_ground_slam', b.x, b.y, 0, 0.6, b.phase === 3 ? 1.45 : 1.25, 0.98, { blend: 'lighter' });
               Balaclava.Audio.play('bomb');
               game.shake(0.30, 8);
-              if (d < r) game.damagePlayer(Math.round(b.dmg * (b.phase === 3 ? 1.50 : 1.35)));
-              this.hazardZones.push({ kind: 'pool', x: b.x, y: b.y, radius: Math.round(r * 0.52), duration: 2.2, timer: 0, dmg: b.dmg, color: this.def.accentColor });
+              if (d < r) game.damagePlayer(Math.round(b.dmg * (b.phase === 3 ? 1.50 : 1.35)), { isMagic: true, status: theme.status || null });
+              this.hazardZones.push({ kind: 'pool', x: b.x, y: b.y, radius: Math.round(r * 0.52), duration: 2.2, timer: 0, dmg: b.dmg, color: bossCol, vfxKey: theme.pillarVfx, status: theme.status || null });
               if (b.phase >= 2) {
                 for (let k = 0; k < 8; k++) {
                   const ca = (k * Math.PI) / 4 + 0.2;
-                  game.spawnEnemyProjectile(b.x, b.y, Math.cos(ca) * 225, Math.sin(ca) * 225, Math.round(b.dmg * 0.85), this.def.accentColor);
+                  game.spawnEnemyProjectile(b.x, b.y, Math.cos(ca) * 225, Math.sin(ca) * 225, Math.round(b.dmg * 0.85), bossCol, projCfg(true));
                 }
               }
             } else if (mode === 'aimed_volley') {
               Balaclava.Audio.play('magic');
+              game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y, tAng, 0.4, 1.0, 0.9, { blend: 'lighter' });
               const spd = 255 + b.phase * 18;
               for (let k = -2; k <= 2; k++) {
                 const a = tAng + k * 0.17;
-                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * spd, Math.sin(a) * spd, Math.round(b.dmg * 0.90), '#ffd54f');
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * spd, Math.sin(a) * spd, Math.round(b.dmg * 0.90), bossCol, projCfg(false));
               }
               for (const s of [-0.55, 0.55]) {
-                game.spawnEnemyProjectile(b.x, b.y, Math.cos(tAng + s) * (spd * 0.85), Math.sin(tAng + s) * (spd * 0.85), Math.round(b.dmg * 0.82), this.def.accentColor);
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(tAng + s) * (spd * 0.85), Math.sin(tAng + s) * (spd * 0.85), Math.round(b.dmg * 0.82), bossCol, projCfg(true));
               }
             } else if (mode === 'dash_strike' || mode === 'dash_combo') {
               const dashSpd = 420 + b.phase * 55;
@@ -2448,6 +2289,7 @@
               b._dashHitCd = 0;
               b.dashVx = Math.cos(tAng) * dashSpd;
               b.dashVy = Math.sin(tAng) * dashSpd;
+              game.spawnFx(theme.dashVfx || 'pvfx_dash_dust', b.x, b.y, tAng, 0.35, 1.0, 0.92, { blend: 'lighter' });
               Balaclava.Audio.play('slash');
             } else if (mode === 'leap_slam') {
               b.leapDur = 0.46;
@@ -2456,8 +2298,10 @@
               b.leapStartY = b.y;
               b.targetX = b.targetX ?? game.player.x;
               b.targetY = b.targetY ?? game.player.y;
+              game.spawnFx(theme.castVfx || 'pvfx_dust_puff', b.x, b.y, 0, 0.36, 1.0, 0.9);
             } else if (mode === 'cross_fissure') {
               Balaclava.Audio.play('magic');
+              game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y, 0, 0.45, 1.15, 0.92, { blend: 'lighter' });
               const cx = b.targetX ?? game.player.x;
               const cy = b.targetY ?? game.player.y;
               const halfLen = 140;
@@ -2474,26 +2318,30 @@
                   duration: 1.70,
                   timer: 0,
                   dmg: b.dmg * 1.05,
-                  color: this.def.accentColor || '#ff5252'
+                  color: bossCol,
+                  vfxKey: theme.fissureVfx || 'pvfx_fire_pillar',
+                  status: theme.status || null
                 });
               }
               for (let k = 0; k < 6; k++) {
                 const a = ang + (k / 6) * Math.PI * 2;
-                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 215, Math.sin(a) * 215, Math.round(b.dmg * 0.82), this.def.accentColor);
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 215, Math.sin(a) * 215, Math.round(b.dmg * 0.82), bossCol, projCfg(true));
               }
             } else if (mode === 'spiral_barrage') {
               const count = b.phase === 3 ? 14 : 10;
               const offset = ((b.phaseCycle || 0) % 3) * 0.24;
               Balaclava.Audio.play('magic');
+              game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y, 0, 0.42, 1.1, 0.92, { blend: 'lighter' });
               for (let k = 0; k < count; k++) {
                 const a = ang + offset + (k / count) * Math.PI * 2;
-                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 265, Math.sin(a) * 265, Math.round(b.dmg * 0.90), '#ffd54f');
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 265, Math.sin(a) * 265, Math.round(b.dmg * 0.90), bossCol, projCfg(false));
                 if (b.phase >= 2 && k % 2 === 0) {
-                  game.spawnEnemyProjectile(b.x, b.y, Math.cos(a - 0.16) * 200, Math.sin(a - 0.16) * 200, Math.round(b.dmg * 0.80), '#ff5252');
+                  game.spawnEnemyProjectile(b.x, b.y, Math.cos(a - 0.16) * 200, Math.sin(a - 0.16) * 200, Math.round(b.dmg * 0.80), bossCol, projCfg(true, { homing: b.phase >= 3 ? 0.85 : 0 }));
                 }
               }
             } else if (mode === 'meteor_rain') {
               Balaclava.Audio.play('meteor');
+              game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y, 0, 0.5, 1.2, 0.95, { blend: 'lighter' });
               const baseX = b.targetX ?? game.player.x;
               const baseY = b.targetY ?? game.player.y;
               const offsets = [[0, 0], [84, -48], [-84, 48], [0, 88]];
@@ -2511,24 +2359,60 @@
                     timer: 0,
                     detonated: false,
                     dmg: b.dmg * 1.20,
-                    color: '#ff5252'
+                    color: bossCol,
+                    vfxKey: theme.meteorVfx || 'pvfx_meteor_strike',
+                    status: theme.status || null
                   });
                 }
               }
               for (let k = 0; k < 10; k++) {
                 const a = ang + (k / 10) * Math.PI * 2;
-                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 245, Math.sin(a) * 245, Math.round(b.dmg * 0.88), '#ff7043');
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 245, Math.sin(a) * 245, Math.round(b.dmg * 0.88), bossCol, projCfg(false));
+              }
+            } else if (mode === 'pillar_ring') {
+              Balaclava.Audio.play('thunder');
+              game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y, 0, 0.48, 1.25, 0.96, { blend: 'lighter' });
+              const tx = b.targetX ?? game.player.x;
+              const ty = b.targetY ?? game.player.y;
+              const ringCount = b.phase === 3 ? 6 : 4;
+              const spots = [{ x: tx, y: ty }];
+              for (let k = 0; k < ringCount; k++) {
+                const pa = (k / ringCount) * Math.PI * 2 + 0.3;
+                spots.push({ x: tx + Math.cos(pa) * 96, y: ty + Math.sin(pa) * 96 });
+              }
+              for (let k = 0; k < spots.length; k++) {
+                const sp = spots[k];
+                if (isBossWalkable(sp.x, sp.y)) {
+                  this.hazardZones.push({
+                    kind: 'pillar',
+                    x: sp.x,
+                    y: sp.y,
+                    radius: 54,
+                    delay: 0.92,
+                    oneShot: true,
+                    timer: 0,
+                    dmg: b.dmg * 1.15,
+                    color: bossCol,
+                    vfxKey: theme.pillarVfx || 'pvfx_fire_pillar',
+                    status: theme.status || null
+                  });
+                }
+              }
+              for (let k = 0; k < 6; k++) {
+                const a = ang + (k / 6) * Math.PI * 2;
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 230, Math.sin(a) * 230, Math.round(b.dmg * 0.85), bossCol, projCfg(true));
               }
             } else if (mode === 'barrage') {
               const count = b.phase === 3 ? 14 : b.phase === 2 ? 11 : 8;
               Balaclava.Audio.play('magic');
+              game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y, 0, 0.4, 1.05, 0.92, { blend: 'lighter' });
               for (let k = 0; k < count; k++) {
                 const a = ang + (k / count) * Math.PI * 2;
-                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 235, Math.sin(a) * 235, Math.round(b.dmg * 0.88), this.def.accentColor);
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 235, Math.sin(a) * 235, Math.round(b.dmg * 0.88), bossCol, projCfg(true));
               }
               for (let k = -1; k <= 1; k++) {
                 const a = ang + k * 0.14;
-                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 290, Math.sin(a) * 290, Math.round(b.dmg * 0.92), '#ffd54f');
+                game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 290, Math.sin(a) * 290, Math.round(b.dmg * 0.92), bossCol, projCfg(false, { homing: b.phase >= 2 ? 0.95 : 0 }));
               }
             }
           }
@@ -2538,7 +2422,7 @@
           if (isBossWalkable(nx, b.y)) b.x = nx;
           if (isBossWalkable(b.x, ny)) b.y = ny;
 
-          if (d < 46) game.damagePlayer(Math.round(b.dmg * 0.78));
+          if (d < 46) game.damagePlayer(Math.round(b.dmg * 0.78), { status: theme.status || null });
 
           b.attackTimer -= dt;
           if (b.attackTimer <= 0) {
@@ -2552,14 +2436,14 @@
               b.telegraphMode = modes1[b.phaseCycle % modes1.length];
             } else if (b.phase === 2) {
               const modes2 = d < 125
-                ? ['slam', 'dash_combo', 'cross_fissure', 'spiral_barrage', 'leap_slam']
-                : ['dash_combo', 'cross_fissure', 'leap_slam', 'spiral_barrage', 'aimed_volley'];
+                ? ['slam', 'dash_combo', 'cross_fissure', 'pillar_ring', 'spiral_barrage', 'leap_slam']
+                : ['dash_combo', 'cross_fissure', 'pillar_ring', 'leap_slam', 'spiral_barrage', 'aimed_volley'];
               b.telegraphMode = modes2[b.phaseCycle % modes2.length];
               b.dashCharges = b.telegraphMode === 'dash_combo' ? 1 : 0;
             } else {
               const modes3 = d < 125
-                ? ['meteor_rain', 'slam', 'dash_combo', 'cross_fissure', 'leap_slam', 'spiral_barrage']
-                : ['meteor_rain', 'dash_combo', 'cross_fissure', 'leap_slam', 'spiral_barrage'];
+                ? ['meteor_rain', 'pillar_ring', 'slam', 'dash_combo', 'cross_fissure', 'leap_slam', 'spiral_barrage']
+                : ['meteor_rain', 'pillar_ring', 'dash_combo', 'cross_fissure', 'leap_slam', 'spiral_barrage'];
               b.telegraphMode = modes3[b.phaseCycle % modes3.length];
               b.dashCharges = b.telegraphMode === 'dash_combo' ? 2 : 0;
             }

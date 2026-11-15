@@ -3539,6 +3539,225 @@ input:focus-visible,
   animation: cosmic-skill-quake 0.28s steps(2, end) 1 !important;
 }
 
+/* === UPGRADE STAT COMPARISON PANEL (Tools & Armor) === */
+.upgrade-cmp-panel {
+  background: #0d1322;
+  border: 2px solid color-mix(in srgb, var(--cmp-accent, #ffd54f) 55%, #1e293b);
+  box-shadow: inset 0 0 0 2px #070b15, 0 3px 0 rgba(0, 0, 0, 0.45);
+  padding: 7px 8px;
+  margin: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.upgrade-cmp-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+  padding-bottom: 4px;
+}
+
+.upgrade-cmp-title {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: var(--cmp-accent, #ffd54f);
+  text-shadow: 1px 1px 0 #050810;
+  overflow-wrap: anywhere;
+}
+
+.upgrade-cmp-sub {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  color: #dbeafe;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.upgrade-cmp-table {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.upgrade-cmp-row {
+  display: grid;
+  grid-template-columns: minmax(48px, 1fr) auto auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 5px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(71, 85, 105, 0.22);
+  min-width: 0;
+}
+
+.upgrade-cmp-row.is-3col {
+  grid-template-columns: minmax(52px, 1fr) auto auto;
+}
+
+.upgrade-cmp-row.is-alt {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.upgrade-cmp-row.is-header {
+  background: transparent;
+  border: none;
+  padding: 1px 5px 2px;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 10px;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.cmp-col-cur,
+.cmp-col-next,
+.cmp-col-delta {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cmp-stat-label {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 12px;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.cmp-val-cur {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cmp-val-next {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 12px;
+  color: #ffe57f;
+  text-align: right;
+  text-shadow: 1px 1px 0 #070b14;
+  white-space: nowrap;
+}
+
+.cmp-delta-pill {
+  justify-self: end;
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 11px;
+  padding: 2px 5px;
+  min-width: 30px;
+  text-align: center;
+  border: 1px solid #334155;
+  background: #141e30;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.cmp-delta-pill.is-pos {
+  background: #0d3321;
+  border-color: #22c55e;
+  color: #86efac;
+}
+
+.cmp-delta-pill.is-neg {
+  background: #3b1318;
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+/* === WORKSTATION LEVEL PERKS CARD (Nv.1 / Nv.2 / Nv.3) === */
+.bldg-perks-card {
+  background: #101729;
+  border: 2px solid #41557a;
+  box-shadow: inset 0 0 0 2px #090e1a;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.bldg-perks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.bldg-perks-title {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 14px;
+  color: #ffd54f;
+  letter-spacing: 0.4px;
+}
+
+.bldg-perks-badge {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  padding: 2px 7px;
+  background: #18233c;
+  border: 1px solid #60a5fa;
+  color: #bae6fd;
+}
+
+.bldg-perks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bldg-perk-tier {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid #2b3a55;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 15px;
+  line-height: 1.25;
+  color: #94a3b8;
+}
+
+.bldg-perk-tier.is-unlocked {
+  background: rgba(20, 48, 35, 0.45);
+  border-color: #34d399;
+  color: #ecfdf5;
+}
+
+.bldg-perk-tier.is-next {
+  background: rgba(56, 42, 16, 0.48);
+  border-color: #fbbf24;
+  color: #fef3c7;
+}
+
+.bldg-perk-lv {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  padding: 2px 6px;
+  background: #0a101d;
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+}
+
+.bldg-perk-status {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid currentColor;
+  flex-shrink: 0;
+}
+
 /* Hold-to-Learn Button */
 .btn-skill-hold-activate {
   position: relative;
@@ -4210,33 +4429,171 @@ input:focus-visible,
 #modal-box.skills-cosmic-fullscreen .skill-tree-workspace {
   gap: 0;
   position: relative;
+  image-rendering: pixelated;
 }
 #modal-box.skills-cosmic-fullscreen .skill-board-wrap {
-  border: none;
-  border-width: 0;
+  border: 3px solid #2b3c63;
   border-image: none;
   border-image-source: none;
   border-radius: 0;
-  background: url('../assets/ui/sky_starfield.png') center / cover no-repeat, radial-gradient(circle at 42% 48%, rgba(44, 78, 165, 0.24), rgba(5, 8, 22, 0.45));
-  box-shadow: none;
+  background: #050814;
+  box-shadow: inset 0 0 0 2px #02040a;
+  image-rendering: pixelated;
+}
+#modal-box.skills-cosmic-fullscreen .skill-board {
+  background: transparent;
+  image-rendering: pixelated;
+}
+.skill-pixel-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  z-index: 0;
+}
+#modal-box.skills-cosmic-fullscreen .skill-svg-lines {
+  z-index: 1;
 }
 #modal-box.skills-cosmic-fullscreen .skill-tree-topbar {
-  background: rgba(8, 14, 36, 0.78);
-  border: 1px solid rgba(128, 216, 255, 0.25);
-  border-radius: 10px;
-  padding: 4px 10px;
+  background: #0b1124;
+  border: 2px solid #354b7a;
+  border-radius: 0;
+  padding: 6px 10px;
   margin-bottom: 0;
-  backdrop-filter: blur(4px);
+  backdrop-filter: none;
+  box-shadow: inset 0 0 0 2px #060a16, 0 4px 0 rgba(0, 0, 0, 0.55);
+}
+#modal-box.skills-cosmic-fullscreen .skill-points-pill {
+  background: #141c36;
+  border: 2px solid #f59e0b;
+  border-radius: 0;
+  color: #fde68a;
+  font-family: 'BalaclavaPixel', monospace;
+  box-shadow: inset 0 0 0 1px #080c18;
 }
 #modal-box.skills-cosmic-fullscreen .skill-inspector {
-  background: rgba(10, 16, 38, 0.88);
+  background: #0b1020;
   border: none;
-  border-left: 1px solid rgba(128, 216, 255, 0.26);
+  border-left: 3px solid #2b3c63;
   border-image: none;
   border-radius: 0;
-  padding: 16px 18px;
+  padding: 14px 16px;
   color: #edf4ff;
-  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.48);
+  box-shadow: inset 2px 0 0 #050812;
+  image-rendering: pixelated;
+}
+#modal-box.skills-cosmic-fullscreen .skill-tree-legend {
+  background: #0a1020;
+  border: 2px solid #2b3c63;
+  border-radius: 0;
+  backdrop-filter: none;
+  box-shadow: inset 0 0 0 1px #050812;
+  padding: 5px 10px;
+}
+#modal-box.skills-cosmic-fullscreen .skill-legend-hex {
+  border-radius: 0;
+  clip-path: none;
+  width: 11px;
+  height: 11px;
+  border: 2px solid #040710;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+#modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-available { background: #38bdf8; }
+#modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-unlocked { background: #fbbf24; }
+#modal-box.skills-cosmic-fullscreen .skill-legend-hex.is-locked { background: #334155; }
+#modal-box.skills-cosmic-fullscreen .skill-core-hub {
+  border-radius: 0;
+  clip-path: polygon(
+    20% 0%, 80% 0%, 100% 20%, 100% 80%,
+    80% 100%, 20% 100%, 0% 80%, 0% 20%
+  );
+  background: #111b36;
+  border: 2px solid #fbbf24;
+  box-shadow: inset 0 0 0 3px #070b18, 0 0 0 2px #040711;
+}
+#modal-box.skills-cosmic-fullscreen .skill-branch-tag {
+  background: #0a0f1f;
+  border: 2px solid currentColor;
+  border-radius: 0;
+  padding: 3px 9px;
+  font-family: 'BalaclavaPixel', monospace;
+  text-shadow: 1px 1px 0 #04060d;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.65);
+}
+
+/* Crisp Pixel Star Sockets replacing blurry AI gradient hex nodes */
+#modal-box.skills-cosmic-fullscreen .tree-node-btn {
+  border-radius: 0 !important;
+  clip-path: none !important;
+  background: #0d1426 !important;
+  border: 2px solid #354566 !important;
+  box-shadow: inset 0 0 0 2px #060913, 0 3px 0 rgba(2, 4, 10, 0.85) !important;
+  transition: transform 0.1s steps(2, end), border-color 0.12s steps(2, end) !important;
+  z-index: 3;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn::before,
+#modal-box.skills-cosmic-fullscreen .tree-node-btn::after {
+  content: none !important;
+  display: none !important;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.locked {
+  background: #090d1a !important;
+  border-color: #253047 !important;
+  opacity: 0.72;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.available {
+  background: #10203a !important;
+  border-color: #38bdf8 !important;
+  box-shadow: inset 0 0 0 2px #0a1529, 0 0 0 2px rgba(56, 189, 248, 0.28), 0 3px 0 #030712 !important;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.available.can-afford {
+  background: #0e2c26 !important;
+  border-color: #34d399 !important;
+  box-shadow: inset 0 0 0 2px #061814, 0 0 0 2px rgba(52, 211, 153, 0.38), 0 3px 0 #030712 !important;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked {
+  background: #231b0e !important;
+  border-color: #fbbf24 !important;
+  box-shadow: inset 0 0 0 2px #140f06, 0 0 0 2px rgba(251, 191, 36, 0.32), 0 3px 0 #060402 !important;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.keystone {
+  border-width: 3px !important;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.selected-node {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+  z-index: 8;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-tier {
+  border-radius: 0 !important;
+  background: #060913 !important;
+  border: 1px solid #3c4d73 !important;
+  font-family: 'BalaclavaPixel', monospace !important;
+  padding: 0 3px !important;
+  bottom: -7px !important;
+}
+#modal-box.skills-cosmic-fullscreen .tree-node-btn.unlocked .tree-node-tier {
+  border-color: #fbbf24 !important;
+  color: #fde68a !important;
+}
+#modal-box.skills-cosmic-fullscreen .btn-skill-hold-activate {
+  border-radius: 0;
+  border: 2px solid #34d399;
+  box-shadow: inset 0 0 0 2px #081812, 0 3px 0 #030a07;
+}
+#modal-box.skills-cosmic-fullscreen .skill-unlock-celebration {
+  border-radius: 0;
+  border: 2px solid #fbbf24;
+  background: #0e1428;
+  box-shadow: inset 0 0 0 2px #050812, 0 5px 0 rgba(0, 0, 0, 0.65);
 }
 
 /* HUD Active Buff Pills */
@@ -4982,6 +5339,192 @@ input:focus-visible,
 .scene-transition.is-dungeon .st-sub {
   color: #d6baa2;
   text-shadow: 1px 1px 0 #09060d;
+}
+
+.scene-transition.is-dungeon.has-dungeon-brief .st-stage {
+  margin-top: clamp(18px, 4.2vh, 52px);
+  width: min(720px, 94vw);
+  gap: 6px;
+}
+
+.st-dungeon-brief {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 2px;
+  padding: 10px 12px;
+  background: rgba(10, 7, 16, 0.88);
+  border: 2px solid #593e34;
+  box-shadow: inset 0 0 0 2px #1c1324, 0 6px 0 rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  image-rendering: pixelated;
+}
+
+.st-db-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  border-bottom: 1px solid rgba(138, 99, 76, 0.35);
+  padding-bottom: 6px;
+}
+
+.st-db-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.st-db-badge {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 14px;
+  line-height: 1.1;
+  padding: 3px 7px;
+  background: #171120;
+  border: 1px solid #4c3756;
+  color: #e6d7c8;
+  text-shadow: 1px 1px 0 #07050c;
+}
+
+.st-db-badge.is-rec {
+  border-color: #c88d44;
+  color: #ffd578;
+}
+
+.st-db-badge.is-lvl {
+  border-color: #4f799e;
+  color: #a6dcff;
+}
+
+.st-db-floors {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 14px;
+  color: #bfa691;
+  line-height: 1.2;
+}
+
+.st-db-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+
+@media (max-width: 640px) {
+  .st-db-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.st-db-panel {
+  background: rgba(19, 14, 27, 0.92);
+  border: 1px solid #47324e;
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.st-db-panel-title {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  letter-spacing: 0.6px;
+  color: #ffb870;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #07050c;
+}
+
+.st-db-mobs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 5px;
+}
+
+.st-db-mob-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #120d1a;
+  border: 1px solid #352742;
+  padding: 4px 6px;
+  min-width: 0;
+}
+
+.st-db-mob-canvas {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.st-db-mob-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.st-db-mob-name {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 14px;
+  color: #f3e9df;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-db-mob-sub {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 12px;
+  color: #9fb7cd;
+}
+
+.st-db-boss-box {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: linear-gradient(180deg, rgba(48, 17, 25, 0.9), rgba(22, 11, 20, 0.95));
+  border: 1px solid #8a3843;
+  padding: 7px 8px;
+  flex: 1;
+}
+
+.st-db-boss-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.st-db-boss-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.st-db-boss-name {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 15px;
+  color: #ff9c9c;
+  line-height: 1.15;
+  text-shadow: 1px 1px 0 #130408;
+}
+
+.st-db-boss-stats {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  color: #f4d6a8;
+}
+
+.st-db-boss-relic {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 12px;
+  color: #9be8ff;
 }
 
 /* Minimalist Pixel Loading Bar (cohesive with boot screen) */

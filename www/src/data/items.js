@@ -1248,19 +1248,19 @@
     varita_arcana: {
       id: 'varita_arcana', name: 'Varita Láser Arcana', category: 'equipamiento', rarity: 'epico',
       sellValue: 260, buyValue: 620, isLaserWeapon: true,
-      laserStats: { range: 350, dmg: 24, nodeDmg: 22, energyCost: 6.5, cooldown: 0.30, width: 10, color: '#7c4dff', coreColor: '#e0f7fa' },
+      laserStats: { range: 360, dmg: 26, nodeDmg: 22, energyCost: 6.5, cooldown: 0.30, width: 11, color: '#7c4dff', coreColor: '#e0f7fa', beamMode: 'helix' },
       source: 'Centro de Investigación (Titanio + Cristales Mágicos + Esencia Oscura + Polvo Estelar)',
-      uses: 'Equipa en Barra [9]/[0] y dispara rayos láser arcanos que dañan enemigos y rompen menas',
-      desc: 'Canaliza un haz arcano concentrado hacia el cursor para el tramo avanzado de aventura.',
+      uses: 'Haz Arcano Doble Hélice: explota runas arcanas al impactar y mina vetas en línea',
+      desc: 'Canaliza un doble haz arcano trenzado que detona pulsos al impacto.',
       icon: 'varita_arcana'
     },
     cetro_vacio: {
       id: 'cetro_vacio', name: 'Cetro Láser del Vacío', category: 'equipamiento', rarity: 'legendario',
       sellValue: 540, buyValue: 1250, isLaserWeapon: true,
-      laserStats: { range: 450, dmg: 44, nodeDmg: 38, energyCost: 8.5, cooldown: 0.26, width: 14, color: '#ff4081', coreColor: '#fff9c4' },
+      laserStats: { range: 460, dmg: 46, nodeDmg: 38, energyCost: 8.5, cooldown: 0.27, width: 15, color: '#ff4081', coreColor: '#fff9c4', beamMode: 'void_pull' },
       source: 'Investigación Suprema (Varita Arcana + Oricalco + Diamantes + Esencia Oscura)',
-      uses: 'Equipa en Barra [9]/[0] y proyecta un haz del vacío que perfora enemigos y menas',
-      desc: 'Reliquia prismática avanzada que atraviesa múltiples objetivos en línea recta.',
+      uses: 'Rayo Singularidad: abre una implosión del vacío que atrae enemigos al punto de impacto',
+      desc: 'Reliquia abisal cuyo haz colapsa la gravedad alrededor de los objetivos.',
       icon: 'cetro_vacio'
     },
     pergamino_rayo: {
@@ -1631,16 +1631,16 @@
     baculo_dorado: {
       id: 'baculo_dorado', name: 'Báculo Láser Aúreo', category: 'equipamiento', rarity: 'epico',
       sellValue: 310, buyValue: 710, isLaserWeapon: true,
-      laserStats: { range: 400, dmg: 32, nodeDmg: 28, energyCost: 7.5, cooldown: 0.28, width: 12, color: '#ffd54f', coreColor: '#fffde7' },
-      source: 'Centro de Investigación (Adamantita + Topacio + Núcleo Solar)', uses: 'Asígnalo a la barra y dispara rayos láser dorados de largo alcance',
-      desc: 'Amplifica gemas solares en un haz concentrado que tala y daña.', icon: 'staff_gold'
+      laserStats: { range: 410, dmg: 34, nodeDmg: 28, energyCost: 7.5, cooldown: 0.29, width: 13, color: '#ffd54f', coreColor: '#fffde7', beamMode: 'solar_pillar' },
+      source: 'Centro de Investigación (Adamantita + Topacio + Núcleo Solar)', uses: 'Haz Sagrado Solar: invoca un pilar celestial ardiente en el impacto que quema en área',
+      desc: 'Amplifica gemas solares invocando columnas de luz divina sobre el objetivo.', icon: 'staff_gold'
     },
     baculo_estelar: {
       id: 'baculo_estelar', name: 'Cetro Cósmico Estelar', category: 'equipamiento', rarity: 'legendario',
       sellValue: 620, buyValue: 1420, isLaserWeapon: true,
-      laserStats: { range: 500, dmg: 62, nodeDmg: 54, energyCost: 9.0, cooldown: 0.24, width: 16, color: '#00e5ff', coreColor: '#ffffff' },
-      source: 'Investigación Celestial (Cetro del Vacío + Lingote Celestial + Gema del Alma)', uses: 'Dispara el láser más potente del tramo final contra jefes y vetas',
-      desc: 'Canaliza energía de estrellas caídas en pulsos concentrados.', icon: 'wand_legendary'
+      laserStats: { range: 510, dmg: 64, nodeDmg: 54, energyCost: 9.5, cooldown: 0.25, width: 17, color: '#00e5ff', coreColor: '#ffffff', beamMode: 'orbital_storm' },
+      source: 'Investigación Celestial (Cetro del Vacío + Lingote Celestial + Gema del Alma)', uses: 'Láser Orbital Eléctrico: descarga tormenta eléctrica y explosión estelar a lo largo del rayo',
+      desc: 'Canaliza energía de estrellas caídas desatando relámpagos orbitales en cadena.', icon: 'wand_legendary'
     },
     bomba_abismal: {
       id: 'bomba_abismal', name: 'Bomba Abismal Cósmica', category: 'especiales', rarity: 'legendario',
@@ -1780,58 +1780,58 @@
     espada_llamarada: {
       id: 'espada_llamarada', name: 'Sable Llamarada del Fénix', category: 'equipamiento', rarity: 'epico',
       sellValue: 260, buyValue: 620, isSpecialBlade: true,
-      bladeStats: { range: 112, dmg: 38, energyCost: 5.0, cooldown: 0.29, color: '#ff7043', waveRange: 230, icon: 'sword_flame' },
-      source: 'Yunque Rúnico / Investigación', uses: 'Asígnala a la barra y desata tajos de fuego y ondas ígneas',
-      desc: 'Hoja curva templada en magma vivo para el tramo avanzado.', icon: 'sword_flame'
+      bladeStats: { range: 112, dmg: 38, energyCost: 5.0, cooldown: 0.29, color: '#ff7043', waveRange: 230, icon: 'sword_flame', uniqueMode: 'flame_wave', burnDmg: 8 },
+      source: 'Yunque Rúnico / Investigación', uses: 'Desata onda de fuego perforante e incinera enemigos durante 4s',
+      desc: 'Cada corte proyecta una oleada viva de llamas del fénix.', icon: 'sword_flame'
     },
     hoja_glacial: {
       id: 'hoja_glacial', name: 'Hoja Glacial Eterna', category: 'equipamiento', rarity: 'epico',
       sellValue: 255, buyValue: 610, isSpecialBlade: true,
-      bladeStats: { range: 112, dmg: 36, energyCost: 4.8, cooldown: 0.28, color: '#4fc3f7', waveRange: 240, slow: true, icon: 'sword_frost' },
-      source: 'Yunque Rúnico / Investigación', uses: 'Lanza tajos helados que ralentizan y quiebran enemigos',
-      desc: 'Cincelada en hielo eterno de las cumbres.', icon: 'sword_frost'
+      bladeStats: { range: 112, dmg: 36, energyCost: 4.8, cooldown: 0.28, color: '#4fc3f7', waveRange: 240, slow: true, icon: 'sword_frost', uniqueMode: 'frost_spikes' },
+      source: 'Yunque Rúnico / Investigación', uses: 'Lanza 3 estacas de hielo perforantes y congela al instante',
+      desc: 'Desprende espinas gélidas al frente con cada estocada.', icon: 'sword_frost'
     },
     espada_solar_mitica: {
       id: 'espada_solar_mitica', name: 'Espada del Sol Invicto', category: 'equipamiento', rarity: 'legendario',
       sellValue: 440, buyValue: 980, isSpecialBlade: true,
-      bladeStats: { range: 126, dmg: 64, energyCost: 6.0, cooldown: 0.26, color: '#ffd54f', waveRange: 300, icon: 'sword_solar' },
-      source: 'Investigación Celestial', uses: 'Arma solar suprema que proyecta destellos abrasadores',
-      desc: 'Refleja la luz pura del mediodía en cada golpe.', icon: 'sword_solar'
+      bladeStats: { range: 126, dmg: 64, energyCost: 6.0, cooldown: 0.26, color: '#ffd54f', waveRange: 300, icon: 'sword_solar', uniqueMode: 'solar_nova', burnDmg: 10 },
+      source: 'Investigación Celestial', uses: 'Estalla una Nova Solar radial (155px) y pilar celestial quemando todo alrededor',
+      desc: 'Concentra la furia del mediodía en explosiones sagradas.', icon: 'sword_solar'
     },
     media_luna_abisal: {
       id: 'media_luna_abisal', name: 'Cimitarra Media Luna Abisal', category: 'equipamiento', rarity: 'legendario',
       sellValue: 415, buyValue: 940, isSpecialBlade: true,
-      bladeStats: { range: 122, dmg: 58, energyCost: 5.5, cooldown: 0.25, color: '#7e57c2', waveRange: 280, lifeSteal: 0.06, icon: 'sword_moon' },
-      source: 'Investigación Oscura', uses: 'Drena un 6% del daño causado y lanza haces lunares',
-      desc: 'Filo creciente forjado bajo eclipses eternos.', icon: 'sword_moon'
+      bladeStats: { range: 122, dmg: 58, energyCost: 5.5, cooldown: 0.25, color: '#7e57c2', waveRange: 280, lifeSteal: 0.08, icon: 'sword_moon', uniqueMode: 'void_boomerang' },
+      source: 'Investigación Oscura', uses: 'Proyecta una media luna boomerang que regresa drenando 8% de vida',
+      desc: 'Corta el vacío ida y vuelta absorbiendo vitalidad enemiga.', icon: 'sword_moon'
     },
     espada_prismatica: {
       id: 'espada_prismatica', name: 'Filo Prismático Cósmico', category: 'equipamiento', rarity: 'legendario',
       sellValue: 470, buyValue: 1050, isSpecialBlade: true,
-      bladeStats: { range: 132, dmg: 70, energyCost: 6.5, cooldown: 0.25, color: '#ec407a', waveRange: 320, icon: 'sword_prism' },
-      source: 'Investigación Real', uses: 'Proyecta haces multicolores de altísimo alcance',
-      desc: 'Descompone la magia pura en cortes devastadores.', icon: 'sword_prism'
+      bladeStats: { range: 132, dmg: 70, energyCost: 6.5, cooldown: 0.25, color: '#ec407a', waveRange: 320, icon: 'sword_prism', uniqueMode: 'prism_rays' },
+      source: 'Investigación Real', uses: 'Dispara 3 haces arcoíris cósmicos en abanico de altísimo alcance',
+      desc: 'Fragmenta la luz astral en triples tajos multicolores.', icon: 'sword_prism'
     },
     katana_sakura: {
       id: 'katana_sakura', name: 'Katana Pétalo Carmesí', category: 'equipamiento', rarity: 'epico',
       sellValue: 285, buyValue: 670, isSpecialBlade: true,
-      bladeStats: { range: 108, dmg: 34, energyCost: 4.0, cooldown: 0.25, color: '#f48fb1', waveRange: 210, icon: 'sword_sakura' },
-      source: 'Yunque Rúnico', uses: 'Cortes veloces con ráfaga de pétalos cortantes',
-      desc: 'Doble filo ligero equilibrado para duelos avanzados.', icon: 'sword_sakura'
+      bladeStats: { range: 108, dmg: 34, energyCost: 4.0, cooldown: 0.22, color: '#f48fb1', waveRange: 210, icon: 'sword_sakura', uniqueMode: 'sakura_flurry', critBonus: 0.15 },
+      source: 'Yunque Rúnico', uses: 'Cortes veloces (+15% Crítico) que liberan cuchillas de viento rastreadoras',
+      desc: 'Cada tajo libera torbellinos carmesíes que persiguen presas.', icon: 'sword_sakura'
     },
     hoja_espinas: {
       id: 'hoja_espinas', name: 'Espada de Espinas Silvestres', category: 'equipamiento', rarity: 'raro',
       sellValue: 175, buyValue: 410, isSpecialBlade: true,
-      bladeStats: { range: 104, dmg: 28, energyCost: 4.5, cooldown: 0.30, color: '#66bb6a', waveRange: 195, icon: 'sword_thorn' },
-      source: 'Yunque Rúnico', uses: 'Cortes naturales eficaces contra bestias y bosques',
-      desc: 'Tallada con raíces vivas y espinas de jade.', icon: 'sword_thorn'
+      bladeStats: { range: 104, dmg: 28, energyCost: 4.5, cooldown: 0.30, color: '#66bb6a', waveRange: 195, icon: 'sword_thorn', uniqueMode: 'bramble_snare' },
+      source: 'Yunque Rúnico', uses: 'Hace brotar zarzas venenosas que ralentizan e intoxican en área',
+      desc: 'Tallada con raíces vivas que enredan y envenenan.', icon: 'sword_thorn'
     },
     cetro_prism_vacio: {
       id: 'cetro_prism_vacio', name: 'Hoja del Vacío Violeta', category: 'equipamiento', rarity: 'epico',
       sellValue: 310, buyValue: 730, isSpecialBlade: true,
-      bladeStats: { range: 118, dmg: 48, energyCost: 5.5, cooldown: 0.27, color: '#ab47bc', waveRange: 260, icon: 'sword_void' },
-      source: 'Investigación Arcana', uses: 'Corta el espacio proyectando descargas de amatista',
-      desc: 'Engarzada con esquirlas de geoda y esencia oscura.', icon: 'sword_void'
+      bladeStats: { range: 118, dmg: 48, energyCost: 5.5, cooldown: 0.27, color: '#ab47bc', waveRange: 260, icon: 'sword_void', uniqueMode: 'void_vortex' },
+      source: 'Investigación Arcana', uses: 'Genera un vórtice gravitacional al tajar que atrae enemigos al centro',
+      desc: 'Rasga el tejido dimensional arrastrando presas hacia tu filo.', icon: 'sword_void'
     },
 
     // === ESCUDOS, CORONAS Y JOYERÍA HERÁLDICA (Shield_All & items_pack_new) ===
@@ -2103,11 +2103,11 @@
     caliz_nebulosa_obj: { id: 'caliz_nebulosa_obj', name: 'Cáliz de Sangre Cósmica', category: 'comida', rarity: 'legendario', sellValue: 120, buyValue: 280, source: 'Alquimia / Jefes', uses: 'Cura +180 Vida y concede +40% Daño durante 60s', desc: 'Copa en forma de corazón rellena de esencia vital pura.', healHp: 180, healEnergy: 70, buff: { type: 'dmg', mult: 1.40, duration: 60 }, icon: 'caliz_nebulosa' },
     elixir_vida_supremo: { id: 'elixir_vida_supremo', name: 'Poción Rubí Suprema', category: 'comida', rarity: 'epico', sellValue: 74, buyValue: 170, source: 'Alquimia', uses: 'Curación instantánea (+160 Vida y +60 Energía)', desc: 'Frasco sellado con rubí para duelos contra jefes.', healHp: 160, healEnergy: 60, icon: 'elixir_vida' },
     elixir_mana_astral: { id: 'elixir_mana_astral', name: 'Esencia Zafiro de Vigor', category: 'comida', rarity: 'epico', sellValue: 72, buyValue: 165, source: 'Alquimia', uses: 'Restaura 100% Energía y +45% Velocidad (45s)', desc: 'Destello azulino que disipa toda fatiga al instante.', healHp: 40, healEnergy: 180, buff: { type: 'speed', mult: 1.45, duration: 45 }, icon: 'elixir_mana' },
-    espada_relampago: { id: 'espada_relampago', name: 'Hoja del Relámpago Azul', category: 'equipamiento', rarity: 'epico', sellValue: 260, buyValue: 590, source: 'Yunque Rúnico (Titanio + Zafiro + Cristales Mágicos)', uses: 'Haz clic al usar en Hotbar para descargar un tajo eléctrico (38 daño)', desc: 'Filo cargado de electricidad que paraliza enemigos.', weaponMelee: { dmg: 38, range: 76, arcColor: '#4fc3f7', speed: 0.28 }, icon: 'espada_relampago' },
-    espada_tormenta: { id: 'espada_tormenta', name: 'Espada de la Tormenta Suprema', category: 'equipamiento', rarity: 'legendario', sellValue: 410, buyValue: 920, source: 'Investigación Real', uses: 'Arma Legendaria de Tormenta (56 daño + descargas críticas)', desc: 'Atrapa rayos reales del firmamento con cada estocada.', weaponMelee: { dmg: 56, range: 84, arcColor: '#80deea', speed: 0.25 }, icon: 'espada_tormenta' },
-    espada_hueso_rey: { id: 'espada_hueso_rey', name: 'Mandoble del Rey Óseo', category: 'equipamiento', rarity: 'legendario', sellValue: 430, buyValue: 980, source: 'Ritual del Bosque Oscuro', uses: 'Arma Única del Soberano Esqueleto (60 daño y robo de vida)', desc: 'Forjada tras derrotar o pacificar al coloso coronado del Bosque Oscuro.', weaponMelee: { dmg: 60, range: 86, arcColor: '#ce93d8', speed: 0.26 }, icon: 'espada_astral_v2' },
-    martillo_paladin: { id: 'martillo_paladin', name: 'Martillo del Paladín Real', category: 'equipamiento', rarity: 'epico', sellValue: 280, buyValue: 640, source: 'Yunque Rúnico', uses: 'Maza pesada sagrada (48 daño en área amplia)', desc: 'Aplasta esqueletos y armaduras rocosas de un solo impacto.', weaponMelee: { dmg: 48, range: 80, arcColor: '#ffd54f', speed: 0.34 }, icon: 'martillo_paladin' },
-    baculo_solaris: { id: 'baculo_solaris', name: 'Báculo Láser Solaris', category: 'equipamiento', rarity: 'legendario', sellValue: 560, buyValue: 1280, source: 'Investigación Cósmica', uses: 'Dispara un rayo láser verde-dorado de largo alcance que mina y combate', desc: 'Canaliza energía estelar concentrada en un haz continuo de etapa final.', isLaserWeapon: true, laserStats: { range: 470, dmg: 50, nodeDmg: 44, energyCost: 8.0, cooldown: 0.25, width: 14, color: '#69f0ae', coreColor: '#ffffff' }, icon: 'baculo_solaris' },
+    espada_relampago: { id: 'espada_relampago', name: 'Hoja del Relámpago Azul', category: 'equipamiento', rarity: 'epico', sellValue: 260, buyValue: 590, source: 'Yunque Rúnico (Titanio + Zafiro + Cristales Mágicos)', uses: 'Descarga cadenas eléctricas que saltan al enemigo cercano', desc: 'Filo cargado que rebota chispas voltaicas entre objetivos.', weaponMelee: { dmg: 38, range: 78, arcColor: '#4fc3f7', speed: 0.27, uniqueMode: 'chain_arc' }, icon: 'espada_relampago' },
+    espada_tormenta: { id: 'espada_tormenta', name: 'Espada de la Tormenta Suprema', category: 'equipamiento', rarity: 'legendario', sellValue: 410, buyValue: 920, source: 'Investigación Real', uses: 'Invoca nube tormentosa y rayos celestiales en área sobre el corte', desc: 'Atrapa rayos reales del firmamento creando explosiones eléctricas.', weaponMelee: { dmg: 56, range: 86, arcColor: '#80deea', speed: 0.25, uniqueMode: 'thunder_tempest', cleave: true }, icon: 'espada_tormenta' },
+    espada_hueso_rey: { id: 'espada_hueso_rey', name: 'Mandoble del Rey Óseo', category: 'equipamiento', rarity: 'legendario', sellValue: 430, buyValue: 980, source: 'Ritual del Bosque Oscuro', uses: 'Ondas espectrales que roban 12% de vida al golpear', desc: 'Mandoble del coloso que libera garras sombrías y drena vitalidad.', weaponMelee: { dmg: 60, range: 88, arcColor: '#ce93d8', speed: 0.26, lifeSteal: 0.12, uniqueMode: 'bone_siphon', cleave: true }, icon: 'espada_astral_v2' },
+    martillo_paladin: { id: 'martillo_paladin', name: 'Martillo del Paladín Real', category: 'equipamiento', rarity: 'epico', sellValue: 280, buyValue: 640, source: 'Yunque Rúnico', uses: 'Impacto sísmico sagrado en 360° (35% aturdimiento + pilar divino)', desc: 'Aplasta esqueletos y armaduras rocosas con ondas sagradas.', weaponMelee: { dmg: 48, range: 86, arcColor: '#ffd54f', speed: 0.34, cleave: true, stunChance: 0.35, uniqueMode: 'holy_slam' }, icon: 'martillo_paladin' },
+    baculo_solaris: { id: 'baculo_solaris', name: 'Báculo Láser Solaris', category: 'equipamiento', rarity: 'legendario', sellValue: 560, buyValue: 1280, source: 'Investigación Cósmica', uses: 'Rayo Prismático que rebota en 2 rayos secundarios hacia enemigos cercanos', desc: 'Canaliza energía estelar concentrada que se refracta en múltiples objetivos.', isLaserWeapon: true, laserStats: { range: 475, dmg: 52, nodeDmg: 44, energyCost: 8.0, cooldown: 0.26, width: 14, color: '#69f0ae', coreColor: '#ffffff', beamMode: 'prism_ricochet' }, icon: 'baculo_solaris' },
     collar_oseo: { id: 'collar_oseo', name: 'Collar del Osario Antiguo', category: 'equipamiento', rarity: 'epico', sellValue: 220, buyValue: 510, source: 'Bosque Oscuro / Altar Óseo', uses: 'Equipa en Amuleto para +22% Daño, +14% Crítico y +45 Vida Máx', desc: 'Reliquia engastada con colmillos de bestias primigenias.', equipSlot: 'amulet', bonus: { dmgBonus: 0.22, critChance: 0.14, maxHp: 45 }, icon: 'collar_oseo' },
     anillo_rubi_real: { id: 'anillo_rubi_real', name: 'Sortija Rubí del Conquistador', category: 'equipamiento', rarity: 'epico', sellValue: 235, buyValue: 540, source: 'Forja Real', uses: 'Equipa en Anillo para +24% Daño y +18% Velocidad de ataque', desc: 'Gema escarlata tallada en fuego volcánico.', equipSlot: 'ring', bonus: { dmgBonus: 0.24, attackSpeed: 0.18 }, icon: 'anillo_rubi' },
     talisman_meteoro: { id: 'talisman_meteoro', name: 'Amuleto del Meteoro Ardiente', category: 'equipamiento', rarity: 'legendario', sellValue: 390, buyValue: 880, source: 'Investigación / Meteoritos', uses: 'Equipa en Accesorio para +28% Daño, +25% Experiencia y halo luminoso', desc: 'Piedra celeste en ignición eterna.', equipSlot: 'relic', stats: { dmgPct: 0.28, xpBonus: 0.25, lightRadius: 110 }, icon: 'talisman_meteoro' },
@@ -2158,11 +2158,11 @@
     ballesta_madera: { id: 'ballesta_madera', name: 'Ballesta de Cazador', category: 'equipamiento', rarity: 'poco_comun', sellValue: 75, buyValue: 175, source: 'Taller / Forja', uses: 'Dispara virotes rápidos de precisión (22 daño)', desc: 'Mecanismo tenso para perforar armaduras ligeras.', isRangedWeapon: true, rangedStats: { dmg: 22, speed: 590, range: 410, cooldown: 0.42, color: '#ffe082', pierce: 1 }, icon: 'crossbow_wood' },
     ballesta_legendaria: { id: 'ballesta_legendaria', name: 'Ballesta Perforadora Astral', category: 'equipamiento', rarity: 'legendario', sellValue: 385, buyValue: 880, source: 'Yunque Rúnico / Jefes', uses: 'Dispara virotes perforantes que atraviesan hasta 2 enemigos (54 daño)', desc: 'Obra maestra de precisión balística arcana.', isRangedWeapon: true, rangedStats: { dmg: 54, speed: 740, range: 500, cooldown: 0.32, color: '#e040fb', pierce: 2 }, icon: 'crossbow_legendary' },
 
-    varita_escarcha: { id: 'varita_escarcha', name: 'Varita de Escarcha Boreal', category: 'equipamiento', rarity: 'epico', sellValue: 195, buyValue: 450, source: 'Mesa de Hechicería Avanzada', uses: 'Proyectil gélido que ralentiza enemigos (22 daño base + Poder Mágico)', desc: 'Varita tallada en azurita glacial y mitrilo.', isStaffWeapon: true, staffStats: { dmg: 22, speed: 500, range: 375, cooldown: 0.32, energyCost: 4.5, color: '#80deea', slowDur: 2.0 }, icon: 'wand_frost' },
-    varita_rubi: { id: 'varita_rubi', name: 'Varita Ígnea de Rubí', category: 'equipamiento', rarity: 'epico', sellValue: 265, buyValue: 610, source: 'Mesa de Hechicería Avanzada', uses: 'Orbe ígneo que quema al impactar (34 daño + Poder Mágico)', desc: 'Canaliza chispas de rubí y esencia oscura.', isStaffWeapon: true, staffStats: { dmg: 34, speed: 545, range: 400, cooldown: 0.29, energyCost: 5.5, color: '#ff7043', burnDmg: 6 }, icon: 'wand_ruby' },
-    baculo_druida: { id: 'baculo_druida', name: 'Báculo del Guardián Silvestre', category: 'equipamiento', rarity: 'epico', sellValue: 225, buyValue: 520, source: 'Mesa de Hechicería Avanzada', uses: 'Proyectil esmeralda (+12% Poder Mágico al equipar en hotbar, 28 daño)', desc: 'Madera viva coronada por un brote ancestral.', isStaffWeapon: true, staffStats: { dmg: 28, speed: 490, range: 405, cooldown: 0.32, energyCost: 5.0, color: '#81c784' }, icon: 'staff_druid' },
-    baculo_lunar: { id: 'baculo_lunar', name: 'Báculo de Media Luna', category: 'equipamiento', rarity: 'legendario', sellValue: 340, buyValue: 780, source: 'Mesa de Hechicería Suprema', uses: 'Proyectil creciente arcano de largo alcance (42 daño + Poder Mágico)', desc: 'Amplifica ondas nocturnas en las mazmorras finales.', isStaffWeapon: true, staffStats: { dmg: 42, speed: 560, range: 445, cooldown: 0.28, energyCost: 6.5, color: '#b39ddb', pierce: 1 }, icon: 'staff_crescent' },
-    baculo_rubi: { id: 'baculo_rubi', name: 'Cetro Rubí del Archimago', category: 'equipamiento', rarity: 'legendario', sellValue: 490, buyValue: 1120, source: 'Mesa de Hechicería Suprema', uses: 'Orbes explosivos rubí (56 daño en área + Poder Mágico)', desc: 'Concentra energía solar en cada descarga mágica.', isStaffWeapon: true, staffStats: { dmg: 56, speed: 600, range: 480, cooldown: 0.27, energyCost: 7.5, color: '#ff5252', aoeRadius: 44 }, icon: 'staff_ruby' },
+    varita_escarcha: { id: 'varita_escarcha', name: 'Varita de Escarcha Boreal', category: 'equipamiento', rarity: 'epico', sellValue: 195, buyValue: 450, source: 'Mesa de Hechicería Avanzada', uses: 'Dispara abanico triple de esquirlas gélidas que congelan y perforan', desc: 'Lanza 3 fragmentos glaciales con explosión de escarcha.', isStaffWeapon: true, staffStats: { dmg: 18, speed: 510, range: 375, cooldown: 0.34, energyCost: 5.0, color: '#80deea', slowDur: 2.6, staffMode: 'frost_cone', vfxKey: 'pvfx_ice_shard' }, icon: 'wand_frost' },
+    varita_rubi: { id: 'varita_rubi', name: 'Varita Ígnea de Rubí', category: 'equipamiento', rarity: 'epico', sellValue: 265, buyValue: 610, source: 'Mesa de Hechicería Avanzada', uses: 'Lanza 2 ascuas gemelas teledirigidas que persiguen y queman al impactar', desc: 'Bolas de fuego gemelas con rastreo automático de enemigos.', isStaffWeapon: true, staffStats: { dmg: 24, speed: 520, range: 420, cooldown: 0.31, energyCost: 5.8, color: '#ff7043', burnDmg: 8, aoeRadius: 34, staffMode: 'homing_twins', vfxKey: 'soggy_fireball' }, icon: 'wand_ruby' },
+    baculo_druida: { id: 'baculo_druida', name: 'Báculo del Guardián Silvestre', category: 'equipamiento', rarity: 'epico', sellValue: 225, buyValue: 520, source: 'Mesa de Hechicería Avanzada', uses: 'Proyectil natural perforante (perfora 2) que cura +4 HP y envenena al impactar (+12% Poder Mágico)', desc: 'Libera esporas curativas y enredaderas al golpear presas.', isStaffWeapon: true, staffStats: { dmg: 30, speed: 495, range: 410, cooldown: 0.33, energyCost: 5.2, color: '#81c784', pierce: 2, poisonDmg: 7, slowDur: 1.8, staffMode: 'druid_bloom', vfxKey: 'pvfx_poison_dart' }, icon: 'staff_druid' },
+    baculo_lunar: { id: 'baculo_lunar', name: 'Báculo de Media Luna', category: 'equipamiento', rarity: 'legendario', sellValue: 340, buyValue: 780, source: 'Mesa de Hechicería Suprema', uses: 'Lanza una hoja lunar Boomerang que perfora de ida y vuelve cortando por segunda vez', desc: 'Ondas crecientes que describen un retorno devastador hacia ti.', isStaffWeapon: true, staffStats: { dmg: 44, speed: 560, range: 445, cooldown: 0.34, energyCost: 6.5, color: '#b39ddb', pierce: 99, staffMode: 'lunar_boomerang', vfxKey: 'aw_slash_wave' }, icon: 'staff_crescent' },
+    baculo_rubi: { id: 'baculo_rubi', name: 'Cetro Rubí del Archimago', category: 'equipamiento', rarity: 'legendario', sellValue: 490, buyValue: 1120, source: 'Mesa de Hechicería Suprema', uses: 'Orbe solar explosivo que al impactar estalla en 4 chispas ígneas radiales', desc: 'Concentra energía de archimago con racimos pirotécnicos secundarios.', isStaffWeapon: true, staffStats: { dmg: 54, speed: 590, range: 480, cooldown: 0.30, energyCost: 7.8, color: '#ff5252', aoeRadius: 68, burnDmg: 10, staffMode: 'archmage_cluster', vfxKey: 'pvfx_arcane_orb_projectile' }, icon: 'staff_ruby' },
 
     // =========================================================
     // FASE 5: EQUIPO ARCANO, LLAVES DE MAZMORRA Y TABLILLA RÚNICA

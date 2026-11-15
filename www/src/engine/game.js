@@ -144,9 +144,9 @@
         facing: 1,
         hp: 85, maxHp: 85,
         energy: 100, maxEnergy: 100,
-        level: 1, xp: 0, nextXp: 28,
+        level: 1, xp: 0, nextXp: 48,
         skillPoints: 0,
-        swingTimer: 0, swingDur: 0.25, swingTool: 'pico', swingAngle: 0,
+        swingTimer: 0, swingDur: 0.25, swingTool: 'pico', swingItemId: null, swingAngle: 0,
         bowLoaded: true, bowReloadTimer: 0, bowReloadDur: 0.55, bowNeedsAutoReload: false,
         attackCount: 0,
         dashTimer: 0, dashCd: 0, dashVx: 0, dashVy: 0,
@@ -418,16 +418,18 @@
         }
       }
 
-      // Monument & Library global building auras
+      // Monument & Library global building auras (scaled by building upgrade level 1..3)
       for (const b of this.buildings) {
         const def = Balaclava.BUILDINGS[b.type];
         if (!def) continue;
-        if (def.auraDmg) m.dmgBonus += def.auraDmg;
-        if (def.auraSpeed) m.moveSpeed += def.auraSpeed;
-        if (def.auraLuck) m.luckBonus += def.auraLuck;
-        if (def.xpBonus) m.xpBonus += def.xpBonus;
-        if (def.auraXp) m.xpBonus += def.auraXp;
-        if (def.auraSpellPower) m.spellPower += def.auraSpellPower;
+        const lvl = Math.max(1, Number(b.level) || 1);
+        const lvlMult = 1 + (lvl - 1) * 0.45;
+        if (def.auraDmg) m.dmgBonus += +(def.auraDmg * lvlMult).toFixed(4);
+        if (def.auraSpeed) m.moveSpeed += +(def.auraSpeed * lvlMult).toFixed(4);
+        if (def.auraLuck) m.luckBonus += +(def.auraLuck * lvlMult).toFixed(4);
+        if (def.xpBonus) m.xpBonus += +(def.xpBonus * lvlMult).toFixed(4);
+        if (def.auraXp) m.xpBonus += +(def.auraXp * lvlMult).toFixed(4);
+        if (def.auraSpellPower) m.spellPower += +(def.auraSpellPower * lvlMult).toFixed(4);
       }
 
       // Active potions / altar buffs / spells
@@ -765,7 +767,7 @@
         this.player.level++;
         this.player.skillPoints += 1;
         const lv = this.player.level;
-        this.player.nextXp = Math.round(22 + lv * 18 + Math.pow(lv, 1.5) * 10);
+        this.player.nextXp = Math.round(42 + lv * 28 + Math.pow(lv, 1.65) * 16);
         this.recomputeModifiers();
         this.player.hp = this.player.maxHp;
         this.player.energy = this.player.maxEnergy;
@@ -788,10 +790,10 @@
             lvlEl.classList.add('lvl-crest-burst');
           }
         }
-        this.spawnFx('fx_vfx_elden_ring', this.player.x, this.player.y + 2, 0, 1.45, 1.9, 1.0);
-        this.spawnFx('fx_thunder_strike', this.player.x, this.player.y - 52, 0, 0.85, 2.5, 1);
-        this.spawnFx('fx_thunder_splash', this.player.x, this.player.y + 4, 0, 0.72, 2.4, 0.95);
-        this.spawnFx('fx_level_ring', this.player.x, this.player.y + 6, 0, 1.15, 2.9, 0.98);
+        this.spawnFx('px_level_up', this.player.x, this.player.y + 8, 0, 1.35, 1.35, 1.0, { follow: this.player, offY: 8, blend: 'lighter' });
+        this.spawnFx('pvfx_level_up', this.player.x, this.player.y + 6, 0, 1.4, 1.25, 0.98, { follow: this.player, offY: 6, blend: 'lighter' });
+        this.spawnFx('pvfx_angel_feathers', this.player.x, this.player.y - 16, 0, 1.15, 1.15, 0.95, { blend: 'lighter' });
+        this.spawnFx('pvfx_lightning_strike', this.player.x, this.player.y + 6, 0, 0.65, 1.2, 0.92, { blend: 'lighter' });
         this.spawnShockwave(this.player.x, this.player.y, 175, '#ffd54f');
         this.spawnParticles(this.player.x, this.player.y, '#ffd54f', 40);
         this.addFloatingText(this.player.x, this.player.y - 68, T('toast.levelUp', { prev: oldLevel, next: this.player.level }), '#fff176');
@@ -1155,23 +1157,43 @@
     }
 
     // === TIMED CRAFTING & SKILLS ===
+    getBestStationLevel(station) {
+      if (!station || station === 'mano' || !Array.isArray(this.buildings)) return 1;
+      let best = 1;
+      for (const b of this.buildings) {
+        const def = Balaclava.BUILDINGS && Balaclava.BUILDINGS[b.type];
+        if (!def) continue;
+        if (def.station === station || (station === 'investigacion' && def.station === 'forja')) {
+          const matchesPrimary = def.station === station;
+          if (matchesPrimary) {
+            best = Math.max(best, Number(b.level) || 1);
+          } else if (best === 1 && def.station === 'forja' && !this.hasStationAvailable('investigacion')) {
+            best = Math.max(best, Number(b.level) || 1);
+          }
+        }
+      }
+      return Math.max(1, Math.min(3, best));
+    }
+
     getCraftDuration(rec) {
       const base = (rec && rec.craftTime) || 2.2;
-      const spd = 1 + (this.mods.craftSpeed || 0) + (rec && rec.isCook ? (this.mods.cookSpeed || 0) : 0);
-      return Math.max(0.55, +(base / Math.max(0.5, spd)).toFixed(2));
+      const stLv = (rec && rec.station) ? this.getBestStationLevel(rec.station) : 1;
+      const stSpd = stLv >= 3 ? 0.75 : stLv === 2 ? 0.35 : 0;
+      const spd = 1 + (this.mods.craftSpeed || 0) + stSpd + (rec && rec.isCook ? (this.mods.cookSpeed || 0) : 0);
+      return Math.max(0.45, +(base / Math.max(0.5, spd)).toFixed(2));
     }
 
-    getToolUpgradeDuration(nextTier) {
+    getToolUpgradeDuration(nextTier, station = null) {
       const tierIdx = Array.isArray(Balaclava.TIER_ORDER) ? Math.max(1, Balaclava.TIER_ORDER.indexOf(nextTier)) : 1;
-      // Match initial tool craftTime (2.0s) at first upgrade and scale moderately per tier
+      const st = station || (nextTier && nextTier !== 'mejorada' ? 'forja' : 'mesa');
       const base = +(2.0 + Math.min(3.5, (tierIdx - 1) * 0.35)).toFixed(2);
-      return this.getCraftDuration({ craftTime: base });
+      return this.getCraftDuration({ craftTime: base, station: st });
     }
 
-    getArmorUpgradeDuration(tierIdx) {
+    getArmorUpgradeDuration(tierIdx, station = null) {
       const idx = Math.max(1, Number(tierIdx) || 1);
       const base = +(2.0 + Math.min(3.5, (idx - 1) * 0.35)).toFixed(2);
-      return this.getCraftDuration({ craftTime: base });
+      return this.getCraftDuration({ craftTime: base, station: station || 'forja' });
     }
 
     getOwnedArmorItem(slot) {
@@ -1662,17 +1684,30 @@
       };
 
       let queuedCount = 0;
+      const stLv = this.getBestStationLevel(rec.station);
+      const outItemCheck = Balaclava.ITEMS && Balaclava.ITEMS[rec.out];
+      const isStackable = !(outItemCheck && outItemCheck.equipSlot);
       for (let t = 0; t < times; t++) {
         if (this.craftQueue.length >= 8) break;
         const can = Object.entries(rec.in).every(([id, q]) => hasIngredient(id, q));
         if (!can) break;
         Object.entries(rec.in).forEach(([id, q]) => consumeIngredient(id, q));
         let outQty = rec.qty;
-        if (Math.random() < (this.mods.doubleCraft || 0)) {
+        const dblProb = (this.mods.doubleCraft || 0) + (isStackable && stLv >= 3 ? 0.25 : 0);
+        if (Math.random() < dblProb) {
           outQty *= 2;
         }
+        if (stLv >= 3 && Math.random() < 0.20) {
+          const refundKeys = Object.keys(rec.in || {}).filter(k => (rec.in[k] || 0) > 0);
+          if (refundKeys.length > 0) {
+            const rKey = refundKeys[Math.floor(Math.random() * refundKeys.length)];
+            this.addItem(rKey, 1);
+            const rName = (Balaclava.ITEMS[rKey] && Balaclava.ITEMS[rKey].name) || rKey;
+            this.addFloatingText(this.player.x, this.player.y - 34, `¡Eco Nv.3! +1 ${rName}`, '#80deea');
+          }
+        }
         const dur = this.getCraftDuration(rec);
-        const xpGain = Math.round(rec.xp * (1 + (this.mods.craftXp || 0)));
+        const xpGain = Math.round(rec.xp * (1 + (this.mods.craftXp || 0) + (stLv - 1) * 0.20));
         const outItem = Balaclava.ITEMS[rec.out];
         const outName = rec.out === '_coin' ? `${outQty} Monedas` : (outItem ? outItem.name : rec.out);
         this.craftQueue.push({
@@ -1758,7 +1793,9 @@
       for (const [id, q] of Object.entries(cost.items)) {
         this.removeItem(id, q);
       }
-      const dur = this.getToolUpgradeDuration(nextTier);
+      const upStation = nextTier !== 'mejorada' ? 'forja' : 'mesa';
+      const stLv = this.getBestStationLevel(upStation);
+      const dur = this.getToolUpgradeDuration(nextTier, upStation);
       const tierName = Balaclava.TIER_META[nextTier] ? Balaclava.TIER_META[nextTier].name : nextTier;
       this.craftQueue.push({
         id: `${Date.now()}_${Math.random()}`,
@@ -1768,7 +1805,7 @@
         toolUpgrade: toolId,
         targetTier: nextTier,
         qty: 1,
-        xp: Math.round(40 * (1 + (this.mods.craftXp || 0))),
+        xp: Math.round(40 * (1 + (this.mods.craftXp || 0) + (stLv - 1) * 0.20)),
         station: nextTier !== 'mejorada' ? 'forja' : 'mano',
         totalTime: dur,
         elapsed: 0
@@ -1888,7 +1925,8 @@
         this.removeItem(id, q);
       }
       const tierIdx = Balaclava.getArmorTierIndex(slot, nextId);
-      const dur = this.getArmorUpgradeDuration(tierIdx);
+      const stLv = this.getBestStationLevel(mat.station || 'forja');
+      const dur = this.getArmorUpgradeDuration(tierIdx, mat.station);
       this.craftQueue.push({
         id: `${Date.now()}_${Math.random()}`,
         recipeId: mat.recipeId,
@@ -1898,7 +1936,7 @@
         prevItem: curId,
         targetItem: nextId,
         qty: 1,
-        xp: Math.round((mat.xp || 32) * (1 + (this.mods.craftXp || 0))),
+        xp: Math.round((mat.xp || 32) * (1 + (this.mods.craftXp || 0) + (stLv - 1) * 0.20)),
         station: mat.station,
         totalTime: dur,
         elapsed: 0
@@ -2590,6 +2628,8 @@
     swingSpecialBlade(itemDef, wx, wy) {
       if (this.isPlayerDead()) return;
       if (this.player.swingTimer > 0) return;
+      if (!Number.isFinite(wx)) wx = this.player.x + (this.player.facing || 1) * 90;
+      if (!Number.isFinite(wy)) wy = this.player.y;
       const bStats = itemDef.bladeStats || itemDef.weaponMelee || {};
       const range = (bStats.range || itemDef.bladeRange || 82) + (this.mods.reachBonus || 0);
       const hovered = this.findHoveredEntity(wx, wy, range);
@@ -2612,6 +2652,7 @@
       this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
       this.player.swingAngle = ang;
       this.player.swingTool = 'espada';
+      this.player.swingItemId = itemDef.id;
       this.player.attackCount = (this.player.attackCount || 0) + 1;
       const baseDur = typeof bStats.speed === 'number'
         ? (bStats.speed < 0.7 ? bStats.speed : 0.28 / Math.max(0.4, bStats.speed))
@@ -2623,14 +2664,128 @@
       const hitX = this.player.x + Math.cos(ang) * 34;
       const hitY = this.player.y + Math.sin(ang) * 34;
       const tint = bStats.color || bStats.arcColor || itemDef.bladeColor || '#ffd54f';
+      const uMode = bStats.uniqueMode || itemDef.id;
+      const baseBladeDmg = Math.max(4, Math.round((bStats.dmg || itemDef.bladeDmg || 38) * (1 + (this.mods.dmgBonus || 0))));
       this.spawnParticles(hitX, hitY, tint, 6);
 
-      // Armas especiales con efectos de particulas sincronizados al ataque
-      const isFire = (bStats.burnDmg || itemDef.bladeEffect === 'burn' || tint === '#ff7043' || (itemDef.id && (itemDef.id.includes('llamarada') || itemDef.id.includes('ignea'))));
-      const isFrost = (bStats.slow || itemDef.bladeEffect === 'slow' || tint === '#4fc3f7' || (itemDef.id && (itemDef.id.includes('glacial') || itemDef.id.includes('escarcha'))));
-      const isElectric = (tint === '#80deea' || (itemDef.id && (itemDef.id.includes('relampago') || itemDef.id.includes('tormenta'))));
-      const isDark = (itemDef.bladeEffect === 'lifesteal' || bStats.lifeSteal || (itemDef.id && (itemDef.id.includes('abisal') || itemDef.id.includes('sombra'))));
-      const isHoly = (tint === '#ffd54f' || (itemDef.id && (itemDef.id.includes('solar') || itemDef.id.includes('paladin'))));
+      const isFire = (uMode === 'flame_wave' || uMode === 'solar_nova' || bStats.burnDmg || itemDef.bladeEffect === 'burn' || tint === '#ff7043' || (itemDef.id && (itemDef.id.includes('llamarada') || itemDef.id.includes('ignea'))));
+      const isFrost = (uMode === 'frost_spikes' || bStats.slow || itemDef.bladeEffect === 'slow' || tint === '#4fc3f7' || (itemDef.id && (itemDef.id.includes('glacial') || itemDef.id.includes('escarcha'))));
+      const isElectric = (uMode === 'chain_arc' || uMode === 'thunder_tempest' || tint === '#80deea' || (itemDef.id && (itemDef.id.includes('relampago') || itemDef.id.includes('tormenta'))));
+      const isDark = (uMode === 'void_boomerang' || uMode === 'void_vortex' || uMode === 'bone_siphon' || itemDef.bladeEffect === 'lifesteal' || bStats.lifeSteal || (itemDef.id && (itemDef.id.includes('abisal') || itemDef.id.includes('sombra'))));
+      const isHoly = (uMode === 'holy_slam' || tint === '#ffd54f' || (itemDef.id && (itemDef.id.includes('solar') || itemDef.id.includes('paladin'))));
+
+      // Signature VFX + Unique Mechanics per Special Weapon
+      const enemyList = this.activeDungeon
+        ? [...this.activeDungeon.enemies, ...(this.activeDungeon.boss ? [this.activeDungeon.boss] : [])]
+        : this.combat.enemies;
+
+      if (uMode === 'flame_wave' || itemDef.id === 'espada_llamarada') {
+        this.spawnFx('pa_slash2_fire', hitX, hitY, ang, 0.34, 1.0, 0.96, { blend: 'lighter' });
+        this.spawnPlayerProjectile(hitX, hitY, Math.cos(ang) * 440, Math.sin(ang) * 440, Math.round(baseBladeDmg * 0.72), '#ff7043', false, {
+          life: 0.52, pierce: 99, burnDmg: 8, hitsNodes: true, vfxKey: 'soggy_fire_slash', vfxHit: 'pvfx_fireball_impact', usedId: itemDef.id
+        });
+      } else if (uMode === 'frost_spikes' || itemDef.id === 'hoja_glacial') {
+        this.spawnFx('pa_slash1_blue', hitX, hitY, ang, 0.32, 0.98, 0.96, { blend: 'lighter' });
+        [-0.26, 0, 0.26].forEach(off => {
+          const a = ang + off;
+          this.spawnPlayerProjectile(hitX, hitY, Math.cos(a) * 460, Math.sin(a) * 460, Math.round(baseBladeDmg * 0.55), '#4fc3f7', false, {
+            life: 0.52, pierce: 2, slowDur: 3.6, vfxKey: 'pvfx_ice_shard', vfxHit: 'aw_ice_chargeshatter', usedId: itemDef.id
+          });
+        });
+      } else if (uMode === 'solar_nova' || itemDef.id === 'espada_solar_mitica') {
+        this.spawnFx('pa_slash3_gold', hitX, hitY, ang, 0.36, 1.15, 0.98, { blend: 'lighter' });
+        this.spawnFx('pvfx_solar_shrapnel', hitX, hitY, 0, 0.55, 1.25, 0.95, { blend: 'lighter' });
+        this.spawnFx('aw_holy_pillar', hitX + Math.cos(ang) * 26, hitY + Math.sin(ang) * 26, 0, 0.52, 0.95, 0.92, { blend: 'lighter' });
+        this.spawnShockwave(hitX, hitY, 155, '#ffd54f');
+        for (const e of enemyList) {
+          if (e && !e._dead && dist(hitX, hitY, e.x, e.y) <= 155) {
+            this.combat.damageEnemy(this, e, Math.round(baseBladeDmg * 0.45), ang, false, false);
+            e.burnTimer = Math.max(e.burnTimer || 0, 3.5);
+          }
+        }
+      } else if (uMode === 'void_boomerang' || itemDef.id === 'media_luna_abisal') {
+        this.spawnFx('aw_slash_wave', hitX, hitY, ang, 0.34, 1.05, 0.96, { blend: 'lighter' });
+        this.spawnPlayerProjectile(hitX, hitY, Math.cos(ang) * 480, Math.sin(ang) * 480, Math.round(baseBladeDmg * 0.65), '#7e57c2', false, {
+          life: 1.05, maxLife: 1.05, pierce: 99, boomerang: true, lifeSteal: 0.08, vfxKey: 'dark_vfx2', vfxHit: 'pvfx_shadow_claw', usedId: itemDef.id
+        });
+      } else if (uMode === 'prism_rays' || itemDef.id === 'espada_prismatica') {
+        this.spawnFx('pvfx_prism_loom', hitX, hitY, ang, 0.44, 1.15, 0.98, { blend: 'lighter' });
+        const cols = ['#ff4081', '#ffd54f', '#00e5ff'];
+        [-0.24, 0, 0.24].forEach((off, idx) => {
+          const a = ang + off;
+          this.spawnPlayerProjectile(hitX, hitY, Math.cos(a) * 580, Math.sin(a) * 580, Math.round(baseBladeDmg * 0.6), cols[idx], false, {
+            life: 0.56, pierce: 4, vfxKey: 'px_energy_bolt', vfxHit: 'pvfx_firework_burst', usedId: itemDef.id
+          });
+        });
+      } else if (uMode === 'sakura_flurry' || itemDef.id === 'katana_sakura') {
+        this.spawnFx('aw_slash_x', hitX, hitY, ang, 0.30, 0.95, 0.98, { blend: 'lighter' });
+        [-0.35, -0.12, 0.12, 0.35].forEach(off => {
+          const a = ang + off;
+          this.spawnPlayerProjectile(hitX, hitY, Math.cos(a) * 430, Math.sin(a) * 430, Math.round(baseBladeDmg * 0.42), '#f48fb1', false, {
+            life: 0.58, homing: true, pierce: 0, vfxKey: 'pa_rogue3', vfxHit: 'pvfx_wind_blade', usedId: itemDef.id
+          });
+        });
+      } else if (uMode === 'bramble_snare' || itemDef.id === 'hoja_espinas') {
+        this.spawnFx('pa_slash1_green', hitX, hitY, ang, 0.32, 0.98, 0.95, { blend: 'lighter' });
+        const bx = hitX + Math.cos(ang) * 32;
+        const by = hitY + Math.sin(ang) * 32;
+        this.spawnFx('pvfx_vine_snare', bx, by, 0, 0.62, 1.15, 0.96);
+        this.spawnFx('pvfx_earth_spike', bx, by, 0, 0.48, 1.0, 0.92);
+        for (const e of enemyList) {
+          if (e && !e._dead && dist(bx, by, e.x, e.y) <= 98) {
+            e.slowTimer = Math.max(e.slowTimer || 0, 3.0);
+            e.poisonTimer = Math.max(e.poisonTimer || 0, 3.5);
+          }
+        }
+      } else if (uMode === 'void_vortex' || itemDef.id === 'cetro_prism_vacio') {
+        this.spawnFx('pa_slash1_purple', hitX, hitY, ang, 0.34, 1.05, 0.96, { blend: 'lighter' });
+        const vx = hitX + Math.cos(ang) * 48;
+        const vy = hitY + Math.sin(ang) * 48;
+        this.spawnFx('pvfx_void_implosion', vx, vy, 0, 0.65, 1.18, 0.98, { blend: 'lighter' });
+        for (const e of enemyList) {
+          if (e && !e._dead && !e.isBoss && dist(vx, vy, e.x, e.y) <= 155) {
+            e.x += (vx - e.x) * 0.48;
+            e.y += (vy - e.y) * 0.48;
+          }
+        }
+      } else if (uMode === 'chain_arc' || itemDef.id === 'espada_relampago') {
+        this.spawnFx('pa_slash2_cyan', hitX, hitY, ang, 0.32, 0.98, 0.96, { blend: 'lighter' });
+        const near = enemyList.filter(e => e && !e._dead && dist(hitX, hitY, e.x, e.y) <= 190).slice(0, 2);
+        for (const ne of near) {
+          this.spawnFx('lt_bolt1', ne.x, ne.y - 10, 0, 0.32, 0.95, 0.95, { blend: 'lighter' });
+          this.combat.damageEnemy(this, ne, Math.round(baseBladeDmg * 0.55), ang, false, false);
+        }
+      } else if (uMode === 'thunder_tempest' || itemDef.id === 'espada_tormenta') {
+        this.spawnFx('aw_lightning_arc', hitX, hitY, ang, 0.38, 1.12, 0.98, { blend: 'lighter' });
+        const sx = hitX + Math.cos(ang) * 38;
+        const sy = hitY + Math.sin(ang) * 38;
+        this.spawnFx('pvfx_thunder_cloud', sx, sy - 44, 0, 0.72, 1.15, 0.95);
+        this.spawnFx('pvfx_lightning_strike', sx, sy + 6, 0, 0.45, 1.1, 0.98, { blend: 'lighter' });
+        this.spawnFx('aw_explosion_electric', sx, sy, 0, 0.42, 0.95, 0.92, { blend: 'lighter' });
+        for (const e of enemyList) {
+          if (e && !e._dead && dist(sx, sy, e.x, e.y) <= 125) {
+            this.combat.damageEnemy(this, e, Math.round(baseBladeDmg * 0.52), ang, false, false);
+          }
+        }
+      } else if (uMode === 'bone_siphon' || itemDef.id === 'espada_hueso_rey') {
+        this.spawnFx('aw_slash_heavy', hitX, hitY, ang, 0.34, 1.05, 0.96, { blend: 'lighter' });
+        this.spawnFx('pvfx_shadow_claw', hitX + Math.cos(ang) * 18, hitY + Math.sin(ang) * 18, ang, 0.42, 1.08, 0.95, { blend: 'lighter' });
+        this.spawnFx('pvfx_soul_drain', hitX, hitY, ang, 0.46, 0.95, 0.88, { blend: 'lighter' });
+      } else if (uMode === 'holy_slam' || itemDef.id === 'martillo_paladin') {
+        this.spawnFx('pvfx_hammer_smash', hitX, hitY, ang, 0.40, 1.15, 0.98, { blend: 'lighter' });
+        this.spawnFx('pvfx_holy_smite', hitX + Math.cos(ang) * 20, hitY + Math.sin(ang) * 20, 0, 0.50, 1.05, 0.96, { blend: 'lighter' });
+        this.spawnShockwave(hitX, hitY, 115, '#ffd54f');
+        this.shake(0.14, 3.8);
+        for (const e of enemyList) {
+          if (e && !e._dead && dist(hitX, hitY, e.x, e.y) <= 115) {
+            const extra = /skel|golem|grave|undead/i.test(e.type || '') ? 1.45 : 1.0;
+            this.combat.damageEnemy(this, e, Math.round(baseBladeDmg * 0.45 * extra), ang, false, false);
+            if (!e.isBoss && Math.random() < 0.35) e.stunTimer = Math.max(e.stunTimer || 0, 1.4);
+          }
+        }
+      } else {
+        this.spawnFx('aw_slash_horizontal', hitX, hitY, ang, 0.28, 0.85, 0.95, { blend: 'lighter' });
+      }
 
       if (isFire) {
         this.spawnParticles(hitX + Math.cos(ang) * 12, hitY + Math.sin(ang) * 12, '#ffab40', 4);
@@ -2647,9 +2802,6 @@
 
       Balaclava.Audio.play('slash');
 
-      const enemyList = this.activeDungeon
-        ? [...this.activeDungeon.enemies, ...(this.activeDungeon.boss ? [this.activeDungeon.boss] : [])]
-        : this.combat.enemies;
       const applyBladeHit = (e) => {
         const critRate = (this.mods.critChance || 0) + (bStats.critBonus || 0) + (itemDef.bladeEffect === 'crit' ? 0.25 : 0.08);
         const isCrit = Math.random() < critRate;
@@ -2659,6 +2811,7 @@
         if (itemDef.bladeEffect === 'burn' || bStats.burnDmg || isFire) e.burnTimer = Math.max(e.burnTimer || 0, 3.5);
         if (itemDef.bladeEffect === 'slow' || bStats.slow || isFrost) e.slowTimer = Math.max(e.slowTimer || 0, 3.5);
         if (bStats.stunChance && Math.random() < bStats.stunChance && !e.isBoss) {
+          e.stunTimer = Math.max(e.stunTimer || 0, 1.6);
           e.slowTimer = Math.max(e.slowTimer || 0, 1.8);
           this.addFloatingText(e.x, e.y - 32, Balaclava.I18n ? Balaclava.I18n.t('toast.stunned') : 'Aturdido!', '#ffe082');
         }
@@ -2667,7 +2820,7 @@
 
       const prioritizedEnemy = (hovered && hovered.kind === 'enemy' && hovered.inReach) ? hovered.entity : null;
       if (prioritizedEnemy) applyBladeHit(prioritizedEnemy);
-      const wideCleave = !!wmObj.cleave;
+      const wideCleave = !!(bStats && bStats.cleave);
       for (const e of enemyList) {
         if (!e || e._dead || e.hp <= 0 || e === prioritizedEnemy) continue;
         if (!this.isEntityInReach(e, range, 'enemy')) continue;
@@ -2699,6 +2852,8 @@
 
     fireSpecializedWeapon(itemDef, wx, wy) {
       if (this.isPlayerDead() || this.player.swingTimer > 0) return false;
+      if (!Number.isFinite(wx)) wx = this.player.x + (this.player.facing || 1) * 140;
+      if (!Number.isFinite(wy)) wy = this.player.y;
       const st = itemDef.isStaffWeapon ? itemDef.staffStats : itemDef.rangedStats;
       if (!st) return false;
       const eCost = this.player.godMode
@@ -2718,6 +2873,7 @@
       this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
       this.player.swingAngle = ang;
       this.player.swingTool = itemDef.isStaffWeapon ? 'baculo' : 'arco';
+      this.player.swingItemId = itemDef.id;
       const cd = Math.max(0.14, (st.cooldown || 0.28) / (1 + (this.mods.attackSpeed || 0)));
       this.player.swingDur = cd;
       this.player.swingTimer = cd;
@@ -2726,13 +2882,50 @@
       const dmg = Math.max(6, Math.round((st.dmg || 32) * spMult));
       const spd = st.speed || 540;
       const life = Math.max(0.45, (st.range || 440) / spd);
-      this.spawnPlayerProjectile(
-        this.player.x, this.player.y, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg,
-        st.color || (itemDef.isStaffWeapon ? '#ce93d8' : '#ffe082'),
-        !itemDef.isStaffWeapon,
-        { life, pierce: st.pierce || 0, aoeRadius: st.aoeRadius || 0, slowDur: st.slowDur || 0, burnDmg: st.burnDmg || 0, hitsNodes: !!itemDef.isStaffWeapon }
-      );
-      this.spawnParticles(this.player.x + Math.cos(ang) * 16, this.player.y + Math.sin(ang) * 16, st.color || '#ce93d8', 5);
+      const sx = this.player.x + Math.cos(ang) * 16;
+      const sy = this.player.y + Math.sin(ang) * 16;
+      const sMode = st.staffMode || (itemDef.isStaffWeapon ? itemDef.id : null);
+
+      if (sMode === 'frost_cone') {
+        this.spawnFx('aw_ice_castfrost', sx, sy, ang, 0.30, 0.85, 0.95, { blend: 'lighter' });
+        [-0.22, 0, 0.22].forEach(off => {
+          const a = ang + off;
+          this.spawnPlayerProjectile(sx, sy, Math.cos(a) * spd, Math.sin(a) * spd, dmg, st.color || '#80deea', false, {
+            life, pierce: 1, slowDur: st.slowDur || 2.6, hitsNodes: true, vfxKey: 'pvfx_ice_shard', vfxHit: 'aw_ice_chargeshatter', usedId: itemDef.id
+          });
+        });
+      } else if (sMode === 'homing_twins') {
+        this.spawnFx('aw_fire_castflame', sx, sy, ang, 0.30, 0.85, 0.95, { blend: 'lighter' });
+        [-0.28, 0.28].forEach(off => {
+          const a = ang + off;
+          this.spawnPlayerProjectile(sx, sy, Math.cos(a) * spd, Math.sin(a) * spd, dmg, st.color || '#ff7043', false, {
+            life: life * 1.15, homing: true, aoeRadius: st.aoeRadius || 34, burnDmg: st.burnDmg || 8, hitsNodes: true, vfxKey: 'soggy_fireball', vfxHit: 'pvfx_fireball_impact', usedId: itemDef.id
+          });
+        });
+      } else if (sMode === 'druid_bloom') {
+        this.spawnFx('pvfx_leaf_gust', sx, sy, ang, 0.35, 0.92, 0.92, { blend: 'lighter' });
+        this.spawnPlayerProjectile(sx, sy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg, st.color || '#81c784', false, {
+          life, pierce: st.pierce || 2, slowDur: st.slowDur || 1.8, poisonDmg: st.poisonDmg || 7, healOnHit: 4, hitsNodes: true, vfxKey: 'pvfx_poison_dart', vfxHit: 'pvfx_bloom_heal', usedId: itemDef.id
+        });
+      } else if (sMode === 'lunar_boomerang') {
+        this.spawnFx('aw_arcane_charge', sx, sy, ang, 0.28, 0.85, 0.95, { blend: 'lighter' });
+        this.spawnPlayerProjectile(sx, sy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg, st.color || '#b39ddb', false, {
+          life: 1.35, maxLife: 1.35, pierce: 99, boomerang: true, hitsNodes: true, vfxKey: 'aw_slash_wave', vfxHit: 'pvfx_shadow_claw', usedId: itemDef.id
+        });
+      } else if (sMode === 'archmage_cluster') {
+        this.spawnFx('aw_fire_chargeburst_max', sx, sy, ang, 0.36, 0.90, 0.98, { blend: 'lighter' });
+        this.spawnPlayerProjectile(sx, sy, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg, st.color || '#ff5252', false, {
+          life, aoeRadius: st.aoeRadius || 68, burnDmg: st.burnDmg || 10, clusterSplit: 4, hitsNodes: true, vfxKey: 'pvfx_arcane_orb_projectile', vfxHit: 'pvfx_fire_nova', usedId: itemDef.id
+        });
+      } else {
+        this.spawnPlayerProjectile(
+          this.player.x, this.player.y, Math.cos(ang) * spd, Math.sin(ang) * spd, dmg,
+          st.color || (itemDef.isStaffWeapon ? '#ce93d8' : '#ffe082'),
+          !itemDef.isStaffWeapon,
+          { life, pierce: st.pierce || 0, aoeRadius: st.aoeRadius || 0, slowDur: st.slowDur || 0, burnDmg: st.burnDmg || 0, hitsNodes: !!itemDef.isStaffWeapon, vfxKey: st.vfxKey, usedId: itemDef.id }
+        );
+      }
+      this.spawnParticles(sx, sy, st.color || '#ce93d8', 6);
       Balaclava.Audio.play(itemDef.isStaffWeapon ? 'laser' : 'bow');
       return true;
     }
@@ -2814,21 +3007,26 @@
         : [...this.combat.enemies];
 
       if (spellId === 'misil_arcano') {
+        this.spawnFx('pvfx_magic_circle', px, py + 4, 0, 0.36, 0.72, 0.85, { blend: 'lighter' });
         for (const off of [-0.14, 0.14]) {
           const a = ang + off;
-          this.spawnPlayerProjectile(px, py, Math.cos(a) * 460, Math.sin(a) * 460, baseDmg, sp.color, false, { life: 1.3, homing: true, hitsNodes: true, usedId: 'spell:misil_arcano' });
+          this.spawnPlayerProjectile(px, py, Math.cos(a) * 460, Math.sin(a) * 460, baseDmg, sp.color, false, { life: 1.3, homing: true, hitsNodes: true, vfxKey: 'pvfx_magic_missile', vfxHit: 'aw_arcane_impact', usedId: 'spell:misil_arcano' });
         }
         Balaclava.Audio.play('laser');
       } else if (spellId === 'bola_fuego') {
-        this.spawnPlayerProjectile(px, py, Math.cos(ang) * 390, Math.sin(ang) * 390, baseDmg, sp.color, false, { life: 1.4, aoeRadius: sp.aoeRadius || 72, burnDmg: 8, hitsNodes: true, usedId: 'spell:bola_fuego' });
+        this.spawnFx('aw_fire_castflame', px + Math.cos(ang) * 18, py + Math.sin(ang) * 18, ang, 0.34, 0.95, 0.95, { blend: 'lighter' });
+        this.spawnPlayerProjectile(px, py, Math.cos(ang) * 390, Math.sin(ang) * 390, baseDmg, sp.color, false, { life: 1.4, aoeRadius: sp.aoeRadius || 72, burnDmg: 8, hitsNodes: true, vfxKey: 'aw_fire_fireball', vfxHit: 'pvfx_fireball_impact', usedId: 'spell:bola_fuego' });
         Balaclava.Audio.play('explosion');
       } else if (spellId === 'nova_hielo') {
         const r = sp.aoeRadius || 135;
+        this.spawnFx('pvfx_frost_nova', px, py, 0, 0.58, 1.35, 0.98, { blend: 'lighter' });
+        this.spawnFx('aw_ice_chargeshatter', px, py - 6, 0, 0.45, 1.2, 0.94, { blend: 'lighter' });
         this.spawnShockwave(px, py, r, sp.color);
         this.spawnParticles(px, py, '#b2ebf2', 24);
         for (const e of foes) {
           if (e && !e._dead && dist(px, py, e.x, e.y) <= r + (e.radius || 16)) {
             this.combat.damageEnemy(this, e, baseDmg, Math.atan2(e.y - py, e.x - px), false);
+            this.spawnFx('pvfx_ice_spike', e.x, e.y + 4, 0, 0.44, 0.95, 0.95);
             e.slowTimer = Math.max(e.slowTimer || 0, 3.6);
           }
         }
@@ -2842,9 +3040,11 @@
           .slice(0, maxBounces);
         let mult = 1.0;
         let hitCount = 0;
+        this.spawnFx('aw_lightning_charge', px, py - 8, 0, 0.34, 0.9, 0.95, { blend: 'lighter' });
         for (const e of sorted) {
           this.combat.damageEnemy(this, e, Math.round(baseDmg * mult), Math.atan2(e.y - py, e.x - px), Math.random() < 0.25);
-          this.spawnFx('fx_thunder_strike', e.x, e.y - 20, 0, 0.35, 1.35, 0.95);
+          this.spawnFx('pvfx_lightning_strike', e.x, e.y + 4, 0, 0.44, 1.05, 0.98, { blend: 'lighter' });
+          this.spawnFx('lt_bolt1', e.x, e.y - 8, 0, 0.32, 0.95, 0.95, { blend: 'lighter' });
           mult *= 0.82;
           hitCount++;
         }
@@ -2855,16 +3055,18 @@
             .slice(0, maxBounces - hitCount);
           for (const n of nodeTargets) {
             this.damageSingleNodeByMagic(n, Math.round(baseDmg * mult), sp.color, Math.atan2(n.y - py, n.x - px), 'spell:cadena_rayos');
-            this.spawnFx('fx_thunder_strike', n.x, n.y - 20, 0, 0.35, 1.35, 0.95);
+            this.spawnFx('pvfx_lightning_strike', n.x, n.y + 4, 0, 0.44, 1.0, 0.96, { blend: 'lighter' });
             mult *= 0.82;
             hitCount++;
           }
         }
-        if (hitCount === 0) this.spawnFx('fx_thunder_strike', wx, wy - 20, 0, 0.32, 1.1, 0.85);
+        if (hitCount === 0) this.spawnFx('pvfx_lightning_strike', wx, wy + 4, 0, 0.42, 0.95, 0.92, { blend: 'lighter' });
         Balaclava.Audio.play('thunder');
       } else if (spellId === 'curacion_sagrada') {
         const heal = Math.round((sp.baseHeal || 48) * spMult);
         this.healPlayer(heal, 0);
+        this.spawnFx('pvfx_holy_heal', px, py + 6, 0, 0.85, 1.15, 0.98, { follow: this.player, offY: 6, blend: 'lighter' });
+        this.spawnFx('aw_heal_burst', px, py - 4, 0, 0.48, 0.95, 0.95, { blend: 'lighter' });
         this.spawnShockwave(px, py, 85, sp.color);
         this.spawnParticles(px, py, '#a5d6a7', 20);
         this.addFloatingText(px, py - 28, `+${heal} HP`, '#a5d6a7');
@@ -2873,6 +3075,8 @@
         const sh = Math.round((sp.baseShield || 55) * spMult);
         this.player.shieldHp = Math.max(this.player.shieldHp || 0, sh);
         this.player.shieldTimer = sp.duration || 8.0;
+        this.spawnFx('pvfx_barrier_block', px, py + 2, 0, 0.72, 1.12, 0.98, { follow: this.player, offY: 2, blend: 'lighter' });
+        this.spawnFx('st_shield', px, py - 6, 0, 0.65, 1.05, 0.92, { follow: this.player, offY: -6, blend: 'lighter' });
         this.spawnShockwave(px, py, 95, sp.color);
         this.spawnParticles(px, py, '#ffe082', 18);
         this.addFloatingText(px, py - 28, Balaclava.I18n ? Balaclava.I18n.t('toast.aegisShield', { sh }) : `Égida +${sh}`, '#ffe082');
@@ -2889,9 +3093,11 @@
             destX = cx; destY = cy; break;
           }
         }
+        this.spawnFx('pvfx_blink_out', px, py + 6, 0, 0.42, 0.95, 0.95, { blend: 'lighter' });
         this.spawnParticles(px, py, sp.color, 14);
         this.player.x = destX; this.player.y = destY;
         this.player.invuln = Math.max(this.player.invuln || 0, 0.35);
+        this.spawnFx('pvfx_teleport_in', destX, destY + 6, 0, 0.48, 1.05, 0.98, { blend: 'lighter' });
         this.spawnShockwave(destX, destY, 95, sp.color);
         for (const e of foes) {
           if (e && !e._dead && dist(destX, destY, e.x, e.y) <= 95 + (e.radius || 16)) {
@@ -2903,6 +3109,8 @@
       } else if (spellId === 'furia_arcana') {
         this.applyTimedBuff('furia_arcana', { mult: 1.30, time: sp.duration || 7.0, sourceId: 'spell:furia_arcana', sourceName: sp.name, blessingName: sp.name });
         this.recomputeModifiers();
+        this.spawnFx('pvfx_power_up_aura', px, py + 6, 0, 0.95, 1.25, 0.98, { follow: this.player, offY: 6, blend: 'lighter' });
+        this.spawnFx('st_rage', px, py - 10, 0, 0.72, 1.05, 0.95, { follow: this.player, offY: -10, blend: 'lighter' });
         this.spawnShockwave(px, py, 115, sp.color);
         this.addFloatingText(px, py - 30, Balaclava.I18n ? Balaclava.I18n.t('toast.arcaneFury') : '¡FURIA ARCANA!', sp.color);
         Balaclava.Audio.play('levelup');
@@ -2911,6 +3119,8 @@
         const tx = px + Math.cos(ang) * clamped;
         const ty = py + Math.sin(ang) * clamped;
         const r = sp.aoeRadius || 92;
+        this.spawnFx('pvfx_earth_spike', tx, ty + 6, 0, 0.56, 1.2, 0.98);
+        this.spawnFx('aw_earth_rockspike', tx + 16, ty + 6, 0, 0.45, 1.05, 0.95);
         this.spawnShockwave(tx, ty, r, sp.color);
         this.spawnParticles(tx, ty, '#8bc34a', 20);
         for (const e of foes) {
@@ -2922,13 +3132,16 @@
         this.damageNodesInArea(tx, ty, r, Math.round(baseDmg * 0.95), sp.color, ang, 'spell:espinas_tierra');
         Balaclava.Audio.play('hit');
       } else if (spellId === 'daga_veneno') {
+        this.spawnFx('aw_poison_splash', px + Math.cos(ang) * 16, py + Math.sin(ang) * 16, ang, 0.28, 0.85, 0.95, { blend: 'lighter' });
         for (const off of [-0.24, 0, 0.24]) {
           const a = ang + off;
-          this.spawnPlayerProjectile(px, py, Math.cos(a) * 520, Math.sin(a) * 520, baseDmg, sp.color, true, { life: 1.0, poisonDmg: 6, hitsNodes: true, usedId: 'spell:daga_veneno' });
+          this.spawnPlayerProjectile(px, py, Math.cos(a) * 520, Math.sin(a) * 520, baseDmg, sp.color, true, { life: 1.0, poisonDmg: 6, hitsNodes: true, vfxKey: 'pvfx_poison_dart', vfxHit: 'pvfx_acid_splash', usedId: 'spell:daga_veneno' });
         }
         Balaclava.Audio.play('bow');
       } else if (spellId === 'drenaje_mana') {
         const r = sp.aoeRadius || 120;
+        this.spawnFx('pvfx_soul_drain', px, py, 0, 0.65, 1.3, 0.98, { blend: 'lighter' });
+        this.spawnFx('aw_explosion_dark', px, py, 0, 0.46, 1.05, 0.9, { blend: 'lighter' });
         this.spawnShockwave(px, py, r, sp.color);
         let hits = 0;
         for (const e of foes) {
@@ -2949,7 +3162,9 @@
         for (const [ox, oy] of offsets) {
           const mx = cx + ox;
           const my = cy + oy;
-          this.spawnFx('explosionLarge', mx, my, 0, 0.45, 1.9, 0.94);
+          this.spawnFx('pvfx_meteor_strike', mx, my + 8, 0, 0.72, 1.25, 0.98, { blend: 'lighter' });
+          this.spawnFx('soggy_incinerate', mx, my, 0, 0.65, 1.05, 0.95, { blend: 'lighter' });
+          this.spawnFx('px_blast_big', mx, my - 6, 0, 0.56, 1.15, 0.92, { blend: 'lighter' });
           this.spawnShockwave(mx, my, mRad, sp.color);
           for (const e of foes) {
             if (e && !e._dead && dist(mx, my, e.x, e.y) <= mRad + (e.radius || 16)) {
@@ -2968,6 +3183,8 @@
 
     useActiveSlot(wx, wy) {
       if (this.isPlayerDead()) return;
+      if (!Number.isFinite(wx)) wx = this.player.x + (this.player.facing || 1) * 90;
+      if (!Number.isFinite(wy)) wy = this.player.y;
       if (this.placingBuildingId) {
         const tx = Math.floor(wx / TILE_SIZE);
         const ty = Math.floor(wy / TILE_SIZE);
@@ -3080,6 +3297,7 @@
       this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
       this.player.swingAngle = ang;
       this.player.swingTool = toolId;
+      this.player.swingItemId = null;
       this.player.attackCount = (this.player.attackCount || 0) + 1;
 
       const spdBonus = 1 + (toolId === 'espada' ? (this.mods.attackSpeed || 0) : 0) + tb.speedMult;
@@ -3126,7 +3344,12 @@
         const isCrit = Math.random() < critRate;
         const dmg = Math.max(1, Math.round(stats.power * 1.35 * eff.mult * (1 + (this.mods.dmgBonus || 0) + tb.dmgBonus + tb.fireDmg) * (isCrit ? 2 : 1)));
         this.combat.damageEnemy(this, e, dmg, ang, isCrit);
-        this.spawnFx('hitSpark', e.x, e.y, ang, 0.18, 1.0);
+        const slashKey = toolId === 'espada'
+          ? ((this.player.attackCount % 3 === 0) ? 'pa_slash3_gold' : (this.player.attackCount % 2 === 0) ? 'pa_slash2_cyan' : 'pa_slash1_gold')
+          : toolId === 'hacha' ? 'pvfx_axe_smear'
+          : toolId === 'guadana' ? 'smear_h1'
+          : 'pvfx_hit_spark';
+        this.spawnFx(slashKey, e.x, e.y - 4, ang, 0.26, 0.82, 0.92, { blend: 'lighter' });
         if (eff.hint && this.time - (this.lastHintTime || 0) > 2.2) {
           this.lastHintTime = this.time;
           this.addFloatingText(e.x, e.y - 36, eff.hint, '#ffb74d');
@@ -3174,7 +3397,17 @@
         n.hitAnim = 1;
         Balaclava.Audio.play(n.tool === 'pico' ? 'mine' : n.tool === 'pala' ? 'dig' : 'chop');
         this.spawnParticles(n.x, n.y, n.tool === 'pico' ? '#b0bec5' : '#81c784', 6);
-        this.spawnFx('hitSpark', n.x, n.y, ang, 0.2);
+        if (n.tool === 'hacha' || n.kind === 'tree' || n.kind === 'giant_tree') {
+          this.spawnFx('wood_hit', n.x, n.y - 8, 0, 0.28, 1.25, 0.96);
+          this.spawnFx('wood_splinter', n.x, n.y - 6, ang, 0.30, 1.05, 0.92);
+        } else if (n.tool === 'pico') {
+          this.spawnFx('pvfx_rock_shatter', n.x, n.y - 4, 0, 0.34, 0.92, 0.95);
+          this.spawnFx('aw_hit_spark_medium', n.x, n.y - 6, ang, 0.22, 0.78, 0.92, { blend: 'lighter' });
+        } else if (n.tool === 'pala') {
+          this.spawnFx('pvfx_dust_puff', n.x, n.y, 0, 0.32, 0.95, 0.9);
+        } else {
+          this.spawnFx('pvfx_leaf_gust', n.x, n.y - 4, ang, 0.30, 0.9, 0.92);
+        }
         if (n.hp <= 0) this.destroyNode(n, stats, toolId);
         return 'hit';
       };
@@ -3183,8 +3416,11 @@
         if (toolId !== 'espada') return;
         Balaclava.Audio.play('slash');
         this.player.attackCount++;
+        const swKey = (this.player.attackCount % 3 === 0) ? 'pa_slash3_gold' : (this.player.attackCount % 2 === 0) ? 'pa_slash2_cyan' : 'pa_slash1_gold';
+        this.spawnFx(swKey, hitX, hitY, ang, 0.28, 0.88, 0.94, { blend: 'lighter' });
         if (this.mods.shockwave && this.player.attackCount % 3 === 0) {
           const waveDmg = Math.round(stats.power * 2.4 * (1 + (this.mods.dmgBonus || 0)));
+          this.spawnFx('pvfx_shockwave_ring', this.player.x, this.player.y, 0, 0.42, 1.4, 0.95, { blend: 'lighter' });
           this.spawnShockwave(this.player.x, this.player.y, 125, '#80d8ff');
           for (const e of enemyList) {
             if (dist(this.player.x, this.player.y, e.x, e.y) <= 125) {
@@ -3411,12 +3647,21 @@
 
       this.gainXp(node.xp || 6);
       this.spawnParticles(node.x, node.y, '#ffe082', 12);
+      if (node.tool === 'hacha' || node.kind === 'tree' || node.kind === 'giant_tree') {
+        this.spawnFx('wood_splinter', node.x, node.y - 12, 0, 0.42, 1.35, 0.96);
+        this.spawnFx('pvfx_leaf_gust', node.x, node.y - 18, 0, 0.48, 1.15, 0.92);
+      } else if (node.tool === 'pico') {
+        this.spawnFx('pvfx_rock_shatter', node.x, node.y - 6, 0, 0.44, 1.25, 0.98);
+      } else {
+        this.spawnFx('pvfx_harvest_seal', node.x, node.y, 0, 0.42, 1.0, 0.88, { blend: 'lighter' });
+      }
 
       // Micro-dopamina de inicio: 25% de probabilidad de soltar moneda brillante al romper recursos
       if (Math.random() < 0.25) {
         const bonusCoins = randInt(1, 2);
         this.addCoins(bonusCoins);
         this.spawnParticles(node.x, node.y, '#ffd54f', 8);
+        this.spawnFx('pvfx_coin_pickup', node.x, node.y - 10, 0, 0.45, 1.1, 0.95, { blend: 'lighter' });
         if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') {
           Balaclava.Audio.play('coin');
         }
@@ -3455,6 +3700,8 @@
       }
       this.gainXp(18 + Math.round(plotDist * 22));
       this.spawnParticles(node.x, node.y, '#ffd54f', 16);
+      this.spawnFx('px_treasure_burst', node.x, node.y - 6, 0, 0.72, 1.35, 1.0, { blend: 'lighter' });
+      this.spawnFx('pvfx_treasure_glint', node.x, node.y - 12, 0, 0.85, 1.25, 0.96, { blend: 'lighter' });
       this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.treasureChestOpen', { coins }) : `¡Cofre del tesoro abierto! +${coins} monedas`, 'success');
     }
 
@@ -3512,6 +3759,8 @@
       this.shake(0.24, 5);
       this.spawnShockwave(node.x, node.y, 110, '#ffd54f');
       this.spawnParticles(node.x, node.y, '#ffd54f', 24);
+      this.spawnFx('px_treasure_burst', node.x, node.y - 6, 0, 0.78, 1.45, 1.0, { blend: 'lighter' });
+      this.spawnFx('pvfx_treasure_glint', node.x, node.y - 14, 0, 0.92, 1.35, 0.98, { blend: 'lighter' });
 
       const secretPool = Object.keys(Balaclava.PERMANENT_RELICS || {}).filter(
         id => Balaclava.PERMANENT_RELICS[id] && Balaclava.PERMANENT_RELICS[id].isSecret
@@ -3949,8 +4198,13 @@
 
     enterDungeon(dungeonId) {
       if (Balaclava.UI && Balaclava.UI.activeModal) Balaclava.UI.closeModal();
-      const def = Balaclava.DUNGEONS ? Balaclava.DUNGEONS[dungeonId] : null;
-      const dName = def ? def.name : 'Mazmorra';
+      const def = (Balaclava.DUNGEON_DEFS && Balaclava.DUNGEON_DEFS[dungeonId])
+        || (Balaclava.DUNGEONS && Balaclava.DUNGEONS[dungeonId])
+        || null;
+      const gate = (Balaclava.DUNGEON_GATES && Balaclava.DUNGEON_GATES[dungeonId]) || null;
+      const dName = (def && def.name) || (gate && gate.name) || 'Mazmorra';
+      const tierList = Array.isArray(Balaclava.DUNGEON_TIER_LIST) ? Balaclava.DUNGEON_TIER_LIST : [];
+      const tierIdx = Math.max(0, tierList.indexOf(dungeonId));
       const doEnter = () => {
         this.farming.fishing = null;
         this.placingBuildingId = null;
@@ -3958,8 +4212,11 @@
         this.activeDungeon = new Balaclava.DungeonInstance(dungeonId, { x: this.player.x, y: this.player.y }, this.player.level);
         this._savedOverworldDrops = Array.isArray(this.drops) ? this.drops : [];
         this.drops = [];
+        this.enemyProjectiles = [];
         this.thrownBombs = [];
         this.laserBeams = [];
+        this.player.statusEffects = {};
+        if (this.combat) this.combat.worldHazards = [];
         this.resetAmbientParticles();
         this.player.x = this.activeDungeon.spawnPos.x;
         this.player.y = this.activeDungeon.spawnPos.y;
@@ -3980,10 +4237,50 @@
         Balaclava.Audio.fadeOutMusic(600);
       }
       if (Balaclava.UI && typeof Balaclava.UI.playSceneTransition === 'function') {
+        const BIOME_NAMES = {
+          pradera: 'Pradera Esmeralda',
+          desierto: 'Desierto Dorado',
+          montanas_heladas: 'Cumbres Heladas',
+          bosque_oscuro: 'Bosque Sombrío',
+          tierras_volcanicas: 'Tierras Volcánicas'
+        };
+        const biomeId = (gate && gate.biome) || (def && def.themeKey) || 'pradera';
+        const recLevel = (gate && gate.recLevel) || Math.max(2, tierIdx + 2);
+        const mobLevelMin = Math.max(2, tierIdx * 2 + 2, Math.floor(((this.player && this.player.level) || 1) * 0.85));
+        const miniLevel = tierIdx * 2 + 4;
+        const enemies = (def && Array.isArray(def.enemyTypes) ? def.enemyTypes : []).map(eType => {
+          const ed = Balaclava.CombatSystem ? Balaclava.CombatSystem.getEnemyDef(eType) : null;
+          return {
+            type: eType,
+            name: (ed && ed.name) || eType,
+            level: mobLevelMin,
+            ranged: Boolean(ed && ed.ranged)
+          };
+        });
+        const relicItem = def && def.bossRelicId && Balaclava.ITEMS ? Balaclava.ITEMS[def.bossRelicId] : null;
         Balaclava.UI.playSceneTransition(dName, doEnter, {
           icon: 'assets/icons/skull_death.png',
-          sub: 'Descendiendo a las catacumbas ancestrales...',
-          kind: 'dungeon'
+          sub: (Balaclava.I18n && Balaclava.I18n.lang === 'es')
+            ? 'Descendiendo a las cámaras ancestrales...'
+            : 'Descending into the ancient chambers...',
+          kind: 'dungeon',
+          dungeonMeta: {
+            id: dungeonId,
+            name: dName,
+            biomeName: BIOME_NAMES[biomeId] || biomeId,
+            recLevel,
+            tier: tierIdx + 1,
+            mobLevelMin,
+            miniLevel,
+            floorsDesc: '4 Sectores: Atrio · Alas Rúnicas · Guardián · Santuario del Jefe',
+            enemies,
+            boss: def && def.boss ? {
+              name: def.boss.name,
+              hp: def.boss.hp,
+              dmg: def.boss.dmg,
+              relicName: relicItem ? relicItem.name : null
+            } : null
+          }
         });
       } else {
         doEnter();
@@ -4008,6 +4305,8 @@
         this.enemyProjectiles = [];
         this.thrownBombs = [];
         this.laserBeams = [];
+        this.player.statusEffects = {};
+        if (this.combat) this.combat.worldHazards = [];
         this.resetAmbientParticles();
         Balaclava.Audio.play('portal');
         if (Balaclava.Audio.setMood) Balaclava.Audio.setMood('meadow', { delayMs: 800, fadeOutMs: 320, fadeInMs: 4800 });
@@ -4018,9 +4317,10 @@
         Balaclava.Audio.fadeOutMusic(620);
       }
       if (!force && Balaclava.UI && typeof Balaclava.UI.playSceneTransition === 'function') {
-        Balaclava.UI.playSceneTransition('SUPERFICIE', doExit, {
+        const isEs = !!(Balaclava.I18n && Balaclava.I18n.lang === 'es');
+        Balaclava.UI.playSceneTransition(isEs ? 'SUPERFICIE' : 'SURFACE', doExit, {
           icon: 'assets/icons/campfire.png',
-          sub: 'Regresando a la luz del archipiélago...',
+          sub: isEs ? 'Regresando a la luz del archipiélago...' : 'Returning to the sunlit archipelago...',
           kind: 'overworld'
         });
       } else {
@@ -4084,6 +4384,20 @@
       return true;
     }
 
+    applyPlayerStatus(status) {
+      if (!status || !status.kind || this.isPlayerDead() || this.player.godMode) return;
+      if (!this.player.statusEffects) this.player.statusEffects = {};
+      const k = status.kind;
+      const dur = Math.max(0.8, status.dur || 2.0);
+      const cur = this.player.statusEffects[k];
+      this.player.statusEffects[k] = {
+        timer: cur ? Math.max(cur.timer || 0, dur) : dur,
+        tickCd: cur ? Math.min(cur.tickCd || 0.65, 0.55) : 0.65,
+        fxCd: cur ? (cur.fxCd || 0) : 0,
+        tickDmg: Math.max(cur ? (cur.tickDmg || 0) : 0, status.tickDmg || 0)
+      };
+    }
+
     damagePlayer(raw, opts = null) {
       if (this.player.godMode) {
         if ((this.time - (this._lastGodImmuneFx || -99)) >= 0.45) {
@@ -4099,10 +4413,11 @@
         this.addFloatingText(this.player.x, this.player.y - 26, Balaclava.I18n ? Balaclava.I18n.t('toast.dodgeFloat') : '¡ESQUIVA!', '#b3e5fc');
         return;
       }
+      const curseBonus = (this.player.statusEffects && this.player.statusEffects.curse && this.player.statusEffects.curse.timer > 0) ? 1.15 : 1;
       const mit = (opts && opts.isMagic) ? Math.max(0.35, 1 - Math.min(0.65, this.mods.spellResist || 0)) : 1;
       const defPct = Math.min(0.65, Math.max(0, this.mods.defPct || 0));
       const flatMit = (this.mods.def || 0) * 0.45;
-      let dmg = Math.max(1, Math.round(Math.max(1, raw * mit - flatMit) * (1 - defPct)));
+      let dmg = Math.max(1, Math.round(Math.max(1, raw * curseBonus * mit - flatMit) * (1 - defPct)));
       if ((this.player.shieldHp || 0) > 0 && (this.player.shieldTimer || 0) > 0) {
         const absorbed = Math.min(this.player.shieldHp, dmg);
         this.player.shieldHp -= absorbed;
@@ -4119,6 +4434,7 @@
       this.shake(0.22, 5);
       Balaclava.Audio.play('hurt');
       this.addFloatingText(this.player.x, this.player.y - 24, `-${dmg}`, '#ef5350');
+      if (opts && opts.status) this.applyPlayerStatus(opts.status);
 
       // Armor Thorns enchant reflection (% of raw damage)
       if ((this.mods.thorns || 0) > 0) {
@@ -4166,6 +4482,8 @@
       this.player.energy = this.player.maxEnergy;
       this.player.deadTimer = 0;
       this.player.invuln = 1.6;
+      this.player.statusEffects = {};
+      if (this.combat) this.combat.worldHazards = [];
       this.clearTransientInputs();
       this.resetAltarNotifications();
       if (this.activeDungeon) this.exitDungeon(true);
@@ -4194,6 +4512,7 @@
       this.floatingTexts = [];
       this.hotHeals = [];
       this.combat.enemies = [];
+      if (this.combat) this.combat.worldHazards = [];
       this.warningBanner = null;
       this.respawnPlayer({ silent: true });
       this.resetAmbientParticles();
@@ -4215,8 +4534,9 @@
       this.projectiles.push(Object.assign({ x, y, vx, vy, dmg, color, isArrow, life: 1.4, hitIds: new Set() }, opts || {}));
     }
 
-    spawnEnemyProjectile(x, y, vx, vy, dmg, color = '#ff7043') {
-      this.enemyProjectiles.push({ x, y, vx, vy, dmg, color, life: 2.2 });
+    spawnEnemyProjectile(x, y, vx, vy, dmg, color = '#ff7043', opts = null) {
+      const life = opts && opts.life ? opts.life : 2.3;
+      this.enemyProjectiles.push(Object.assign({ x, y, vx, vy, dmg, color, life }, opts || {}));
     }
 
     spawnParticles(x, y, color, count = 8) {
@@ -4235,10 +4555,23 @@
       this.shockwaves.push({ x, y, r: 10, maxR, color, life: 0.3, maxLife: 0.3 });
     }
 
-    spawnFx(key, x, y, angle = 0, duration = 0.24, scale = 1.6, alpha = 1) {
+    spawnFx(key, x, y, angle = 0, duration = 0, scale = 0, alpha = 1, opts = null) {
       if (!this.fxAnims) this.fxAnims = [];
-      if (this.fxAnims.length >= 40) this.fxAnims.shift();
-      this.fxAnims.push({ key, x, y, angle, life: duration, maxLife: duration, scale, alpha });
+      if (this.fxAnims.length >= 140) this.fxAnims.shift();
+      const meta = Balaclava.VFX_V2 && Balaclava.VFX_V2[key];
+      const dur = duration && duration > 0 ? duration : ((meta && meta.dur) || 0.28);
+      const sc = scale && scale > 0 ? scale : (meta ? (meta.fw >= 96 ? 1.05 : meta.fw >= 64 ? 1.25 : 1.5) : 1.5);
+      this.fxAnims.push({
+        key, x, y, angle,
+        life: dur, maxLife: dur,
+        scale: sc, alpha,
+        blend: (opts && opts.blend) || 'source-over',
+        follow: opts && opts.follow ? opts.follow : null,
+        offX: (opts && opts.offX) || 0,
+        offY: (opts && opts.offY) || 0,
+        flip: !!(opts && opts.flip),
+        row: opts && opts.row != null ? opts.row : null
+      });
     }
 
     spawnFishCatchLeap(startX, startY, targetX, targetY, fishId) {
@@ -4484,11 +4817,13 @@
       this.shake(0.32, b.isTnt ? 9 : 7);
       this.spawnShockwave(b.x, b.y, b.radius, b.tint || '#ff7043');
       if (b.isTnt) {
-        this.spawnFx('tinyExplosion', b.x, b.y - 10, 0, 0.56, 1.12, 0.96);
+        this.spawnFx('pvfx_big_explosion', b.x, b.y - 10, 0, 0.65, 1.35, 1.0, { blend: 'lighter' });
+        this.spawnFx('px_blast_big', b.x, b.y - 6, 0, 0.56, 1.25, 0.95, { blend: 'lighter' });
       } else {
-        this.spawnFx('explosionLarge', b.x, b.y - 6, 0, 0.52, Math.max(2.2, b.radius / 52), 0.95);
+        this.spawnFx('soggy_incinerate', b.x, b.y - 6, 0, 0.58, Math.max(1.15, b.radius / 88), 0.98, { blend: 'lighter' });
+        this.spawnFx('pvfx_fire_nova', b.x, b.y - 4, 0, 0.48, 1.15, 0.94, { blend: 'lighter' });
       }
-      this.spawnFx('explosionSmall', b.x + randInt(-18, 18), b.y + randInt(-14, 14), 0, 0.42, 2.2, 0.9);
+      this.spawnFx('aw_explosion_debris', b.x + randInt(-14, 14), b.y + randInt(-10, 10), 0, 0.42, 1.15, 0.92);
       this.spawnParticles(b.x, b.y, b.tint || '#ff8a65', 22);
       this.spawnParticles(b.x, b.y, '#ffe082', 14);
 
@@ -4561,6 +4896,8 @@
       if (this.isPlayerDead()) return false;
       if (!itemDef || !itemDef.laserStats || (this.inventory[itemDef.id] || 0) <= 0) return false;
       if ((this.laserCooldown || 0) > 0) return false;
+      if (!Number.isFinite(wx)) wx = this.player.x + (this.player.facing || 1) * 160;
+      if (!Number.isFinite(wy)) wy = this.player.y - 4;
 
       const st = itemDef.laserStats;
       const energyCost = this.player.godMode ? 0 : Math.max(0.5, st.energyCost * (1 - (this.mods.energySave || 0)));
@@ -4577,6 +4914,7 @@
       this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
       this.player.swingAngle = ang;
       this.player.swingTool = itemDef.id;
+      this.player.swingItemId = itemDef.id;
       this.player.swingDur = Math.min(0.16, st.cooldown);
       this.player.swingTimer = this.player.swingDur;
 
@@ -4584,6 +4922,7 @@
       const y1 = (this.player.y - 4) + Math.sin(ang) * 14;
       const x2 = x1 + Math.cos(ang) * st.range;
       const y2 = y1 + Math.sin(ang) * st.range;
+      const bMode = st.beamMode || itemDef.id;
 
       if (!this.laserBeams) this.laserBeams = [];
       this.laserBeams.push({
@@ -4592,9 +4931,11 @@
         width: st.width || 10,
         color: st.color || '#7c4dff',
         coreColor: st.coreColor || '#e0f7fa',
-        life: 0.20,
-        maxLife: 0.20
+        beamMode: bMode,
+        life: 0.24,
+        maxLife: 0.24
       });
+      this.spawnFx('pvfx_arcane_beam', x1, y1, ang, 0.30, 0.72, 0.92, { blend: 'lighter' });
 
       const segDist = (px, py) => {
         const vx = x2 - x1;
@@ -4611,11 +4952,21 @@
       const laserEnemies = this.activeDungeon
         ? [...this.activeDungeon.enemies, ...(this.activeDungeon.boss ? [this.activeDungeon.boss] : [])]
         : [...this.combat.enemies];
+      let firstHitEnemy = null;
       for (const e of laserEnemies) {
         if (Balaclava.Utils.segmentHitsEntity(x1, y1, x2, y2, e, beamHalfW)) {
+          if (!firstHitEnemy) firstHitEnemy = e;
           const isCrit = Math.random() < (this.mods.critChance || 0);
           this.combat.damageEnemy(this, e, Math.round(dmgBase * (isCrit ? 1.8 : 1)), ang, isCrit);
-          this.spawnFx('arcaneBlast', e.x, e.y, ang, 0.28, 1.35, 0.92);
+          if (bMode === 'solar_pillar') e.burnTimer = Math.max(e.burnTimer || 0, 3.5);
+          this.spawnFx(
+            bMode === 'solar_pillar' ? 'pvfx_holy_smite'
+            : bMode === 'void_pull' ? 'pvfx_void_implosion'
+            : bMode === 'orbital_storm' ? 'pvfx_lightning_strike'
+            : bMode === 'prism_ricochet' ? 'pvfx_prism_loom'
+            : 'pvfx_arcane_burst',
+            e.x, e.y, ang, 0.38, 1.05, 0.96, { blend: 'lighter' }
+          );
         }
       }
       if (!this.activeDungeon && Array.isArray(this.world.sheep)) {
@@ -4637,7 +4988,50 @@
         }
       }
 
-      this.spawnFx('arcaneBlast', x2, y2, ang, 0.24, 1.15, 0.85);
+      const endX = firstHitEnemy ? firstHitEnemy.x : (x1 + Math.cos(ang) * Math.min(st.range * 0.72, dist(x1, y1, wx, wy) || st.range));
+      const endY = firstHitEnemy ? firstHitEnemy.y : (y1 + Math.sin(ang) * Math.min(st.range * 0.72, dist(x1, y1, wx, wy) || st.range));
+
+      // Unique secondary laser weapon effects
+      if (bMode === 'void_pull' || itemDef.id === 'cetro_vacio') {
+        this.spawnFx('pvfx_void_implosion', endX, endY, 0, 0.62, 1.25, 0.98, { blend: 'lighter' });
+        for (const e of laserEnemies) {
+          if (e && !e._dead && !e.isBoss && dist(endX, endY, e.x, e.y) <= 145) {
+            e.x += (endX - e.x) * 0.45;
+            e.y += (endY - e.y) * 0.45;
+          }
+        }
+      } else if (bMode === 'solar_pillar' || itemDef.id === 'baculo_dorado') {
+        this.spawnFx('aw_holy_pillar', endX, endY + 8, 0, 0.56, 1.15, 0.98, { blend: 'lighter' });
+        for (const e of laserEnemies) {
+          if (e && !e._dead && dist(endX, endY, e.x, e.y) <= 85) {
+            this.combat.damageEnemy(this, e, Math.round(dmgBase * 0.45), ang, false, false);
+            e.burnTimer = Math.max(e.burnTimer || 0, 3.5);
+          }
+        }
+      } else if (bMode === 'prism_ricochet' || itemDef.id === 'baculo_solaris') {
+        const anchor = firstHitEnemy || { x: endX, y: endY };
+        const splitTargets = laserEnemies.filter(e => e && !e._dead && e !== firstHitEnemy && dist(anchor.x, anchor.y, e.x, e.y) <= 230).slice(0, 2);
+        for (const stTarget of splitTargets) {
+          this.laserBeams.push({
+            x1: anchor.x, y1: anchor.y, x2: stTarget.x, y2: stTarget.y,
+            angle: Math.atan2(stTarget.y - anchor.y, stTarget.x - anchor.x),
+            width: 8, color: '#ffd54f', coreColor: '#ffffff', beamMode: 'ricochet', life: 0.22, maxLife: 0.22
+          });
+          this.combat.damageEnemy(this, stTarget, Math.round(dmgBase * 0.7), ang, false, false);
+          this.spawnFx('lt_bolt3', stTarget.x, stTarget.y - 6, 0, 0.30, 0.9, 0.95, { blend: 'lighter' });
+        }
+      } else if (bMode === 'orbital_storm' || itemDef.id === 'baculo_estelar') {
+        this.spawnFx('pvfx_lightning_strike', endX, endY + 8, 0, 0.52, 1.35, 0.98, { blend: 'lighter' });
+        this.spawnFx('aw_explosion_electric', endX, endY, 0, 0.46, 1.15, 0.96, { blend: 'lighter' });
+        this.spawnShockwave(endX, endY, 105, '#00e5ff');
+        for (const e of laserEnemies) {
+          if (e && !e._dead && dist(endX, endY, e.x, e.y) <= 105) {
+            this.combat.damageEnemy(this, e, Math.round(dmgBase * 0.5), ang, false, false);
+          }
+        }
+      }
+
+      this.spawnFx('aw_arcane_impact', x2, y2, ang, 0.32, 0.92, 0.9, { blend: 'lighter' });
       Balaclava.Audio.play('laser');
       this.shake(0.08, 2.2);
       return true;
@@ -5166,6 +5560,46 @@
       p.energy = Math.min(p.maxEnergy, p.energy + dt * (1.2 + (this.mods.energyRegen || 0)));
       if (this.mods.regen > 0) p.hp = Math.min(p.maxHp, p.hp + dt * this.mods.regen);
 
+      // Elemental & status debuffs inflicted by enemy attacks
+      let statusSpeedMult = 1.0;
+      if (p.statusEffects && !p.godMode && p.deadTimer <= 0) {
+        const STATUS_META = {
+          burn: { fx: 'st_burn', col: '#ff7043' },
+          poison: { fx: 'st_poisonbubble', col: '#8bc34a' },
+          bleed: { fx: 'st_bleed', col: '#ef5350' },
+          slow: { fx: 'st_freeze', col: '#80deea', speedMult: 0.65 },
+          shock: { fx: 'st_shock', col: '#4fc3f7', speedMult: 0.80 },
+          curse: { fx: 'st_curse', col: '#ce93d8' }
+        };
+        for (const k of Object.keys(p.statusEffects)) {
+          const st = p.statusEffects[k];
+          if (!st || st.timer <= 0) { delete p.statusEffects[k]; continue; }
+          st.timer -= dt;
+          const sm = STATUS_META[k];
+          if (sm && sm.speedMult) statusSpeedMult = Math.min(statusSpeedMult, sm.speedMult);
+          st.fxCd = (st.fxCd || 0) - dt;
+          if (st.fxCd <= 0 && sm && this.spawnFx) {
+            st.fxCd = 0.50;
+            this.spawnFx(sm.fx, p.x, p.y - 12, 0, 0.46, 0.72, 0.9, { follow: p, offY: -12, blend: 'lighter' });
+          }
+          if ((st.tickDmg || 0) > 0) {
+            st.tickCd = (st.tickCd || 0.65) - dt;
+            if (st.tickCd <= 0) {
+              st.tickCd = 0.68;
+              const td = Math.max(1, Math.round(st.tickDmg));
+              p.hp = Math.max(0, p.hp - td);
+              this.addFloatingText(p.x, p.y - 28, `-${td}`, (sm && sm.col) || '#ef5350');
+              if (p.hp <= 0) {
+                p.invuln = 0;
+                this.damagePlayer(1);
+                break;
+              }
+            }
+          }
+          if (st.timer <= 0) delete p.statusEffects[k];
+        }
+      }
+
       // Gradual Healing-over-Time from food & potions
       if (Array.isArray(this.hotHeals) && this.hotHeals.length > 0 && p.deadTimer <= 0) {
         for (let i = this.hotHeals.length - 1; i >= 0; i--) {
@@ -5212,7 +5646,7 @@
           mx /= len; my /= len;
           if (Math.abs(mx) > 0.1 && p.swingTimer <= 0) p.facing = mx > 0 ? 1 : -1;
 
-          let baseSpeed = 190 * (1 + (this.mods.moveSpeed || 0));
+          let baseSpeed = 190 * (1 + (this.mods.moveSpeed || 0)) * statusSpeedMult;
           if (p.swingTimer > 0) baseSpeed *= 0.65;
           const ptx = Math.floor(p.x / TILE_SIZE);
           const pty = Math.floor(p.y / TILE_SIZE);
@@ -5285,7 +5719,9 @@
       p.dashTimer = 0.16;
       p.dashCd = 0.75;
       Balaclava.Audio.play('slash');
-      this.spawnFx('dashDust', p.x, p.y + 11, Math.atan2(dy, dx), 0.30, 1.05, 0.56);
+      const dashAng = Math.atan2(dy, dx);
+      this.spawnFx('px_dash_trail', p.x, p.y + 4, dashAng, 0.38, 1.1, 0.92, { blend: 'lighter' });
+      this.spawnFx('pvfx_blink_dash', p.x + Math.cos(dashAng) * 18, p.y + Math.sin(dashAng) * 18, dashAng, 0.34, 0.95, 0.9, { blend: 'lighter' });
       this.spawnParticles(p.x, p.y, '#e6d3b3', 5);
     }
 
@@ -5350,9 +5786,11 @@
           if (d.itemId === '_coin') {
             this.addCoins(d.qty);
             Balaclava.Audio.play('coin');
+            this.spawnFx('pvfx_coin_pickup', d.x, d.y - 6, 0, 0.42, 0.95, 0.95, { blend: 'lighter' });
           } else {
             this.addItem(d.itemId, d.qty);
             Balaclava.Audio.play('pickup');
+            this.spawnFx('pvfx_star_burst_pickup', d.x, d.y - 6, 0, 0.36, 0.85, 0.85, { blend: 'lighter' });
           }
           this.drops.splice(i, 1);
         }
@@ -5386,11 +5824,37 @@
             pr.vy = Math.sin(nAng) * spd;
           }
         }
+        if (pr.boomerang) {
+          const half = (pr.maxLife || 1.35) * 0.52;
+          if (!pr._returning && pr.life <= half) {
+            pr._returning = true;
+            if (pr.hitIds) pr.hitIds.clear();
+          }
+          if (pr._returning) {
+            const retAng = Math.atan2(this.player.y - pr.y, this.player.x - pr.x);
+            const spd = Math.hypot(pr.vx, pr.vy) || 480;
+            pr.vx = Math.cos(retAng) * spd;
+            pr.vy = Math.sin(retAng) * spd;
+          }
+        }
         pr.x += pr.vx * dt;
         pr.y += pr.vy * dt;
         let hit = false;
         const pad = pr.hitPad || 8;
         const triggerProjAoe = (excludeEnemy, excludeNode) => {
+          if (pr.vfxHit && this.spawnFx) {
+            this.spawnFx(pr.vfxHit, pr.x, pr.y, Math.atan2(pr.vy, pr.vx), 0.36, 0.95, 0.96, { blend: 'lighter' });
+          }
+          if (pr.clusterSplit && !pr._clustered) {
+            pr._clustered = true;
+            const cnt = pr.clusterSplit;
+            for (let k = 0; k < cnt; k++) {
+              const ca = (k / cnt) * Math.PI * 2 + 0.4;
+              this.spawnPlayerProjectile(pr.x, pr.y, Math.cos(ca) * 320, Math.sin(ca) * 320, Math.round(pr.dmg * 0.42), pr.color || '#ff5252', false, {
+                life: 0.45, aoeRadius: 34, burnDmg: 6, hitsNodes: true, vfxKey: 'soggy_fireball', vfxHit: 'pvfx_small_explosion', usedId: pr.usedId
+              });
+            }
+          }
           if (!pr.aoeRadius) return;
           const projAng = Math.atan2(pr.vy, pr.vx);
           this.spawnShockwave(pr.x, pr.y, pr.aoeRadius, pr.color || '#ff7043');
@@ -5403,6 +5867,7 @@
             if (dist(pr.x, pr.y, other.x, other.y) <= pr.aoeRadius + (other.radius || 16)) {
               this.combat.damageEnemy(this, other, Math.round(pr.dmg * 0.72), Math.atan2(other.y - pr.y, other.x - pr.x), false, false);
               if (pr.burnDmg) other.burnTimer = Math.max(other.burnTimer || 0, 3.0);
+              if (pr.poisonDmg) other.poisonTimer = Math.max(other.poisonTimer || 0, 3.2);
             }
           }
           if ((!pr.isArrow || pr.hitsNodes) && !this.activeDungeon) {
@@ -5412,9 +5877,13 @@
         const onProjHit = (target) => {
           if (pr.hitIds) pr.hitIds.add(target);
           const isCrit = Math.random() < (this.mods.critChance || 0);
-          this.combat.damageEnemy(this, target, pr.dmg * (isCrit ? 2 : 1), Math.atan2(pr.vy, pr.vx), isCrit);
+          const dealt = pr.dmg * (isCrit ? 2 : 1);
+          this.combat.damageEnemy(this, target, dealt, Math.atan2(pr.vy, pr.vx), isCrit);
           if (pr.slowDur) target.slowTimer = Math.max(target.slowTimer || 0, pr.slowDur);
-          if (pr.burnDmg || pr.poisonDmg) target.burnTimer = Math.max(target.burnTimer || 0, 3.0);
+          if (pr.burnDmg) target.burnTimer = Math.max(target.burnTimer || 0, 3.0);
+          if (pr.poisonDmg) target.poisonTimer = Math.max(target.poisonTimer || 0, 3.2);
+          if (pr.healOnHit) this.healPlayer(pr.healOnHit, 0);
+          if (pr.lifeSteal) this.healPlayer(Math.max(2, Math.round(dealt * pr.lifeSteal)), 0);
           triggerProjAoe(target, null);
           if ((pr.pierce || 0) > 0) { pr.pierce--; return false; }
           return true;
@@ -5478,12 +5947,28 @@
       for (let i = this.enemyProjectiles.length - 1; i >= 0; i--) {
         const pr = this.enemyProjectiles[i];
         pr.life -= dt;
+        if (pr.homing && pr.homing > 0 && !this.isPlayerDead()) {
+          const curAng = Math.atan2(pr.vy, pr.vx);
+          const spd = Math.hypot(pr.vx, pr.vy) || 200;
+          const aimAng = Math.atan2(this.player.y - pr.y, this.player.x - pr.x);
+          const diff = Math.atan2(Math.sin(aimAng - curAng), Math.cos(aimAng - curAng));
+          const nextAng = curAng + Math.max(-pr.homing * dt, Math.min(pr.homing * dt, diff));
+          pr.vx = Math.cos(nextAng) * spd;
+          pr.vy = Math.sin(nextAng) * spd;
+        }
         pr.x += pr.vx * dt;
         pr.y += pr.vy * dt;
-        if (dist(pr.x, pr.y, this.player.x, this.player.y) < 18) {
-          this.damagePlayer(pr.dmg, { isMagic: true });
+        const hitR = pr.radius || 18;
+        if (dist(pr.x, pr.y, this.player.x, this.player.y) < hitR) {
+          if (pr.impactVfx && this.spawnFx) {
+            this.spawnFx(pr.impactVfx, pr.x, pr.y, 0, 0.28, 0.72, 0.94, { blend: 'lighter' });
+          }
+          this.damagePlayer(pr.dmg, { isMagic: true, status: pr.status || null });
           this.enemyProjectiles.splice(i, 1);
         } else if (pr.life <= 0) {
+          if (pr.impactVfx && this.spawnFx) {
+            this.spawnFx(pr.impactVfx, pr.x, pr.y, 0, 0.22, 0.55, 0.75, { blend: 'lighter' });
+          }
           this.enemyProjectiles.splice(i, 1);
         }
       }
@@ -5544,8 +6029,13 @@
       }
       if (this.fxAnims) {
         for (let i = this.fxAnims.length - 1; i >= 0; i--) {
-          this.fxAnims[i].life -= dt;
-          if (this.fxAnims[i].life <= 0) this.fxAnims.splice(i, 1);
+          const fx = this.fxAnims[i];
+          fx.life -= dt;
+          if (fx.follow && !fx.follow._dead && fx.follow.x != null) {
+            fx.x = fx.follow.x + (fx.offX || 0);
+            fx.y = fx.follow.y + (fx.offY || 0);
+          }
+          if (fx.life <= 0) this.fxAnims.splice(i, 1);
         }
       }
       if (this.fishCatchLeaps && this.fishCatchLeaps.length > 0) {
@@ -6782,6 +7272,11 @@
       // Draw purchasable plot buy signs on adjacent locked plots
       this.renderLockedPlotSigns(ctx);
 
+      // Overworld enemy hazard zones (goblin bombs, acid pools, miniboss pillars)
+      if (this.combat && Array.isArray(this.combat.worldHazards) && this.combat.worldHazards.length > 0 && Balaclava.EnemyAttacks && Balaclava.EnemyAttacks.renderHazards) {
+        Balaclava.EnemyAttacks.renderHazards(ctx, this.combat.worldHazards, this.time, '#ff7043');
+      }
+
       // Collect Y-sorted drawable world objects
       const drawables = [];
 
@@ -7544,12 +8039,15 @@
       let frame = Math.floor(p.animTimer * (isMoving ? 10 : 7)) % frameCount;
       let sourceY = 0;
 
+      const swingTierId = (this.toolTiers && this.toolTiers[p.swingTool]) || 'basica';
+      const isSpecialItemSwing = !!(p.swingItemId && Balaclava.ITEMS && Balaclava.ITEMS[p.swingItemId]);
+      let pawnUsesNativeSheet = false;
+
       // Animaciones de acción con la herramienta / arma correspondiente en la mano (¡SIN CAMBIAR DE PERSONAJE!)
       if (p.swingTimer > 0 && !p.deadTimer) {
         const prog = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
 
         if (skinDef.type === 'monk') {
-          // El Monje NUNCA cambia a otro sprite: canaliza postura de meditación / poder espiritual con sus hábitos
           const healSheet = assets.get(skinDef.heal) || idleSheet;
           if (healSheet) {
             sheet = healSheet;
@@ -7557,7 +8055,6 @@
             frame = Math.min(frameCount - 1, Math.floor(prog * 8));
           }
         } else if (skinDef.type === 'archer') {
-          // El Arquero NUNCA cambia a otro sprite
           if (p.swingTool === 'arco' && assets.get(skinDef.shoot || 'archer_black_shoot')) {
             sheet = assets.get(skinDef.shoot || 'archer_black_shoot');
             frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 8;
@@ -7568,37 +8065,38 @@
             frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
           }
         } else if (skinDef.type === 'warrior') {
-          // El Caballero NUNCA cambia a otro sprite
-          if ((p.swingTool === 'espada' || p.swingTool === 'guadana') && (assets.get(skinDef.atk1) || assets.get(skinDef.atk2))) {
+          if (!isSpecialItemSwing && swingTierId === 'basica' && (p.swingTool === 'espada' || p.swingTool === 'guadana') && (assets.get(skinDef.atk1) || assets.get(skinDef.atk2))) {
             sheet = (p.attackCount % 2 === 0 && assets.get(skinDef.atk2)) ? assets.get(skinDef.atk2) : assets.get(skinDef.atk1);
             frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
             frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
-          } else if (assets.get(skinDef.atk1)) {
-            sheet = assets.get(skinDef.atk1);
-            frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
-            frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
-          }
-        } else if (skinDef.type === 'pawn') {
-          // Los Pawns usan EXCLUSIVAMENTE sus propias hojas nativas de su mismo aspecto
-          // Para el arco, conserva el cuerpo nativo del Pawn (sin cambiar a archer_shoot) y anima el arco en mano
-          if (p.swingTool === 'arco') {
+            pawnUsesNativeSheet = true;
+          } else {
             sheet = isMoving ? runSheet : idleSheet;
             if (sheet) {
               frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
-              frame = Math.floor(p.animTimer * (isMoving ? 10 : 6)) % frameCount;
+              frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
             }
-          } else if (p.swingTool === 'hacha' && assets.get(skinDef.axe)) {
-            sheet = assets.get(skinDef.axe);
-          } else if ((p.swingTool === 'pico' || p.swingTool === 'azada') && assets.get(skinDef.pick)) {
-            sheet = assets.get(skinDef.pick);
-          } else if (p.swingTool === 'pala' && assets.get(skinDef.hammer)) {
-            sheet = assets.get(skinDef.hammer);
-          } else if (assets.get(skinDef.knife)) {
-            sheet = assets.get(skinDef.knife);
           }
-          if (sheet && p.swingTool !== 'arco') {
+        } else if (skinDef.type === 'pawn') {
+          // Solo usar sprites con herramienta incrustada cuando la herramienta coincide exactamente (Básica).
+          // Para espadas, armas especiales, báculos o picos/hachas mejorados, conservar cuerpo limpio del Pawn + herramienta real equipada en mano.
+          if (!isSpecialItemSwing && swingTierId === 'basica' && p.swingTool === 'hacha' && assets.get(skinDef.axe)) {
+            sheet = assets.get(skinDef.axe);
+            pawnUsesNativeSheet = true;
+          } else if (!isSpecialItemSwing && swingTierId === 'basica' && p.swingTool === 'pico' && assets.get(skinDef.pick)) {
+            sheet = assets.get(skinDef.pick);
+            pawnUsesNativeSheet = true;
+          } else if (!isSpecialItemSwing && swingTierId === 'basica' && p.swingTool === 'pala' && assets.get(skinDef.hammer)) {
+            sheet = assets.get(skinDef.hammer);
+            pawnUsesNativeSheet = true;
+          } else {
+            sheet = isMoving ? runSheet : idleSheet;
+          }
+          if (sheet) {
             frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
-            frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
+            frame = p.swingTool === 'arco'
+              ? Math.floor(p.animTimer * (isMoving ? 10 : 6)) % frameCount
+              : Math.min(frameCount - 1, Math.floor(prog * frameCount));
           }
         }
       }
@@ -7687,8 +8185,14 @@
       // --- ANIMACIÓN DE HERRAMIENTAS Y ARMAS PERSONALIZADA POR ARQUETIPO ---
       if (p.swingTimer > 0 && !p.deadTimer) {
         const prog = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
-        const tierId = this.toolTiers[p.swingTool] || 'basica';
-        const toolImg = assets.getToolImg ? assets.getToolImg(p.swingTool, tierId) : assets.getItemIconCanvas(p.swingTool);
+        const tierId = (this.toolTiers && this.toolTiers[p.swingTool]) || 'basica';
+        let toolImg = null;
+        if (isSpecialItemSwing && assets.getItemIconCanvas) {
+          toolImg = assets.getItemIconCanvas(p.swingItemId);
+        }
+        if (!toolImg) {
+          toolImg = assets.getToolImg ? assets.getToolImg(p.swingTool, tierId) : assets.getItemIconCanvas(p.swingTool);
+        }
 
         // 1. ARQUETIPO MONJE (Túnica café): Herramienta telekinética flotante que sale por el lado y ejecuta el golpe
         if (skinDef.type === 'monk' && toolImg) {
@@ -7733,21 +8237,29 @@
           ctx.arc(0, 0, 20, 0, Math.PI * 2);
           ctx.fill();
 
-          const sz = 28;
+          const sz = isSpecialItemSwing ? 30 : 28;
           ctx.drawImage(toolImg, -sz / 2, -sz / 2, sz, sz);
           ctx.restore();
         }
-        // 2. ARQUETIPOS RANGER / GUERRERO: Herramienta empuñada físicamente en la mano
-        else if ((skinDef.type === 'archer' || (skinDef.type === 'warrior' && p.swingTool !== 'espada' && p.swingTool !== 'guadana')) && p.swingTool !== 'arco' && toolImg) {
-          const reach = 16 + Math.sin(prog * Math.PI) * 18;
-          const tx = p.x + p.facing * 10 + Math.cos(p.swingAngle) * reach;
-          const ty = p.y - 6 + Math.sin(p.swingAngle) * reach;
+        // 2. ARQUETIPOS PAWN / RANGER / GUERRERO: Renderizar exactamente la herramienta/espada/báculo equipado en mano
+        else if (
+          p.swingTool !== 'arco'
+          && toolImg
+          && (
+            skinDef.type === 'archer'
+            || (skinDef.type === 'pawn' && !pawnUsesNativeSheet)
+            || (skinDef.type === 'warrior' && (isSpecialItemSwing || tierId !== 'basica' || (p.swingTool !== 'espada' && p.swingTool !== 'guadana')))
+          )
+        ) {
+          const reach = 17 + Math.sin(prog * Math.PI) * 19;
+          const tx = p.x + p.facing * 9 + Math.cos(p.swingAngle) * reach;
+          const ty = p.y - 7 + Math.sin(p.swingAngle) * reach;
           const swingRot = p.swingAngle + (prog - 0.4) * 2.8 * p.facing + Math.PI / 4;
 
           ctx.save();
           ctx.translate(tx, ty);
           ctx.rotate(swingRot);
-          const sz = 24;
+          const sz = isSpecialItemSwing ? 28 : 25;
           ctx.drawImage(toolImg, -sz / 2, -sz / 2, sz, sz);
           ctx.restore();
         }
@@ -8181,46 +8693,60 @@
         }
       } else if (n.kind === 'dungeon_gate') {
         const gImg = (assets.gateImages && assets.gateImages[n.dungeonId]) || assets.get('mine_active');
+        const isCleared = this.clearedDungeons.includes(n.dungeonId);
         // Arcane aura ring around monumental crypt entrance
         const pulse = 0.24 + Math.sin(this.time * 3) * 0.08;
-        ctx.fillStyle = this.clearedDungeons.includes(n.dungeonId)
+        ctx.fillStyle = isCleared
           ? `rgba(129, 199, 132, ${pulse})`
           : `rgba(255, 213, 79, ${pulse})`;
         ctx.beginPath();
-        ctx.ellipse(0, 14, 72, 26, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 18, 92, 32, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        let dh = 160;
+        let dh = 216;
         if (gImg) {
           const aspect = gImg.width / Math.max(1, gImg.height);
-          if (aspect > 1.3) dh = 135; // Edificios anchos como minas y castillos
-          else if (aspect < 0.65) dh = 180; // Torres y monasterios altos
-          if (n.dungeonId === 'tierras_volcanicas') dh = 176;
+          if (aspect > 1.3) dh = 186; // Edificios anchos como minas y castillos
+          else if (aspect < 0.65) dh = 242; // Torres y monasterios altos
+          if (n.dungeonId === 'tierras_volcanicas') dh = 236;
           const dw = Math.round(dh * aspect);
-          ctx.drawImage(gImg, -dw / 2, 28 - dh, dw, dh);
+          ctx.drawImage(gImg, -dw / 2, 34 - dh, dw, dh);
         } else {
-          ctx.fillStyle = '#37474f'; ctx.fillRect(-44, -64, 88, 82);
-          dh = 92;
+          ctx.fillStyle = '#37474f'; ctx.fillRect(-56, -86, 112, 108);
+          dh = 122;
         }
 
-        // Cartel del nombre flotando elegantemente arriba del techo para no tapar el suelo, rocas o agua
-        const gateTitle = (Balaclava.DUNGEON_DEFS && Balaclava.DUNGEON_DEFS[n.dungeonId] && Balaclava.DUNGEON_DEFS[n.dungeonId].name)
-          || (Balaclava.DUNGEON_GATES && Balaclava.DUNGEON_GATES[n.dungeonId] && Balaclava.DUNGEON_GATES[n.dungeonId].name)
-          || n.name;
-        ctx.font = '14px BalaclavaPixel, monospace';
-        const txtW = ctx.measureText(gateTitle).width;
-        const lw = Math.max(110, Math.round(txtW + 22));
-        const lh = 22;
-        const lblY = Math.round(26 - dh - 16);
+        // Animated doorway portal shimmer (portal_anim 64x64, 4x2 cols/rows, 7 frames)
+        const pImg = assets.extraImages && assets.extraImages.portal_anim;
+        if (pImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(pImg))) {
+          const fr = Math.floor((this.time * 7 + (n.id || 0)) % 7);
+          const col = fr % 4;
+          const row = Math.floor(fr / 4);
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.globalAlpha = 0.42 + Math.sin(this.time * 4.2 + (n.id || 0)) * 0.12;
+          ctx.drawImage(pImg, col * 64, row * 64, 64, 64, -30, -34, 60, 60);
+          ctx.restore();
+        }
 
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
-        ctx.fillRect(Math.round(-lw / 2), lblY, lw, lh);
-        ctx.strokeStyle = this.clearedDungeons.includes(n.dungeonId) ? '#81c784' : '#60a5fa';
-        ctx.lineWidth = 1.6;
-        ctx.strokeRect(Math.round(-lw / 2), lblY, lw, lh);
-        ctx.fillStyle = this.clearedDungeons.includes(n.dungeonId) ? '#a5d6a7' : '#f1f5f9';
-        ctx.textAlign = 'center';
-        ctx.fillText(gateTitle, 0, lblY + 15);
+        // Subtle proximity-only label (no clunky floating blue box)
+        const dPlayer = this.player ? Math.hypot(this.player.x - n.x, this.player.y - n.y) : 999;
+        if (dPlayer <= 205) {
+          const gateTitle = (Balaclava.DUNGEON_DEFS && Balaclava.DUNGEON_DEFS[n.dungeonId] && Balaclava.DUNGEON_DEFS[n.dungeonId].name)
+            || (Balaclava.DUNGEON_GATES && Balaclava.DUNGEON_GATES[n.dungeonId] && Balaclava.DUNGEON_GATES[n.dungeonId].name)
+            || n.name;
+          const fade = Math.max(0.25, Math.min(0.92, (205 - dPlayer) / 110));
+          ctx.save();
+          ctx.globalAlpha = fade;
+          ctx.font = '12px BalaclavaBodyPixel, monospace';
+          ctx.textAlign = 'center';
+          const lblY = 34;
+          ctx.fillStyle = 'rgba(5, 8, 16, 0.85)';
+          ctx.fillText(gateTitle, 1, lblY + 1);
+          ctx.fillStyle = isCleared ? '#a5d6a7' : '#e2e8f0';
+          ctx.fillText(gateTitle, 0, lblY);
+          ctx.restore();
+        }
       } else if (n.kind === 'secret_chest') {
         const cImg = assets.chestImages && (assets.chestImages.sapphire_closed || assets.chestImages.gold_closed);
         const glint = 0.28 + Math.sin(this.time * 4.5 + n.id) * 0.14;
@@ -8480,58 +9006,63 @@
 
       const bImg = assets.getBuildingImg(def.sprite);
       const exImg = assets.extraImages && assets.extraImages[def.sprite];
+      const isFlushTile = ['Bridge_Tile', 'Fish_Pond', 'Corral_Pen', 'Plot_Garden'].includes(def.sprite);
       if (def.sprite === 'Campfire_Anim') {
-        ctx.fillStyle = 'rgba(255, 160, 64, 0.24)';
-        ctx.beginPath(); ctx.arc(cx, cy + 4, 26 + Math.sin(this.time * 8) * 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255, 160, 64, 0.26)';
+        ctx.beginPath(); ctx.arc(cx, cy + 4, 30 + Math.sin(this.time * 8) * 3, 0, Math.PI * 2); ctx.fill();
         const cf = assets.extraImages && assets.extraImages.campfireAnim;
         if (cf) {
           const fw = 16;
           const frames = Math.max(1, Math.floor(cf.width / fw));
           const fr = Math.floor((this.time * 8 + b.id) % frames);
-          ctx.drawImage(cf, fr * fw, 0, fw, cf.height, cx - 22, cy - 26, 44, 44);
+          ctx.drawImage(cf, fr * fw, 0, fw, cf.height, cx - 27, cy - 32, 54, 54);
         } else {
-          ctx.fillStyle = '#ef6c00'; ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ef6c00'; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, Math.PI * 2); ctx.fill();
         }
       } else if (exImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(exImg))) {
-        const vScale = Math.min(def.size === 1 ? 1.06 : 1.04, def.visualScale || (def.size === 1 ? 1.04 : 1.02));
-        ctx.fillStyle = 'rgba(0,0,0,0.26)';
-        ctx.beginPath(); ctx.ellipse(cx, py + h - 3, Math.round(w * 0.42), Math.round(h * 0.13), 0, 0, Math.PI * 2); ctx.fill();
+        const baseScale = def.size === 1 ? 1.42 : 1.28;
+        const vScale = Math.max(baseScale, def.visualScale ? def.visualScale * (def.size === 1 ? 1.32 : 1.22) : baseScale);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.beginPath(); ctx.ellipse(cx, py + h - 2, Math.round(w * (def.size === 1 ? 0.56 : 0.50)), Math.round(h * 0.15), 0, 0, Math.PI * 2); ctx.fill();
         if (def.sprite === 'well_health_strip' || def.sprite === 'well_mana_strip') {
           const fw = 32, fh = 64;
           const frames = Math.max(1, Math.floor(exImg.width / fw));
           const fr = Math.floor((this.time * 5 + b.id) % frames);
-          const dw = Math.round(w * 0.78);
+          const dw = Math.round(w * 0.98);
           const dh = Math.round(dw * (fh / fw));
-          ctx.drawImage(exImg, fr * fw, 0, fw, fh, cx - dw / 2, py + h - dh, dw, dh);
+          ctx.drawImage(exImg, fr * fw, 0, fw, fh, cx - dw / 2, py + h - dh + 4, dw, dh);
         } else if (def.sprite === 'waypoint_white_strip' || def.sprite === 'waypoint_dark_strip') {
           const fw = exImg.height || 128, fh = exImg.height || 128;
           const frames = Math.max(1, Math.floor(exImg.width / fw));
           const fr = Math.floor((this.time * 6 + b.id) % frames);
-          const dw = Math.round(w * 1.02);
-          ctx.drawImage(exImg, fr * fw, 0, fw, fh, cx - dw / 2, py + h - dw + 2, dw, dw);
+          const dw = Math.round(w * 1.24);
+          ctx.drawImage(exImg, fr * fw, 0, fw, fh, cx - dw / 2, py + h - dw + 4, dw, dw);
         } else {
           const dw = Math.round(w * vScale);
           const rawH = Math.round(dw * (exImg.height / Math.max(1, exImg.width)));
-          const dh = Math.min(rawH, Math.round(h * (def.size === 1 ? 1.18 : 1.24)));
-          ctx.drawImage(exImg, cx - dw / 2, cy - dh / 2, dw, dh);
+          const dh = Math.min(rawH, Math.round(h * (def.size === 1 ? 1.72 : 1.54)));
+          const dy = isFlushTile ? (cy - dh / 2) : (py + h - dh + (def.size === 1 ? 6 : 8));
+          ctx.drawImage(exImg, cx - dw / 2, dy, dw, dh);
         }
       } else if (bImg) {
-        const dw = Math.round(w * (def.size === 1 ? 1.04 : 1.05));
-        const maxH = def.size === 1 ? Math.round(h * 1.18) : Math.round(h * 1.22);
+        ctx.fillStyle = 'rgba(0,0,0,0.26)';
+        ctx.beginPath(); ctx.ellipse(cx, py + h - 2, Math.round(w * 0.52), Math.round(h * 0.14), 0, 0, Math.PI * 2); ctx.fill();
+        const dw = Math.round(w * (def.size === 1 ? 1.38 : 1.26));
+        const maxH = def.size === 1 ? Math.round(h * 1.66) : Math.round(h * 1.50);
         const dh = Math.min(maxH, Math.round(dw * (bImg.height / Math.max(1, bImg.width))));
-        ctx.drawImage(bImg, cx - dw / 2, cy - dh / 2, dw, dh);
+        ctx.drawImage(bImg, cx - dw / 2, py + h - dh + 6, dw, dh);
       } else if (def.sprite === 'Portal_Stone') {
         const props = assets.get('props');
-        if (props) ctx.drawImage(props, 350, 260, 100, 74, px - 6, py - 6, w + 12, h + 12);
+        if (props) ctx.drawImage(props, 350, 260, 100, 74, px - 12, py - 14, w + 24, h + 24);
         ctx.strokeStyle = '#80d8ff';
         ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(cx, cy, 14 + Math.sin(this.time * 4) * 3, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, 18 + Math.sin(this.time * 4) * 3, 0, Math.PI * 2); ctx.stroke();
       } else if (def.sprite === 'Altar_Stone' || def.sprite === 'Monument_Statue') {
         const props = assets.get('props');
         if (props) {
           const sx = def.sprite === 'Monument_Statue' ? 442 : 284;
           const sy = def.sprite === 'Monument_Statue' ? 16 : 292;
-          ctx.drawImage(props, sx, sy, 48, 86, px + 2, py - 24, w - 4, h + 24);
+          ctx.drawImage(props, sx, sy, 48, 86, px - 6, py - 38, w + 12, h + 42);
         }
       } else if (def.sprite === 'Corral_Pen') {
         const cpImg = assets.extraImages && assets.extraImages.corral_pen;
@@ -8707,10 +9238,10 @@
       ctx.save();
       ctx.translate(e.x, e.y);
 
-      // 1. Advertencia / Telegraph en el suelo antes de embestir, saltar o disparar ráfagas
-      if (e.state === 'windup' || (e.telegraph > 0 && (e.telegraphMode === 'dash_strike' || e.telegraphMode === 'dash_combo' || e.telegraphMode === 'miniboss_dash' || e.telegraphMode === 'aimed_volley' || e.telegraphMode === 'miniboss_fan' || e.telegraphMode === 'leap_slam' || e.telegraphMode === 'miniboss_leap'))) {
+      // 1. Advertencia / Telegraph en el suelo antes de embestir, saltar, excavar, lanzar bombas, rayos o ráfagas
+      if (e.state === 'windup' || (e.telegraph > 0 && (e.telegraphMode === 'dash_strike' || e.telegraphMode === 'dash_combo' || e.telegraphMode === 'miniboss_dash' || e.telegraphMode === 'aimed_volley' || e.telegraphMode === 'miniboss_fan' || e.telegraphMode === 'leap_slam' || e.telegraphMode === 'miniboss_leap' || e.telegraphMode === 'pillar_ring'))) {
         ctx.save();
-        if (e.attackKind === 'charge' || e.telegraphMode === 'dash_strike' || e.telegraphMode === 'dash_combo' || e.telegraphMode === 'miniboss_dash') {
+        if (e.attackKind === 'charge' || e.attackKind === 'dash' || e.attackKind === 'swoop' || e.telegraphMode === 'dash_strike' || e.telegraphMode === 'dash_combo' || e.telegraphMode === 'miniboss_dash') {
           const dAng = e.targetAngle !== undefined ? e.targetAngle : (e.facing >= 0 ? 0 : Math.PI);
           const lineLen = e.isBoss ? 155 : e.isMiniBoss ? 125 : 100;
           ctx.rotate(dAng);
@@ -8725,11 +9256,27 @@
           ctx.beginPath();
           ctx.moveTo(lineLen, -7); ctx.lineTo(lineLen + 14, 0); ctx.lineTo(lineLen, 7);
           ctx.fill();
-        } else if ((e.attackKind === 'leap' || e.telegraphMode === 'leap_slam' || e.telegraphMode === 'miniboss_leap') && e.targetX !== undefined) {
+        } else if (e.attackKind === 'beam') {
+          const dAng = e.beamAngle !== undefined ? e.beamAngle : (e.targetAngle !== undefined ? e.targetAngle : 0);
+          const prog = clamp(e._beamProgress || 0.35, 0, 1);
+          ctx.rotate(dAng);
+          ctx.strokeStyle = `rgba(128, 216, 255, ${(0.28 + 0.55 * prog).toFixed(2)})`;
+          ctx.lineWidth = Math.max(3, 18 * (1 - prog * 0.65));
+          ctx.beginPath();
+          ctx.moveTo(10, 0);
+          ctx.lineTo(250, 0);
+          ctx.stroke();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5 + prog * 2.5;
+          ctx.beginPath();
+          ctx.moveTo(10, 0);
+          ctx.lineTo(250, 0);
+          ctx.stroke();
+        } else if ((e.attackKind === 'leap' || e.attackKind === 'bomb' || e.telegraphMode === 'leap_slam' || e.telegraphMode === 'miniboss_leap') && e.targetX !== undefined) {
           const relX = e.targetX - e.x;
           const relY = e.targetY - e.y;
           const rad = e.telegraphMode === 'leap_slam' ? 115 : e.telegraphMode === 'miniboss_leap' ? 82 : 52;
-          ctx.fillStyle = 'rgba(255, 82, 82, 0.20)';
+          ctx.fillStyle = e.attackKind === 'bomb' ? 'rgba(255, 112, 67, 0.22)' : 'rgba(255, 82, 82, 0.20)';
           ctx.beginPath();
           ctx.arc(relX, relY, rad, 0, Math.PI * 2);
           ctx.fill();
@@ -8739,7 +9286,15 @@
           ctx.beginPath();
           ctx.arc(relX, relY, rad, 0, Math.PI * 2);
           ctx.stroke();
-        } else if (e.telegraphMode === 'aimed_volley' || e.telegraphMode === 'miniboss_fan') {
+        } else if (e.attackKind === 'burrow' || e.attackKind === 'spore' || e.attackKind === 'cleave' || e.attackKind === 'miniboss_pillars' || e.telegraphMode === 'pillar_ring') {
+          const rad = e.attackKind === 'spore' ? 68 : e.attackKind === 'cleave' ? 56 : e.telegraphMode === 'pillar_ring' ? 92 : 40;
+          ctx.fillStyle = e.attackKind === 'spore' ? 'rgba(139, 195, 74, 0.18)' : 'rgba(255, 183, 77, 0.16)';
+          ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = e.attackKind === 'spore' ? 'rgba(156, 204, 101, 0.9)' : 'rgba(255, 183, 77, 0.9)';
+          ctx.lineWidth = 2.2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.stroke();
+        } else if (e.attackKind === 'miniboss_fan' || e.telegraphMode === 'aimed_volley' || e.telegraphMode === 'miniboss_fan') {
           const dAng = e.targetAngle !== undefined ? e.targetAngle : 0;
           ctx.strokeStyle = 'rgba(255, 213, 79, 0.72)';
           ctx.lineWidth = 2;
@@ -8755,37 +9310,63 @@
         ctx.restore();
       }
 
+      if (e._burrowed && e.state === 'burrow') {
+        const pulse = 1 + Math.sin(this.time * 24 + (e.id || 0)) * 0.12;
+        ctx.fillStyle = 'rgba(109, 76, 65, 0.85)';
+        ctx.beginPath(); ctx.ellipse(0, 6, 17 * pulse, 9 * pulse, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#a1887f';
+        ctx.beginPath(); ctx.ellipse(-5, 3, 6, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(6, 4, 7, 4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 183, 77, 0.72)';
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.ellipse(0, 6, 26, 14, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+        return;
+      }
+
       ctx.fillStyle = 'rgba(0,0,0,0.32)';
       ctx.beginPath(); ctx.ellipse(0, 12, e.isBoss ? 28 : 14, e.isBoss ? 9 : 5, 0, 0, Math.PI * 2); ctx.fill();
 
-      // 2. Dinamismo visual: Squash & Stretch y rebote orgánico
+      // 2. Anclaje exacto al suelo según padding transparente real de cada spritesheet
       const idSeed = typeof e.id === 'number' && Number.isFinite(e.id) ? e.id : (Number.isFinite(e.seed) ? e.seed : 0);
       const isMoving = Math.abs(e.animVx || 0) > 3 || Math.abs(e.animVy || 0) > 3;
+      const isFlying = /^(bat|vampire_bat|plague_bat|wisp|wisp_green|floating_eye|ghastly_eye|flaming_skull|ghost|ghost_spectral)$/i.test(e.type || '')
+        || /^boss_(montanas_heladas|tierras_volcanicas|volcan_caldera)$/i.test(e.type || '');
+      const footPads = Balaclava.ENEMY_FOOT_PADS || {};
+      const groundAnchorY = isFlying ? 4 : 12;
       let squashX = 1.0;
       let squashY = 1.0;
+      let hopY = 0;
+      let walkTilt = 0;
 
       if (e.state === 'windup') {
         squashX = 1.25; squashY = 0.8;
-        const shake = Math.sin(this.time * 48 + idSeed) * 2;
-        ctx.translate(shake, 3);
+        ctx.translate(Math.sin(this.time * 48 + idSeed) * 2, 0);
       } else if (e.state === 'dash') {
-        squashX = 1.35; squashY = 0.82;
+        squashX = 1.32; squashY = 0.84;
       } else if (e.state === 'leap') {
         const lp = e.leapProg || 0;
         const arc = Math.sin(lp * Math.PI);
-        ctx.translate(0, -arc * 28);
+        hopY = -arc * 28;
         squashX = 0.85 + (1 - arc) * 0.28;
         squashY = 1.25 - (1 - arc) * 0.45;
       } else if (isMoving) {
         const cycle = Math.sin(this.time * 8.5 + idSeed);
-        squashX = 1 + cycle * 0.08;
-        squashY = 1 - cycle * 0.08;
-        ctx.translate(0, -Math.abs(cycle) * 2.5);
+        squashX = 1 + cycle * 0.06;
+        squashY = 1 - cycle * 0.06;
+        if (isFlying) hopY = -Math.abs(cycle) * 3.5 - 4;
+        else walkTilt = cycle * 0.045;
       } else {
         const breathe = Math.sin(this.time * 3.5 + idSeed);
-        squashX = 1 + breathe * 0.04;
-        squashY = 1 - breathe * 0.04;
+        squashX = 1 + breathe * 0.035;
+        squashY = 1 - breathe * 0.035;
+        if (isFlying) hopY = -4 + breathe * 2;
       }
+
+      ctx.save();
+      ctx.translate(0, groundAnchorY + hopY);
+      if (walkTilt) ctx.rotate(walkTilt);
       ctx.scale(squashX, squashY);
 
       let spriteDrawn = false;
@@ -8804,11 +9385,13 @@
           const sh = bMeta.sh || bMeta.fh;
           const dw = Math.round(sw * bMeta.scale);
           const dh = Math.round(sh * bMeta.scale);
-          barY = 14 - dh - 8;
+          const bPad = isFlying ? 0 : (footPads['boss_' + bossBiome] || 0);
+          const drawY = -dh + Math.round(dh * bPad) + 2;
+          barY = groundAnchorY + drawY - 8;
           ctx.save();
           if (e.facing < 0) ctx.scale(-1, 1);
-          if (e.hitFlash > 0) this.drawFlashSprite(ctx, bImg, sx, sy, sw, sh, -dw / 2, 18 - dh, dw, dh);
-          else ctx.drawImage(bImg, sx, sy, sw, sh, -dw / 2, 18 - dh, dw, dh);
+          if (e.hitFlash > 0) this.drawFlashSprite(ctx, bImg, sx, sy, sw, sh, -dw / 2, drawY, dw, dh);
+          else ctx.drawImage(bImg, sx, sy, sw, sh, -dw / 2, drawY, dw, dh);
           ctx.restore();
           spriteDrawn = true;
         }
@@ -8830,13 +9413,15 @@
           const mult = 1.32;
           const dw = Math.round(fw * mult);
           const dh = Math.round(fh * mult);
-          barY = 14 - dh - 8;
+          const mbPad = footPads[mbKey] || 0;
+          const drawY = -dh + Math.round(dh * mbPad) + 1;
+          barY = groundAnchorY + drawY - 8;
           ctx.fillStyle = 'rgba(255, 213, 79, 0.26)';
-          ctx.beginPath(); ctx.ellipse(0, 9, 28, 10, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(0, 0, 28, 9, 0, 0, Math.PI * 2); ctx.fill();
           ctx.save();
           if (e.facing < 0) ctx.scale(-1, 1);
-          if (e.hitFlash > 0) this.drawFlashSprite(ctx, mbImg, fr * fw, 0, fw, fh, -dw / 2, 14 - dh, dw, dh);
-          else ctx.drawImage(mbImg, fr * fw, 0, fw, fh, -dw / 2, 14 - dh, dw, dh);
+          if (e.hitFlash > 0) this.drawFlashSprite(ctx, mbImg, fr * fw, 0, fw, fh, -dw / 2, drawY, dw, dh);
+          else ctx.drawImage(mbImg, fr * fw, 0, fw, fh, -dw / 2, drawY, dw, dh);
           ctx.restore();
           spriteDrawn = true;
         }
@@ -8844,9 +9429,10 @@
         const eImg = !spriteDrawn && assets.enemyImages && assets.enemyImages[e.type];
         if (meta && eImg && (Balaclava.Utils.isImgReady ? Balaclava.Utils.isImgReady(eImg) : eImg.complete && eImg.naturalWidth > 0)) {
           const sizeMult = e.isMiniBoss ? 1.38 : 1.0;
+          const ePad = isFlying ? 0 : (footPads[e.type] || 0);
           if (e.isMiniBoss) {
             ctx.fillStyle = 'rgba(255, 213, 79, 0.22)';
-            ctx.beginPath(); ctx.ellipse(0, 8, 26, 10, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 0, 26, 9, 0, 0, Math.PI * 2); ctx.fill();
           }
           ctx.save();
           const useGoldTint = !(e.hitFlash > 0) && !!meta.goldGlow;
@@ -8861,33 +9447,33 @@
             const mult = meta.scale * 1.18 * sizeMult;
             const dw = Math.round(meta.fw * mult);
             const dh = Math.round(meta.fh * mult);
-            barY = 14 - dh - 7;
+            const drawY = -dh + Math.round(dh * ePad) + 1;
+            barY = groundAnchorY + drawY - 7;
             if (e.hitFlash > 0) {
-              this.drawFlashSprite(ctx, eImg, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, 14 - dh, dw, dh);
+              this.drawFlashSprite(ctx, eImg, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
             } else if (useGoldTint) {
-              // Tintear el spritesheet completo 1 sola vez (no por frame)
               const gSrc = this.getTintedSprite(`gold_${e.type}_sheet`, eImg, 0, 0, eImg.width, eImg.height, { sepia: 1, sat: 2.3, hue: 10, bright: 1.25, fallbackTint: 'rgba(255,205,60,0.42)' });
-              if (gSrc) ctx.drawImage(gSrc, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, 14 - dh, dw, dh);
-              else ctx.drawImage(eImg, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, 14 - dh, dw, dh);
+              if (gSrc) ctx.drawImage(gSrc, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
+              else ctx.drawImage(eImg, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
             } else {
-              ctx.drawImage(eImg, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, 14 - dh, dw, dh);
+              ctx.drawImage(eImg, fr * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
             }
           } else {
             const maxFr = Math.max(1, Math.min(4, Math.floor(eImg.width / meta.fw)));
             const fr = Math.abs(Math.floor(this.time * 7 + idSeed)) % maxFr;
             const dw = Math.round(meta.fw * meta.scale * sizeMult);
             const dh = Math.round(meta.fh * meta.scale * sizeMult);
-            barY = 13 - dh - 7;
+            const drawY = -dh + Math.round(dh * ePad) + 1;
+            barY = groundAnchorY + drawY - 7;
             if (e.facing < 0) ctx.scale(-1, 1);
             if (e.hitFlash > 0) {
-              this.drawFlashSprite(ctx, eImg, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, 13 - dh, dw, dh);
+              this.drawFlashSprite(ctx, eImg, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
             } else if (useGoldTint) {
-              // Tintear el spritesheet completo 1 sola vez (no por frame)
               const gSrc = this.getTintedSprite(`gold_${e.type}_sheet`, eImg, 0, 0, eImg.width, eImg.height, { sepia: 1, sat: 2.3, hue: 10, bright: 1.25, fallbackTint: 'rgba(255,205,60,0.42)' });
-              if (gSrc) ctx.drawImage(gSrc, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, 13 - dh, dw, dh);
-              else ctx.drawImage(eImg, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, 13 - dh, dw, dh);
+              if (gSrc) ctx.drawImage(gSrc, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
+              else ctx.drawImage(eImg, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
             } else {
-              ctx.drawImage(eImg, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, 13 - dh, dw, dh);
+              ctx.drawImage(eImg, fr * meta.fw, 0, meta.fw, meta.fh, -dw / 2, drawY, dw, dh);
             }
           }
           ctx.restore();
@@ -8901,16 +9487,17 @@
           const fr = Math.floor(this.time * 8) % 6;
           ctx.save();
           if (e.facing < 0) ctx.scale(-1, 1);
-          if (e.hitFlash > 0) this.drawFlashSprite(ctx, img, fr * 192, 0, 192, 192, -46, -54, 92, 92);
-          else ctx.drawImage(img, fr * 192, 0, 192, 192, -46, -54, 92, 92);
+          if (e.hitFlash > 0) this.drawFlashSprite(ctx, img, fr * 192, 0, 192, 192, -46, -68, 92, 92);
+          else ctx.drawImage(img, fr * 192, 0, 192, 192, -46, -68, 92, 92);
           ctx.restore();
         } else {
           const r = e.isBoss ? 24 : 14;
           ctx.fillStyle = e.hitFlash > 0 ? '#ffffff' : (e.color || '#ef5350');
-          ctx.beginPath(); ctx.arc(0, -4, r, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(0, -r + 2, r, 0, Math.PI * 2); ctx.fill();
           ctx.strokeStyle = '#1a1118'; ctx.lineWidth = 3; ctx.stroke();
         }
       }
+      ctx.restore();
 
       if (e.isBoss && (e.phase || 1) >= 2) {
         ctx.save();
@@ -9066,12 +9653,32 @@
           ctx.lineWidth = Math.max(2.5, pw * 0.42);
           ctx.beginPath(); ctx.moveTo(beam.x1, beam.y1); ctx.lineTo(beam.x2, beam.y2); ctx.stroke();
 
-          // Muzzle & endpoint plasma flares
+          // Muzzle & endpoint plasma flares + energy rings along special laser rays
           ctx.fillStyle = beam.coreColor || '#ffffff';
-          ctx.beginPath(); ctx.arc(beam.x1, beam.y1, pw * 0.72, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(beam.x1, beam.y1, pw * 0.85, 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = beam.color || '#7c4dff';
-          ctx.globalAlpha = alpha * 0.65;
-          ctx.beginPath(); ctx.arc(beam.x2, beam.y2, pw * 1.15, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = alpha * 0.72;
+          ctx.beginPath(); ctx.arc(beam.x2, beam.y2, pw * 1.35, 0, Math.PI * 2); ctx.fill();
+
+          if (beam.beamMode === 'helix' || beam.beamMode === 'orbital_storm' || beam.beamMode === 'void_pull') {
+            const dx = beam.x2 - beam.x1, dy = beam.y2 - beam.y1;
+            const len = Math.hypot(dx, dy) || 1;
+            const nx = -dy / len, ny = dx / len;
+            const amp = beam.beamMode === 'void_pull' ? 9 : 7;
+            ctx.strokeStyle = beam.coreColor || '#ffffff';
+            ctx.globalAlpha = alpha * 0.78;
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            const steps = 16;
+            for (let s = 0; s <= steps; s++) {
+              const t = s / steps;
+              const wave = Math.sin(t * Math.PI * 6 - this.time * 28) * amp * (1 - t * 0.25);
+              const px = beam.x1 + dx * t + nx * wave;
+              const py = beam.y1 + dy * t + ny * wave;
+              if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+          }
         }
         ctx.restore();
       }
@@ -9221,25 +9828,46 @@
     renderCombatEffects(ctx) {
       const exPr = Balaclava.Assets.extraImages || {};
       const okPr = (im) => im && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(im));
-      for (const pr of this.projectiles) {
+      const drawProjSprite = (pr, fallbackKey, fallbackR, spin = false, isEnemy = false) => {
         const ang = Math.atan2(pr.vy || 0, pr.vx || 1);
-        const pImg = pr.isArrow ? exPr.proj_arrow : exPr.proj_magic;
+        const vMeta = pr.vfxKey && Balaclava.VFX_V2 ? Balaclava.VFX_V2[pr.vfxKey] : null;
+        const vImg = pr.vfxKey ? exPr[pr.vfxKey] : null;
+        if (vMeta && okPr(vImg)) {
+          const total = Math.max(1, vMeta.frames || 1);
+          const cols = Math.max(1, vMeta.cols || total);
+          const fr = Math.floor((this.time * 16) % total);
+          const col = fr % cols, row = Math.floor(fr / cols);
+          const dw = Math.min(isEnemy ? 40 : 44, Math.max(isEnemy ? 24 : 22, vMeta.fw * 0.62));
+          const dh = dw * (vMeta.fh / Math.max(1, vMeta.fw));
+          ctx.save();
+          ctx.translate(pr.x, pr.y);
+          ctx.rotate(spin ? (this.time * 14) : ang);
+          if (isEnemy) ctx.globalCompositeOperation = 'lighter';
+          ctx.drawImage(vImg, col * vMeta.fw, row * vMeta.fh, vMeta.fw, vMeta.fh, -dw * 0.5, -dh * 0.5, dw, dh);
+          ctx.restore();
+          return;
+        }
+        const pImg = exPr[fallbackKey] || exPr.proj_fireball;
         if (okPr(pImg)) {
           const fw = pImg.height || 16;
           const frames = Math.max(1, Math.floor(pImg.width / fw));
           const fr = Math.floor((this.time * 12) % frames);
+          const sz = isEnemy ? 26 : 24;
           ctx.save();
           ctx.translate(pr.x, pr.y);
           ctx.rotate(ang);
-          ctx.drawImage(pImg, fr * fw, 0, fw, pImg.height, -12, -12, 24, 24);
+          ctx.drawImage(pImg, fr * fw, 0, fw, pImg.height, -sz * 0.5, -sz * 0.5, sz, sz);
           ctx.restore();
         } else {
           ctx.fillStyle = pr.color;
-          ctx.beginPath(); ctx.arc(pr.x, pr.y, pr.isArrow ? 4 : 6, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(pr.x, pr.y, fallbackR, 0, Math.PI * 2); ctx.fill();
         }
+      };
+
+      for (const pr of this.projectiles) {
+        drawProjSprite(pr, pr.isArrow ? 'proj_arrow' : 'proj_magic', pr.isArrow ? 4 : 6, !!pr.boomerang, false);
       }
       for (const pr of this.enemyProjectiles) {
-        const ang = Math.atan2(pr.vy || 0, pr.vx || 1);
         const cStr = String(pr.color || '').toLowerCase();
         const kStr = String(pr.kind || '').toLowerCase();
         const pk = kStr.includes('web') || cStr.includes('eceff1') || cStr.includes('f5f5f5') || cStr.includes('b0bec5') ? 'proj_web'
@@ -9249,20 +9877,7 @@
           : cStr.includes('ce93') || cStr.includes('7c4d') || cStr.includes('ab47') || cStr.includes('b39d') ? 'proj_dark'
           : cStr.includes('cfd8') || cStr.includes('e0e0') ? 'proj_bone'
           : 'proj_fireball';
-        const pImg = exPr[pk] || exPr.proj_fireball;
-        if (okPr(pImg)) {
-          const fw = pImg.height || 16;
-          const frames = Math.max(1, Math.floor(pImg.width / fw));
-          const fr = Math.floor((this.time * 12) % frames);
-          ctx.save();
-          ctx.translate(pr.x, pr.y);
-          ctx.rotate(ang);
-          ctx.drawImage(pImg, fr * fw, 0, fw, pImg.height, -13, -13, 26, 26);
-          ctx.restore();
-        } else {
-          ctx.fillStyle = pr.color;
-          ctx.beginPath(); ctx.arc(pr.x, pr.y, 6, 0, Math.PI * 2); ctx.fill();
-        }
+        drawProjSprite(pr, pk, 6, false, true);
       }
       for (const sw of this.shockwaves) {
         ctx.strokeStyle = sw.color;
@@ -9275,17 +9890,34 @@
         for (const fx of this.fxAnims) {
           const img = Balaclava.Assets.extraImages[fx.key];
           if (!img || !img.complete || img.naturalWidth <= 0) continue;
-          const fw = img.height || 32;
-          const totalFrames = Math.max(1, Math.floor(img.width / fw));
-          const progress = Math.max(0, Math.min(0.999, 1 - fx.life / fx.maxLife));
-          const fr = Math.floor(progress * totalFrames);
-          const sz = fw * (fx.scale || 1.5);
+          const meta = Balaclava.VFX_V2 && Balaclava.VFX_V2[fx.key];
+          const progress = Math.max(0, Math.min(0.999, 1 - fx.life / Math.max(0.01, fx.maxLife)));
           const baseAlpha = fx.alpha != null ? fx.alpha : 1;
           ctx.save();
-          ctx.globalAlpha = baseAlpha * Math.max(0.08, 1 - progress * 0.7);
+          if (fx.blend && fx.blend !== 'source-over') ctx.globalCompositeOperation = fx.blend;
+          ctx.globalAlpha = baseAlpha * Math.max(0.12, 1 - progress * 0.55);
           ctx.translate(fx.x, fx.y);
-          ctx.rotate(fx.angle || 0);
-          ctx.drawImage(img, fr * fw, 0, fw, img.height, -sz / 2, -sz / 2, sz, sz * (img.height / fw));
+          if (fx.angle) ctx.rotate(fx.angle);
+          if (fx.flip) ctx.scale(-1, 1);
+          if (meta) {
+            const total = Math.max(1, meta.frames || 1);
+            const cols = Math.max(1, meta.cols || total);
+            const fr = Math.min(total - 1, Math.floor(progress * total));
+            const col = fr % cols;
+            const row = fx.row != null ? fx.row : Math.floor(fr / cols);
+            const sc = fx.scale || 1.25;
+            const dw = meta.fw * sc;
+            const dh = meta.fh * sc;
+            const px = meta.px != null ? meta.px : 0.5;
+            const py = meta.py != null ? meta.py : 0.5;
+            ctx.drawImage(img, col * meta.fw, row * meta.fh, meta.fw, meta.fh, -dw * px, -dh * py, dw, dh);
+          } else {
+            const fw = img.height || 32;
+            const totalFrames = Math.max(1, Math.floor(img.width / fw));
+            const fr = Math.floor(progress * totalFrames);
+            const sz = fw * (fx.scale || 1.5);
+            ctx.drawImage(img, fr * fw, 0, fw, img.height, -sz / 2, -sz / 2, sz, sz * (img.height / fw));
+          }
           ctx.restore();
         }
       }
@@ -10041,77 +10673,9 @@
         }
       }
 
-      // 5b. Ground Hazard Zones (Boss/Mini-boss meteor craters, elemental pools, & cross fissures)
-      if (Array.isArray(dung.hazardZones) && dung.hazardZones.length > 0) {
-        ctx.save();
-        for (const z of dung.hazardZones) {
-          if (!z) continue;
-          const col = z.color || def.accentColor || '#ff5252';
-          if (z.kind === 'fissure') {
-            const halfW = z.halfW || 18;
-            if (z.timer < z.delay) {
-              const p = clamp(z.timer / Math.max(0.05, z.delay), 0, 1);
-              ctx.save();
-              ctx.strokeStyle = 'rgba(255, 82, 82, 0.35)';
-              ctx.lineWidth = halfW * 2;
-              ctx.beginPath();
-              ctx.moveTo(z.x, z.y);
-              ctx.lineTo(z.x2, z.y2);
-              ctx.stroke();
-              ctx.strokeStyle = `rgba(255, 193, 7, ${0.45 + 0.45 * p})`;
-              ctx.lineWidth = Math.max(3, halfW * 2 * p);
-              ctx.setLineDash([10, 6]);
-              ctx.beginPath();
-              ctx.moveTo(z.x, z.y);
-              ctx.lineTo(z.x2, z.y2);
-              ctx.stroke();
-              ctx.restore();
-            } else {
-              const fade = clamp(1 - (z.timer - z.delay) / Math.max(0.1, z.duration - z.delay), 0.15, 1);
-              ctx.save();
-              ctx.globalAlpha = fade;
-              ctx.strokeStyle = col;
-              ctx.lineWidth = halfW * 2;
-              ctx.lineCap = 'round';
-              ctx.beginPath();
-              ctx.moveTo(z.x, z.y);
-              ctx.lineTo(z.x2, z.y2);
-              ctx.stroke();
-              ctx.strokeStyle = '#fff3e0';
-              ctx.lineWidth = Math.max(4, halfW * 0.65);
-              ctx.beginPath();
-              ctx.moveTo(z.x, z.y);
-              ctx.lineTo(z.x2, z.y2);
-              ctx.stroke();
-              ctx.restore();
-            }
-          } else {
-            const r = z.radius || 52;
-            if (z.kind === 'meteor' && !z.detonated) {
-              const p = clamp(z.timer / Math.max(0.05, z.delay || 1), 0, 1);
-              ctx.fillStyle = 'rgba(255, 61, 0, 0.16)';
-              ctx.beginPath(); ctx.arc(z.x, z.y, r, 0, Math.PI * 2); ctx.fill();
-              ctx.fillStyle = `rgba(255, 82, 82, ${0.22 + p * 0.32})`;
-              ctx.beginPath(); ctx.arc(z.x, z.y, Math.max(4, r * p), 0, Math.PI * 2); ctx.fill();
-              ctx.strokeStyle = '#ffab40';
-              ctx.lineWidth = 2.5;
-              ctx.beginPath(); ctx.arc(z.x, z.y, r, 0, Math.PI * 2); ctx.stroke();
-            } else {
-              const left = Math.max(0, (z.duration || 2) - z.timer);
-              const alpha = clamp(left / 0.6, 0.2, 0.9);
-              ctx.save();
-              ctx.globalAlpha = alpha;
-              ctx.fillStyle = z.fillColor || 'rgba(255, 87, 34, 0.28)';
-              ctx.beginPath(); ctx.arc(z.x, z.y, r, 0, Math.PI * 2); ctx.fill();
-              ctx.strokeStyle = col;
-              ctx.lineWidth = 2;
-              ctx.setLineDash([6, 4]);
-              ctx.beginPath(); ctx.arc(z.x, z.y, r, 0, Math.PI * 2); ctx.stroke();
-              ctx.restore();
-            }
-          }
-        }
-        ctx.restore();
+      // 5b. Ground Hazard Zones (Boss/Mini-boss meteor craters, bombs, pillars, elemental pools, & cross fissures)
+      if (Array.isArray(dung.hazardZones) && dung.hazardZones.length > 0 && Balaclava.EnemyAttacks && Balaclava.EnemyAttacks.renderHazards) {
+        Balaclava.EnemyAttacks.renderHazards(ctx, dung.hazardZones, this.time, def.accentColor || '#ff5252');
       }
 
       // 6. Enemies + Boss + Player + Ground Drops + Decorative Foreground Pillars

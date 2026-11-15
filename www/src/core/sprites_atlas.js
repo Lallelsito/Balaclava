@@ -1714,9 +1714,17 @@
     for (const [id, url] of Object.entries(Balaclava.EXTRA_SPRITE_PATHS)) {
       jobs.push(loadImg(url).then(img => { if (img) assets.extraImages[id] = img; }));
     }
+    if (Balaclava.VFX_V2) {
+      for (const [id, meta] of Object.entries(Balaclava.VFX_V2)) {
+        if (!meta || !meta.path) continue;
+        jobs.push(loadImg(meta.path).then(img => { if (img) assets.extraImages[id] = img; }));
+      }
+    }
     assets.preloadedIcons = assets.preloadedIcons || [];
+    assets.preloadedUrls = assets.preloadedUrls || {};
     const preloadPool = [
       ...Object.values(Balaclava.TOOL_PNG_MAP || {}).flatMap(m => Object.values(m || {})),
+      ...(Balaclava.SKILL_V2_ICONS || []),
       ...(Balaclava.SKILL_ICON_POOL || []),
       ...Object.values(Balaclava.SKILL_ICON_URLS || {}),
       ...Object.values(Balaclava.SKILL_EXTRA_ICONS || {}),
@@ -1749,7 +1757,13 @@
       if (!uniqueItemUrlCache[rawUrl]) {
         uniqueItemUrlCache[rawUrl] = loadImg(rawUrl);
       }
-      jobs.push(uniqueItemUrlCache[rawUrl].then(img => { if (img) assets.preloadedIcons.push(img); }));
+      jobs.push(uniqueItemUrlCache[rawUrl].then(img => {
+        if (img) {
+          assets.preloadedIcons.push(img);
+          assets.preloadedUrls[encodeURI(rawUrl)] = img;
+          assets.preloadedUrls[encodeURI(withRoot(rawUrl))] = img;
+        }
+      }));
     }
     assets._extraTotal = Math.max(1, jobs.length);
     assets._extraLoaded = 0;
@@ -1823,17 +1837,27 @@
 
   assets.createSkillIconEl = function (skillId, size = 32) {
     const sk = Balaclava.SKILLS && Balaclava.SKILLS[skillId];
-    let url = Balaclava.SKILL_ICON_URLS[skillId];
-    if (!url && sk) {
-      if (sk.icon && Balaclava.ITEM_PNG_MAP[sk.icon]) {
-        url = Balaclava.ITEM_PNG_MAP[sk.icon];
-      } else if (sk.icon && Balaclava.SKILL_EXTRA_ICONS && Balaclava.SKILL_EXTRA_ICONS[sk.icon]) {
-        url = Balaclava.SKILL_EXTRA_ICONS[sk.icon];
-      } else {
-        let h = 0;
-        for (let i = 0; i < skillId.length; i++) h = (h * 31 + skillId.charCodeAt(i)) >>> 0;
-        const pool = Balaclava.SKILL_ICON_POOL || Object.values(Balaclava.SKILL_ICON_URLS);
-        url = pool[h % pool.length];
+    let url = null;
+    if (sk && sk.grantSpell && Balaclava.SKILL_ICON_URLS[skillId]) {
+      url = Balaclava.SKILL_ICON_URLS[skillId];
+    } else if (Balaclava.SKILL_V2_ICONS && Balaclava.SKILL_V2_ICONS.length) {
+      let h = 0;
+      for (let i = 0; i < skillId.length; i++) h = (h * 33 + skillId.charCodeAt(i)) >>> 0;
+      const bOff = sk && sk.branch ? (sk.branch.charCodeAt(0) * 7) : 0;
+      url = Balaclava.SKILL_V2_ICONS[(h + bOff) % Balaclava.SKILL_V2_ICONS.length];
+    } else {
+      url = Balaclava.SKILL_ICON_URLS[skillId];
+      if (!url && sk) {
+        if (sk.icon && Balaclava.ITEM_PNG_MAP[sk.icon]) {
+          url = Balaclava.ITEM_PNG_MAP[sk.icon];
+        } else if (sk.icon && Balaclava.SKILL_EXTRA_ICONS && Balaclava.SKILL_EXTRA_ICONS[sk.icon]) {
+          url = Balaclava.SKILL_EXTRA_ICONS[sk.icon];
+        } else {
+          let h = 0;
+          for (let i = 0; i < skillId.length; i++) h = (h * 31 + skillId.charCodeAt(i)) >>> 0;
+          const pool = Balaclava.SKILL_ICON_POOL || Object.values(Balaclava.SKILL_ICON_URLS);
+          url = pool[h % pool.length];
+        }
       }
     }
     if (url) {

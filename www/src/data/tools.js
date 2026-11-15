@@ -10,12 +10,12 @@
   ];
 
   const TIER_META = {
-    basica:     { id: 'basica',     name: 'Básica',         color: '#b0bec5', mult: 0.90, speed: 0.80, rareBonus: 0.00, rarity: 'comun' },
-    mejorada:   { id: 'mejorada',   name: 'Mejorada',       color: '#81c784', mult: 1.35, speed: 0.95, rareBonus: 0.04, rarity: 'poco_comun' },
-    cobre:      { id: 'cobre',      name: 'De Cobre',       color: '#ffab91', mult: 1.85, speed: 1.10, rareBonus: 0.08, rarity: 'poco_comun' },
-    hierro:     { id: 'hierro',     name: 'De Hierro',      color: '#90caf9', mult: 2.15, speed: 1.00, rareBonus: 0.14, rarity: 'poco_comun' },
-    plata:      { id: 'plata',      name: 'De Plata',       color: '#cfd8dc', mult: 3.25, speed: 1.22, rareBonus: 0.20, rarity: 'raro' },
-    oro:        { id: 'oro',        name: 'De Oro',         color: '#ffd54f', mult: 4.10, speed: 1.40, rareBonus: 0.26, rarity: 'raro' },
+    basica:     { id: 'basica',     name: 'Básica',         color: '#b0bec5', mult: 0.55, speed: 0.72, rareBonus: 0.00, rarity: 'comun' },
+    mejorada:   { id: 'mejorada',   name: 'Mejorada',       color: '#81c784', mult: 0.95, speed: 0.92, rareBonus: 0.04, rarity: 'poco_comun' },
+    cobre:      { id: 'cobre',      name: 'De Cobre',       color: '#ffab91', mult: 1.45, speed: 1.08, rareBonus: 0.08, rarity: 'poco_comun' },
+    hierro:     { id: 'hierro',     name: 'De Hierro',      color: '#90caf9', mult: 2.05, speed: 1.16, rareBonus: 0.14, rarity: 'poco_comun' },
+    plata:      { id: 'plata',      name: 'De Plata',       color: '#cfd8dc', mult: 3.10, speed: 1.28, rareBonus: 0.20, rarity: 'raro' },
+    oro:        { id: 'oro',        name: 'De Oro',         color: '#ffd54f', mult: 4.10, speed: 1.44, rareBonus: 0.26, rarity: 'raro' },
     platino:    { id: 'platino',    name: 'De Platino',     color: '#80deea', mult: 5.10, speed: 1.58, rareBonus: 0.33, rarity: 'raro' },
     acero:      { id: 'acero',      name: 'De Acero Azul',  color: '#64b5f6', mult: 6.20, speed: 1.76, rareBonus: 0.40, rarity: 'epico' },
     cristal:    { id: 'cristal',    name: 'De Cristal',     color: '#ce93d8', mult: 7.45, speed: 1.94, rareBonus: 0.47, rarity: 'epico' },
@@ -50,7 +50,7 @@
     },
     hacha: {
       id: 'hacha', name: 'Hacha', key: '2', role: 'Talar árboles comunes, gigantes y golpe pesado en combate',
-      anim: 'axe', basePower: 6, swingRate: 0.72, baseRange: 76, energyCost: 2.5,
+      anim: 'axe', basePower: 5, swingRate: 0.68, baseRange: 76, energyCost: 2.5,
       tierCosts: {
         mejorada:   { coins: 30,   items: { madera: 10, piedra: 6 } },
         cobre:      { coins: 70,   items: { madera: 10, lingote_cobre: 4 } },
