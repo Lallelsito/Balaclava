@@ -1182,7 +1182,7 @@
     const canWalkPx = ctx.canWalkPx || null;
     const hazards = ctx.hazards || null;
     const enemies = ctx.enemies || [];
-    const aggroDist = ctx.isDungeon ? 9999 : 310;
+    const aggroDist = ctx.isDungeon ? 9999 : (e.earlyZoneMob ? 235 : 310);
 
     if (!e.state) e.state = 'chase';
     if (e.specialAtkCd === undefined) e.specialAtkCd = 1.4 + Math.random() * 1.8;
@@ -1522,7 +1522,7 @@
         }
 
         if (d < (e.isMiniBoss ? 40 : 29) && e.atkCd <= 0 && e.state === 'chase') {
-          e.atkCd = 0.98;
+          e.atkCd = e.earlyZoneMob ? 1.24 : 0.98;
           executeMeleeStrike(game, e, ang, e.isMiniBoss ? 1.12 : 1.0);
           if (prof.leavesPool && hazards && Math.random() < 0.4) {
             hazards.push({
@@ -1584,21 +1584,56 @@
       return ENEMY_DEFS[id] || ENEMY_DEFS.slime;
     }
 
+    getActivePlayerBiome(game) {
+      if (game && game.world && game.player && typeof game.world.getBiomeAtPixel === 'function') {
+        return game.world.getBiomeAtPixel(game.player.x, game.player.y) || 'pradera';
+      }
+      return 'pradera';
+    }
+
     getSpawnConfig(game) {
       const night = typeof game.isNightTime === 'function' ? game.isNightTime() : false;
       const plots = Math.max(1, game.unlockedPlots.length);
       const pLv = Math.max(1, (game.player && game.player.level) || 1);
+      const biome = this.getActivePlayerBiome(game);
       const lvBoost = Math.floor((pLv - 1) / 3);
       if (night) {
+        if (biome === 'pradera') {
+          // Early starter nights remain threatening but fair in spawn cadence and pack size
+          return {
+            isNight: true,
+            biome,
+            interval: Math.max(10.5, 14.5 - Math.min(2.8, plots * 0.25) - Math.min(0.8, (pLv - 1) * 0.05)),
+            maxMobs: Math.min(6, 2 + Math.floor(plots * 0.45) + Math.floor((pLv - 1) / 5))
+          };
+        }
+        if (biome === 'desierto') {
+          return {
+            isNight: true,
+            biome,
+            interval: Math.max(7.8, 11.2 - Math.min(2.2, plots * 0.18) - Math.min(0.8, (pLv - 1) * 0.06)),
+            maxMobs: Math.min(9, 3 + Math.floor(plots * 0.6) + Math.floor((pLv - 1) / 4))
+          };
+        }
         return {
           isNight: true,
+          biome,
           interval: Math.max(4.6, 8.2 - Math.min(2.2, plots * 0.14) - Math.min(1.0, (pLv - 1) * 0.08)),
           maxMobs: Math.min(16, 3 + Math.ceil(plots * 1.0) + lvBoost)
         };
       }
-      // Very calm daytime cadence so exploring & building feels relaxing (night is the real ambush).
+      // First-biome (Pradera) daytime is >=75% quieter so building and gathering feel peaceful.
+      if (biome === 'pradera') {
+        return {
+          isNight: false,
+          biome,
+          interval: Math.max(220.0, 296.0 - Math.min(40.0, (pLv - 1) * 1.0)),
+          maxMobs: 1
+        };
+      }
       return {
         isNight: false,
+        biome,
         interval: Math.max(54.0, 74.0 - Math.min(16.0, (pLv - 1) * 0.8)),
         maxMobs: Math.min(2, plots >= 10 ? 2 : 1)
       };
@@ -1612,16 +1647,22 @@
       const plot = pick(game.unlockedPlots);
       const biome = forceBiome || game.world.plotBiomes[plot[1]][plot[0]];
 
+      // Enforce at least 75% fewer daytime spawns on main starter islands (pradera)
+      if (!night && !forceType && biome === 'pradera') {
+        const activePradera = this.enemies.filter(e => e && e.biome === 'pradera' && e.type !== 'golden_slime').length;
+        if (activePradera >= 1 || Math.random() < 0.75) return null;
+      }
+
       const dayPools = {
-        pradera: ['slime', 'rat', 'rat_giant', 'orc', 'skeleton'],
+        pradera: ['slime', 'rat'],
         desierto: ['beetle', 'scorpion', 'sand_ghoul', 'cobra', 'rock_golem'],
         bosque_oscuro: ['mushroom_mob', 'mushroom_purple', 'slime_toxic', 'goblin', 'goblin_shaman', 'bat'],
         montanas_heladas: ['wolf', 'golem', 'cave_spider'],
         tierras_volcanicas: ['magma', 'fire_elem', 'beetle_fire', 'goblin_tnt']
       };
       const nightPools = {
-        pradera: ['zombie', 'spider', 'ghost', 'skeleton', 'orc', 'rat_giant'],
-        desierto: ['sand_ghoul', 'scorpion', 'skeleton_archer', 'ghost', 'beetle'],
+        pradera: ['slime', 'rat', 'spider', 'zombie', 'skeleton'],
+        desierto: ['beetle', 'sand_ghoul', 'cobra', 'spider', 'scorpion'],
         bosque_oscuro: ['ghost', 'vampire_bat', 'floating_eye', 'mimic', 'shadow_wolf', 'goblin_shaman'],
         montanas_heladas: ['shadow_wolf', 'skeleton_mage', 'cave_spider', 'ghost', 'golem'],
         tierras_volcanicas: ['cultist', 'imp', 'fire_elem', 'beetle_fire', 'magma']
@@ -1652,13 +1693,29 @@
       const lvExtra = pLv - 1;
       const biomeTierMap = { pradera: 0, desierto: 1, montanas_heladas: 2, bosque_oscuro: 3, tierras_volcanicas: 4 };
       const biomeTier = biomeTierMap[biome] || 0;
-      const biomeMinLv = 1 + biomeTier * 4;
-      const dangerLv = Math.max(biomeMinLv, Math.round(1 + plotDist * 2.0 + biomeTier * 1.6 + lvExtra * 0.85));
+      const biomeMinLv = biomeTier === 0 ? 1 : (biomeTier === 1 ? 3 : 1 + biomeTier * 4);
+      const distWeight = biomeTier === 0 ? 1.15 : (biomeTier === 1 ? 1.55 : 2.0);
+      const dangerLv = Math.max(biomeMinLv, Math.round(1 + plotDist * distWeight + biomeTier * 1.5 + lvExtra * 0.85));
       const effLv = Math.max(0, dangerLv - 1);
-      const hpScale = 1 + effLv * 0.36 + Math.pow(effLv, 1.32) * 0.06;
-      const dmgScale = 1 + effLv * 0.11 + Math.pow(effLv, 1.1) * 0.025;
-      const spdScale = 1 + Math.min(0.55, effLv * 0.018 + biomeTier * 0.04);
+      let hpScale = 1 + effLv * 0.36 + Math.pow(effLv, 1.32) * 0.06;
+      let dmgScale = 1 + effLv * 0.11 + Math.pow(effLv, 1.1) * 0.025;
+      let spdScale = 1 + Math.min(0.55, effLv * 0.018 + biomeTier * 0.04);
       const xpScale = 1 + effLv * 0.28 + Math.pow(effLv, 1.2) * 0.05;
+
+      // Keep early biomes (pradera / desierto) gentler at night and starter days approachable
+      const earlyZoneMob = biomeTier <= 1;
+      if (night && biomeTier === 0) {
+        hpScale *= 0.62;
+        dmgScale *= 0.62;
+        spdScale *= 0.84;
+      } else if (night && biomeTier === 1) {
+        hpScale *= 0.76;
+        dmgScale *= 0.75;
+        spdScale *= 0.90;
+      } else if (!night && biomeTier === 0) {
+        hpScale *= 0.85;
+        dmgScale *= 0.78;
+      }
 
       const mob = {
         id: this.nextId++,
@@ -1667,14 +1724,16 @@
         biome,
         level: dangerLv,
         xpMult: xpScale,
-        nocturnal: !!def.nocturnal || (night && Math.random() < 0.75),
+        earlyZoneMob,
+        // All enemies spawned during night burn away at sunrise so main islands stay calm by day
+        nocturnal: !!def.nocturnal || night,
         x, y,
         vx: 0, vy: 0,
         animVx: 0, animVy: 0,
-        hp: Math.round(def.hp * hpScale),
-        maxHp: Math.round(def.hp * hpScale),
-        dmg: Math.round(def.dmg * dmgScale),
-        speed: Math.round(def.speed * spdScale),
+        hp: Math.max(8, Math.round(def.hp * hpScale)),
+        maxHp: Math.max(8, Math.round(def.hp * hpScale)),
+        dmg: Math.max(3, Math.round(def.dmg * dmgScale)),
+        speed: Math.max(34, Math.round(def.speed * spdScale)),
         color: def.color || '#ef5350',
         sprite: def.sprite || null,
         ranged: !!def.ranged,
@@ -1683,7 +1742,7 @@
         hitH: def.hitH || 50,
         bodyOffY: def.bodyOffY !== undefined ? def.bodyOffY : 17,
         hitFlash: 0,
-        atkCd: 1.0,
+        atkCd: earlyZoneMob ? 1.35 : 1.0,
         patrolTimer: randInt(1, 3),
         facing: 1
       };
@@ -1698,11 +1757,11 @@
 
       const cfg = this.getSpawnConfig(game);
       if (!cfg.isNight) {
-        // Slowly banish nocturnal mobs when dawn arrives
+        // Banish nocturnal mobs quickly when dawn arrives so daytime starter islands stay serene
         for (let i = this.enemies.length - 1; i >= 0; i--) {
           if (this.enemies[i].nocturnal && this.enemies[i].type !== 'golden_slime') {
             this.enemies[i].sunBurn = (this.enemies[i].sunBurn || 0) + dt;
-            if (this.enemies[i].sunBurn > 4.0) {
+            if (this.enemies[i].sunBurn > 2.2) {
               game.spawnParticles(this.enemies[i].x, this.enemies[i].y, '#9575cd', 6);
               this.enemies.splice(i, 1);
             }

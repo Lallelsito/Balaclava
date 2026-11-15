@@ -69,11 +69,11 @@ name = "app"
 version = "0.1.0"
 dependencies = [
  "log",
+ "rpcdiscord",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
- "tauri-plugin-drpc",
  "tauri-plugin-log",
 ]
 
@@ -3360,22 +3360,6 @@ dependencies = [
  "serde_json",
  "tauri-utils",
  "walkdir",
-]
-
-[[package]]
-name = "tauri-plugin-drpc"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b291669b7dbc05471fba380eeecf31e3f733ae6013aaa5216a43ca376027e5a"
-dependencies = [
- "log",
- "rpcdiscord",
- "serde",
- "serde_json",
- "tauri",
- "tauri-plugin",
- "thiserror 2.0.21",
- "tokio",
 ]
 
 [[package]]

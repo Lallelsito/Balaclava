@@ -4,10 +4,10 @@
 
   const Balaclava = (window.Balaclava = window.Balaclava || {});
 
-  // Discord RPC - Desactivado para evitar interferencias
-  Balaclava.actualizarDiscord = () => {};
-  Balaclava.initDiscord = () => {};
-  window.actualizarDiscord = () => {};
+  // Fallback seguro si no cargara discord_rpc.js
+  if (!Balaclava.actualizarDiscord) Balaclava.actualizarDiscord = () => {};
+  if (!Balaclava.initDiscord) Balaclava.initDiscord = () => {};
+  if (!window.actualizarDiscord) window.actualizarDiscord = () => {};
 
   // Bloquear menú contextual (clic derecho) para experiencia inmersiva
   document.addEventListener('contextmenu', e => e.preventDefault());
@@ -60,8 +60,9 @@
     }
     resize();
 
-    // 3. Inicializar Interfaz
+    // 3. Inicializar Interfaz y Discord Rich Presence
     Balaclava.UI.init(game);
+    if (typeof Balaclava.initDiscord === 'function') Balaclava.initDiscord();
 
     const onFullscreenChange = () => {
       scheduleResizeSync();

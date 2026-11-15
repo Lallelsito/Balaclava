@@ -10,6 +10,7 @@
     "frontendDist": "../www"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Balaclava Beta 1.0.0",

@@ -191,6 +191,7 @@
         localStorage.setItem('balaclava_last_slot', String(slot));
         const tr = (Balaclava.I18n && Balaclava.I18n.t) ? Balaclava.I18n.t : null;
         game.toast(tr ? tr('toast.saveLoaded', { slot }) : `Game loaded (Slot ${slot}).`, 'success');
+        if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
         return true;
       } catch {
         return false;

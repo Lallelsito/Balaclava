@@ -311,6 +311,7 @@
 
       this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.starterTip') : '¡Comienzas con tu Pico y Hacha listos para explorar!', 'info');
       this.saveSys.save(this, this.currentSlot, true);
+      if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
     }
 
     recomputeModifiers() {
@@ -4231,6 +4232,7 @@
           this.toast('Primera Mazmorra: Pisa las runas ALFA/BETA, lee la Estela Runica [E] y abre cofres con [E].', 'info');
         }
         this.uiDirty = true;
+        if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
       };
 
       if (Balaclava.Audio && typeof Balaclava.Audio.fadeOutMusic === 'function') {
@@ -4311,6 +4313,7 @@
         Balaclava.Audio.play('portal');
         if (Balaclava.Audio.setMood) Balaclava.Audio.setMood('meadow', { delayMs: 800, fadeOutMs: 320, fadeInMs: 4800 });
         this.uiDirty = true;
+        if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
       };
 
       if (!force && Balaclava.Audio && typeof Balaclava.Audio.fadeOutMusic === 'function') {
@@ -4523,6 +4526,7 @@
       this.started = false;
       this.activeDungeon = null;
       if (Balaclava.Audio && Balaclava.Audio.fadeOutMusic) Balaclava.Audio.fadeOutMusic(620);
+      if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
     }
 
     // === PROJECTILES, DROPS, FX ===
