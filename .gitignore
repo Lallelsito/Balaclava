@@ -1,0 +1,31 @@
+# Dependencias de Node.js
+node_modules/
+
+# Artefactos de compilación de Tauri / Rust
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Archivo comprimido de respaldo local (excede límite de tamaño de GitHub)
+/www.zip
+
+# Archivos temporales, cachés, logs y respaldos
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+*.orig
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Archivos de sistema operativo
+.DS_Store
+__MACOSX/
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini

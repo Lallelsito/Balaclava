@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BALACLAVA — Pixel Survival & Fantasy RPG</title>
+  <link rel="preload" as="font" type="font/woff2" href="assets/fonts/boldpixels_web/boldpixels.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/ttf" href="assets/fonts/monogram/monogram/ttf/monogram-extended-italic.ttf" crossorigin />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Boot Loading Screen (5-7s Minimalist Ocean Preload Showcase) -->
+  <div id="boot-loader" class="boot-loader" aria-live="polite">
+    <div class="boot-ocean-glow" aria-hidden="true"></div>
+    <div class="boot-light-rays" aria-hidden="true"></div>
+    <div class="boot-sea-ripples" aria-hidden="true">
+      <span class="boot-ripple r1"></span>
+      <span class="boot-ripple r2"></span>
+      <span class="boot-ripple r3"></span>
+      <span class="boot-ripple r4"></span>
+      <span class="boot-ripple r5"></span>
+      <span class="boot-ripple r6"></span>
+      <span class="boot-ripple r7"></span>
+      <span class="boot-ripple r8"></span>
+      <span class="boot-ripple r9"></span>
+      <span class="boot-ripple r10"></span>
+    </div>
+    <div class="boot-motes" aria-hidden="true">
+      <span class="boot-mote"></span><span class="boot-mote"></span><span class="boot-mote"></span>
+      <span class="boot-mote"></span><span class="boot-mote"></span><span class="boot-mote"></span>
+      <span class="boot-mote"></span><span class="boot-mote"></span><span class="boot-mote"></span>
+      <span class="boot-mote"></span>
+    </div>
+    <div class="boot-stage">
+      <div class="boot-title-wrap">
+        <div class="boot-title-wordmark">BALACLAVA</div>
+      </div>
+
+      <div class="boot-progress-block">
+        <div class="boot-bar-frame">
+          <div class="boot-bar-track">
+            <div id="boot-bar-fill" class="boot-bar-fill">
+              <span class="boot-bar-shimmer" aria-hidden="true"></span>
+              <span class="boot-bar-head" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+        <div class="boot-meta-row">
+          <span id="boot-status-text" class="boot-status-text" data-i18n="boot.phase1">Loading world and pixel art textures...</span>
+          <span id="boot-percent-text" class="boot-percent-text">0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Title Screen (Minimalist Left-Aligned + Duelyst-Inspired Menu) -->
+  <div id="title-screen" class="title-booting">
+    <div class="title-left-column">
+      <div class="title-logo-wrap">
+        <div class="title-brand-row">
+          <div class="title-brand-text">
+            <h1 class="title-main-heading">BALACLAVA</h1>
+            <div class="title-logo-rule" aria-hidden="true">
+              <span class="logo-diamond"></span>
+              <span class="logo-line"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="title-slots" class="title-left-actions"></div>
+      <div id="assets-status" class="assets-status hidden" data-i18n="title.loading">Loading world and pixel art textures...</div>
+    </div>
+    <div class="title-signature" aria-hidden="true">love you saraí &lt;3</div>
+    <div class="title-version" aria-hidden="true">Balaclava beta v1.0.0</div>
+  </div>
+
+  <!-- In-Game HUD -->
+  <div id="hud-root" class="hidden">
+    <div id="top-hud">
+      <div id="hud-top-left" class="hud-top-left">
+        <div id="hero-panel" class="hud-panel hud-slate-card">
+          <div class="hero-crest">
+            <img id="hero-avatar" class="pixel-img" src="assets/packs/Tiny%20Swords%20(Free%20Pack)/Tiny%20Swords%20(Free%20Pack)/UI%20Elements/UI%20Elements/Human%20Avatars/Avatars_01.png" alt="Avatar" />
+            <span id="lvl-text" class="lvl-crest">Lv.1</span>
+          </div>
+
+          <div class="hud-bars-col">
+            <div class="hud-bar-row" data-i18n-title="hud.hpTitle" title="Health (HP): restore by eating food, potions, or near campfires/fountains.">
+              <img class="bar-icon pixel-img" width="24" height="24" src="assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/08_UI/Hearts_Icons/heart_full.png" alt="HP" />
+              <div class="pixel-bar-frame">
+                <div id="hp-fill" class="pixel-bar-fill fill-hp" style="width:100%"></div>
+              </div>
+              <span id="hp-text" class="bar-num">100/100</span>
+            </div>
+            <div class="hud-bar-row" data-i18n-title="hud.enTitle" title="Energy: consumed when mining, chopping, tilling, and fighting; regenerates over time or eating.">
+              <img class="bar-icon pixel-img" width="24" height="24" src="assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/08_UI/Hearts_Icons/mana_orb_full.png" alt="Energy" />
+              <div class="pixel-bar-frame">
+                <div id="en-fill" class="pixel-bar-fill fill-en" style="width:100%"></div>
+              </div>
+              <span id="en-text" class="bar-num">100/100</span>
+            </div>
+            <div id="hud-xp-row" class="hud-bar-row hud-bar-row-xp" data-i18n-title="hud.xpTitle" title="Experience & Level: each level grants +1 Skill Point for the Astral Tree.">
+              <img id="xp-orb-icon" class="bar-icon bar-icon-xp pixel-img" width="24" height="24" src="assets/icons/xp_orb.png" alt="XP" />
+              <div id="xp-bar-frame" class="pixel-bar-frame xp-bar-frame">
+                <div id="xp-fill" class="pixel-bar-fill fill-xp" style="width:0%"></div>
+              </div>
+              <span id="xp-text" class="bar-num bar-xp-num">0/60</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Guided Tutorial Widget -->
+        <div id="tutorial-hud" class="hud-slate-card tutorial-hud-card hidden">
+          <div class="tut-head">
+            <div class="tut-title-wrap">
+              <span class="tut-badge">TUTORIAL</span>
+              <strong id="tut-title" class="tut-title">Bienvenida</strong>
+            </div>
+            <div class="tut-actions">
+              <span id="tut-step-counter" class="tut-counter">1/6</span>
+              <button id="btn-tut-minimize" class="btn-tut-icon" title="Minimizar">_</button>
+              <button id="btn-tut-skip" class="btn-tut-icon" title="Omitir tutorial">✕</button>
+            </div>
+          </div>
+          <div id="tut-body" class="tut-body">
+            <div id="tut-desc" class="tut-desc"></div>
+            <div class="tut-progress-bar-wrap">
+              <div id="tut-progress-bar" class="tut-progress-fill" style="width: 0%"></div>
+            </div>
+            <div id="tut-progress-text" class="tut-progress-text"></div>
+          </div>
+        </div>
+
+        <div id="objective-banner" class="hud-slate-card">
+          <strong data-i18n="hud.currentObjective">Current Objective</strong>
+          <div id="objective-text">Gather stone, wood, and build your Crafting Table.</div>
+          <div id="objective-progress" class="objective-progress"></div>
+          <div id="objective-reward" class="objective-reward"></div>
+        </div>
+        <div id="dungeon-hud" class="hud-slate-card dungeon-hud-card hidden">
+          <strong data-i18n="hud.dungeonObjective">Dungeon Objective</strong>
+          <div id="dungeon-hud-name" class="dungeon-hud-name"></div>
+          <div id="dungeon-hud-obj" class="dungeon-hud-obj"></div>
+        </div>
+      </div>
+
+      <div id="top-center-hud" class="top-center-hud">
+        <div id="world-clock-panel" class="hud-panel hud-slate-subtle">
+          <div id="day-pill" class="day-pill">
+            <img id="day-icon" class="pixel-img" src="assets/icons/sun.png" alt="Day phase" width="28" height="28" />
+            <div class="day-info">
+              <div id="day-label">Day 1 · Day · 05:00</div>
+              <div class="day-track"><div id="day-progress-fill" class="day-progress-fill" style="width:6%"></div></div>
+            </div>
+          </div>
+          <div id="coin-pill" class="coin-pill coin-pill-prominent" data-i18n-title="hud.coinsTitle" title="Monedas de Oro">
+            <img class="pixel-img" src="assets/ui/coin_gold.png" alt="Gold" width="28" height="28" />
+            <strong id="coin-text">15</strong>
+          </div>
+        </div>
+        <div id="hud-target" class="hud-target-subcard hidden"></div>
+      </div>
+
+      <div id="hud-menu-wrap" class="hud-menu-wrap">
+        <button id="btn-menu-toggle" class="hud-menu-toggle hud-slate-card" type="button" data-i18n-title="hud.menuToggleTip" title="Open or close Menu">
+          <img class="pixel-img menu-toggle-icon" src="assets/ui/ts_icon_10.png" width="24" height="24" alt="" />
+          <span data-i18n="hud.menu">Menu</span>
+          <span id="skill-badge-top" class="badge-dot hidden">2</span>
+          <span class="menu-chevron"></span>
+        </button>
+
+        <div id="menu-dropdown" class="hud-menu-dropdown hud-slate-card hidden">
+          <button class="menu-dd-btn" data-modal="inventory" data-i18n-title="key.inventory" title="Inventory & Gear">
+            <img class="pixel-img" src="assets/icons/backpack.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuInventory">Inventory</span>
+          </button>
+          <button class="menu-dd-btn" data-modal="stats" data-i18n-title="modal.titleStats" title="Adventurer Stats">
+            <img class="pixel-img" src="assets/icons/sword.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuStats">Stats</span>
+          </button>
+          <button class="menu-dd-btn" data-modal="build" data-i18n-title="build.title" title="Build & Village">
+            <img class="pixel-img" src="assets/packs/Tiny%20Swords%20(Free%20Pack)/Tiny%20Swords%20(Free%20Pack)/UI%20Elements/UI%20Elements/Icons/Icon_01.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuBuild">Build</span>
+          </button>
+          <button class="menu-dd-btn" data-modal="skills" data-i18n-title="skills.title" title="Astral Constellation Tree">
+            <img class="pixel-img" src="assets/icons/spellbook.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuSkills">Skills</span>
+            <span id="skill-badge" class="badge-dot badge-inline hidden">2</span>
+          </button>
+          <button class="menu-dd-btn" data-modal="quests" data-i18n-title="quests.title" title="Quests & Story">
+            <img class="pixel-img" src="assets/icons/trophy.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuQuests">Quests</span>
+          </button>
+          <button class="menu-dd-btn" data-modal="encyclopedia" data-i18n-title="enc.title" title="Encyclopedia & Lore">
+            <img class="pixel-img" src="assets/ui/ts_icon_05.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuEncyclopedia">Encyclopedia</span>
+          </button>
+          <button class="menu-dd-btn" data-modal="map" data-i18n-title="map.title" title="Archipelago Atlas">
+            <img class="pixel-img" src="assets/icons/scroll_map.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuMap">Map</span>
+          </button>
+          <div class="menu-dd-sep"></div>
+          <button class="menu-dd-btn menu-dd-pause" data-modal="pause" data-i18n-title="hud.menuConfigPause" title="Settings / Pause">
+            <img class="pixel-img" src="assets/ui/ts_icon_10.png" width="24" height="24" alt="" />
+            <span class="menu-dd-label" data-i18n="hud.menuConfigPause">Settings / Pause</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="boss-bar" class="hud-slate-card hidden">
+      <div id="boss-name" class="boss-title" data-i18n="hud.bossDefault">Boss</div>
+      <div class="boss-dragon-shell">
+        <div class="boss-track">
+          <div id="boss-hp-fill" class="boss-hp-fill" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-container"></div>
+    <div id="levelup-banner" class="levelup-banner hidden" aria-live="polite"></div>
+    <div id="altar-blessing-stack" class="altar-blessing-stack hidden" aria-live="polite"></div>
+    <div id="pickup-feed" aria-live="polite"></div>
+
+    <!-- Controls Quick Helper (Bottom Left corner on match entry & AFK idle) -->
+    <div id="hud-controls-helper" class="hud-controls-helper hud-controls-hidden" aria-live="polite">
+      <div class="controls-helper-grid">
+        <div class="controls-helper-item">
+          <span class="ctrl-key-badge">WASD</span>
+          <span class="ctrl-label" data-i18n="controls.move">Move</span>
+        </div>
+        <div class="controls-helper-item">
+          <span id="ctrl-dash-key" class="ctrl-key-badge">Space</span>
+          <span class="ctrl-label" data-i18n="controls.dash">Dash</span>
+        </div>
+        <div class="controls-helper-item">
+          <span id="ctrl-interact-key" class="ctrl-key-badge">E</span>
+          <span class="ctrl-label" data-i18n="controls.interact">Interact</span>
+        </div>
+        <div class="controls-helper-item">
+          <span id="ctrl-zoom-key" class="ctrl-key-badge" data-i18n="controls.keyWheel">Ctrl + Wheel</span>
+          <span class="ctrl-label" data-i18n="controls.zoom">Zoom</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="bottom-hud">
+      <div id="warning-banner" class="warning-banner hidden" role="status"></div>
+      <div id="build-banner" class="hud-slate-card hidden">
+        <span>Placing: <strong id="build-banner-name"></strong></span>
+        <button id="btn-cancel-build" class="btn btn-danger btn-sm" data-i18n="hud.cancelBuild">Cancel</button>
+      </div>
+      <button id="btn-exit-dungeon" class="btn btn-danger btn-sm hidden" data-i18n="hud.exitDungeon">Exit Dungeon</button>
+      <div class="bottom-bars-row">
+        <div id="hotbar" class="hotbar"></div>
+        <div id="spell-bar" class="spell-bar" aria-label="Spell Bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Death Overlay (Blocks gameplay & HUD clicks cleanly until respawn or menu exit) -->
+  <div id="death-overlay" class="death-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="death-title">
+    <div class="death-card">
+      <div class="death-crest">
+        <img class="pixel-img" src="assets/packs/FantasyDungeonAdventure_v1.0/FantasyDungeonAdventure/07_Items/Monster_Drops/skull.png" width="44" height="44" alt="" />
+      </div>
+      <h2 id="death-title" class="death-title" data-i18n="death.bannerTitle">YOU FELL IN BATTLE</h2>
+      <p class="death-sub" data-i18n="death.keepSub">You keep your gear, relics, minerals, and unlocked islands</p>
+      <div id="death-stats-pill" class="death-stats-pill">Level 1 · Day 1 · Kills: 0 · Islands: 1</div>
+      <div class="death-bar-track">
+        <div id="death-bar-fill" class="death-bar-fill" style="width:100%"></div>
+      </div>
+      <div id="death-countdown" class="death-countdown">Respawning at camp in 10.0s...</div>
+      <div class="death-actions">
+        <button id="btn-death-main-menu" type="button" class="btn btn-danger death-menu-btn" data-i18n="death.mainMenu">Main Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Layer -->
+  <div id="modal-backdrop" class="hidden">
+    <div id="modal-box" class="modal-box rpg-panel-slate">
+      <div class="modal-header">
+        <div class="modal-title-carved">
+          <img class="pixel-img modal-gem" src="assets/ui/ff_gem_orange.png" alt="" />
+          <h2 id="modal-title" class="modal-title" data-i18n="modal.titleDefault">Window</h2>
+          <img class="pixel-img modal-gem" src="assets/ui/coin_gold.png" alt="" />
+        </div>
+        <div id="modal-header-tools" class="modal-header-tools hidden"></div>
+        <button id="btn-close-modal" class="btn-close-sq" data-i18n-title="common.close" title="Close">X</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Scene Transition Overlay (Retro Pixel Art Cinematic) -->
+  <div id="balaclava-tooltip" class="balaclava-tooltip hidden" role="tooltip" aria-hidden="true"></div>
+  <div id="scene-transition" class="scene-transition hidden" aria-hidden="true">
+    <div class="st-curtain st-top"></div>
+    <div class="st-curtain st-bottom"></div>
+    <div class="st-stage">
+      <div class="st-header">
+        <div class="st-badge">
+          <img id="scene-transition-icon" class="pixel-img st-icon" src="assets/icons/balaclava_core.png" width="44" height="44" alt="" />
+        </div>
+        <div class="st-titles">
+          <div id="scene-transition-label" class="st-label">BALACLAVA</div>
+          <div id="scene-transition-sub" class="st-sub hidden"></div>
+        </div>
+      </div>
+
+      <!-- Animated pixel sprites: Hero running with pickaxe and happy bouncing sheep -->
+      <div class="st-parade-track">
+        <div class="st-runner-wrap">
+          <div class="st-sprite-sheep"></div>
+          <div class="st-sprite-pawn"></div>
+        </div>
+        <div class="st-parade-ground"></div>
+      </div>
+
+      <!-- Pixel Art Loading Bar -->
+      <div class="st-loading-bar-wrap">
+        <div class="st-loading-bar-frame">
+          <div class="st-loading-bar-fill"></div>
+        </div>
+        <div class="st-loading-status">
+          <span class="st-loading-text">Cargando archipiélago</span>
+          <span class="st-loading-dots">...</span>
+        </div>
+      </div>
+
+      <!-- Charming Rotating Pixel Tip -->
+      <div id="scene-transition-tip" class="st-tip-box">
+        <span class="st-tip-icon">💡</span>
+        <span id="scene-transition-tip-text" class="st-tip-text">Construye una Mesa de Artesanía para forjar herramientas de mayor rango.</span>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="src/core/utils.js"></script>
+  <script defer src="src/core/i18n_data_en.js"></script>
+  <script defer src="src/core/i18n.js"></script>
+  <script defer src="src/core/audio.js"></script>
+  <script defer src="src/data/items.js"></script>
+  <script defer src="src/data/tools.js"></script>
+  <script defer src="src/data/buildings.js"></script>
+  <script defer src="src/data/recipes.js"></script>
+  <script defer src="src/data/enchants.js"></script>
+  <script defer src="src/data/skills.js"></script>
+  <script defer src="src/data/quests.js"></script>
+  <script defer src="src/core/assets.js"></script>
+  <script defer src="src/core/sprites_atlas.js"></script>
+  <script defer src="src/world/hex_grid.js"></script>
+  <script defer src="src/world/world.js"></script>
+  <script defer src="src/world/dungeons.js"></script>
+  <script defer src="src/systems/farming.js"></script>
+  <script defer src="src/systems/automation.js"></script>
+  <script defer src="src/systems/combat.js"></script>
+  <script defer src="src/systems/economy.js"></script>
+  <script defer src="src/systems/events.js"></script>
+  <script defer src="src/systems/tutorial.js"></script>
+  <script defer src="src/systems/save.js"></script>
+  <script defer src="src/engine/game.js"></script>
+  <script defer src="src/ui/ui.js"></script>
+  <script defer src="src/main.js"></script>
+</body>
+</html>
