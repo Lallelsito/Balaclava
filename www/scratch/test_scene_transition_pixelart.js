@@ -13,8 +13,8 @@ const i18nCode = fs.readFileSync(path.join(ROOT, 'src/core/i18n.js'), 'utf8');
 const requiredHtml = [
   'id="scene-transition"',
   'id="st-pixel-canvas"',
-  'width="320"',
-  'height="180"',
+  'width="640"',
+  'height="360"',
   'class="st-stage"',
   'id="scene-transition-icon"',
   'id="scene-transition-label"',
@@ -63,6 +63,9 @@ const spritePaths = [
   'assets/icons/skull_death.png',
   'assets/icons/campfire.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Resources/Wood/Trees/Tree1.png',
+  'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Resources/Wood/Trees/Tree4.png',
+  'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Tilemap_color1.png',
+  'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Water Foam.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Buildings/Blue Buildings/House1.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Decorations/Bushes/Bushe1.png',
   'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Decorations/Rocks/Rock1.png',
@@ -131,7 +134,7 @@ const mockCtx = {
 
 const els = {
   'scene-transition': makeEl('scene-transition'),
-  'st-pixel-canvas': { ...makeEl('st-pixel-canvas'), width: 320, height: 180, getContext: () => mockCtx },
+  'st-pixel-canvas': { ...makeEl('st-pixel-canvas'), width: 640, height: 360, getContext: () => mockCtx },
   'scene-transition-label': makeEl('scene-transition-label'),
   'scene-transition-sub': makeEl('scene-transition-sub'),
   'scene-transition-icon': makeEl('scene-transition-icon'),
@@ -156,7 +159,7 @@ function MockImage() {
 
 const loadedSprites = {};
 const regMockImg = (key, w, h) => { loadedSprites[key] = { _key: key, complete: true, naturalWidth: w, width: w, height: h }; };
-['tree1', 'bush1', 'rock1', 'b_house1_blue', 'monk_yellow_idle', 'monk_yellow_run', 'pawn_idle', 'pawn_run'].forEach(k => regMockImg(k, 192, 192));
+['tree1', 'tree4', 'tile_1', 'water_foam', 'bush1', 'rock1', 'b_house1_blue', 'monk_yellow_idle', 'monk_yellow_run', 'pawn_idle', 'pawn_run'].forEach(k => regMockImg(k, 192, 192));
 regMockImg('sheep_idle', 768, 128);
 regMockImg('sheep_move', 512, 128);
 regMockImg('campfireAnim', 96, 16);
@@ -246,21 +249,26 @@ assert.strictEqual(els['st-loading-text'].textContent, 'Navegando el archipiéla
 assert(canvasOps.length > 50, 'Overworld diorama must draw full pixel scene on initial frame');
 assert(activeRafs.size === 1, 'One rAF ticker must be active during transition');
 
-// Advance animation frame to midpoint
-simNow += 1200;
+// Advance animation frame toward midpoint of 5.6s showcase
+simNow += 3800;
 for (const [id, cb] of Array.from(activeRafs.entries())) {
   activeRafs.delete(id);
   cb(simNow);
 }
-assert(parseFloat(els['st-loading-bar-fill'].style.width) > 70, 'Progress bar should advance across hold');
+assert(parseFloat(els['st-loading-bar-fill'].style.width) > 70, 'Progress bar should advance across 5.6s showcase');
+const hasTree1 = canvasOps.some(op => op[0] === 'drawImage' && op[1] === 'tree1' && op[4] >= 96 && op[5] >= 128);
+const hasTile1 = canvasOps.some(op => op[0] === 'drawImage' && op[1] === 'tile_1');
+assert(hasTree1 && hasTile1, 'Overworld diorama must draw high-resolution tree1 and real tile_1 island');
 
-// Complete midpoint & exit timers
-const midTimeout1 = scheduledTimeouts.find(t => !t.cleared && t.ms >= 1500);
-assert(midTimeout1, 'Midpoint timeout missing');
+// Complete midpoint & exit timers (~5.6s hold + 0.65s reveal = 6.25s, within 5-7s range)
+const midTimeout1 = scheduledTimeouts.find(t => !t.cleared && t.ms >= 5000 && t.ms <= 6500);
+assert(midTimeout1, 'Midpoint timeout missing or outside 5-7s duration target');
 midTimeout1.fn();
 assert.strictEqual(midCalled, 1);
 assert(els['scene-transition'].classList.contains('is-opening'));
 const endTimeout1 = scheduledTimeouts[scheduledTimeouts.length - 1];
+assert(midTimeout1.ms + endTimeout1.ms >= 5000 && midTimeout1.ms + endTimeout1.ms <= 7000,
+  'Total transition duration must be 5-7 seconds');
 endTimeout1.fn();
 assert.strictEqual(doneCalled, 1);
 assert(els['scene-transition'].classList.contains('hidden'));
@@ -271,7 +279,7 @@ canvasOps.length = 0;
 UI.playSceneTransition('CRIPTA ANCESTRAL', null, { kind: 'dungeon', icon: 'assets/icons/skull_death.png', sub: 'Descendiendo...' });
 assert(els['scene-transition'].classList.contains('is-dungeon'), 'Dungeon must toggle is-dungeon class');
 assert.strictEqual(els['st-loading-text'].textContent, 'Descendiendo a las catacumbas...');
-simNow += 1100; // past normP >= 0.56
+simNow += 3600; // past normP >= 0.56 on 5.6s hold
 canvasOps.length = 0;
 for (const [id, cb] of Array.from(activeRafs.entries())) {
   activeRafs.delete(id);
