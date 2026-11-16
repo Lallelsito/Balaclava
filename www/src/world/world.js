@@ -1601,43 +1601,46 @@
       return node;
     }
 
-    trySpawnInPlot(gx, gy, occupiedBuildingTiles = null) {
+    _pickFreePlotTile(gx, gy, occupiedBuildingTiles = null) {
       const biome = this.plotBiomes[gy][gx];
       const ox = gx * PLOT_TILES;
       const oy = gy * PLOT_TILES;
       const isFree = (tx, ty) => {
-        if (this.tiles[ty][tx] !== 1) return false;
+        if (!this.tiles[ty] || this.tiles[ty][tx] !== 1) return false;
         if (this.getNodeAtTile(tx, ty)) return false;
         if (occupiedBuildingTiles && occupiedBuildingTiles.has(tx + ',' + ty)) return false;
         if (this.crops.some(c => c.tx === tx && c.ty === ty)) return false;
         return true;
       };
 
-      let tx = -1;
-      let ty = -1;
       for (let attempt = 0; attempt < 8; attempt++) {
         const cx = ox + randInt(1, PLOT_TILES - 2);
         const cy = oy + randInt(1, PLOT_TILES - 2);
         if (!isFree(cx, cy)) continue;
         if (attempt < 6 && this.getVisualBiomeAtTile(cx, cy) !== biome) continue;
-        tx = cx; ty = cy; break;
+        return [cx, cy];
       }
-      if (tx < 0) {
-        const matchedTiles = [];
-        const freeTiles = [];
-        for (let ly = 1; ly <= PLOT_TILES - 2; ly++) {
-          for (let lx = 1; lx <= PLOT_TILES - 2; lx++) {
-            const fx = ox + lx, fy = oy + ly;
-            if (isFree(fx, fy)) {
-              freeTiles.push([fx, fy]);
-              if (this.getVisualBiomeAtTile(fx, fy) === biome) matchedTiles.push([fx, fy]);
-            }
+
+      const matchedTiles = [];
+      const freeTiles = [];
+      for (let ly = 1; ly <= PLOT_TILES - 2; ly++) {
+        for (let lx = 1; lx <= PLOT_TILES - 2; lx++) {
+          const fx = ox + lx, fy = oy + ly;
+          if (isFree(fx, fy)) {
+            freeTiles.push([fx, fy]);
+            if (this.getVisualBiomeAtTile(fx, fy) === biome) matchedTiles.push([fx, fy]);
           }
         }
-        const pickPool = matchedTiles.length > 0 ? matchedTiles : freeTiles;
-        if (pickPool.length === 0) return false;
-        [tx, ty] = pick(pickPool);
       }
+      const pickPool = matchedTiles.length > 0 ? matchedTiles : freeTiles;
+      return pickPool.length > 0 ? pick(pickPool) : null;
+    }
+
+    trySpawnInPlot(gx, gy, occupiedBuildingTiles = null) {
+      const biome = this.plotBiomes[gy][gx];
+      const spot = this._pickFreePlotTile(gx, gy, occupiedBuildingTiles);
+      if (!spot) return false;
+      const [tx, ty] = spot;
 
       // Distance-scaled rarity pools: common trees/rocks near starter plot (4,4), rare gems far away
       const C = Balaclava.CONST.CENTER_PLOT || 4;
@@ -1659,7 +1662,8 @@
       } else if (biome === 'desierto') {
         pool.push('cactus', 'cactus', 'cactus', 'rock', 'rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'star_sand_vein');
         if (plotDist >= 1.4) pool.push('silver_vein', 'gold_vein', 'sulfur_vein', 'amber_vein');
-        if (plotDist >= 2.3) pool.push('gold_vein', 'platinum_vein', 'crystal_node', 'amber_vein', 'titanium_vein');
+        if (Math.random() < 0.55) pool.push('platinum_vein'); // Low-density platinum veins in desert biome
+        if (plotDist >= 2.3) pool.push('gold_vein', 'crystal_node', 'amber_vein', 'titanium_vein');
       } else if (biome === 'bosque_oscuro') {
         pool.push('giant_tree', 'giant_tree', 'giant_tree', 'giant_tree', 'mushroom_node', 'mushroom_node', 'herb_patch', 'wild_crop_patch', 'iron_vein');
         if (plotDist >= 1.4) pool.push('silver_vein', 'jade_vein', 'abyssal_crystal_vein');
@@ -1676,6 +1680,41 @@
       }
       const kind = pick(pool);
       return !!this.spawnNodeAtTile(tx, ty, kind, biome);
+    }
+
+    trySpawnMineralInPlot(gx, gy, occupiedBuildingTiles = null) {
+      const biome = this.plotBiomes[gy][gx];
+      const spot = this._pickFreePlotTile(gx, gy, occupiedBuildingTiles);
+      if (!spot) return null;
+      const [tx, ty] = spot;
+      const C = Balaclava.CONST.CENTER_PLOT || 4;
+      const plotDist = Math.hypot(gx - C, gy - C);
+
+      const pool = [];
+      if (biome === 'pradera') {
+        pool.push('rock', 'coal_vein', 'copper_vein', 'tin_vein', 'iron_vein');
+        if (plotDist >= 1.1) pool.push('malachite_vein', 'iron_vein');
+        if (plotDist >= 1.5) pool.push('silver_vein', 'gold_vein');
+        if (plotDist >= 2.2) pool.push('jade_vein', 'gold_vein');
+      } else if (biome === 'desierto') {
+        pool.push('rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'sulfur_vein', 'gold_vein');
+        if (plotDist >= 1.4) pool.push('silver_vein', 'amber_vein', 'platinum_vein');
+        else if (Math.random() < 0.25) pool.push('platinum_vein');
+        if (plotDist >= 2.3) pool.push('crystal_node', 'titanium_vein');
+      } else if (biome === 'bosque_oscuro') {
+        pool.push('iron_vein', 'silver_vein', 'jade_vein');
+        if (plotDist >= 1.4) pool.push('abyssal_crystal_vein', 'amethyst_vein');
+        if (plotDist >= 2.3) pool.push('crystal_node', 'bloodstone_vein', 'orichalcum_vein');
+      } else if (biome === 'montanas_heladas') {
+        pool.push('rock', 'iron_vein', 'silver_vein', 'ice_crystal');
+        if (plotDist >= 1.8) pool.push('gold_vein', 'platinum_vein', 'azurite_vein');
+        if (plotDist >= 2.8) pool.push('sapphire_node', 'mithril_vein', 'titanium_vein', 'emerald_vein');
+      } else {
+        pool.push('volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein');
+        if (plotDist >= 2.5) pool.push('ruby_node', 'bloodstone_vein', 'magma_core_vein', 'mithril_vein', 'adamantite_vein');
+        if (plotDist >= 3.2) pool.push('orichalcum_vein', 'diamond_vein');
+      }
+      return this.spawnNodeAtTile(tx, ty, pick(pool), biome);
     }
 
     countNaturalNodesInPlot(gx, gy) {
@@ -1695,9 +1734,9 @@
         }
       }
 
-      // Gentle empty-tile resource generation (~9.5s, 1 spawn/tick max so islands don't overcrowd)
+      // Gentle empty-tile resource generation (~7.3s => 1.3x faster mineral/tree regen)
       this.spawnTimer += dt;
-      if (this.spawnTimer >= 9.5) {
+      if (this.spawnTimer >= 7.3) {
         this.spawnTimer = 0;
         const unlocked = gameState.unlockedPlots;
         if (unlocked.length > 0) {

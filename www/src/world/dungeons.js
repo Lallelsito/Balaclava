@@ -654,6 +654,7 @@
       this.miniBossDefeated = false;
       this.seqProgress = 0; // 0 -> 1 -> 2 -> 3
       this.gateOpen = false;
+      this.bossLocked = false;
       this.wingDoorTiles = [];
       this.vaultDoorTiles = [];
       this.bossGateTiles = [];
@@ -1866,7 +1867,7 @@
     }
 
     checkBossGateUnlock(game) {
-      if (this.gateOpen) return;
+      if (this.gateOpen || this.bossLocked || this.completed) return;
       if (this.vaultOpen && this.miniBossDefeated) {
         this.gateOpen = true;
         const gates = (this.bossGateTiles && this.bossGateTiles.length > 0)
@@ -1880,6 +1881,34 @@
       }
     }
 
+    lockBossGateForFight(game) {
+      if (this.bossLocked || this.completed) return;
+      this.bossLocked = true;
+      const gates = (this.bossGateTiles && this.bossGateTiles.length > 0)
+        ? this.bossGateTiles
+        : [[34, 14], [34, 15], [34, 16]];
+      for (const [gx, gy] of gates) {
+        if (this.grid[gy]) this.grid[gy][gx] = 3;
+      }
+      if (Balaclava.Audio) Balaclava.Audio.play('bomb');
+      if (game && typeof game.shake === 'function') game.shake(0.24, 5);
+      if (game && typeof game.toast === 'function') {
+        const msg = Balaclava.I18n ? Balaclava.I18n.t('dungeon.bossGateLocked') : '¡La Puerta del Jefe se ha sellado! Derrota al guardián para salir.';
+        game.toast(msg, 'warn');
+      }
+    }
+
+    unlockBossGateAfterVictory() {
+      this.bossLocked = false;
+      this.gateOpen = true;
+      const gates = (this.bossGateTiles && this.bossGateTiles.length > 0)
+        ? this.bossGateTiles
+        : [[34, 14], [34, 15], [34, 16]];
+      for (const [gx, gy] of gates) {
+        if (this.grid[gy]) this.grid[gy][gx] = 1;
+      }
+    }
+
     isTileWalkable(tx, ty) {
       if (!Number.isFinite(tx) || !Number.isFinite(ty)) return false;
       if (tx < 0 || ty < 0 || tx >= this.width || ty >= this.height) return false;
@@ -1887,6 +1916,49 @@
       if (!row) return false;
       const t = row[tx];
       return t === 1 || t === 2 || t === 4;
+    }
+
+    hasLineOfSight(x0, y0, x1, y1) {
+      if (!Number.isFinite(x0) || !Number.isFinite(y0) || !Number.isFinite(x1) || !Number.isFinite(y1)) return false;
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const len = Math.hypot(dx, dy);
+      if (len <= 10) {
+        return this.isTileWalkable(Math.floor(x1 / TILE_SIZE), Math.floor(y1 / TILE_SIZE));
+      }
+      const steps = Math.max(2, Math.ceil(len / 10));
+      for (let i = 1; i <= steps; i++) {
+        const f = i / steps;
+        const sx = x0 + dx * f;
+        const sy = y0 + dy * f;
+        if (!this.isTileWalkable(Math.floor(sx / TILE_SIZE), Math.floor(sy / TILE_SIZE))) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    clipRayToWalkable(x0, y0, x1, y1) {
+      if (!Number.isFinite(x0) || !Number.isFinite(y0) || !Number.isFinite(x1) || !Number.isFinite(y1)) {
+        return { x: x0 || 0, y: y0 || 0, blocked: true };
+      }
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const len = Math.hypot(dx, dy);
+      const steps = Math.max(1, Math.ceil(len / 10));
+      let lastX = x0;
+      let lastY = y0;
+      for (let i = 1; i <= steps; i++) {
+        const f = i / steps;
+        const sx = x0 + dx * f;
+        const sy = y0 + dy * f;
+        if (!this.isTileWalkable(Math.floor(sx / TILE_SIZE), Math.floor(sy / TILE_SIZE))) {
+          return { x: lastX, y: lastY, blocked: true };
+        }
+        lastX = sx;
+        lastY = sy;
+      }
+      return { x: x1, y: y1, blocked: false };
     }
 
     update(dt, game) {
@@ -2090,6 +2162,7 @@
             enemies: this.enemies,
             hazards: this.hazardZones,
             canWalkPx,
+            hasLos: (x0, y0, x1, y1) => this.hasLineOfSight(x0, y0, x1, y1),
             bossTheme: enemyApi.getBossTheme ? enemyApi.getBossTheme(this.id) : null
           });
           e.animVx = (aiStep.moveVx || 0) * spdScale;
@@ -2103,11 +2176,15 @@
         }
       }
 
-      // Grand 3-Phase Boss AI
+      // Grand 3-Phase Boss AI — lock boss chamber door as soon as hero steps past threshold
       if (this.phaseBanner && this.phaseBanner.timer > 0) {
         this.phaseBanner.timer = Math.max(0, this.phaseBanner.timer - dt);
       }
-      if (this.boss && this.boss.hp > 0 && ptx >= (this.bossRoomMinX || 34)) {
+      const bossMinTileX = (this.bossRoomMinX || 34);
+      if (this.boss && this.boss.hp > 0 && this.gateOpen && !this.bossLocked && game.player.x >= (bossMinTileX + 1.15) * TILE_SIZE) {
+        this.lockBossGateForFight(game);
+      }
+      if (this.boss && this.boss.hp > 0 && (this.bossLocked || ptx >= bossMinTileX + 1)) {
         const b = this.boss;
         const bMinX = (this.bossRoomMinX || 34) + 3;
         const bMaxX = Math.max(bMinX + 6, this.width - 5);

@@ -137,7 +137,8 @@
         market: game.economy ? {
           stock: (game.economy.marketStock || []).slice(0, 5),
           sellContracts: (game.economy.sellContracts || []).slice(0, 5),
-          refreshTimer: game.economy.refreshTimer || 900
+          refreshTimer: game.economy.refreshTimer || 900,
+          manualRefreshesUsed: game.economy.manualRefreshesUsed || 0
         } : null,
         tutorial: (game.tutorialSys || game.tutorial) ? {
           step: (game.tutorialSys || game.tutorial).step || 0,
@@ -369,6 +370,9 @@
         if (Array.isArray(data.market.stock) && data.market.stock.length) game.economy.marketStock = data.market.stock.slice(0, 5);
         if (Array.isArray(data.market.sellContracts) && data.market.sellContracts.length) game.economy.sellContracts = data.market.sellContracts.slice(0, 5);
         if (Number.isFinite(data.market.refreshTimer)) game.economy.refreshTimer = data.market.refreshTimer;
+        game.economy.manualRefreshesUsed = Number.isFinite(data.market.manualRefreshesUsed)
+          ? Math.max(0, Math.min(game.economy.maxManualRefreshes || 3, data.market.manualRefreshesUsed))
+          : 0;
       }
       // Restaurar progreso del tutorial exclusivo de esta partida
       if (game.tutorialSys || game.tutorial) {

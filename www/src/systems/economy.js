@@ -11,10 +11,42 @@
       this.sellContracts = [];
       this.refreshTimer = 0;
       this.refreshInterval = 900; // rotates every 15 minutes (900 seconds)
+      this.maxManualRefreshes = 3;
+      this.manualRefreshesUsed = 0;
       this.refreshStock(1);
     }
 
-    refreshStock(playerLevel = 1) {
+    getRemainingRefreshes() {
+      return Math.max(0, (this.maxManualRefreshes || 3) - (this.manualRefreshesUsed || 0));
+    }
+
+    manualRefreshStock(game) {
+      if (this.getRemainingRefreshes() <= 0) {
+        const secs = Math.max(0, Math.ceil(this.refreshTimer || 0));
+        const mm = String(Math.floor(secs / 60)).padStart(2, '0');
+        const ss = String(secs % 60).padStart(2, '0');
+        const msg = Balaclava.I18n
+          ? Balaclava.I18n.t('market.refreshLimitToast', { mm, ss })
+          : `Solo puedes renovar 3 veces por ciclo. Reinicio en ${mm}:${ss}.`;
+        if (game && typeof game.toast === 'function') game.toast(msg, 'warn');
+        if (Balaclava.Audio) Balaclava.Audio.play('error');
+        return false;
+      }
+      if (!game || (game.coins || 0) < 15) {
+        if (game && typeof game.toast === 'function') {
+          game.toast(Balaclava.I18n ? Balaclava.I18n.t('market.needCoinsRefresh') : 'Necesitas 15 monedas para renovar.', 'warn');
+        }
+        return false;
+      }
+      game.coins -= 15;
+      this.manualRefreshesUsed = (this.manualRefreshesUsed || 0) + 1;
+      this.refreshStock((game.player && game.player.level) || 1, { resetCycle: false });
+      if (Balaclava.Audio) Balaclava.Audio.play('coin');
+      return true;
+    }
+
+    refreshStock(playerLevel = 1, opts = {}) {
+      const resetCycle = opts.resetCycle !== false;
       const seedsPool = ['semillas', 'semillas_zanahoria', 'semillas_calabaza', 'semillas_tomate', 'semillas_papa', 'semillas_fresa', 'cebo_gusano'];
       const matPool = ['madera', 'piedra', 'carbon', 'hierro', 'cobre', 'arena', 'arcilla', 'cuero', 'tablon', 'ladrillo', 'vidrio', 'tela'];
       const rarePool = ['oro', 'lingote_hierro', 'lingote_bronce', 'engrane', 'pocion_vida', 'pocion_velocidad', 'llave_mazmorra', 'fertilizante'];
@@ -67,7 +99,10 @@
 
       this.marketStock = buyList.slice(0, 5);
       this.sellContracts = sellList.slice(0, 5);
-      this.refreshTimer = this.refreshInterval;
+      if (resetCycle) {
+        this.refreshTimer = this.refreshInterval;
+        this.manualRefreshesUsed = 0;
+      }
     }
 
     sellMarketContract(game, idx, qty = 1) {

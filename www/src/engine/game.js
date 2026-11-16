@@ -2158,6 +2158,11 @@
 
     isEntityInReach(entity, customReach = null, targetKind = 'enemy') {
       if (!entity || entity._dead || (entity.hp !== undefined && entity.hp <= 0)) return false;
+      if (targetKind === 'enemy' && this.activeDungeon && typeof this.activeDungeon.hasLineOfSight === 'function') {
+        if (!this.activeDungeon.hasLineOfSight(this.player.x, this.player.y, entity.x, entity.y)) {
+          return false;
+        }
+      }
       const hb = Balaclava.Utils.getEntityHitbox ? Balaclava.Utils.getEntityHitbox(entity) : null;
       const effR = hb ? Math.max(entity.radius || 16, hb.radius) : (entity.radius || 16);
       if (this.isTargetInReach(entity.x, entity.y, effR, customReach, targetKind)) return true;
@@ -2176,6 +2181,9 @@
       const checkEnemy = (e) => {
         if (!e || e._dead || e.hp <= 0) return;
         if (!Number.isFinite(e.x) || !Number.isFinite(e.y)) return;
+        if (this.activeDungeon && typeof this.activeDungeon.hasLineOfSight === 'function' && !this.activeDungeon.hasLineOfSight(px, py, e.x, e.y)) {
+          return;
+        }
         const hb = getHb(e);
         const dx = Math.abs(wx - hb.cx);
         const dy = Math.abs(wy - hb.cy);
@@ -2503,28 +2511,6 @@
             }
           }
         }
-        if (dung.exitPortal && dung.exitPortal.active) {
-          const ex = (dung.exitPortal.tx + 0.5) * TILE_SIZE;
-          const ey = (dung.exitPortal.ty + 0.5) * TILE_SIZE;
-          if (dist(wx, wy, ex, ey) <= 38) {
-            return {
-              kind: 'dungeon_exit_portal',
-              entity: dung.exitPortal,
-              x: ex,
-              y: ey,
-              boxX: ex,
-              boxY: ey,
-              hitW: 52,
-              hitH: 52,
-              hitR: 28,
-              inReach: dist(px, py, ex, ey) <= 96,
-              enforceReach: false,
-              name: 'Portal de Salida',
-              sub: 'Pulsa [E] o haz clic para volver a la superficie',
-              itemIcon: 'portal'
-            };
-          }
-        }
         if (Array.isArray(dung.crates)) {
           for (const cr of dung.crates) {
             if (cr.broken) continue;
@@ -2549,6 +2535,28 @@
                 itemIcon: 'madera'
               };
             }
+          }
+        }
+        if (dung.exitPortal && dung.exitPortal.active) {
+          const ex = (dung.exitPortal.tx + 0.5) * TILE_SIZE;
+          const ey = (dung.exitPortal.ty + 0.5) * TILE_SIZE;
+          if (dist(wx, wy, ex, ey) <= 32) {
+            return {
+              kind: 'dungeon_exit_portal',
+              entity: dung.exitPortal,
+              x: ex,
+              y: ey,
+              boxX: ex,
+              boxY: ey,
+              hitW: 52,
+              hitH: 52,
+              hitR: 28,
+              inReach: dist(px, py, ex, ey) <= 96,
+              enforceReach: false,
+              name: Balaclava.I18n ? Balaclava.I18n.t('hover.exitPortalName') : 'Portal de Salida',
+              sub: Balaclava.I18n ? Balaclava.I18n.t('dungeon.portalExit') : 'Pulsa [E] o haz clic para confirmar salida',
+              itemIcon: 'portal'
+            };
           }
         }
         if (Array.isArray(dung.pillars)) {
@@ -2676,9 +2684,10 @@
       const isHoly = (uMode === 'holy_slam' || tint === '#ffd54f' || (itemDef.id && (itemDef.id.includes('solar') || itemDef.id.includes('paladin'))));
 
       // Signature VFX + Unique Mechanics per Special Weapon
-      const enemyList = this.activeDungeon
+      const enemyList = (this.activeDungeon
         ? [...this.activeDungeon.enemies, ...(this.activeDungeon.boss ? [this.activeDungeon.boss] : [])]
-        : this.combat.enemies;
+        : this.combat.enemies
+      ).filter(e => e && !e._dead && (!this.activeDungeon || typeof this.activeDungeon.hasLineOfSight !== 'function' || this.activeDungeon.hasLineOfSight(this.player.x, this.player.y, e.x, e.y)));
 
       if (uMode === 'flame_wave' || itemDef.id === 'espada_llamarada') {
         this.spawnFx('pa_slash2_fire', hitX, hitY, ang, 0.34, 1.0, 0.96, { blend: 'lighter' });
@@ -3007,7 +3016,12 @@
         ? [...this.activeDungeon.enemies, ...(this.activeDungeon.boss ? [this.activeDungeon.boss] : [])]
         : [...this.combat.enemies];
 
-      if (spellId === 'misil_arcano') {
+        const losOk = (ox, oy, ex, ey) => !this.activeDungeon || typeof this.activeDungeon.hasLineOfSight !== 'function' || this.activeDungeon.hasLineOfSight(ox, oy, ex, ey);
+        const clipDung = (ox, oy, tx, ty) => (this.activeDungeon && typeof this.activeDungeon.clipRayToWalkable === 'function')
+          ? this.activeDungeon.clipRayToWalkable(ox, oy, tx, ty)
+          : { x: tx, y: ty, blocked: false };
+
+        if (spellId === 'misil_arcano') {
         this.spawnFx('pvfx_magic_circle', px, py + 4, 0, 0.36, 0.72, 0.85, { blend: 'lighter' });
         for (const off of [-0.14, 0.14]) {
           const a = ang + off;
@@ -3025,7 +3039,7 @@
         this.spawnShockwave(px, py, r, sp.color);
         this.spawnParticles(px, py, '#b2ebf2', 24);
         for (const e of foes) {
-          if (e && !e._dead && dist(px, py, e.x, e.y) <= r + (e.radius || 16)) {
+          if (e && !e._dead && dist(px, py, e.x, e.y) <= r + (e.radius || 16) && losOk(px, py, e.x, e.y)) {
             this.combat.damageEnemy(this, e, baseDmg, Math.atan2(e.y - py, e.x - px), false);
             this.spawnFx('pvfx_ice_spike', e.x, e.y + 4, 0, 0.44, 0.95, 0.95);
             e.slowTimer = Math.max(e.slowTimer || 0, 3.6);
@@ -3036,7 +3050,7 @@
       } else if (spellId === 'cadena_rayos') {
         const maxBounces = sp.bounces || 4;
         const sorted = foes
-          .filter(e => e && !e._dead && dist(px, py, e.x, e.y) <= 340)
+          .filter(e => e && !e._dead && dist(px, py, e.x, e.y) <= 340 && losOk(px, py, e.x, e.y))
           .sort((a, b) => dist(wx, wy, a.x, a.y) - dist(wx, wy, b.x, b.y))
           .slice(0, maxBounces);
         let mult = 1.0;
@@ -3084,13 +3098,15 @@
         Balaclava.Audio.play('equip');
       } else if (spellId === 'paso_etereo') {
         const stepDist = Math.min(180, dist(px, py, wx, wy));
+        const clippedBlink = clipDung(px, py, px + Math.cos(ang) * stepDist, py + Math.sin(ang) * stepDist);
+        const blinkDist = dist(px, py, clippedBlink.x, clippedBlink.y);
         let destX = px;
         let destY = py;
         const canStep = (tx, ty) => this.activeDungeon ? this.activeDungeon.isTileWalkable(tx, ty) : this.world.isTileWalkable(tx, ty);
         for (let f = 1.0; f >= 0.2; f -= 0.2) {
-          const cx = px + Math.cos(ang) * stepDist * f;
-          const cy = py + Math.sin(ang) * stepDist * f;
-          if (canStep(Math.floor(cx / TILE_SIZE), Math.floor(cy / TILE_SIZE))) {
+          const cx = px + Math.cos(ang) * blinkDist * f;
+          const cy = py + Math.sin(ang) * blinkDist * f;
+          if (canStep(Math.floor(cx / TILE_SIZE), Math.floor(cy / TILE_SIZE)) && losOk(px, py, cx, cy)) {
             destX = cx; destY = cy; break;
           }
         }
@@ -3101,7 +3117,7 @@
         this.spawnFx('pvfx_teleport_in', destX, destY + 6, 0, 0.48, 1.05, 0.98, { blend: 'lighter' });
         this.spawnShockwave(destX, destY, 95, sp.color);
         for (const e of foes) {
-          if (e && !e._dead && dist(destX, destY, e.x, e.y) <= 95 + (e.radius || 16)) {
+          if (e && !e._dead && dist(destX, destY, e.x, e.y) <= 95 + (e.radius || 16) && losOk(destX, destY, e.x, e.y)) {
             this.combat.damageEnemy(this, e, baseDmg, Math.atan2(e.y - destY, e.x - destX), false);
           }
         }
@@ -3117,15 +3133,16 @@
         Balaclava.Audio.play('levelup');
       } else if (spellId === 'espinas_tierra') {
         const clamped = Math.min(215, dist(px, py, wx, wy));
-        const tx = px + Math.cos(ang) * clamped;
-        const ty = py + Math.sin(ang) * clamped;
+        const clipped = clipDung(px, py, px + Math.cos(ang) * clamped, py + Math.sin(ang) * clamped);
+        const tx = clipped.x;
+        const ty = clipped.y;
         const r = sp.aoeRadius || 92;
         this.spawnFx('pvfx_earth_spike', tx, ty + 6, 0, 0.56, 1.2, 0.98);
         this.spawnFx('aw_earth_rockspike', tx + 16, ty + 6, 0, 0.45, 1.05, 0.95);
         this.spawnShockwave(tx, ty, r, sp.color);
         this.spawnParticles(tx, ty, '#8bc34a', 20);
         for (const e of foes) {
-          if (e && !e._dead && dist(tx, ty, e.x, e.y) <= r + (e.radius || 16)) {
+          if (e && !e._dead && dist(tx, ty, e.x, e.y) <= r + (e.radius || 16) && losOk(tx, ty, e.x, e.y)) {
             this.combat.damageEnemy(this, e, baseDmg, ang, false);
             e.slowTimer = Math.max(e.slowTimer || 0, 2.5);
           }
@@ -3146,7 +3163,7 @@
         this.spawnShockwave(px, py, r, sp.color);
         let hits = 0;
         for (const e of foes) {
-          if (e && !e._dead && dist(px, py, e.x, e.y) <= r + (e.radius || 16)) {
+          if (e && !e._dead && dist(px, py, e.x, e.y) <= r + (e.radius || 16) && losOk(px, py, e.x, e.y)) {
             this.combat.damageEnemy(this, e, baseDmg, Math.atan2(e.y - py, e.x - px), false);
             hits++;
           }
@@ -3156,19 +3173,21 @@
         Balaclava.Audio.play('heal');
       } else if (spellId === 'lluvia_meteoros') {
         const clamped = Math.min(240, dist(px, py, wx, wy));
-        const cx = px + Math.cos(ang) * clamped;
-        const cy = py + Math.sin(ang) * clamped;
+        const clipped = clipDung(px, py, px + Math.cos(ang) * clamped, py + Math.sin(ang) * clamped);
+        const cx = clipped.x;
+        const cy = clipped.y;
         const offsets = [[0, 0], [-42, 26], [42, -24]];
         const mRad = sp.aoeRadius || 105;
         for (const [ox, oy] of offsets) {
-          const mx = cx + ox;
-          const my = cy + oy;
+          const hitOff = clipDung(cx, cy, cx + ox, cy + oy);
+          const mx = hitOff.x;
+          const my = hitOff.y;
           this.spawnFx('pvfx_meteor_strike', mx, my + 8, 0, 0.72, 1.25, 0.98, { blend: 'lighter' });
           this.spawnFx('soggy_incinerate', mx, my, 0, 0.65, 1.05, 0.95, { blend: 'lighter' });
           this.spawnFx('px_blast_big', mx, my - 6, 0, 0.56, 1.15, 0.92, { blend: 'lighter' });
           this.spawnShockwave(mx, my, mRad, sp.color);
           for (const e of foes) {
-            if (e && !e._dead && dist(mx, my, e.x, e.y) <= mRad + (e.radius || 16)) {
+            if (e && !e._dead && dist(mx, my, e.x, e.y) <= mRad + (e.radius || 16) && losOk(mx, my, e.x, e.y)) {
               this.combat.damageEnemy(this, e, baseDmg, ang, Math.random() < 0.35);
               e.burnTimer = Math.max(e.burnTimer || 0, 3.5);
             }
@@ -3177,6 +3196,102 @@
         }
         this.shake(0.32, 6);
         Balaclava.Audio.play('explosion');
+      } else if (spellId === 'lluvia_minerales' || spellId === 'llamado_horda' || spellId === 'llamado_fauna') {
+        const refundSurfaceSpell = (msgEs, msgEn) => {
+          if (cost > 0) this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + cost);
+          delete this.spellCooldowns[spellId];
+          const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+          this.toast(isEn ? msgEn : msgEs, 'warn');
+          Balaclava.Audio.play('error');
+        };
+        if (this.activeDungeon || !Array.isArray(this.unlockedPlots) || this.unlockedPlots.length === 0) {
+          refundSurfaceSpell(
+            'Este hechizo solo funciona en las islas de la superficie.',
+            'This spell can only be cast on surface islands.'
+          );
+          return false;
+        }
+        const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+        if (spellId === 'lluvia_minerales') {
+          const occ = this.getOccupiedTileSet();
+          const targetCount = 15;
+          let spawned = 0;
+          const triesMax = Math.max(40, this.unlockedPlots.length * 10);
+          for (let k = 0; k < triesMax && spawned < targetCount; k++) {
+            const [gx, gy] = pick(this.unlockedPlots);
+            const node = this.world.trySpawnMineralInPlot(gx, gy, occ);
+            if (node) {
+              spawned++;
+              this.spawnParticles(node.x, node.y, '#ffd54f', 7);
+            }
+          }
+          this.spawnFx('pvfx_magic_circle', px, py + 4, 0, 0.55, 1.15, 0.95, { blend: 'lighter' });
+          this.spawnShockwave(px, py, 120, sp.color);
+          Balaclava.Audio.play('levelup');
+          this.toast(
+            isEn ? `Mineral Surge! ${spawned} ore veins erupted across your islands.` : `¡Lluvia Mineral! Brotaron ${spawned} vetas minerales por tus islas.`,
+            'success'
+          );
+        } else if (spellId === 'llamado_horda') {
+          const hostilePools = {
+            pradera: ['slime', 'rat', 'spider', 'zombie', 'skeleton'],
+            desierto: ['beetle', 'scorpion', 'sand_ghoul', 'cobra', 'rock_golem'],
+            bosque_oscuro: ['mushroom_mob', 'goblin', 'goblin_shaman', 'shadow_wolf', 'bat'],
+            montanas_heladas: ['wolf', 'golem', 'cave_spider', 'skeleton_mage'],
+            tierras_volcanicas: ['magma', 'fire_elem', 'beetle_fire', 'goblin_tnt', 'imp']
+          };
+          const targetMobs = 10;
+          let spawned = 0;
+          const unlockedBiomes = [...new Set(this.unlockedPlots.map(([gx, gy]) => (this.world.plotBiomes[gy] && this.world.plotBiomes[gy][gx]) || 'pradera'))];
+          for (let k = 0; k < 44 && spawned < targetMobs; k++) {
+            const bPick = pick(unlockedBiomes);
+            const mobType = pick(hostilePools[bPick] || hostilePools.pradera);
+            const mob = this.combat.spawnWorldEnemy(this, null, mobType);
+            if (mob) {
+              spawned++;
+              this.spawnParticles(mob.x, mob.y, '#ef5350', 8);
+              if (this.spawnFx) this.spawnFx('pvfx_teleport_in', mob.x, mob.y, 0, 0.38, 0.85, 0.9, { blend: 'lighter' });
+            }
+          }
+          this.spawnFx('pvfx_magic_circle', px, py + 4, 0, 0.55, 1.15, 0.95, { blend: 'lighter' });
+          this.spawnShockwave(px, py, 130, sp.color);
+          Balaclava.Audio.play('thunder');
+          this.toast(
+            isEn ? `Call of the Horde! ${spawned} hostile monsters appeared on your islands.` : `¡Llamado de la Horda! Aparecieron ${spawned} monstruos por tus islas.`,
+            'warn'
+          );
+        } else if (spellId === 'llamado_fauna') {
+          const faunaByBiome = {
+            pradera: ['sheep', 'vaca', 'cerdo', 'conejo', 'pato'],
+            desierto: ['conejo', 'pato', 'sheep'],
+            bosque_oscuro: ['cerdo', 'conejo', 'sheep'],
+            montanas_heladas: ['sheep', 'conejo', 'vaca'],
+            tierras_volcanicas: ['sheep', 'cerdo', 'conejo']
+          };
+          const occ = this.getOccupiedTileSet();
+          const targetAnimals = 10;
+          let spawned = 0;
+          for (let k = 0; k < 48 && spawned < targetAnimals; k++) {
+            const [gx, gy] = pick(this.unlockedPlots);
+            const spot = this.world._pickFreePlotTile(gx, gy, occ);
+            if (!spot) continue;
+            const biome = (this.world.plotBiomes[gy] && this.world.plotBiomes[gy][gx]) || 'pradera';
+            const aKind = pick(faunaByBiome[biome] || faunaByBiome.pradera);
+            const beforeLen = this.world.sheep.length;
+            this.world.spawnAnimal(spot[0], spot[1], aKind);
+            if (this.world.sheep.length > beforeLen) {
+              spawned++;
+              this.spawnParticles((spot[0] + 0.5) * TILE_SIZE, (spot[1] + 0.5) * TILE_SIZE, '#81c784', 8);
+            }
+          }
+          this.spawnFx('pvfx_holy_heal', px, py + 4, 0, 0.65, 1.15, 0.95, { blend: 'lighter' });
+          this.spawnShockwave(px, py, 120, sp.color);
+          Balaclava.Audio.play('heal');
+          this.toast(
+            isEn ? `Call of the Wild! ${spawned} passive animals arrived on your islands.` : `¡Llamado de Fauna! Llegaron ${spawned} animales pasivos a tus islas.`,
+            'success'
+          );
+        }
       }
       this.uiDirty = true;
       return true;
@@ -3424,7 +3539,7 @@
           this.spawnFx('pvfx_shockwave_ring', this.player.x, this.player.y, 0, 0.42, 1.4, 0.95, { blend: 'lighter' });
           this.spawnShockwave(this.player.x, this.player.y, 125, '#80d8ff');
           for (const e of enemyList) {
-            if (dist(this.player.x, this.player.y, e.x, e.y) <= 125) {
+            if (dist(this.player.x, this.player.y, e.x, e.y) <= 125 && (!this.activeDungeon || this.activeDungeon.hasLineOfSight(this.player.x, this.player.y, e.x, e.y))) {
               this.combat.damageEnemy(this, e, waveDmg, ang, false);
             }
           }
@@ -3434,7 +3549,7 @@
       // Priority A: Player explicitly selected/hovered a target in reach
       if (hovered && hovered.inReach) {
         if (hovered.kind === 'dungeon_exit_portal' && this.activeDungeon) {
-          this.exitDungeon();
+          this.requestExitDungeon();
           return;
         }
         if (hovered.kind === 'dungeon_chest' && this.activeDungeon && typeof this.activeDungeon.openChest === 'function') {
@@ -3816,14 +3931,14 @@
           const ep = this.activeDungeon.exitPortal;
           const dExit = Math.hypot((this.player.x / TILE_SIZE) - (ep.tx + 0.5), (this.player.y / TILE_SIZE) - (ep.ty + 0.5));
           if (dExit <= 1.85) {
-            this.exitDungeon();
+            this.requestExitDungeon();
             return;
           }
         }
         const tx = Math.floor(this.player.x / TILE_SIZE);
         const ty = Math.floor(this.player.y / TILE_SIZE);
         if (this.activeDungeon.grid[ty] && this.activeDungeon.grid[ty][tx] === 4) {
-          this.exitDungeon();
+          this.requestExitDungeon();
         }
         return;
       }
@@ -4289,8 +4404,26 @@
       }
     }
 
+    requestExitDungeon() {
+      if (!this.activeDungeon || this.isPlayerDead()) return;
+      if (this.activeDungeon.bossLocked && this.activeDungeon.boss && this.activeDungeon.boss.hp > 0) {
+        this.toast(Balaclava.I18n ? Balaclava.I18n.t('dungeon.bossGateLocked') : '¡La Puerta del Jefe está sellada! Derrota al guardián para salir.', 'warn');
+        if (Balaclava.Audio) Balaclava.Audio.play('error');
+        return;
+      }
+      if (Balaclava.UI && typeof Balaclava.UI.openModal === 'function') {
+        Balaclava.UI.openModal('exit_dungeon_confirm');
+      } else {
+        this.exitDungeon();
+      }
+    }
+
     exitDungeon(force = false) {
       if (!this.activeDungeon || (!force && this.isPlayerDead())) return;
+      if (!force && this.activeDungeon.bossLocked && this.activeDungeon.boss && this.activeDungeon.boss.hp > 0) {
+        this.toast(Balaclava.I18n ? Balaclava.I18n.t('dungeon.bossGateLocked') : '¡La Puerta del Jefe está sellada! Derrota al guardián para salir.', 'warn');
+        return;
+      }
       const doExit = () => {
         const rp = this.activeDungeon ? (this.activeDungeon.returnPos || {}) : {};
         const safe = this.findSafeOverworldSpawn(rp.x, rp.y);
@@ -4778,6 +4911,11 @@
         targetX = px + Math.cos(ang) * throwDist;
         targetY = py + Math.sin(ang) * throwDist;
       }
+      if (this.activeDungeon && typeof this.activeDungeon.clipRayToWalkable === 'function') {
+        const clipped = this.activeDungeon.clipRayToWalkable(px, py, targetX, targetY);
+        targetX = clipped.x;
+        targetY = clipped.y;
+      }
 
       this.removeItem(item.id, 1);
       this.player.facing = targetX >= px ? 1 : -1;
@@ -4873,6 +5011,7 @@
         : [...this.combat.enemies];
       for (const e of bombHitList) {
         if (!e || e._dead || e.hp <= 0) continue;
+        if (this.activeDungeon && typeof this.activeDungeon.hasLineOfSight === 'function' && !this.activeDungeon.hasLineOfSight(b.x, b.y, e.x, e.y)) continue;
         const hb = Balaclava.Utils.getEntityHitbox(e);
         if (dist(b.x, b.y, e.x, e.y) <= b.radius + hb.radius || dist(b.x, b.y, hb.cx, hb.cy) <= b.radius + Math.max(hb.hw, hb.hh) * 0.7) {
           const ang = Math.atan2(e.y - b.y, e.x - b.x);
@@ -4924,8 +5063,13 @@
 
       const x1 = this.player.x + Math.cos(ang) * 18;
       const y1 = (this.player.y - 4) + Math.sin(ang) * 14;
-      const x2 = x1 + Math.cos(ang) * st.range;
-      const y2 = y1 + Math.sin(ang) * st.range;
+      let x2 = x1 + Math.cos(ang) * st.range;
+      let y2 = y1 + Math.sin(ang) * st.range;
+      if (this.activeDungeon && typeof this.activeDungeon.clipRayToWalkable === 'function') {
+        const clipped = this.activeDungeon.clipRayToWalkable(this.player.x, this.player.y, x2, y2);
+        x2 = clipped.x;
+        y2 = clipped.y;
+      }
       const bMode = st.beamMode || itemDef.id;
 
       if (!this.laserBeams) this.laserBeams = [];
@@ -4953,9 +5097,10 @@
 
       const beamHalfW = (st.width || 10) * 0.9 + 10;
       const dmgBase = Math.round(st.dmg * (1 + (this.mods.dmgBonus || 0) * 0.4 + (this.mods.spellPower || 0) * 0.6));
-      const laserEnemies = this.activeDungeon
+      const laserEnemies = (this.activeDungeon
         ? [...this.activeDungeon.enemies, ...(this.activeDungeon.boss ? [this.activeDungeon.boss] : [])]
-        : [...this.combat.enemies];
+        : [...this.combat.enemies]
+      ).filter(e => e && !e._dead && (!this.activeDungeon || typeof this.activeDungeon.hasLineOfSight !== 'function' || this.activeDungeon.hasLineOfSight(this.player.x, this.player.y, e.x, e.y)));
       let firstHitEnemy = null;
       for (const e of laserEnemies) {
         if (Balaclava.Utils.segmentHitsEntity(x1, y1, x2, y2, e, beamHalfW)) {
@@ -5813,6 +5958,7 @@
           let bestD = 220;
           for (const e of targets) {
             if (!e || e._dead || (pr.hitIds && pr.hitIds.has(e))) continue;
+            if (this.activeDungeon && typeof this.activeDungeon.hasLineOfSight === 'function' && !this.activeDungeon.hasLineOfSight(pr.x, pr.y, e.x, e.y)) continue;
             const d = dist(pr.x, pr.y, e.x, e.y);
             if (d < bestD) { bestD = d; nearest = e; }
           }
@@ -5841,11 +5987,30 @@
             pr.vy = Math.sin(retAng) * spd;
           }
         }
+        const prevX = pr.x;
+        const prevY = pr.y;
         pr.x += pr.vx * dt;
         pr.y += pr.vy * dt;
         let hit = false;
+        let hitWall = false;
+        if (this.activeDungeon && typeof this.activeDungeon.isTileWalkable === 'function') {
+          const stepDx = pr.x - prevX;
+          const stepDy = pr.y - prevY;
+          const stepCount = Math.max(1, Math.ceil(Math.hypot(stepDx, stepDy) / 10));
+          for (let s = 1; s <= stepCount; s++) {
+            const sx = prevX + (stepDx * s) / stepCount;
+            const sy = prevY + (stepDy * s) / stepCount;
+            if (!this.activeDungeon.isTileWalkable(Math.floor(sx / TILE_SIZE), Math.floor(sy / TILE_SIZE))) {
+              hitWall = true;
+              hit = true;
+              this.spawnParticles(prevX, prevY, pr.color || '#90a4ae', 5);
+              break;
+            }
+          }
+        }
         const pad = pr.hitPad || 8;
         const triggerProjAoe = (excludeEnemy, excludeNode) => {
+          if (hitWall) return;
           if (pr.vfxHit && this.spawnFx) {
             this.spawnFx(pr.vfxHit, pr.x, pr.y, Math.atan2(pr.vy, pr.vx), 0.36, 0.95, 0.96, { blend: 'lighter' });
           }
@@ -5868,6 +6033,7 @@
             : this.combat.enemies;
           for (const other of pool) {
             if (!other || other === excludeEnemy || other._dead) continue;
+            if (this.activeDungeon && typeof this.activeDungeon.hasLineOfSight === 'function' && !this.activeDungeon.hasLineOfSight(pr.x, pr.y, other.x, other.y)) continue;
             if (dist(pr.x, pr.y, other.x, other.y) <= pr.aoeRadius + (other.radius || 16)) {
               this.combat.damageEnemy(this, other, Math.round(pr.dmg * 0.72), Math.atan2(other.y - pr.y, other.x - pr.x), false, false);
               if (pr.burnDmg) other.burnTimer = Math.max(other.burnTimer || 0, 3.0);
@@ -5892,7 +6058,7 @@
           if ((pr.pierce || 0) > 0) { pr.pierce--; return false; }
           return true;
         };
-        if (this.activeDungeon) {
+        if (!hitWall && this.activeDungeon) {
           const dEnemies = this.activeDungeon.enemies;
           for (let ei = dEnemies.length - 1; ei >= 0; ei--) {
             const e = dEnemies[ei];
@@ -5904,7 +6070,7 @@
           if (!hit && this.activeDungeon.boss && !(pr.hitIds && pr.hitIds.has(this.activeDungeon.boss)) && ptInHb(pr.x, pr.y, this.activeDungeon.boss, pad)) {
             if (onProjHit(this.activeDungeon.boss)) hit = true;
           }
-        } else {
+        } else if (!hitWall) {
           const wEnemies = this.combat.enemies;
           for (let ei = wEnemies.length - 1; ei >= 0; ei--) {
             const e = wEnemies[ei];
@@ -5960,10 +6126,33 @@
           pr.vx = Math.cos(nextAng) * spd;
           pr.vy = Math.sin(nextAng) * spd;
         }
+        const ePrevX = pr.x;
+        const ePrevY = pr.y;
         pr.x += pr.vx * dt;
         pr.y += pr.vy * dt;
+        let hitDungeonWall = false;
+        if (this.activeDungeon && typeof this.activeDungeon.isTileWalkable === 'function') {
+          const stepDx = pr.x - ePrevX;
+          const stepDy = pr.y - ePrevY;
+          const stepCount = Math.max(1, Math.ceil(Math.hypot(stepDx, stepDy) / 10));
+          for (let s = 1; s <= stepCount; s++) {
+            const sx = ePrevX + (stepDx * s) / stepCount;
+            const sy = ePrevY + (stepDy * s) / stepCount;
+            if (!this.activeDungeon.isTileWalkable(Math.floor(sx / TILE_SIZE), Math.floor(sy / TILE_SIZE))) {
+              hitDungeonWall = true;
+              break;
+            }
+          }
+        }
         const hitR = pr.radius || 18;
-        if (dist(pr.x, pr.y, this.player.x, this.player.y) < hitR) {
+        if (hitDungeonWall) {
+          if (pr.impactVfx && this.spawnFx) {
+            this.spawnFx(pr.impactVfx, ePrevX, ePrevY, 0, 0.20, 0.50, 0.72, { blend: 'lighter' });
+          } else {
+            this.spawnParticles(ePrevX, ePrevY, pr.color || '#90a4ae', 4);
+          }
+          this.enemyProjectiles.splice(i, 1);
+        } else if (dist(pr.x, pr.y, this.player.x, this.player.y) < hitR) {
           if (pr.impactVfx && this.spawnFx) {
             this.spawnFx(pr.impactVfx, pr.x, pr.y, 0, 0.28, 0.72, 0.94, { blend: 'lighter' });
           }

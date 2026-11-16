@@ -684,6 +684,42 @@
       aoeRadius: 115,
       color: '#ff5252',
       desc: 'Invoca un cataclismo de meteoros devastadores sobre el cursor provocando cráteres y aniquilación.'
+    },
+    lluvia_minerales: {
+      id: 'lluvia_minerales',
+      name: 'Lluvia Mineral',
+      icon: 'spell_lluvia_minerales',
+      element: 'tierra',
+      tier: 2,
+      cost: 35,
+      cooldown: 70.0,
+      baseDamage: 0,
+      color: '#ffd54f',
+      desc: 'Hace brotar multitud de vetas minerales y gemas por todas tus islas desbloqueadas.'
+    },
+    llamado_horda: {
+      id: 'llamado_horda',
+      name: 'Llamado de la Horda',
+      icon: 'spell_llamado_horda',
+      element: 'sombra',
+      tier: 2,
+      cost: 32,
+      cooldown: 70.0,
+      baseDamage: 0,
+      color: '#ef5350',
+      desc: 'Invoca una oleada de monstruos hostiles en tus islas para cazar botín y experiencia.'
+    },
+    llamado_fauna: {
+      id: 'llamado_fauna',
+      name: 'Llamado de Fauna',
+      icon: 'spell_llamado_fauna',
+      element: 'naturaleza',
+      tier: 2,
+      cost: 28,
+      cooldown: 70.0,
+      baseDamage: 0,
+      color: '#81c784',
+      desc: 'Atrae abundantes animales pacíficos (ovejas, vacas, cerdos, conejos y patos) hacia tus islas.'
     }
   };
 

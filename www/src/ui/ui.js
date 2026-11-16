@@ -2735,7 +2735,7 @@
       const leftDrawers = new Set(['inventory', 'crafting', 'build', 'market', 'quests', 'achievements', 'enchant', 'building', 'npc']);
       const wideDrawers = new Set(['build', 'inventory', 'crafting', 'quests', 'achievements']);
       backdrop.classList.toggle('fullscreen-modal', fullModals.has(name));
-      const compactStyled = new Set(['pause', 'title_settings', 'credits', 'quit_confirm', 'quit_web_fallback', 'discord_fallback']);
+      const compactStyled = new Set(['pause', 'title_settings', 'credits', 'quit_confirm', 'quit_web_fallback', 'discord_fallback', 'exit_dungeon_confirm']);
       const isCompactModal = compactStyled.has(name);
       if (modalBox) {
         modalBox.classList.toggle('modal-fullscreen', fullModals.has(name));
@@ -2743,7 +2743,7 @@
         modalBox.classList.toggle('map-atlas-fullscreen', name === 'map');
         modalBox.classList.toggle('quests-modal', name === 'quests');
         modalBox.classList.toggle('pause-pixel-modal', isCompactModal);
-        modalBox.classList.toggle('pause-root-compact', (name === 'pause' && this.pauseView === 'root') || name === 'credits' || name === 'quit_confirm' || name === 'quit_web_fallback' || name === 'discord_fallback');
+        modalBox.classList.toggle('pause-root-compact', (name === 'pause' && this.pauseView === 'root') || name === 'credits' || name === 'quit_confirm' || name === 'quit_web_fallback' || name === 'discord_fallback' || name === 'exit_dungeon_confirm');
         modalBox.classList.toggle('pause-settings-compact', (name === 'pause' && this.pauseView === 'settings') || name === 'title_settings');
       }
       backdrop.classList.toggle('drawer-left', leftDrawers.has(name));
@@ -3364,7 +3364,8 @@
       }
 
       const edBtn = document.getElementById('btn-exit-dungeon');
-      if (g.activeDungeon) edBtn.classList.remove('hidden');
+      const bossLocked = !!(g.activeDungeon && g.activeDungeon.bossLocked && g.activeDungeon.boss && g.activeDungeon.boss.hp > 0);
+      if (g.activeDungeon && !bossLocked) edBtn.classList.remove('hidden');
       else edBtn.classList.add('hidden');
 
       // Universal 9-slot Hotbar (1..9 holds ANY item or unlocked tool; Shift+Click swaps slots; diff-cached!)
@@ -3687,7 +3688,8 @@
         credits: tr('credits.title'),
         quit_confirm: tr('quit.title'),
         quit_web_fallback: tr('quit.webFallbackTitle'),
-        discord_fallback: tr('title.discord')
+        discord_fallback: tr('title.discord'),
+        exit_dungeon_confirm: tr('dungeon.exitTitle')
       };
       const backdrop = document.getElementById('modal-backdrop');
       const modalBox = document.getElementById('modal-box');
@@ -3700,7 +3702,7 @@
         modalBox.classList.toggle('modal-fullscreen', isFullScreen);
         modalBox.classList.toggle('skills-cosmic-fullscreen', this.activeModal === 'skills');
         modalBox.classList.toggle('map-atlas-fullscreen', this.activeModal === 'map');
-        const isCompactMenu = this.activeModal === 'credits' || this.activeModal === 'quit_confirm' || this.activeModal === 'quit_web_fallback' || this.activeModal === 'discord_fallback';
+        const isCompactMenu = this.activeModal === 'credits' || this.activeModal === 'quit_confirm' || this.activeModal === 'quit_web_fallback' || this.activeModal === 'discord_fallback' || this.activeModal === 'exit_dungeon_confirm';
         modalBox.classList.toggle('pause-root-compact', (this.activeModal === 'pause' && this.pauseView === 'root') || isCompactMenu);
         modalBox.classList.toggle('pause-settings-compact', this.pauseView === 'settings' || this.activeModal === 'title_settings');
         modalBox.classList.toggle('steam-dialog-box', isCompactMenu);
@@ -3728,6 +3730,7 @@
       else if (this.activeModal === 'quit_confirm') this.renderQuitModal(body, false);
       else if (this.activeModal === 'quit_web_fallback') this.renderQuitModal(body, true);
       else if (this.activeModal === 'discord_fallback') this.renderDiscordFallbackModal(body);
+      else if (this.activeModal === 'exit_dungeon_confirm') this.renderExitDungeonConfirmModal(body);
       else if (this.activeModal === 'building') this.renderBuildingInspector(titleEl, body, this.modalData);
       else if (this.activeModal === 'npc') this.renderNpcDialog(titleEl, body, this.modalData);
       else if (this.activeModal === 'controls') {
@@ -7708,13 +7711,26 @@
             onclick: () => { this.marketTab = 'vender'; this.renderModal(); }
           }, tr('market.tabSell', { n: Math.min(5, (g.economy.sellContracts || []).length) }))
         ]),
-        this.el('button', {
-          class: 'btn btn-gold btn-sm',
-          onclick: () => {
-            if (g.coins < 15) return g.toast(tr('market.needCoinsRefresh'), 'warn');
-            g.coins -= 15; g.economy.refreshStock(g.player.level); Balaclava.Audio.play('coin'); this.renderModal();
-          }
-        }, tr('market.refreshBtn'))
+        (() => {
+          const maxRef = g.economy.maxManualRefreshes || 3;
+          const remRef = typeof g.economy.getRemainingRefreshes === 'function'
+            ? g.economy.getRemainingRefreshes()
+            : Math.max(0, maxRef - (g.economy.manualRefreshesUsed || 0));
+          const btnText = remRef > 0
+            ? tr('market.refreshBtn', { rem: remRef, max: maxRef })
+            : tr('market.refreshLimitBtn', { max: maxRef, mm, ss });
+          return this.el('button', {
+            id: 'btn-market-refresh',
+            class: remRef > 0 ? 'btn btn-gold btn-sm' : 'btn btn-stone btn-sm',
+            disabled: remRef <= 0 ? 'disabled' : null,
+            onclick: () => {
+              if (typeof g.economy.manualRefreshStock === 'function') {
+                g.economy.manualRefreshStock(g);
+              }
+              this.renderModal();
+            }
+          }, btnText);
+        })()
       ]);
       body.appendChild(topRow);
 
@@ -8989,6 +9005,42 @@
           class: 'btn btn-gold pause-big-btn',
           onclick: () => this.closeModal()
         }, tr('common.back'))
+      ]));
+    }
+
+    renderExitDungeonConfirmModal(body) {
+      const g = this.game;
+      const dung = g && g.activeDungeon;
+      const unopenedChests = dung && Array.isArray(dung.chests) ? dung.chests.filter(c => c && !c.opened).length : 0;
+      const unlootedDrops = g && Array.isArray(g.drops) ? g.drops.length : 0;
+      const children = [
+        this.el('p', { class: 'quit-msg' }, tr('dungeon.exitConfirmMsg'))
+      ];
+      if (unopenedChests > 0 || unlootedDrops > 0) {
+        children.push(this.el('p', {
+          class: 'quit-msg',
+          style: 'margin-top:8px;color:#ffd54f;font-size:14px;'
+        }, tr('dungeon.exitLootWarn', { chests: unopenedChests, drops: unlootedDrops })));
+      }
+      body.appendChild(this.el('div', { class: 'pause-stack quit-box' }, [
+        this.el('div', { class: 'card quit-card' }, children),
+        this.el('div', { class: 'quit-actions-row' }, [
+          this.el('button', {
+            id: 'btn-exit-dungeon-cancel',
+            type: 'button',
+            class: 'btn btn-stone pause-big-btn',
+            onclick: () => this.closeModal()
+          }, tr('dungeon.exitStayBtn')),
+          this.el('button', {
+            id: 'btn-exit-dungeon-confirm',
+            type: 'button',
+            class: 'btn btn-danger pause-big-btn',
+            onclick: () => {
+              this.closeModal();
+              if (g) g.exitDungeon();
+            }
+          }, tr('dungeon.exitConfirmBtn'))
+        ])
       ]));
     }
 

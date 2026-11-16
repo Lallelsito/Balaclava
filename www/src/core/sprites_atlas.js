@@ -682,6 +682,9 @@
     spell_fortificacion: VERARC_BASE + 'Spells/fortify_spell.png',
     spell_drenaje_mana: VERARC_BASE + 'Spells/mana_replenish.png',
     spell_daga_veneno: VERARC_BASE + 'Spells/poison_dagger.png',
+    spell_lluvia_minerales: VERARC_BASE + 'Spells/fortify_spell.png',
+    spell_llamado_horda: VERARC_BASE + 'Spells/counterspell.png',
+    spell_llamado_fauna: VERARC_BASE + 'Spells/summoning_spell.png',
 
     // === FASE 5: NUEVAS ARMAS, BÁCULOS, VARITAS Y ARQUETIPOS (UNIFICADO 32x32) ===
     dagger_iron: 'assets/icons_extra/dagger_iron.png',

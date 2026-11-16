@@ -231,7 +231,8 @@
     if (exitDung) {
       exitDung.addEventListener('click', () => {
         if (game.isPlayerDead && game.isPlayerDead()) return;
-        game.exitDungeon();
+        if (typeof game.requestExitDungeon === 'function') game.requestExitDungeon();
+        else game.exitDungeon();
       });
     }
 

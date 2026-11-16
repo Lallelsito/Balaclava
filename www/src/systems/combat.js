@@ -1066,14 +1066,14 @@
             game.spawnFx(vfx, z.x, z.y - (z.kind === 'pillar' ? 14 : 4), 0, 0.52, r >= 60 ? 1.15 : 0.9, 0.98, { blend: 'lighter' });
           }
           if (game.shake) game.shake(0.18, 4);
-          if (dist(pPx, pPy, z.x, z.y) <= r) {
+          if (dist(pPx, pPy, z.x, z.y) <= r && (!game.activeDungeon || game.activeDungeon.hasLineOfSight(z.x, z.y, pPx, pPy))) {
             game.damagePlayer(Math.round(z.dmg || (themeFallback && themeFallback.boss ? themeFallback.boss.dmg * 1.1 : 18)), { isMagic: true, status: z.status || null });
           }
         } else if (z.detonated && !z.oneShot) {
           z.tickCd = (z.tickCd || 0) - dt;
           if (z.tickCd <= 0) {
             z.tickCd = 0.45;
-            if (dist(pPx, pPy, z.x, z.y) <= (z.radius || 54) * 0.85) {
+            if (dist(pPx, pPy, z.x, z.y) <= (z.radius || 54) * 0.85 && (!game.activeDungeon || game.activeDungeon.hasLineOfSight(z.x, z.y, pPx, pPy))) {
               game.damagePlayer(Math.max(4, Math.round((z.dmg || 16) * 0.35)), { isMagic: true, status: z.status || null });
             }
           }
@@ -1087,7 +1087,7 @@
         z.tickCd = (z.tickCd || 0) - dt;
         if (z.tickCd <= 0) {
           z.tickCd = 0.45;
-          if (dist(pPx, pPy, z.x, z.y) <= (z.radius || 44)) {
+          if (dist(pPx, pPy, z.x, z.y) <= (z.radius || 44) && (!game.activeDungeon || game.activeDungeon.hasLineOfSight(z.x, z.y, pPx, pPy))) {
             game.damagePlayer(Math.max(4, Math.round((z.dmg || 14) * 0.34)), { isMagic: true, status: z.status || null });
           }
         }
@@ -1182,7 +1182,8 @@
     const canWalkPx = ctx.canWalkPx || null;
     const hazards = ctx.hazards || null;
     const enemies = ctx.enemies || [];
-    const aggroDist = ctx.isDungeon ? 9999 : (e.earlyZoneMob ? 235 : 310);
+    const hasLos = (!ctx.isDungeon || !ctx.hasLos) ? true : ctx.hasLos(e.x, e.y, px, py);
+    const aggroDist = ctx.isDungeon ? (hasLos ? 9999 : 250) : (e.earlyZoneMob ? 235 : 310);
 
     if (!e.state) e.state = 'chase';
     if (e.specialAtkCd === undefined) e.specialAtkCd = 1.4 + Math.random() * 1.8;
@@ -1227,7 +1228,7 @@
         } else if (e.attackKind === 'bomb') {
           const bx = e.targetX !== undefined ? e.targetX : px;
           const by = e.targetY !== undefined ? e.targetY : py;
-          if (hazards) {
+          if (hazards && hasLos) {
             hazards.push({
               kind: 'bomb',
               x: bx,
@@ -1241,92 +1242,114 @@
               vfxKey: prof.specialVfx || prof.meleeVfx || 'pvfx_big_explosion',
               status: prof.status || { kind: 'burn', dur: 1.6, tickDmg: 2 }
             });
+            spawnStrikeVfx(game, prof.windupVfx || 'pvfx_smoke_bomb', e.x, e.y - 8, dAng, 0.75);
+            if (game.spawnParticles) game.spawnParticles(bx, by, '#ffab40', 8);
+            if (Balaclava.Audio) Balaclava.Audio.play('magic');
           }
-          spawnStrikeVfx(game, prof.windupVfx || 'pvfx_smoke_bomb', e.x, e.y - 8, dAng, 0.75);
-          if (game.spawnParticles) game.spawnParticles(bx, by, '#ffab40', 8);
-          if (Balaclava.Audio) Balaclava.Audio.play('magic');
           e.state = 'chase';
           e.specialAtkCd = 3.1 + Math.random() * 1.6;
         } else if (e.attackKind === 'burrow') {
-          e.state = 'burrow';
-          e.burrowTimer = 0.85;
-          e._burrowed = true;
-          e._burrowPuffCd = 0;
-          spawnStrikeVfx(game, prof.windupVfx || 'pvfx_dust_puff', e.x, e.y, 0, 0.95);
-          if (Balaclava.Audio) Balaclava.Audio.play('hit');
+          if (hasLos) {
+            e.state = 'burrow';
+            e.burrowTimer = 0.85;
+            e._burrowed = true;
+            e._burrowPuffCd = 0;
+            spawnStrikeVfx(game, prof.windupVfx || 'pvfx_dust_puff', e.x, e.y, 0, 0.95);
+            if (Balaclava.Audio) Balaclava.Audio.play('hit');
+          } else {
+            e.state = 'chase';
+            e.specialAtkCd = 1.6;
+          }
         } else if (e.attackKind === 'beam') {
-          e._beamProgress = 0;
-          const raySin = Math.sin(dAng);
-          const rayCos = Math.cos(dAng);
-          for (let step = 52; step <= 235; step += 62) {
-            spawnStrikeVfx(game, prof.specialVfx || 'pvfx_arcane_beam', e.x + rayCos * step, e.y + raySin * step, dAng, 0.82);
+          if (hasLos) {
+            e._beamProgress = 0;
+            const raySin = Math.sin(dAng);
+            const rayCos = Math.cos(dAng);
+            for (let step = 52; step <= 235; step += 62) {
+              const bx = e.x + rayCos * step;
+              const by = e.y + raySin * step;
+              if (ctx.isDungeon && ctx.hasLos && !ctx.hasLos(e.x, e.y, bx, by)) break;
+              spawnStrikeVfx(game, prof.specialVfx || 'pvfx_arcane_beam', bx, by, dAng, 0.82);
+            }
+            const fwd = (px - e.x) * rayCos + (py - e.y) * raySin;
+            const perp = Math.abs((px - e.x) * raySin - (py - e.y) * rayCos);
+            if (fwd >= -10 && fwd <= 255 && perp <= 24) {
+              game.damagePlayer(Math.max(4, Math.round((e.dmg || 10) * 1.25)), { isMagic: true, status: prof.status || null });
+            }
+            fireMobVolley(game, e, dAng, { count: 1, dmgMult: 0.78, speedMult: 1.15 });
+            if (game.shake) game.shake(0.12, 3);
           }
-          const fwd = (px - e.x) * rayCos + (py - e.y) * raySin;
-          const perp = Math.abs((px - e.x) * raySin - (py - e.y) * rayCos);
-          if (fwd >= -10 && fwd <= 255 && perp <= 24) {
-            game.damagePlayer(Math.max(4, Math.round((e.dmg || 10) * 1.25)), { isMagic: true, status: prof.status || null });
-          }
-          fireMobVolley(game, e, dAng, { count: 1, dmgMult: 0.78, speedMult: 1.15 });
-          if (game.shake) game.shake(0.12, 3);
           e.state = 'chase';
           e.specialAtkCd = 3.3 + Math.random() * 1.5;
         } else if (e.attackKind === 'blink') {
-          spawnStrikeVfx(game, prof.windupVfx || 'pvfx_blink_out', e.x, e.y, 0, 0.85);
-          let blinked = false;
-          const baseAng = Math.random() * Math.PI * 2;
-          for (let attempt = 0; attempt < 8; attempt++) {
-            const ta = baseAng + (attempt / 8) * Math.PI * 2;
-            const tr = 115 + (attempt % 2) * 35;
-            const tx = px + Math.cos(ta) * tr;
-            const ty = py + Math.sin(ta) * tr;
-            if (!canWalkPx || canWalkPx(tx, ty)) {
-              e.x = tx;
-              e.y = ty;
-              blinked = true;
-              break;
+          if (hasLos) {
+            spawnStrikeVfx(game, prof.windupVfx || 'pvfx_blink_out', e.x, e.y, 0, 0.85);
+            let blinked = false;
+            const baseAng = Math.random() * Math.PI * 2;
+            for (let attempt = 0; attempt < 8; attempt++) {
+              const ta = baseAng + (attempt / 8) * Math.PI * 2;
+              const tr = 115 + (attempt % 2) * 35;
+              const tx = px + Math.cos(ta) * tr;
+              const ty = py + Math.sin(ta) * tr;
+              const tileOk = !canWalkPx || canWalkPx(tx, ty);
+              const losOk = !ctx.isDungeon || !ctx.hasLos || (ctx.hasLos(e.x, e.y, tx, ty) && ctx.hasLos(tx, ty, px, py));
+              if (tileOk && losOk) {
+                e.x = tx;
+                e.y = ty;
+                blinked = true;
+                break;
+              }
+            }
+            if (blinked) spawnStrikeVfx(game, prof.specialVfx || 'pvfx_teleport_in', e.x, e.y, 0, 0.9);
+            if (!ctx.isDungeon || !ctx.hasLos || ctx.hasLos(e.x, e.y, px, py)) {
+              fireMobVolley(game, e, Math.atan2(py - e.y, px - e.x), { dmgMult: 0.95 });
             }
           }
-          if (blinked) spawnStrikeVfx(game, prof.specialVfx || 'pvfx_teleport_in', e.x, e.y, 0, 0.9);
-          fireMobVolley(game, e, Math.atan2(py - e.y, px - e.x), { dmgMult: 0.95 });
           e.state = 'chase';
           e.specialAtkCd = 3.2 + Math.random() * 1.6;
         } else if (e.attackKind === 'spore') {
-          spawnStrikeVfx(game, prof.specialVfx || 'aw_poison_splash', e.x, e.y, 0, 1.05);
-          if (d < 72) executeMeleeStrike(game, e, dAng, 1.18);
-          if (prof.proj) fireMobVolley(game, e, dAng, { dmgMult: 0.82 });
-          if (prof.leavesPool && hazards) {
-            hazards.push({
-              kind: 'pool',
-              x: e.x,
-              y: e.y,
-              timer: 0,
-              duration: 3.0,
-              radius: 44,
-              dmg: Math.max(6, Math.round((e.dmg || 10) * 0.9)),
-              color: prof.poolColor || '#8bc34a',
-              fillColor: 'rgba(139, 195, 74, 0.24)',
-              vfxKey: prof.specialVfx || 'aw_poison_splash',
-              status: prof.status || { kind: 'poison', dur: 2.0, tickDmg: 3 }
-            });
+          if (hasLos) {
+            spawnStrikeVfx(game, prof.specialVfx || 'aw_poison_splash', e.x, e.y, 0, 1.05);
+            if (d < 72) executeMeleeStrike(game, e, dAng, 1.18);
+            if (prof.proj) fireMobVolley(game, e, dAng, { dmgMult: 0.82 });
+            if (prof.leavesPool && hazards) {
+              hazards.push({
+                kind: 'pool',
+                x: e.x,
+                y: e.y,
+                timer: 0,
+                duration: 3.0,
+                radius: 44,
+                dmg: Math.max(6, Math.round((e.dmg || 10) * 0.9)),
+                color: prof.poolColor || '#8bc34a',
+                fillColor: 'rgba(139, 195, 74, 0.24)',
+                vfxKey: prof.specialVfx || 'aw_poison_splash',
+                status: prof.status || { kind: 'poison', dur: 2.0, tickDmg: 3 }
+              });
+            }
           }
           e.state = 'chase';
           e.specialAtkCd = 3.4 + Math.random() * 1.6;
         } else if (e.attackKind === 'cleave') {
-          spawnStrikeVfx(game, prof.specialVfx || prof.meleeVfx || 'aw_slash_heavy', e.x + Math.cos(dAng) * 20, e.y + Math.sin(dAng) * 20, dAng, 0.95);
-          if (d < 62) {
-            executeMeleeStrike(game, e, dAng, 1.25);
-          } else if (Balaclava.Audio) {
-            Balaclava.Audio.play(prof.audio || 'slash');
+          if (hasLos) {
+            spawnStrikeVfx(game, prof.specialVfx || prof.meleeVfx || 'aw_slash_heavy', e.x + Math.cos(dAng) * 20, e.y + Math.sin(dAng) * 20, dAng, 0.95);
+            if (d < 62) {
+              executeMeleeStrike(game, e, dAng, 1.25);
+            } else if (Balaclava.Audio) {
+              Balaclava.Audio.play(prof.audio || 'slash');
+            }
           }
           e.state = 'chase';
           e.specialAtkCd = 2.8 + Math.random() * 1.4;
         } else if (e.attackKind === 'miniboss_fan') {
-          const fanCount = e.eliteVariant ? 5 : 4;
-          fireMobVolley(game, e, Math.atan2(py - e.y, px - e.x), { count: fanCount, spread: 0.24, dmgMult: 0.9, speedMult: 1.08 });
+          if (hasLos) {
+            const fanCount = e.eliteVariant ? 5 : 4;
+            fireMobVolley(game, e, Math.atan2(py - e.y, px - e.x), { count: fanCount, spread: 0.24, dmgMult: 0.9, speedMult: 1.08 });
+          }
           e.state = 'chase';
           e.specialAtkCd = 2.6 + Math.random() * 1.2;
         } else if (e.attackKind === 'miniboss_pillars') {
-          if (hazards) {
+          if (hazards && hasLos) {
             const pillarVfx = (ctx.bossTheme && ctx.bossTheme.pillarVfx) || prof.pillarVfx || prof.specialVfx || 'pvfx_fire_pillar';
             const pillarCol = (ctx.bossTheme && ctx.bossTheme.color) || e.color || '#ff7043';
             for (let k = 0; k < 2; k++) {
@@ -1334,7 +1357,7 @@
               const radOff = k === 0 ? 12 : 68;
               const zx = px + Math.cos(angOff) * radOff;
               const zy = py + Math.sin(angOff) * radOff;
-              if (!canWalkPx || canWalkPx(zx, zy)) {
+              if ((!canWalkPx || canWalkPx(zx, zy)) && (!ctx.isDungeon || !ctx.hasLos || ctx.hasLos(e.x, e.y, zx, zy))) {
                 hazards.push({
                   kind: 'pillar',
                   x: zx,
@@ -1350,8 +1373,8 @@
                 });
               }
             }
+            spawnStrikeVfx(game, prof.windupVfx || 'pvfx_magic_circle', e.x, e.y, 0, 0.9);
           }
-          spawnStrikeVfx(game, prof.windupVfx || 'pvfx_magic_circle', e.x, e.y, 0, 0.9);
           e.state = 'chase';
           e.specialAtkCd = 3.0 + Math.random() * 1.3;
         } else {
@@ -1453,7 +1476,7 @@
       const ang = Math.atan2(py - e.y, px - e.x);
       e.facing = Math.cos(ang) >= 0 ? 1 : -1;
 
-      if (e.isMiniBoss && e.specialAtkCd <= 0 && d < 320) {
+      if (hasLos && e.isMiniBoss && e.specialAtkCd <= 0 && d < 320) {
         const roll = Math.random();
         e.state = 'windup';
         e.windupMax = 0.55;
@@ -1465,7 +1488,7 @@
         else if (roll < 0.62 && ctx.isDungeon && hazards) e.attackKind = 'miniboss_pillars';
         else if (roll < 0.82 && d < 220) e.attackKind = 'leap';
         else e.attackKind = 'dash';
-      } else if (!e.isMiniBoss && e.specialAtkCd <= 0) {
+      } else if (hasLos && !e.isMiniBoss && e.specialAtkCd <= 0) {
         const b = prof.behavior;
         if (b === 'bomber' && d > 48 && d < 250 && hazards) {
           e.state = 'windup'; e.attackKind = 'bomb'; e.windupMax = 0.50; e.windupTimer = 0.50; e.targetX = px; e.targetY = py;
@@ -1503,12 +1526,12 @@
             moveVx = Math.cos(strafeAng) * e.speed * 0.45;
             moveVy = Math.sin(strafeAng) * e.speed * 0.45;
           }
-          if (e.atkCd <= 0) {
+          if (hasLos && e.atkCd <= 0) {
             e.atkCd = prof.behavior === 'ranged_fan' ? 2.15 : 1.75;
             fireMobVolley(game, e, ang);
           }
         } else {
-          if (prof.proj && d > 95 && d < 210 && e.atkCd <= 0 && !e.ranged) {
+          if (hasLos && prof.proj && d > 95 && d < 210 && e.atkCd <= 0 && !e.ranged) {
             e.atkCd = 2.5;
             fireMobVolley(game, e, ang, { count: 1, dmgMult: 0.75 });
           }
@@ -1521,7 +1544,7 @@
           moveVy = Math.sin(finalAng) * spd;
         }
 
-        if (d < (e.isMiniBoss ? 40 : 29) && e.atkCd <= 0 && e.state === 'chase') {
+        if (hasLos && d < (e.isMiniBoss ? 40 : 29) && e.atkCd <= 0 && e.state === 'chase') {
           e.atkCd = e.earlyZoneMob ? 1.24 : 0.98;
           executeMeleeStrike(game, e, ang, e.isMiniBoss ? 1.12 : 1.0);
           if (prof.leavesPool && hazards && Math.random() < 0.4) {
@@ -1846,6 +1869,20 @@
 
     damageEnemy(game, enemy, rawDmg, knockAng = 0, isCrit = false, allowProc = true) {
       if (!enemy || enemy._dead || enemy.hp <= 0) return false;
+      if (allowProc && game && game.activeDungeon) {
+        const dung = game.activeDungeon;
+        if (enemy.isBoss && !dung.bossLocked) {
+          if ((game.time - (game._lastBossLockWarn || -99)) >= 1.5) {
+            game._lastBossLockWarn = game.time;
+            game.addFloatingText(enemy.x, enemy.y - 36, '¡Entra a la sala del Jefe!', '#ffd54f');
+          }
+          game.spawnParticles(enemy.x, enemy.y, '#90a4ae', 4);
+          return false;
+        }
+        if (typeof dung.hasLineOfSight === 'function' && !dung.hasLineOfSight(game.player.x, game.player.y, enemy.x, enemy.y)) {
+          return false;
+        }
+      }
       let dmg = rawDmg;
       if ((enemy.isBoss || enemy.isMiniBoss) && (game.mods.bossDmg || game.mods.bossDmgBonus)) {
         dmg = Math.round(dmg * (1 + (game.mods.bossDmg || 0) + (game.mods.bossDmgBonus || 0)));
@@ -1977,6 +2014,9 @@
         const dung = game.activeDungeon;
         dung.boss = null;
         dung.completed = true;
+        if (typeof dung.unlockBossGateAfterVictory === 'function') {
+          dung.unlockBossGateAfterVictory();
+        }
         if (!game.clearedDungeons.includes(dung.id)) {
           game.clearedDungeons.push(dung.id);
         }

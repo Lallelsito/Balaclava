@@ -312,7 +312,10 @@
       espinas_tierra: { name: 'Telluric Spikes', desc: 'Erupts stone spikes at the cursor that pierce and briefly root enemies.' },
       daga_veneno: { name: 'Venom Fan', desc: 'Throws 3 ethereal daggers in a fan that poison and deal damage over time.' },
       drenaje_mana: { name: 'Vital Siphon', desc: 'Drains essence from nearby foes, healing you and restoring energy per target.' },
-      lluvia_meteoros: { name: 'Meteor Shower', desc: 'Calls down 3 devastating meteors over the cursor area causing massive blasts.' }
+      lluvia_meteoros: { name: 'Meteor Shower', desc: 'Calls down 3 devastating meteors over the cursor area causing massive blasts.' },
+      lluvia_minerales: { name: 'Mineral Surge', desc: 'Spawns abundant ore veins and crystals across all your unlocked islands (70s cooldown).' },
+      llamado_horda: { name: 'Call of the Horde', desc: 'Summons a wave of hostile monsters across your islands for combat loot and XP (70s cooldown).' },
+      llamado_fauna: { name: 'Call of the Wild', desc: 'Summons abundant passive animals (sheep, cows, pigs, rabbits, ducks) across your islands (70s cooldown).' }
     },
 
     dungeons: {
@@ -1650,6 +1653,9 @@
       grimorio_daga_veneno: { name: 'Grimoire: Venom Fan', desc: 'Shadow codex of arcane assassins.', uses: 'Use to learn Venom Fan (3 poison daggers)', source: 'Sorcery Table / Dark Forest' },
       grimorio_drenaje_mana: { name: 'Grimoire: Vital Siphon', desc: 'Forbidden tome bound in living shadow.', uses: 'Use to learn Vital Siphon (drains HP & Energy)', source: 'Sorcery Table / Necropolis' },
       grimorio_lluvia_meteoros: { name: 'Grimoire: Meteor Shower', desc: 'The most destructive star spell in Albion.', uses: 'Use to learn Meteor Shower (fiery cataclysm)', source: 'Sorcery Table / Ashen Throne' },
+      grimorio_lluvia_minerales: { name: 'Grimoire: Mineral Surge', desc: 'Telluric codex saturating your islands with fresh ore veins.', uses: 'Use to learn Mineral Surge (spawns many minerals)', source: 'Sorcery Table' },
+      grimorio_llamado_horda: { name: 'Grimoire: Call of the Horde', desc: 'Shadow scroll summoning waves of monsters across your islands.', uses: 'Use to learn Call of the Horde (spawns hostile mobs)', source: 'Sorcery Table' },
+      grimorio_llamado_fauna: { name: 'Grimoire: Call of the Wild', desc: 'Sylvan tome gathering peaceful herds across your islands.', uses: 'Use to learn Call of the Wild (spawns passive mobs)', source: 'Sorcery Table' },
       daga_hierro: { name: 'Iron Dagger', desc: 'Short balanced blade for relentless thrusts.', uses: 'Ultra-fast attacks (20 dmg, +14% Crit)', source: 'Forge / Anvil' },
       daga_acero: { name: 'Shadow Steel Dagger', desc: 'Tempered in coal dust for lethal precision.', uses: 'Deadly edge (42 dmg, +20% Crit & rapid pace)', source: 'Forge / Runic Anvil' },
       daga_oro: { name: 'Ceremonial Golden Dagger', desc: 'Gleams beneath catacomb torches.', uses: 'Swift golden strikes (58 dmg, +24% Crit)', source: 'Pyramids / Runic Anvil' },
