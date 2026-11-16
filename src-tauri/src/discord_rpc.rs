@@ -80,7 +80,7 @@ fn truncate_str(s: &str, max_chars: usize) -> Option<String> {
 fn default_boot_payload() -> RpcActivityPayload {
     RpcActivityPayload {
         details: Some("En el menú principal".to_string()),
-        state: Some("Balaclava · Beta 1.0.0".to_string()),
+        state: Some("Balaclava · Beta 1.0.1".to_string()),
         start_timestamp: Some(unix_now_secs()),
         large_image: Some("balaclava_logo".to_string()),
         large_text: Some("Balaclava".to_string()),

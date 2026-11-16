@@ -5,6 +5,7 @@
   const Balaclava = (window.Balaclava = window.Balaclava || {});
 
   const DISCORD_INVITE_URL = 'https://discord.gg/8wrsjRSMY2';
+  const APP_VERSION_LABEL = 'Beta 1.0.1';
   const SESSION_START_SEC = Math.floor(Date.now() / 1000);
   const MIN_PUSH_INTERVAL_MS = 1200;
   const POLL_INTERVAL_MS = 2500;
@@ -98,10 +99,10 @@
     if (!game || !game.started) {
       return {
         details: isEn ? 'In the Main Menu' : 'En el menú principal',
-        state: isEn ? 'Preparing an expedition · Beta 1.0.0' : 'Preparando expedición · Beta 1.0.0',
+        state: isEn ? `Preparing an expedition · ${APP_VERSION_LABEL}` : `Preparando expedición · ${APP_VERSION_LABEL}`,
         startTimestamp: SESSION_START_SEC,
         largeImage: 'balaclava_logo',
-        largeText: 'Balaclava · Beta 1.0.0',
+        largeText: `Balaclava · ${APP_VERSION_LABEL}`,
         smallImage: null,
         smallText: null,
         buttons: buildButtons(lang),
@@ -122,7 +123,7 @@
           : `Reapareciendo en campamento · Nv.${lvl}`,
         startTimestamp: SESSION_START_SEC,
         largeImage: 'balaclava_logo',
-        largeText: 'Balaclava · Beta 1.0.0',
+        largeText: `Balaclava · ${APP_VERSION_LABEL}`,
         smallImage: null,
         smallText: null,
         buttons: buildButtons(lang),
@@ -167,7 +168,7 @@
         state,
         startTimestamp: SESSION_START_SEC,
         largeImage: 'balaclava_logo',
-        largeText: 'Balaclava · Beta 1.0.0',
+        largeText: `Balaclava · ${APP_VERSION_LABEL}`,
         smallImage: dungBiome,
         smallText: dungName,
         buttons: buildButtons(lang),
@@ -201,7 +202,7 @@
       state,
       startTimestamp: SESSION_START_SEC,
       largeImage: 'balaclava_logo',
-      largeText: 'Balaclava · Beta 1.0.0',
+      largeText: `Balaclava · ${APP_VERSION_LABEL}`,
       smallImage: biome.id,
       smallText: biome.name,
       buttons: buildButtons(lang),

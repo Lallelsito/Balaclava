@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Balaclava Beta 1.0.0",
+        "title": "Balaclava Beta 1.0.1",
         "width": 800,
         "height": 600,
         "resizable": true,
