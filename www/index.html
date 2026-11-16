@@ -262,6 +262,28 @@
     </div>
   </div>
 
+  <!-- Native Windows GSMTC Media Overlay -->
+  <div id="media-overlay" class="media-overlay is-idle" style="display: none;" role="region" aria-label="Reproductor multimedia">
+    <div class="media-overlay-icon" aria-hidden="true">
+      <svg class="media-note-svg" viewBox="0 0 16 16" width="15" height="15" shape-rendering="crispEdges">
+        <rect x="7" y="2" width="2" height="9" fill="currentColor" />
+        <rect x="9" y="2" width="4" height="2" fill="currentColor" />
+        <rect x="11" y="4" width="2" height="2" fill="currentColor" />
+        <rect x="4" y="9" width="5" height="4" fill="currentColor" />
+        <rect x="5" y="13" width="3" height="1" fill="currentColor" />
+      </svg>
+    </div>
+    <div class="media-overlay-meta">
+      <div id="media-overlay-title" class="media-overlay-title">Sin reproducción</div>
+      <div id="media-overlay-artist" class="media-overlay-artist"></div>
+    </div>
+    <div class="media-overlay-controls">
+      <button id="btn-media-prev" class="media-ctrl-btn" type="button" title="Canción anterior" aria-label="Canción anterior">&#x23EE;&#xFE0E;</button>
+      <button id="btn-media-play" class="media-ctrl-btn media-ctrl-main" type="button" title="Reproducir / Pausar" aria-label="Reproducir / Pausar">&#x23EF;&#xFE0E;</button>
+      <button id="btn-media-next" class="media-ctrl-btn" type="button" title="Siguiente canción" aria-label="Siguiente canción">&#x23ED;&#xFE0E;</button>
+    </div>
+  </div>
+
   <!-- Death Overlay (Full-Screen Pixel Art Sanctuary Panorama + Crisp Pixel HUD) -->
   <div id="death-overlay" class="death-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="death-title">
     <canvas id="death-pixel-canvas" class="death-pixel-canvas" width="640" height="360"></canvas>
@@ -355,6 +377,7 @@
   <script defer src="src/systems/tutorial.js"></script>
   <script defer src="src/systems/save.js"></script>
   <script defer src="src/systems/discord_rpc.js"></script>
+  <script defer src="src/systems/media_overlay.js"></script>
   <script defer src="src/engine/game.js"></script>
   <script defer src="src/ui/ui.js"></script>
   <script defer src="src/main.js"></script>

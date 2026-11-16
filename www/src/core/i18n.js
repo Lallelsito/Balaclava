@@ -181,6 +181,13 @@
       'settings.particles': 'Particles',
       'settings.floatingText': 'Damage Numbers',
       'settings.showHitbox': 'Target Outline',
+      'settings.mediaOverlay': 'Media Player (Overlay)',
+      'settings.mediaOverlayDesc': 'Shows current Windows song and playback controls in a corner',
+      'media.noPlayback': 'No playback',
+      'media.unknownTrack': 'Playing',
+      'media.prev': 'Previous track',
+      'media.playPause': 'Play / Pause',
+      'media.next': 'Next track',
       'settings.controlsHeader': 'Keybindings (Click to rebind)',
       'settings.controlsTip': 'Numbers [1]-[0] switch hotbar tools · Click/Hold acts · Right-click cancels',
       'settings.pressKey': 'Press key...',
@@ -1305,6 +1312,13 @@
       'settings.particles': 'Partículas',
       'settings.floatingText': 'Números',
       'settings.showHitbox': 'Marco Objetivo',
+      'settings.mediaOverlay': 'Reproductor multimedia (Overlay)',
+      'settings.mediaOverlayDesc': 'Muestra la canción actual de Windows y controles en una esquina',
+      'media.noPlayback': 'Sin reproducción',
+      'media.unknownTrack': 'Reproduciendo',
+      'media.prev': 'Canción anterior',
+      'media.playPause': 'Reproducir / Pausar',
+      'media.next': 'Siguiente canción',
       'settings.controlsHeader': 'Controles (Clic para reasignar)',
       'settings.controlsTip': 'Números [1]-[0] cambian herramienta · Clic/Mantener actúa · Clic derecho cancela',
       'settings.pressKey': 'Pulsa tecla...',
@@ -2687,6 +2701,9 @@
     }
     applyCatalogLanguage(normalized);
     applyDomTranslations(document);
+    if (Balaclava.MediaOverlay && typeof Balaclava.MediaOverlay.syncLanguage === 'function') {
+      Balaclava.MediaOverlay.syncLanguage();
+    }
 
     if (UI) {
       const titleScreen = document.getElementById('title-screen');

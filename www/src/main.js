@@ -60,9 +60,12 @@
     }
     resize();
 
-    // 3. Inicializar Interfaz y Discord Rich Presence
+    // 3. Inicializar Interfaz, Discord Rich Presence y Media Overlay
     Balaclava.UI.init(game);
     if (typeof Balaclava.initDiscord === 'function') Balaclava.initDiscord();
+    if (Balaclava.MediaOverlay && typeof Balaclava.MediaOverlay.init === 'function') {
+      Balaclava.MediaOverlay.init();
+    }
 
     const onFullscreenChange = () => {
       scheduleResizeSync();

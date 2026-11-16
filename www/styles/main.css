@@ -6843,6 +6843,216 @@ body:is(.ui-scale-22, .ui-scale-44) .hud-controls-helper {
   color: #6b7894;
 }
 
+/* === NATIVE WINDOWS GSMTC MEDIA OVERLAY === */
+#media-overlay {
+  position: fixed;
+  top: calc(10px * var(--ui-scale, 1));
+  right: calc(136px * var(--ui-scale, 1) + 6px);
+  bottom: auto;
+  z-index: 46;
+  width: 224px;
+  max-width: calc(100vw - 28px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: rgba(14, 18, 30, 0.84);
+  border: 1px solid rgba(208, 178, 114, 0.36);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  font-family: 'BalaclavaPixel', monospace;
+  font-weight: normal;
+  color: #f4efe6;
+  pointer-events: auto;
+  user-select: none;
+  image-rendering: pixelated;
+  transition: opacity 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+#title-screen:not(.hidden) ~ #media-overlay {
+  top: 16px;
+  right: 16px;
+  bottom: auto;
+  width: 244px;
+}
+
+#media-overlay.is-idle {
+  opacity: 0.56;
+  border-color: rgba(120, 142, 178, 0.28);
+}
+
+#media-overlay.is-idle:hover {
+  opacity: 0.82;
+}
+
+#media-overlay.is-playing {
+  border-color: rgba(255, 213, 79, 0.5);
+  background: rgba(16, 21, 35, 0.88);
+}
+
+.media-overlay-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffd54f;
+  background: rgba(255, 213, 79, 0.08);
+  border: 1px solid rgba(255, 213, 79, 0.25);
+  border-radius: 4px;
+}
+
+#media-overlay.is-idle .media-overlay-icon {
+  color: #8d9eb8;
+  background: rgba(141, 158, 184, 0.08);
+  border-color: rgba(141, 158, 184, 0.2);
+}
+
+.media-note-svg {
+  display: block;
+}
+
+.media-overlay-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+
+.media-overlay-title {
+  font-size: 13px;
+  line-height: 1.15;
+  color: #fff6e6;
+  text-shadow: 1px 1px 0 #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#media-overlay.is-idle .media-overlay-title {
+  color: #a9b8cf;
+}
+
+.media-overlay-artist {
+  font-size: 11px;
+  line-height: 1.1;
+  color: #9eb7d8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.media-overlay-artist:empty {
+  display: none;
+}
+
+.media-overlay-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.media-ctrl-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(24, 31, 52, 0.9);
+  border: 1px solid rgba(208, 178, 114, 0.32);
+  border-radius: 4px;
+  color: #e6ecf8;
+  font-family: 'Segoe UI Symbol', 'BalaclavaPixel', monospace;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.media-ctrl-btn:hover {
+  background: rgba(42, 54, 86, 0.96);
+  border-color: #ffd54f;
+  color: #ffd54f;
+}
+
+.media-ctrl-btn:active {
+  transform: translateY(1px);
+}
+
+.media-ctrl-btn.media-ctrl-main {
+  color: #ffd54f;
+}
+
+/* Settings toggle row for Reproductor multimedia (Overlay) */
+.media-setting-block {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.media-overlay-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  background: rgba(12, 16, 26, 0.88);
+  border: 1px solid #3c5478;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.media-overlay-setting-row:hover {
+  border-color: rgba(255, 213, 79, 0.65);
+}
+
+.media-setting-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.media-setting-title {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 15px;
+  color: #eef4ff;
+  text-shadow: 0 1px 0 #0c1220;
+}
+
+.media-setting-sub {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 11px;
+  color: #93accb;
+}
+
+.media-setting-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pixel-check-switch {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.pixel-check-switch:focus-visible + .setting-toggle-img {
+  outline: 2px solid #ffd54f;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+
 
 
 

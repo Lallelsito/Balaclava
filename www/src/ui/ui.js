@@ -8555,6 +8555,40 @@
               style: 'text-align: right; margin-top: 5px; font-size: 13px; color: #a8c2db; font-style: italic;'
             }, tr(curTheme.descKey))
           ]);
+        })(),
+        (() => {
+          const mediaOn = Balaclava.MediaOverlay && typeof Balaclava.MediaOverlay.isEnabled === 'function'
+            ? Balaclava.MediaOverlay.isEnabled()
+            : true;
+          const chk = this.el('input', {
+            id: 'chk-media-overlay',
+            type: 'checkbox',
+            class: 'pixel-check-switch',
+            checked: mediaOn ? 'checked' : null,
+            onchange: (e) => {
+              const checked = !!e.target.checked;
+              if (Balaclava.MediaOverlay && typeof Balaclava.MediaOverlay.setEnabled === 'function') {
+                Balaclava.MediaOverlay.setEnabled(checked);
+              }
+              this.renderModal();
+            }
+          });
+          return this.el('div', { class: 'media-setting-block' }, [
+            this.el('label', { class: 'media-overlay-setting-row', for: 'chk-media-overlay' }, [
+              this.el('span', { class: 'media-setting-label-wrap' }, [
+                this.el('span', { class: 'media-setting-title' }, tr('settings.mediaOverlay')),
+                this.el('span', { class: 'media-setting-sub' }, tr('settings.mediaOverlayDesc'))
+              ]),
+              this.el('span', { class: 'media-setting-control' }, [
+                chk,
+                this.el('img', {
+                  class: 'setting-toggle-img',
+                  src: mediaOn ? Balaclava.UI_URLS.toggleOn : Balaclava.UI_URLS.toggleOff,
+                  alt: mediaOn ? tr('common.on') : tr('common.off')
+                })
+              ])
+            ])
+          ]);
         })()
       ]);
     }
