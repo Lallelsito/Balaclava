@@ -1713,17 +1713,32 @@
       const center = Balaclava.CONST.CENTER_PLOT || 4;
       const plotDist = Math.hypot(plot[0] - center, plot[1] - center);
       const pLv = Math.max(1, (game.player && game.player.level) || 1);
-      const lvExtra = pLv - 1;
       const biomeTierMap = { pradera: 0, desierto: 1, montanas_heladas: 2, bosque_oscuro: 3, tierras_volcanicas: 4 };
       const biomeTier = biomeTierMap[biome] || 0;
-      const biomeMinLv = biomeTier === 0 ? 1 : (biomeTier === 1 ? 3 : 1 + biomeTier * 4);
-      const distWeight = biomeTier === 0 ? 1.15 : (biomeTier === 1 ? 1.55 : 2.0);
-      const dangerLv = Math.max(biomeMinLv, Math.round(1 + plotDist * distWeight + biomeTier * 1.5 + lvExtra * 0.85));
+
+      const ranges = (Balaclava.CONST && Balaclava.CONST.BIOME_LEVEL_RANGES) || {
+        pradera: [1, 15],
+        desierto: [16, 45],
+        montanas_heladas: [46, 95],
+        bosque_oscuro: [96, 150],
+        tierras_volcanicas: [151, 200]
+      };
+      const [minLv, maxLv] = ranges[biome] || [1, 15];
+      const pProg = clamp(((pLv - 1) / 30) + (plotDist / 5) * 0.4, 0, 1);
+      const dangerLv = clamp(Math.round(minLv + pProg * (maxLv - minLv)), minLv, Math.min(200, maxLv));
       const effLv = Math.max(0, dangerLv - 1);
-      let hpScale = 1 + effLv * 0.36 + Math.pow(effLv, 1.32) * 0.06;
-      let dmgScale = 1 + effLv * 0.11 + Math.pow(effLv, 1.1) * 0.025;
-      let spdScale = 1 + Math.min(0.55, effLv * 0.018 + biomeTier * 0.04);
+      let hpScale = 1 + effLv * 0.28 + Math.pow(effLv, 1.25) * 0.05;
+      let dmgScale = 1 + effLv * 0.09 + Math.pow(effLv, 1.08) * 0.02;
+      let spdScale = 1 + Math.min(0.55, effLv * 0.015 + biomeTier * 0.04);
       const xpScale = 1 + effLv * 0.28 + Math.pow(effLv, 1.2) * 0.05;
+
+      // 5-6x difficulty target for Biome 3+ (Montañas Heladas, Bosque Sombrío, Tierras Volcánicas)
+      if (biomeTier >= 2) {
+        const biomeMult = biomeTier === 2 ? 5.2 : biomeTier === 3 ? 5.6 : 6.0;
+        hpScale *= biomeMult;
+        dmgScale *= (biomeMult * 0.85);
+        spdScale *= 1.15;
+      }
 
       // Keep early biomes (pradera / desierto) gentler at night and starter days approachable
       const earlyZoneMob = biomeTier <= 1;
@@ -2017,8 +2032,15 @@
         if (typeof dung.unlockBossGateAfterVictory === 'function') {
           dung.unlockBossGateAfterVictory();
         }
-        if (!game.clearedDungeons.includes(dung.id)) {
-          game.clearedDungeons.push(dung.id);
+        if (dung.isCorrupted) {
+          if (!Array.isArray(game.corruptedClearedDungeons)) game.corruptedClearedDungeons = [];
+          if (!game.corruptedClearedDungeons.includes(dung.id)) {
+            game.corruptedClearedDungeons.push(dung.id);
+          }
+        } else {
+          if (!game.clearedDungeons.includes(dung.id)) {
+            game.clearedDungeons.push(dung.id);
+          }
         }
         game.addCoins(enemy.coins);
         game.gainXp(enemy.xp);

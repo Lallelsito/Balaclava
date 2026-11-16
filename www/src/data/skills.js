@@ -720,6 +720,42 @@
       baseDamage: 0,
       color: '#81c784',
       desc: 'Atrae abundantes animales pacíficos (ovejas, vacas, cerdos, conejos y patos) hacia tus islas.'
+    },
+    invocacion_minerales: {
+      id: 'invocacion_minerales',
+      name: 'Invocación Mineral',
+      icon: 'spell_lluvia_minerales',
+      element: 'tierra',
+      tier: 2,
+      cost: 35,
+      cooldown: 70.0,
+      baseDamage: 0,
+      color: '#ffd54f',
+      desc: 'Hace brotar multitud de vetas minerales y gemas por todas tus islas desbloqueadas (al estilo Forager).'
+    },
+    invocacion_monstruos: {
+      id: 'invocacion_monstruos',
+      name: 'Invocación Hostil',
+      icon: 'spell_llamado_horda',
+      element: 'sombra',
+      tier: 2,
+      cost: 32,
+      cooldown: 70.0,
+      baseDamage: 0,
+      color: '#ef5350',
+      desc: 'Invoca una horda de enemigos y monstruos oscuros por tus islas para recolectar botín de combate.'
+    },
+    invocacion_fauna: {
+      id: 'invocacion_fauna',
+      name: 'Invocación de Fauna',
+      icon: 'spell_llamado_fauna',
+      element: 'naturaleza',
+      tier: 2,
+      cost: 28,
+      cooldown: 70.0,
+      baseDamage: 0,
+      color: '#81c784',
+      desc: 'Invoca multitud de criaturas y mobs pacíficos en tus parcelas para esquilar y criar.'
     }
   };
 

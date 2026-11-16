@@ -183,7 +183,15 @@
     WORLD_TILES,
     WORLD_PX,
     BIOMES,
-    RARITIES
+    RARITIES,
+    MAX_ENEMY_LEVEL: 200,
+    BIOME_LEVEL_RANGES: {
+      pradera: [1, 15],
+      desierto: [16, 45],
+      montanas_heladas: [46, 95],
+      bosque_oscuro: [96, 150],
+      tierras_volcanicas: [151, 200]
+    }
   };
 
   Balaclava.Utils = {

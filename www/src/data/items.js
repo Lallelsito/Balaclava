@@ -366,6 +366,174 @@
       desc: 'Nada entre brasas fundidas sin quemarse.',
       icon: 'fish_lava'
     },
+    pez_dorado_solar: {
+      id: 'pez_dorado_solar', name: 'Pez Dorado Solar', category: 'comida', rarity: 'raro',
+      sellValue: 60, buyValue: 140, source: 'Pesca en oasis y costas del Desierto',
+      uses: 'Alta cocina y regeneración de resistencia',
+      desc: 'Escamas doradas que reflejan la luz del sol ardiente.',
+      healHp: 55, healEnergy: 70, icon: 'fish_gold'
+    },
+    esturion_glacial: {
+      id: 'esturion_glacial', name: 'Esturión Glacial Primordial', category: 'especiales', rarity: 'epico',
+      sellValue: 95, buyValue: 220, source: 'Pesca en aguas congeladas de Montañas Heladas',
+      uses: 'Platos maestros y tónicos de hielo',
+      desc: 'Pez acorazado con escamas duras como el permafrost.',
+      healHp: 75, healEnergy: 90, icon: 'fish_ice'
+    },
+    anguila_sombras: {
+      id: 'anguila_sombras', name: 'Anguila de las Sombras', category: 'especiales', rarity: 'epico',
+      sellValue: 90, buyValue: 210, source: 'Pesca nocturna en Bosque Oscuro',
+      uses: 'Alquimia arcana y preparación de venenos',
+      desc: 'Se desliza sin dejar rastro en aguas tenebrosas.',
+      healHp: 65, healEnergy: 85, icon: 'fish_shadow'
+    },
+    pez_fenix_magma: {
+      id: 'pez_fenix_magma', name: 'Pez Fénix de Magma', category: 'especiales', rarity: 'legendario',
+      sellValue: 150, buyValue: 350, source: 'Pesca legendaria en Tierras Volcánicas',
+      uses: 'Platos supremos y reactivos místicos',
+      desc: 'Emite un calor abrasador y renace en lava volcánica.',
+      healHp: 110, healEnergy: 130, icon: 'fish_phoenix'
+    },
+    pez_legendario_kraken: {
+      id: 'pez_legendario_kraken', name: 'Kraken Abisal Juvenil', category: 'especiales', rarity: 'legendario',
+      sellValue: 240, buyValue: 550, source: 'Pesca en anomalías y aguas profundas con Cebo Arcano',
+      uses: 'Trofeo marino supremo y elixires míticos',
+      desc: 'Criatura mítica temida por marineros de todos los biomas.',
+      healHp: 160, healEnergy: 180, icon: 'fish_legendary'
+    },
+    cebo_arcano: {
+      id: 'cebo_arcano', name: 'Cebo Arcano Magistral', category: 'especiales', rarity: 'epico',
+      sellValue: 45, buyValue: 110, source: 'Mesa de Alquimia (Cebo + Esencia Arcana)',
+      uses: 'Atrae peces legendarios con +80% probabilidad',
+      desc: 'Señuelo encantado con luminiscencia marina irresistible.',
+      icon: 'worm_bait'
+    },
+    cebo_volcanico: {
+      id: 'cebo_volcanico', name: 'Cebo Ígneo de Magma', category: 'especiales', rarity: 'epico',
+      sellValue: 50, buyValue: 120, source: 'Forja / Alquimia (Cebo + Esencia Magma)',
+      uses: 'Resiste la lava volcánica y atrae peces de fuego',
+      desc: 'Impregnado con azufre y núcleos de calor volcánico.',
+      icon: 'worm_bait'
+    },
+    sashimi_glacial: {
+      id: 'sashimi_glacial', name: 'Sashimi Glacial Sublime', category: 'comida', rarity: 'epico',
+      sellValue: 85, buyValue: 190, source: 'Cocina (Esturión Glacial + Algas + Hielo)',
+      uses: 'Restaura +95 HP y +110 Energía',
+      desc: 'Cortes finos y frescos servidos sobre escarcha marina pura.',
+      healHp: 95, healEnergy: 110, icon: 'fish_cooked'
+    },
+    estofado_marino_supremo: {
+      id: 'estofado_marino_supremo', name: 'Cazuela Imperial del Océano', category: 'comida', rarity: 'legendario',
+      sellValue: 140, buyValue: 310, source: 'Cocina (Pez Dorado Solar + Cangrejo + Trigo)',
+      uses: 'Restaura +150 HP y +150 Energía',
+      desc: 'Manjar de reyes elaborado con los mejores tesoros marinos.',
+      healHp: 150, healEnergy: 150, icon: 'stew'
+    },
+    brocheta_magma: {
+      id: 'brocheta_magma', name: 'Brocheta Ígnea de Fénix', category: 'comida', rarity: 'legendario',
+      sellValue: 160, buyValue: 360, source: 'Cocina (Pez Fénix + Carbón + Chile)',
+      uses: 'Restaura +180 HP y otorga inmunidad al frío temporal',
+      desc: 'Asado a temperaturas volcánicas extremas con sabor explosivo.',
+      healHp: 180, healEnergy: 160, icon: 'fish_cooked'
+    },
+    viga_madera: {
+      id: 'viga_madera', name: 'Viga de Madera Estructural', category: 'materiales', rarity: 'comun',
+      sellValue: 16, buyValue: 38, source: 'Aserradero (Tablón x4 + Lingote Hierro x1)',
+      uses: 'Construcción de edificios avanzados y refuerzos',
+      desc: 'Madero macizo ensamblado para sostener grandes estructuras.',
+      icon: 'wood_beam'
+    },
+    madera_refinada: {
+      id: 'madera_refinada', name: 'Madera Refinada y Barnizada', category: 'materiales', rarity: 'poco_comun',
+      sellValue: 28, buyValue: 65, source: 'Aserradero (Tablón x6 + Resina x2)',
+      uses: 'Muebles de precisión, máquinas y arcos superiores',
+      desc: 'Madera noble tratada contra la humedad y el desgaste.',
+      icon: 'wood_refined'
+    },
+    cuerda: {
+      id: 'cuerda', name: 'Cuerda Resistente', category: 'materiales', rarity: 'comun',
+      sellValue: 8, buyValue: 20, source: 'Telar (Fibra Vegetal x3)',
+      uses: 'Aparejos de pesca, puentes colgantes y arcos',
+      desc: 'Cordel trenzado de fibras duraderas de alta tensión.',
+      icon: 'rope'
+    },
+    tela_reforzada: {
+      id: 'tela_reforzada', name: 'Tela Reforzada', category: 'materiales', rarity: 'poco_comun',
+      sellValue: 32, buyValue: 75, source: 'Telar (Tela x3 + Cuero x2)',
+      uses: 'Armaduras de tela, capas y mochilas de expedición',
+      desc: 'Tejido denso reforzado con capas flexibles de cuero.',
+      icon: 'cloth_heavy'
+    },
+    armadura_tela: {
+      id: 'armadura_tela', name: 'Túnica de Tejedor Reforzada', category: 'armaduras', rarity: 'poco_comun',
+      equipSlot: 'armor', sellValue: 60, buyValue: 145, source: 'Telar (Tela Reforzada x4 + Lana x3)',
+      uses: 'Armadura ligera (+18 Defensa, +20 Energía)',
+      desc: 'Túnica artesanal flexible que facilita el movimiento y la magia.',
+      stats: { def: 18, maxEnergy: 20 }, icon: 'armor_cloth'
+    },
+    pantalones_cuero: {
+      id: 'pantalones_cuero', name: 'Pantalones de Cuero', category: 'armaduras', rarity: 'comun',
+      equipSlot: 'legs', sellValue: 25, buyValue: 60, source: 'Telar / Forja',
+      uses: 'Equipamiento inferior (+8 Defensa)',
+      desc: 'Pantalones resistentes cosidos a mano.',
+      stats: { def: 8 }, icon: 'armor_leather'
+    },
+    pantalones_hierro: {
+      id: 'pantalones_hierro', name: 'Pantalones de Hierro', category: 'armaduras', rarity: 'poco_comun',
+      equipSlot: 'legs', sellValue: 55, buyValue: 130, source: 'Forja',
+      uses: 'Equipamiento inferior (+22 Defensa)',
+      desc: 'Grebas de hierro forjado que protegen las piernas.',
+      stats: { def: 22 }, icon: 'armor_iron'
+    },
+    pantalones_acero: {
+      id: 'pantalones_acero', name: 'Pantalones de Acero Glacial', category: 'armaduras', rarity: 'raro',
+      equipSlot: 'legs', sellValue: 110, buyValue: 260, source: 'Forja / Yunque Rúnico',
+      uses: 'Equipamiento inferior (+42 Defensa, +10% Resistencia)',
+      desc: 'Placas templadas contra frío y golpes contundentes.',
+      stats: { def: 42, moveSpeed: 0.05 }, icon: 'armor_iron'
+    },
+    lingote_bronce: {
+      id: 'lingote_bronce', name: 'Lingote de Bronce Antiguo', category: 'minerales', rarity: 'comun',
+      sellValue: 24, buyValue: 58, source: 'Horno (Cobre x2 + Estaño x1)',
+      uses: 'Forja de herramientas tempranas y piezas de precisión',
+      desc: 'Aleación milenaria de cobre y estaño.',
+      icon: 'ingot_copper'
+    },
+    aleacion_ignea: {
+      id: 'aleacion_ignea', name: 'Aleación Ígnea Volcánica', category: 'minerales', rarity: 'epico',
+      sellValue: 120, buyValue: 280, source: 'Fundición (Lingote Acero x2 + Material Volcánico x4)',
+      uses: 'Herramientas de oricalco y armaduras refractarias',
+      desc: 'Metal abrasador que retiene el calor de la magma.',
+      icon: 'ingot_fire'
+    },
+    aleacion_celestial: {
+      id: 'aleacion_celestial', name: 'Aleación Celestial Sublime', category: 'minerales', rarity: 'legendario',
+      sellValue: 260, buyValue: 600, source: 'Fundición (Lingote Celestial x2 + Polvo Estelar x4)',
+      uses: 'Armas míticas y forja de artefactos supremos',
+      desc: 'Forjada con energía de estrellas caídas.',
+      icon: 'ingot_celestial'
+    },
+    esencia_corrupta: {
+      id: 'esencia_corrupta', name: 'Esencia del Vacío Corrupto', category: 'especiales', rarity: 'legendario',
+      sellValue: 220, buyValue: 500, source: 'Jefes y monstruos en Mazmorras Corruptas',
+      uses: 'Forja de equipamiento supremo y purificación de reliquias',
+      desc: 'Materia oscura fluctuante extraída del corazón de dungeons corruptas.',
+      icon: 'dark_essence'
+    },
+    gema_vacio: {
+      id: 'gema_vacio', name: 'Gema del Vacío Primordial', category: 'gemas', rarity: 'legendario',
+      sellValue: 350, buyValue: 800, source: 'Cofres de jefes en Mazmorras Corruptas',
+      uses: 'Engarces supremos y recetas definitivas de endgame',
+      desc: 'Cristal hiperdenso que dobla la luz a su alrededor.',
+      icon: 'abyssal_crystal'
+    },
+    reliquia_vacio: {
+      id: 'reliquia_vacio', name: 'Corazón del Vacío Corrompido', category: 'reliquias', rarity: 'legendario',
+      sellValue: 500, buyValue: 1200, source: 'Completar las 24 Mazmorras Corruptas',
+      uses: 'Reliquia legendaria activa: +40% Daño, +25% Defensa, +20% Velocidad',
+      desc: 'El poder absoluto del abismo domado por el conquistador.',
+      stats: { dmgBonus: 0.40, def: 50, moveSpeed: 0.20 }, icon: 'relic_abyss'
+    },
 
     // === COMIDA COCINADA & POCIONES ===
     pan: {

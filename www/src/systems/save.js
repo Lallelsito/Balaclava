@@ -99,6 +99,9 @@
         npcQuestProgress: { ...game.npcQuestProgress },
         claimedContracts: [...(game.claimedContracts || [])],
         clearedDungeons: [...game.clearedDungeons],
+        corruptedClearedDungeons: [...(game.corruptedClearedDungeons || [])],
+        dailySchedule: (game.events && game.events.dailySchedule) ? { ...game.events.dailySchedule } : null,
+        activeEvent: (game.events && game.events.activeEvent) ? { ...game.events.activeEvent } : null,
         dungeonIntroSeen: !!game.dungeonIntroSeen,
         unlockedAchievements: [...game.unlockedAchievements],
         encyclopedia: {
@@ -300,6 +303,11 @@
       game.npcQuestProgress = data.npcQuestProgress || {};
       game.claimedContracts = Array.isArray(data.claimedContracts) ? [...data.claimedContracts] : [];
       game.clearedDungeons = data.clearedDungeons || [];
+      game.corruptedClearedDungeons = Array.isArray(data.corruptedClearedDungeons) ? [...data.corruptedClearedDungeons] : [];
+      if (game.events) {
+        if (data.dailySchedule) game.events.dailySchedule = { ...data.dailySchedule };
+        if (data.activeEvent) game.events.activeEvent = { ...data.activeEvent };
+      }
       game.dungeonIntroSeen = !!data.dungeonIntroSeen;
       game.unlockedAchievements = data.unlockedAchievements || [];
       if (data.encyclopedia) {

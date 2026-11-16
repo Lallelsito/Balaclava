@@ -5,7 +5,7 @@
   const Balaclava = (window.Balaclava = window.Balaclava || {});
 
   const DISCORD_INVITE_URL = 'https://discord.gg/8wrsjRSMY2';
-  const APP_VERSION_LABEL = 'Beta 1.0.1';
+  const APP_VERSION_LABEL = 'Beta 1.1.1';
   const SESSION_START_SEC = Math.floor(Date.now() / 1000);
   const MIN_PUSH_INTERVAL_MS = 1200;
   const POLL_INTERVAL_MS = 2500;

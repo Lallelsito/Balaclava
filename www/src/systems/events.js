@@ -5,10 +5,71 @@
   const { PLOT_TILES, TILE_SIZE } = Balaclava.CONST;
   const { pick, randInt } = Balaclava.Utils;
 
+  const DAILY_EVENTS = {
+    lluvia_fertil: {
+      id: 'lluvia_fertil',
+      name: 'Lluvia Fértil',
+      desc: 'Lluvia tibia y nutritiva que riega y acelera los cultivos.',
+      duration: 110,
+      color: '#4fc3f7'
+    },
+    tormenta_electrica: {
+      id: 'tormenta_electrica',
+      name: 'Tormenta Eléctrica',
+      desc: 'Rayos y descargas voltaicas sobrecargan el archipiélago.',
+      duration: 90,
+      color: '#ffd54f'
+    },
+    lluvia_meteoritos: {
+      id: 'lluvia_meteoritos',
+      name: 'Lluvia de Meteoritos',
+      desc: 'Cuerpos celestes caen en las islas exteriores.',
+      duration: 100,
+      color: '#ff7043'
+    },
+    esencia_arcana: {
+      id: 'esencia_arcana',
+      name: 'Oleada de Esencia Arcana',
+      desc: 'La magia ambiental se condensa y potencia la caída de esencias oscuras.',
+      duration: 110,
+      color: '#ce93d8'
+    },
+    viento_favorable: {
+      id: 'viento_favorable',
+      name: 'Viento Favorable',
+      desc: 'Brizas vivas aumentan notablemente la velocidad de movimiento del héroe.',
+      duration: 120,
+      color: '#81c784'
+    },
+    niebla_espesa: {
+      id: 'niebla_espesa',
+      name: 'Niebla Espesa',
+      desc: 'Densa bruma sobre el mar que atrae criaturas nocturnas.',
+      duration: 110,
+      color: '#90a4ae'
+    },
+    abundancia_mineral: {
+      id: 'abundancia_mineral',
+      name: 'Abundancia Mineral',
+      desc: 'Erupciones telúricas aceleran la regeneración de vetas y rocas.',
+      duration: 120,
+      color: '#ffd54f'
+    },
+    anomalia_temporal: {
+      id: 'anomalia_temporal',
+      name: 'Anomalía Temporal',
+      desc: 'Distorsión del tiempo: hornos, aserraderos y telares operan al doble de velocidad.',
+      duration: 110,
+      color: '#ba68c8'
+    }
+  };
+
   class EventsSystem {
     constructor() {
       this.eventTimer = 45;
       this.dailyChallenges = this.generateDailyChallenges();
+      this.dailySchedule = null;
+      this.activeEvent = null;
     }
 
     generateDailyChallenges() {
@@ -68,41 +129,100 @@
     }
 
     update(dt, game) {
-      const rateMult = 1 + (game.mods.eventRate || 0);
-      this.eventTimer -= dt * rateMult;
-      if (this.eventTimer <= 0) {
-        this.eventTimer = randInt(55, 95);
-        this.triggerRandomEvent(game);
-      }
       this.checkProgress(game);
+
+      if (game.activeDungeon) return;
+
+      const curDay = Math.floor(game.dayCount || 1);
+      const curTime = (game.dayTime % 1 + 1) % 1;
+
+      // 1 random scheduled event per in-game day (not ad-hoc timers)
+      if (!this.dailySchedule || this.dailySchedule.day !== curDay) {
+        const eventKeys = Object.keys(DAILY_EVENTS);
+        this.dailySchedule = {
+          day: curDay,
+          triggerTime: 0.18 + Math.random() * 0.62,
+          eventId: pick(eventKeys),
+          triggered: false
+        };
+      }
+
+      if (!this.dailySchedule.triggered && curTime >= this.dailySchedule.triggerTime) {
+        this.dailySchedule.triggered = true;
+        this.startDailyEvent(game, this.dailySchedule.eventId);
+      }
+
+      if (this.activeEvent) {
+        this.activeEvent.timeLeft = Math.max(0, this.activeEvent.timeLeft - dt);
+        this.applyDailyEventTick(game, dt);
+        if (this.activeEvent.timeLeft <= 0) {
+          const endedName = this.activeEvent.name;
+          this.activeEvent = null;
+          game.recomputeModifiers();
+          game.toast(`El evento "${endedName}" ha concluido.`, 'info');
+        }
+      }
+    }
+
+    startDailyEvent(game, eventId) {
+      const def = DAILY_EVENTS[eventId] || DAILY_EVENTS.lluvia_fertil;
+      this.activeEvent = {
+        id: def.id,
+        name: def.name,
+        desc: def.desc,
+        timeLeft: def.duration,
+        duration: def.duration,
+        color: def.color
+      };
+      game.recomputeModifiers();
+      Balaclava.Audio.play('portal');
+      game.toast(`¡Evento Diario: ${def.name}! ${def.desc}`, 'warn');
+
+      if (def.id === 'lluvia_meteoritos' && game.unlockedPlots.length >= 2) {
+        for (let i = 0; i < 2; i++) {
+          const plot = pick(game.unlockedPlots);
+          const biome = game.world.plotBiomes[plot[1]][plot[0]];
+          const tx = plot[0] * PLOT_TILES + randInt(2, PLOT_TILES - 3);
+          const ty = plot[1] * PLOT_TILES + randInt(2, PLOT_TILES - 3);
+          if (game.world.tiles[ty][tx] === 1 && !game.world.getNodeAtTile(tx, ty) && !game.getBuildingAtTile(tx, ty)) {
+            game.world.spawnNodeAtTile(tx, ty, 'meteor', biome);
+            game.spawnParticles((tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE, '#ff8a65', 18);
+          }
+        }
+        game.shake(0.35, 6);
+      }
+    }
+
+    applyDailyEventTick(game, dt) {
+      if (!this.activeEvent) return;
+      const id = this.activeEvent.id;
+
+      if (id === 'lluvia_fertil') {
+        // Accelerate crop watering and growth
+        for (const c of game.world.crops) {
+          c.watered = true;
+          c.progress = Math.min(1.0, c.progress + dt * 0.05);
+          c.stage = c.progress >= 1 ? 3 : c.progress >= 0.65 ? 2 : c.progress >= 0.3 ? 1 : 0;
+        }
+      } else if (id === 'tormenta_electrica') {
+        this._strikeTimer = (this._strikeTimer || 0) + dt;
+        if (this._strikeTimer >= 8.5) {
+          this._strikeTimer = 0;
+          if (game.combat.enemies.length > 0) {
+            const target = pick(game.combat.enemies);
+            game.spawnFx('fx_thunder_strike', target.x, target.y - 18, 0, 0.34, 1.35, 0.92);
+            game.combat.damageEnemy(game, target, 45, 0, false);
+          }
+        }
+      } else if (id === 'abundancia_mineral') {
+        game.world.spawnTimer = (game.world.spawnTimer || 0) + dt * 0.8;
+      }
     }
 
     triggerRandomEvent(game) {
       if (game.activeDungeon || game.unlockedPlots.length === 0) return;
-      const plot = pick(game.unlockedPlots);
-      const biome = game.world.plotBiomes[plot[1]][plot[0]];
-      const tx = plot[0] * PLOT_TILES + randInt(2, PLOT_TILES - 3);
-      const ty = plot[1] * PLOT_TILES + randInt(2, PLOT_TILES - 3);
-      if (game.world.tiles[ty][tx] !== 1 || game.world.getNodeAtTile(tx, ty) || game.getBuildingAtTile(tx, ty)) return;
-
-      const roll = Math.random();
-      const worldChests = game.world.nodes.filter(n => n.kind === 'chest').length;
-      if (roll < 0.18 && game.unlockedPlots.length >= 2) {
-        // Meteorite impact (less frequent so meteors stay special)
-        game.world.spawnNodeAtTile(tx, ty, 'meteor', biome);
-        game.shake(0.45, 7);
-        Balaclava.Audio.play('meteor');
-        game.spawnParticles((tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE, '#ff8a65', 20);
-        game.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.meteorFallen', { biome: Balaclava.CONST.BIOMES[biome].name }) : `¡Un meteorito cayó en ${Balaclava.CONST.BIOMES[biome].name}! Búscalo para obtener diamantes.`, 'warn');
-      } else if (roll < 0.21 && worldChests < 1 && Math.random() < 0.45) {
-        // Ultra-rare hidden treasure chest!
-        game.world.spawnSpecialNode(tx, ty, 'chest', biome);
-        game.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.chestSpawned', { biome: Balaclava.CONST.BIOMES[biome].name }) : `¡Ha aparecido un cofre misterioso en ${Balaclava.CONST.BIOMES[biome].name}!`, 'info');
-      } else {
-        // Rare Golden Slime!
-        game.combat.spawnWorldEnemy(game, biome, 'golden_slime');
-        game.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.goldenSlime', { biome: Balaclava.CONST.BIOMES[biome].name }) : `¡Un Limo Dorado Raro merodea por ${Balaclava.CONST.BIOMES[biome].name}!`, 'info');
-      }
+      const keys = Object.keys(DAILY_EVENTS);
+      this.startDailyEvent(game, pick(keys));
     }
 
     checkProgress(game) {

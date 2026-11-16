@@ -2534,8 +2534,22 @@
           return;
         }
 
+        if (e.code === 'F8' || (e.code === 'KeyP' && !this.hasOpenModal() && !isTypingTarget)) {
+          e.preventDefault();
+          this.togglePhotoMode();
+          return;
+        }
+
         const modalBindOrder = ['inventory', 'crafting', 'build', 'skills', 'map', 'market', 'quests', 'encyclopedia', 'pause'];
         if (this.hasOpenModal()) {
+          if (this.activeModal === 'inventory' && this._hoveredInvSlot && e.code >= 'Digit1' && e.code <= 'Digit9') {
+            const hotbarIdx = Number(e.code.replace('Digit', '')) - 1;
+            g.assignHotbarSlot(hotbarIdx, this._hoveredInvSlot.kind, this._hoveredInvSlot.id);
+            Balaclava.Audio.play('pickup');
+            this.updateHUD(true);
+            this.renderModal();
+            return;
+          }
           const matchedModal = modalBindOrder.find(m => kb[m] === e.code);
           if (matchedModal && (matchedModal === this.activeModal || (matchedModal === 'pause' && (this.activeModal === 'settings' || this.activeModal === 'controls')))) {
             this.closeModal();
@@ -3731,6 +3745,7 @@
       else if (this.activeModal === 'quit_web_fallback') this.renderQuitModal(body, true);
       else if (this.activeModal === 'discord_fallback') this.renderDiscordFallbackModal(body);
       else if (this.activeModal === 'exit_dungeon_confirm') this.renderExitDungeonConfirmModal(body);
+      else if (this.activeModal === 'corrupted_dungeon_choice') this.renderCorruptedDungeonChoice(titleEl, body);
       else if (this.activeModal === 'building') this.renderBuildingInspector(titleEl, body, this.modalData);
       else if (this.activeModal === 'npc') this.renderNpcDialog(titleEl, body, this.modalData);
       else if (this.activeModal === 'controls') {
@@ -3886,6 +3901,8 @@
             class: `inv-slot rarity-${rarity}` + (this.selectedToolId === tool.id ? ' selected' : ''),
             'data-tip': this.tipAttr(this._buildToolTipSpec(tool.id, { context: 'inv' })),
             'aria-label': `${tool.name} (${tierMeta.name})`,
+            onmouseenter: () => { this._hoveredInvSlot = { kind: 'tool', id: tool.id }; },
+            onmouseleave: () => { if (this._hoveredInvSlot && this._hoveredInvSlot.id === tool.id) this._hoveredInvSlot = null; },
             onclick: (ev) => {
               if (ev && ev.shiftKey && g.quickTransferToHotbar) {
                 const idx = g.quickTransferToHotbar('tool', tool.id);
@@ -3911,6 +3928,8 @@
             class: `inv-slot rarity-${it.rarity || 'comun'}` + (!this.selectedToolId && this.selectedItemId === id ? ' selected' : ''),
             'data-tip': this.tipAttr(this._buildItemTipSpec(id, { count: g.inventory[id], context: 'inv' })),
             'aria-label': it.name,
+            onmouseenter: () => { this._hoveredInvSlot = { kind: 'item', id }; },
+            onmouseleave: () => { if (this._hoveredInvSlot && this._hoveredInvSlot.id === id) this._hoveredInvSlot = null; },
             onclick: (ev) => {
               if (ev && ev.shiftKey && g.quickTransferToHotbar) {
                 const idx = g.quickTransferToHotbar('item', id);
@@ -4115,15 +4134,18 @@
         rightCol.appendChild(det);
       }
 
-      // 7-Slot Equipment Paperdoll with FDA Slot Frames
+      // 10-Slot Dedicated Equipment Paperdoll with FDA Slot Frames
       const equipDefs = [
-        ['helm', tr('inv.slotHelm'), Balaclava.UI_URLS.slotHead],
-        ['armor', tr('inv.slotArmor'), Balaclava.UI_URLS.slotChest],
-        ['shield', tr('inv.slotShield'), Balaclava.UI_URLS.slotOffhand],
-        ['boots', tr('inv.slotBoots'), Balaclava.UI_URLS.slotFeet],
-        ['ring', tr('inv.slotRing'), Balaclava.UI_URLS.slotRing],
-        ['amulet', tr('inv.slotAmulet'), Balaclava.UI_URLS.slotNeck],
-        ['relic', tr('inv.slotRelic'), Balaclava.UI_URLS.slotRing]
+        ['helm', 'Casco', Balaclava.UI_URLS.slotHead],
+        ['armor', 'Pechera', Balaclava.UI_URLS.slotChest],
+        ['legs', 'Pantalones', Balaclava.UI_URLS.slotFeet],
+        ['boots', 'Botas', Balaclava.UI_URLS.slotFeet],
+        ['shield', 'Escudo', Balaclava.UI_URLS.slotOffhand],
+        ['ring', 'Accesorio 1', Balaclava.UI_URLS.slotRing],
+        ['amulet', 'Accesorio 2', Balaclava.UI_URLS.slotNeck],
+        ['relic', 'Reliquia 1', Balaclava.UI_URLS.slotRing],
+        ['relic2', 'Reliquia 2', Balaclava.UI_URLS.slotRing],
+        ['relic3', 'Reliquia 3', Balaclava.UI_URLS.slotRing]
       ];
       const dollGrid = this.el('div', { class: 'equip-doll-grid' });
       equipDefs.forEach(([slotKey, slotLabel, bgUrl]) => {
@@ -4157,6 +4179,20 @@
         ]));
       });
 
+      // Live Stat Panel
+      const statGrid = this.el('div', {
+        class: 'parchment-box',
+        style: 'margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;'
+      }, [
+        this.el('div', { style: 'color:#ef5350;font-weight:700;' }, `❤️ Vida: ${Math.round(g.player.hp)} / ${Math.round(g.player.maxHp)}`),
+        this.el('div', { style: 'color:#4fc3f7;font-weight:700;' }, `⚡ Energía: ${Math.round(g.player.energy)} / ${Math.round(g.player.maxEnergy)}`),
+        this.el('div', { style: 'color:#ffb74d;font-weight:700;' }, `⚔️ Daño: +${Math.round((g.mods.dmgBonus || 0) * 100)}%`),
+        this.el('div', { style: 'color:#80deea;font-weight:700;' }, `🗡️ Vel. Ataque: +${Math.round((g.mods.attackSpeed || 0) * 100)}%`),
+        this.el('div', { style: 'color:#81c784;font-weight:700;' }, `🛡️ Armadura: ${Math.round((g.mods.armor || 0) + (g.mods.defense || 0))}`),
+        this.el('div', { style: 'color:#ba68c8;font-weight:700;' }, `👟 Vel. Mov.: +${Math.round((g.mods.moveSpeed || 0) * 100)}%`),
+        this.el('div', { style: 'color:#ffd54f;font-weight:700;grid-column:1/-1;' }, `✨ Suerte / Doble Drop: +${Math.round((g.mods.doubleDropChance || 0) * 100)}%`)
+      ]);
+
       const eqPanel = this.el('div', { class: 'parchment-box' }, [
         this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;' }, [
           this.el('strong', { style: 'font-size:16px;' }, tr('inv.activeGearTitle')),
@@ -4165,7 +4201,8 @@
             onclick: () => this.openModal('stats')
           }, tr('inv.viewStats'))
         ]),
-        dollGrid
+        dollGrid,
+        statGrid
       ]);
       rightCol.appendChild(eqPanel);
 
@@ -4350,10 +4387,12 @@
       body.appendChild(this.el('div', { class: 'stats-section-grid' }, [combatCard, worldCard, recordsCard]));
     }
 
-    _renderCraftQueueBanner(parent) {
+    _renderCraftQueueBanner(parent, activeStation = null) {
       const g = this.game;
-      const queue = g.craftQueue || [];
-      const ready = g.craftReady || [];
+      const allQueue = g.craftQueue || [];
+      const allReady = g.craftReady || [];
+      const queue = activeStation ? allQueue.filter(j => j.station === activeStation) : allQueue;
+      const ready = activeStation ? allReady.filter(e => e.station === activeStation) : allReady;
       if (!queue.length && !ready.length) return;
       const wrapper = this.el('div', {
         id: 'live-craft-queue-list',
@@ -4367,7 +4406,7 @@
             this.el('strong', { style: 'color:#b9f6ca;font-size:14px;' }, tr('craft.pickupTray', { n: ready.length })),
             this.el('button', {
               class: 'btn btn-green btn-sm',
-              onclick: () => { g.claimAllCrafted(); this.updateHUD(true); this.renderModal(); }
+              onclick: () => { g.claimAllCrafted(activeStation); this.updateHUD(true); this.renderModal(); }
             }, tr('craft.claimAll'))
           ])
         ]);
@@ -4383,7 +4422,7 @@
             this.el('button', {
               class: 'btn btn-gold btn-sm',
               style: 'padding:3px 9px;font-size:14px;',
-              onclick: () => { g.claimCrafted(ri); this.updateHUD(true); this.renderModal(); }
+              onclick: () => { g.claimCrafted(ri, activeStation); this.updateHUD(true); this.renderModal(); }
             }, tr('craft.claim'))
           ]));
         });
@@ -9044,6 +9083,44 @@
       ]));
     }
 
+    renderCorruptedDungeonChoice(titleEl, body) {
+      const g = this.game;
+      const dId = this.modalData?.dungeonId;
+      const def = (Balaclava.DUNGEON_DEFS && Balaclava.DUNGEON_DEFS[dId]) || {};
+      titleEl.textContent = `Desafío Corrupto: ${def.name || 'Mazmorra'}`;
+
+      body.appendChild(this.el('div', { class: 'parchment-box', style: 'margin-bottom:12px;' }, [
+        this.el('div', { style: 'font-size:16px;font-weight:700;color:#e040fb;margin-bottom:6px;' }, '¡Has dominado las 24 Mazmorras del Archipiélago!'),
+        this.el('div', { style: 'font-size:14px;color:#eceff1;line-height:1.45;' },
+          'Las energías del vacío han corrompido esta mazmorra ancestral. Los enemigos y el jefe poseen 25x vida, daño abrumador y patrones intensos, pero otorgan Esencias Corruptas, Gemas del Vacío y Reliquias Legendarias.'
+        )
+      ]));
+
+      const isCorruptedCleared = Array.isArray(g.corruptedClearedDungeons) && g.corruptedClearedDungeons.includes(dId);
+      if (isCorruptedCleared) {
+        body.appendChild(this.el('div', { class: 'card', style: 'color:#81c784;font-weight:700;margin-bottom:12px;' }, [
+          this.uiIcon('iconCheck', 16),
+          '¡Ya completaste esta mazmorra en Modo Corrupto!'
+        ]));
+      }
+
+      const btnRow = this.el('div', { style: 'display:flex;gap:10px;justify-content:flex-end;margin-top:14px;' }, [
+        this.el('button', {
+          class: 'btn btn-stone',
+          onclick: () => this.closeModal()
+        }, 'Cancelar'),
+        this.el('button', {
+          class: 'btn btn-danger',
+          style: 'background:linear-gradient(135deg, #7b1fa2, #d500f9);border-color:#ea80fc;',
+          onclick: () => {
+            this.closeModal();
+            g.enterDungeon(dId, true);
+          }
+        }, '⚔️ Entrar en Modo Corrupto (25x Dificultad)')
+      ]);
+      body.appendChild(btnRow);
+    }
+
     renderQuitModal(body, webFallback = false) {
       if (webFallback) {
         body.appendChild(this.el('div', { class: 'pause-stack quit-box' }, [
@@ -9324,7 +9401,7 @@
       const perksCard = this._buildBuildingUpgradePerksCard(b, def);
       if (perksCard) body.appendChild(perksCard);
 
-      this._renderCraftQueueBanner(body);
+      this._renderCraftQueueBanner(body, def.station || null);
 
       const appendFooter = () => {
         const foot = this.el('div', { style: 'display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;' });
@@ -9435,24 +9512,265 @@
         ]));
       }
 
+      if (def.opensPanel === 'cofre_logistico' || b.type === 'cofre_logistico') {
+        this.renderLogisticChest(body, b);
+        appendFooter();
+        return;
+      }
+
       if (def.station) {
         if (def.station === 'forja' || def.station === 'yunque_runico') {
           this.renderForjaCategories(body, def.station, false);
         } else {
-          const stRecs = this._sortRecipes(Balaclava.RECIPES.filter(r => r.station === def.station));
-          if (stRecs.length) {
-            body.appendChild(this.el('h4', { style: 'margin:8px 0;color:#ffd54f;' }, tr('bldg.stationRecipesTitle')));
-            const rGrid = this.el('div', { class: 'grid-cards', style: 'margin-bottom:12px;' });
-            stRecs.forEach(r => {
-              const card = this._buildRecipeCard(r, false);
-              if (card) rGrid.appendChild(card);
-            });
-            body.appendChild(rGrid);
-          }
+          this.renderStationCategories(body, def.station);
         }
       }
 
       appendFooter();
+    }
+
+    renderStationCategories(body, stationId) {
+      const g = this.game;
+      const allRecs = Balaclava.RECIPES.filter(r => r.station === stationId);
+      if (!allRecs.length) return;
+
+      this.stationTabs = this.stationTabs || {};
+      const curTab = this.stationTabs[stationId] || 'todos';
+
+      let catDefs = [['todos', tr('inv.tabAll')]];
+      if (stationId === 'horno' || stationId === 'fundicion') {
+        catDefs = [
+          ['todos', tr('inv.tabAll')],
+          ['lingotes', 'Lingotes'],
+          ['aleaciones', 'Aleaciones / Materiales'],
+          ['otros', 'Otros']
+        ];
+      } else if (stationId === 'aserradero') {
+        catDefs = [
+          ['todos', tr('inv.tabAll')],
+          ['vigas', 'Tablones y Vigas'],
+          ['maderas', 'Maderas Refinadas'],
+          ['otros', 'Otros']
+        ];
+      } else if (stationId === 'telar') {
+        catDefs = [
+          ['todos', tr('inv.tabAll')],
+          ['telas', 'Telas y Hilos'],
+          ['armaduras', 'Prendas y Ropa'],
+          ['pantalones', 'Pantalones']
+        ];
+      } else if (stationId === 'cocina') {
+        catDefs = [
+          ['todos', tr('inv.tabAll')],
+          ['platos', 'Platos y Guisos'],
+          ['pescados', 'Pescados y Brochetas'],
+          ['otros', 'Otros']
+        ];
+      } else {
+        catDefs = [
+          ['todos', tr('inv.tabAll')],
+          ['materiales', 'Materiales'],
+          ['equipo', 'Equipo'],
+          ['otros', 'Otros']
+        ];
+      }
+
+      const tabs = this.el('div', { class: 'tab-row', style: 'margin-bottom:12px;' });
+      catDefs.forEach(([catId, label]) => {
+        tabs.appendChild(this.el('button', {
+          class: 'tab-btn' + (curTab === catId ? ' active' : ''),
+          onclick: () => {
+            this.stationTabs[stationId] = catId;
+            this.renderModal();
+          }
+        }, label));
+      });
+      body.appendChild(tabs);
+
+      const filteredRecs = allRecs.filter(r => {
+        if (curTab === 'todos') return true;
+        const it = Balaclava.ITEMS[r.out] || {};
+        const outId = r.out || '';
+        if (stationId === 'horno' || stationId === 'fundicion') {
+          if (curTab === 'lingotes') return outId.startsWith('lingote_') && !outId.includes('aleacion');
+          if (curTab === 'aleaciones') return outId.includes('aleacion') || outId.includes('acero') || outId.includes('bronce') || outId === 'vidrio';
+          return !outId.startsWith('lingote_') && !outId.includes('aleacion') && !outId.includes('acero');
+        }
+        if (stationId === 'aserradero') {
+          if (curTab === 'vigas') return outId.includes('tablon') || outId.includes('viga');
+          if (curTab === 'maderas') return outId.includes('madera_refinada') || outId.includes('madera');
+          return !outId.includes('tablon') && !outId.includes('viga') && !outId.includes('madera');
+        }
+        if (stationId === 'telar') {
+          if (curTab === 'telas') return outId.includes('tela') || outId.includes('cuerda') || outId.includes('hilo') || outId.includes('fibra');
+          if (curTab === 'armaduras') return (it.equipSlot === 'armor' || it.equipSlot === 'helm') && !outId.includes('pantalones');
+          if (curTab === 'pantalones') return outId.includes('pantalones') || it.equipSlot === 'legs';
+          return true;
+        }
+        if (stationId === 'cocina') {
+          if (curTab === 'platos') return outId.includes('estofado') || outId.includes('sopa') || outId.includes('guiso') || outId.includes('pan');
+          if (curTab === 'pescados') return outId.includes('sashimi') || outId.includes('brocheta') || outId.includes('pez') || outId.includes('pescado');
+          return true;
+        }
+        if (curTab === 'materiales') return it.category === 'materiales' || it.category === 'recursos';
+        if (curTab === 'equipo') return it.equipSlot || it.type === 'weapon' || it.category === 'equipamiento';
+        return true;
+      });
+
+      const stRecs = this._sortRecipes(filteredRecs);
+      if (stRecs.length) {
+        body.appendChild(this.el('h4', { style: 'margin:8px 0;color:#ffd54f;' }, tr('bldg.stationRecipesTitle')));
+        const rGrid = this.el('div', { class: 'grid-cards', style: 'margin-bottom:12px;' });
+        stRecs.forEach(r => {
+          const card = this._buildRecipeCard(r, false);
+          if (card) rGrid.appendChild(card);
+        });
+        body.appendChild(rGrid);
+      } else {
+        body.appendChild(this.el('div', { class: 'card', style: 'margin-bottom:12px;color:#90a4ae;' }, 'No hay recetas en esta categoría.'));
+      }
+    }
+
+    renderLogisticChest(body, b) {
+      const g = this.game;
+      b.storage = b.storage || {};
+      b.filters = b.filters || [];
+      const totalStored = Object.values(b.storage).reduce((sum, q) => sum + (Number(q) || 0), 0);
+      const cap = 300;
+
+      body.appendChild(this.el('div', { class: 'parchment-box', style: 'margin-bottom:10px;' }, [
+        this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;' }, [
+          this.el('strong', { style: 'color:#ffd54f;font-size:16px;' }, 'Almacenamiento Inteligente'),
+          this.el('span', { style: 'color:#80deea;font-weight:700;' }, `${totalStored} / ${cap} unidades`)
+        ]),
+        this.el('div', { style: 'font-size:14px;color:#b0bec5;margin-top:4px;' },
+          'Las máquinas conectadas por tuberías envían automáticamente su exceso a este cofre cuando se llenan.'
+        )
+      ]));
+
+      const filterWrap = this.el('div', { class: 'card', style: 'margin-bottom:12px;' });
+      filterWrap.appendChild(this.el('strong', { style: 'color:#ffb74d;display:block;margin-bottom:6px;' }, 'Filtro de Recepción (Objetos aceptados):'));
+      const activeFilterText = b.filters.length > 0
+        ? b.filters.map(fid => (Balaclava.ITEMS[fid]?.name || fid)).join(', ')
+        : 'Todos los objetos permitidos (Sin filtro restrictivo)';
+      filterWrap.appendChild(this.el('div', { style: 'font-size:14px;color:#eceff1;margin-bottom:8px;' }, `Filtros activos: ${activeFilterText}`));
+
+      const filterBtnRow = this.el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;' });
+      const commonFilters = [
+        ['madera', 'Madera'],
+        ['piedra', 'Piedra'],
+        ['hierro', 'Hierro'],
+        ['oro', 'Oro'],
+        ['carbon', 'Carbón'],
+        ['tablon', 'Tablones'],
+        ['lingote_hierro', 'L. Hierro']
+      ];
+      commonFilters.forEach(([fId, fLabel]) => {
+        const isF = b.filters.includes(fId);
+        filterBtnRow.appendChild(this.el('button', {
+          class: `btn btn-sm ${isF ? 'btn-green' : 'btn-stone'}`,
+          onclick: () => {
+            if (isF) b.filters = b.filters.filter(x => x !== fId);
+            else b.filters.push(fId);
+            this.renderModal();
+          }
+        }, `${isF ? '✓ ' : '+ '}${fLabel}`));
+      });
+      if (b.filters.length > 0) {
+        filterBtnRow.appendChild(this.el('button', {
+          class: 'btn btn-sm btn-danger',
+          onclick: () => { b.filters = []; this.renderModal(); }
+        }, 'Limpiar Filtros'));
+      }
+      filterWrap.appendChild(filterBtnRow);
+      body.appendChild(filterWrap);
+
+      const stKeys = Object.keys(b.storage).filter(k => b.storage[k] > 0);
+      body.appendChild(this.el('h4', { style: 'margin:8px 0;color:#80cbc4;' }, 'Contenido del Cofre (Retiro Gradual):'));
+      if (stKeys.length === 0) {
+        body.appendChild(this.el('div', { class: 'card', style: 'color:#90a4ae;margin-bottom:12px;' }, 'El cofre logístico está vacío actualmente.'));
+      } else {
+        const grid = this.el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-bottom:12px;' });
+        stKeys.forEach(k => {
+          const qty = b.storage[k];
+          const it = Balaclava.ITEMS[k] || { name: k, icon: 'items/gem_ruby' };
+          const withdraw = (amount) => {
+            const take = Math.min(qty, amount);
+            b.storage[k] -= take;
+            if (b.storage[k] <= 0) delete b.storage[k];
+            g.addItem(k, take);
+            Balaclava.Audio.play('pickup');
+            this.updateHUD(true);
+            this.renderModal();
+          };
+
+          const itemRow = this.el('div', {
+            class: 'card',
+            style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;'
+          }, [
+            this.el('div', { style: 'display:flex;align-items:center;gap:10px;' }, [
+              this.itemIcon(it.icon, 32),
+              this.el('div', {}, [
+                this.el('strong', { style: 'color:#fff;font-size:15px;' }, it.name),
+                this.el('div', { style: 'color:#ffd54f;font-weight:700;' }, `x${qty}`)
+              ])
+            ]),
+            this.el('div', { style: 'display:flex;gap:4px;' }, [
+              this.el('button', { class: 'btn btn-sm btn-stone', onclick: () => withdraw(1) }, '-1'),
+              this.el('button', { class: 'btn btn-sm btn-stone', onclick: () => withdraw(10) }, '-10'),
+              this.el('button', { class: 'btn btn-sm btn-stone', onclick: () => withdraw(50) }, '-50'),
+              this.el('button', { class: 'btn btn-sm btn-gold', onclick: () => withdraw(qty) }, 'Todo')
+            ])
+          ]);
+          grid.appendChild(itemRow);
+        });
+        body.appendChild(grid);
+      }
+
+      const invDeposit = this.el('div', { class: 'card', style: 'margin-bottom:12px;' });
+      invDeposit.appendChild(this.el('strong', { style: 'color:#a5d6a7;display:block;margin-bottom:6px;' }, 'Depositar desde tu inventario:'));
+      const invKeys = Object.keys(g.inventory).filter(k => g.inventory[k] > 0);
+      if (invKeys.length === 0) {
+        invDeposit.appendChild(this.el('div', { style: 'color:#90a4ae;' }, 'Tu inventario está vacío.'));
+      } else {
+        const depGrid = this.el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;' });
+        invKeys.slice(0, 16).forEach(k => {
+          const count = g.inventory[k];
+          const it = Balaclava.ITEMS[k] || { name: k };
+          depGrid.appendChild(this.el('button', {
+            class: 'btn btn-sm btn-stone',
+            onclick: () => {
+              const curTot = Object.values(b.storage).reduce((s, q) => s + (Number(q) || 0), 0);
+              const space = Math.max(0, cap - curTot);
+              if (space <= 0) {
+                g.toast('El cofre logístico está lleno', 'warn');
+                return;
+              }
+              const depositQty = Math.min(count, Math.min(10, space));
+              g.removeItem(k, depositQty);
+              b.storage[k] = (b.storage[k] || 0) + depositQty;
+              Balaclava.Audio.play('pickup');
+              this.updateHUD(true);
+              this.renderModal();
+            }
+          }, `+10 ${it.name} (${count})`));
+        });
+        invDeposit.appendChild(depGrid);
+      }
+      body.appendChild(invDeposit);
+    }
+
+    togglePhotoMode() {
+      const g = this.game;
+      g.photoMode = !g.photoMode;
+      if (g.photoMode) {
+        document.body.classList.add('photo-mode-active');
+        g.toast('Modo Foto activado (Pulsa P o F8 para salir)', 'info');
+      } else {
+        document.body.classList.remove('photo-mode-active');
+        g.toast('Modo Foto desactivado', 'info');
+      }
+      this.updateHUD(true);
     }
 
     renderNpcDialog(titleEl, body, npc) {

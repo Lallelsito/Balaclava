@@ -162,7 +162,11 @@
           game.gainXp(Math.round(def.autoXp * (1 + (b.level - 1) * 0.4)));
         }
 
-        if (stored >= cap) continue;
+        if (stored >= cap) {
+          b.isPausedFull = true;
+          continue;
+        }
+        b.isPausedFull = false;
 
         // Auto Drill extracts biome-specific minerals
         if (def.autoDrill) {
@@ -216,11 +220,51 @@
     }
 
     depositToBuilding(game, b, itemId, qty) {
-      b.storage[itemId] = (b.storage[itemId] || 0) + qty;
+      if (!b.storage) b.storage = {};
+      const cap = this.getStorageCapacity(game, b);
+      const curStored = this.getTotalStoredCount(b);
+      const space = Math.max(0, cap - curStored);
+      const toStore = Math.min(qty, space);
+      if (toStore > 0) {
+        b.storage[itemId] = (b.storage[itemId] || 0) + toStore;
+      }
+      const overflow = qty - toStore;
+      if (overflow > 0) {
+        const routed = this.routeOverflowToLogistics(game, b, itemId, overflow);
+        if (!routed) {
+          b.isPausedFull = true;
+          return false;
+        }
+      }
+      b.isPausedFull = (this.getTotalStoredCount(b) >= cap);
+      return true;
+    }
+
+    routeOverflowToLogistics(game, sourceB, itemId, qty) {
+      const chests = (game.buildings || []).filter(x => x.type === 'cofre_logistico');
+      if (chests.length === 0) return false;
+      let remaining = qty;
+      for (const ch of chests) {
+        if (!ch.storage) ch.storage = {};
+        if (Array.isArray(ch.filters) && ch.filters.length > 0 && !ch.filters.includes(itemId)) {
+          continue;
+        }
+        const chCap = this.getStorageCapacity(game, ch);
+        const chCur = this.getTotalStoredCount(ch);
+        const chSpace = Math.max(0, chCap - chCur);
+        const fit = Math.min(remaining, chSpace);
+        if (fit > 0) {
+          ch.storage[itemId] = (ch.storage[itemId] || 0) + fit;
+          remaining -= fit;
+          if (remaining <= 0) return true;
+        }
+      }
+      return remaining < qty;
     }
 
     collectFromBuilding(game, b) {
       let collectedAny = false;
+      b.isPausedFull = false;
       if (b.coinsStored > 0) {
         game.addCoins(b.coinsStored);
         b.coinsStored = 0;

@@ -237,6 +237,21 @@
       desc: 'Construye pasarelas sobre el agua para unir islas y cruzar entre biomas sin nadar.',
       sprite: 'Bridge_Tile', badge: 'bridge',
       isBridge: true
+    },
+    tuberias_conduit: {
+      id: 'tuberias_conduit', name: 'Tubería Logística', category: 'automatizacion', size: 1, placeOn: 'land',
+      cost: { lingote_cobre: 3, lingote_hierro: 2 },
+      desc: 'Conducto de transporte automatizado que conecta máquinas adyacentes y canaliza producción hacia cofres logísticos.',
+      sprite: 'prop_pipe', visualScale: 1.0, badge: 'gear',
+      isConduit: true, walkableFloor: true
+    },
+    cofre_logistico: {
+      id: 'cofre_logistico', name: 'Cofre Logístico', category: 'automatizacion', size: 1, placeOn: 'land',
+      cost: { tablon: 10, lingote_hierro: 6, engrane: 3 },
+      desc: 'Cofre inteligente de recepción para la red logística. Recibe automáticamente excedentes de máquinas y permite filtrado y extracción gradual (-1, -10, -50, Todo).',
+      sprite: 'prop_chest', visualScale: 1.15, badge: 'chest',
+      capacity: 300, isLogisticChest: true,
+      opensPanel: 'cofre_logistico'
     }
   };
 
@@ -565,7 +580,7 @@
     'aserradero', 'telar', 'molino', 'cocina', 'ahumador', 'forja', 'yunque_runico', 'mesa_encantamientos', 'mesa_hechiceria',
     'plantacion', 'aspersor', 'colmena', 'jardin_mariposas', 'estanque', 'muelle_pesca', 'corral', 'granja', 'invernadero',
     'barriles_bodega', 'casa_comercio', 'banco', 'tesoreria', 'biblioteca', 'estanteria_arcana',
-    'cantera_piedra', 'taller_mecanico', 'alquimia', 'laboratorio', 'fundicion', 'taladro', 'recolector', 'observatorio_astral', 'centro_investigacion',
+    'cantera_piedra', 'taller_mecanico', 'alquimia', 'laboratorio', 'fundicion', 'taladro', 'tuberias_conduit', 'cofre_logistico', 'recolector', 'observatorio_astral', 'centro_investigacion',
     'torre_magica', 'torre_rayos', 'balista', 'faro_costero', 'portal', 'monumento', 'altar', 'mazmorra_santuario',
     'banco_madera', 'camino_piedra', 'camino_hierba', 'valla_madera', 'muro_madera', 'muro_piedra',
     'maceta_flores', 'farola_pueblo', 'brasero_eterno', 'brasero_magma', 'mesa_banquete',

@@ -7052,6 +7052,25 @@ body:is(.ui-scale-22, .ui-scale-44) .hud-controls-helper {
   border-radius: 3px;
 }
 
+/* Photo Mode (Clean HUD Toggle F8 / P) */
+body.photo-mode-active #hud,
+body.photo-mode-active #top-hud,
+body.photo-mode-active #bottom-hud,
+body.photo-mode-active .hud-top,
+body.photo-mode-active .hud-bottom,
+body.photo-mode-active .hud-left,
+body.photo-mode-active .hud-right,
+body.photo-mode-active .hotbar,
+body.photo-mode-active #floating-music-widget,
+body.photo-mode-active .quest-tracker,
+body.photo-mode-active .minimap-container,
+body.photo-mode-active .modal-overlay,
+body.photo-mode-active #toast-container {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 
 
 

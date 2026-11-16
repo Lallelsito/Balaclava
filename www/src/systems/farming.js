@@ -283,11 +283,15 @@
 
     rollTargetFish(biome, luck, baitId, tierIdx) {
       const roll = Math.random();
-      const baitMult = baitId === 'cebo_dorado' ? 2.1 : baitId === 'cebo_gusano' ? 1.35 : 1.0;
+      const baitMult = baitId === 'cebo_arcano' ? 3.2
+        : baitId === 'cebo_volcanico' ? 2.6
+        : baitId === 'cebo_dorado' ? 2.1
+        : baitId === 'cebo_gusano' ? 1.35 : 1.0;
       const rareScore = clamp((roll - (luck * 0.18 + (baitMult - 1) * 0.22)), 0, 1);
 
-      if (rareScore < 0.03) return { id: 'cofre_hundido', diff: 0.84, xp: 55 };
-      if (rareScore < 0.06) return { id: 'perla', diff: 0.78, xp: 48 };
+      if (rareScore < 0.015) return { id: 'pez_legendario_kraken', diff: 0.95, xp: 120 };
+      if (rareScore < 0.035) return { id: 'cofre_hundido', diff: 0.84, xp: 55 };
+      if (rareScore < 0.065) return { id: 'perla', diff: 0.78, xp: 48 };
       if (rareScore < 0.10) return { id: 'gema_marina', diff: 0.76, xp: 44 };
       if (rareScore < 0.14) return { id: 'cangrejo_dorado', diff: 0.70, xp: 40 };
       if (rareScore < 0.18) return { id: 'mapa_tesoro_item', diff: 0.68, xp: 38 };
@@ -295,8 +299,9 @@
       if (rareScore < 0.27) return { id: 'carpa_dorada', diff: 0.66, xp: 34 };
       if (rareScore < 0.32) return { id: 'pez_dorado', diff: 0.64, xp: 30 };
 
-      if (biome === 'tierras_volcanicas' && (tierIdx >= 3 || Math.random() < 0.55)) {
+      if (biome === 'tierras_volcanicas' && (tierIdx >= 3 || Math.random() < 0.55 || baitId === 'cebo_volcanico')) {
         return pick([
+          { id: 'pez_fenix_magma', diff: 0.82, xp: 50 },
           { id: 'pez_lava', diff: 0.66, xp: 30 },
           { id: 'anguila', diff: 0.60, xp: 26 },
           { id: 'pez_globo', diff: 0.58, xp: 24 }
@@ -304,6 +309,7 @@
       }
       if (biome === 'bosque_oscuro') {
         return pick([
+          { id: 'anguila_sombras', diff: 0.74, xp: 42 },
           { id: 'pez_abismal', diff: 0.56, xp: 26 },
           { id: 'bagre', diff: 0.44, xp: 20 },
           { id: 'anguila', diff: 0.52, xp: 22 },
@@ -313,6 +319,7 @@
       }
       if (biome === 'montanas_heladas') {
         return pick([
+          { id: 'esturion_glacial', diff: 0.72, xp: 40 },
           { id: 'pez_helado', diff: 0.52, xp: 24 },
           { id: 'trucha_arcoiris', diff: 0.44, xp: 20 },
           { id: 'medusa', diff: 0.50, xp: 20 },
@@ -330,6 +337,7 @@
         ]);
       }
       return pick([
+        { id: 'pez_dorado_solar', diff: 0.65, xp: 35 },
         { id: 'algas', diff: 0.18, xp: 8 },
         { id: 'anchoa', diff: 0.25, xp: 12 },
         { id: 'lubina', diff: 0.30, xp: 14 },

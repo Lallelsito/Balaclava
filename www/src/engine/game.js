@@ -33,7 +33,7 @@
 
       // Active gameplay state
       this.player = this.makeInitialPlayer();
-      this.coins = 25;
+      this.coins = 75;
       this.inventory = {};
       this.hotbar = [
         { kind: 'tool', id: 'pico' },
@@ -56,11 +56,13 @@
       this.dayDuration = 660; // 8 min dia (480s) + 3 min noche (180s)
       this.lastHintTime = 0;
       this.fxAnims = [];
-      this.equipped = { armor: null, helm: null, shield: null, boots: null, ring: null, amulet: null, relic: null };
-      this.armorTiers = { helm: null, armor: null, shield: null, boots: null };
+      this.equipped = { armor: null, helm: null, legs: null, shield: null, boots: null, ring: null, amulet: null, relic: null, relic2: null, relic3: null };
+      this.armorTiers = { helm: null, armor: null, legs: null, shield: null, boots: null };
       this.toolEnchants = {};
       this.armorEnchants = {};
       this.permanentRelics = [];
+      this.corruptedClearedDungeons = [];
+      this.photoMode = false;
 
       const C = Balaclava.CONST.CENTER_PLOT || 4;
       this.unlockedPlots = [[C, C]];
@@ -211,11 +213,13 @@
         pala: null, cana: null, guadana: null, arco: null, azada: null
       };
       this.lastHintTime = 0;
-      this.equipped = { armor: null, helm: null, shield: null, boots: null, ring: null, amulet: null, relic: null };
-      this.armorTiers = { helm: null, armor: null, shield: null, boots: null };
+      this.equipped = { armor: null, helm: null, legs: null, shield: null, boots: null, ring: null, amulet: null, relic: null, relic2: null, relic3: null };
+      this.armorTiers = { helm: null, armor: null, legs: null, shield: null, boots: null };
       this.toolEnchants = {};
       this.armorEnchants = {};
       this.permanentRelics = [];
+      this.corruptedClearedDungeons = [];
+      this.photoMode = false;
       this.unlockedPlots = [[C, C]];
       this.unlockedSkills = [];
       this.unlockedSpells = ['misil_arcano'];
@@ -460,6 +464,23 @@
             m[statKey] = (m[statKey] || 0) + num;
           }
         });
+      }
+
+      // Dynamic daily events active modifiers
+      if (this.events && this.events.activeEvent) {
+        const evId = this.events.activeEvent.id;
+        if (evId === 'viento_favorable') m.moveSpeed += 0.30;
+        if (evId === 'anomalia_temporal') m.machineSpeed += 1.0;
+      }
+
+      // Soft-caps and diminishing returns for attack speed and bonus damage
+      const rawAtkSpd = m.attackSpeed;
+      if (rawAtkSpd > 0.45) {
+        m.attackSpeed = 0.45 + 0.65 * (1 - Math.exp(-(rawAtkSpd - 0.45) / 0.75));
+      }
+      const rawDmg = m.dmgBonus;
+      if (rawDmg > 0.80) {
+        m.dmgBonus = 0.80 + 1.10 * Math.log10(1 + (rawDmg - 0.80));
       }
 
       this.mods = m;
@@ -864,7 +885,11 @@
       }
 
       if (item.equipSlot) {
-        const slotKey = item.equipSlot === 'helmet' ? 'helm' : item.equipSlot;
+        let slotKey = item.equipSlot === 'helmet' ? 'helm' : item.equipSlot;
+        if (slotKey === 'relic') {
+          if (this.equipped.relic && !this.equipped.relic2) slotKey = 'relic2';
+          else if (this.equipped.relic && this.equipped.relic2 && !this.equipped.relic3) slotKey = 'relic3';
+        }
         const prev = this.equipped[slotKey];
         this.removeItem(itemId, 1);
         if (prev) this.addItem(prev, 1);
@@ -1524,15 +1549,25 @@
       this.uiDirty = true;
     }
 
-    claimCrafted(index) {
-      if (!Array.isArray(this.craftReady) || index < 0 || index >= this.craftReady.length) return false;
-      const entry = this.craftReady.splice(index, 1)[0];
+    claimCrafted(index, station = null) {
+      if (!Array.isArray(this.craftReady)) return false;
+      let targetIdx = index;
+      if (station) {
+        const matchingIndices = [];
+        this.craftReady.forEach((e, idx) => {
+          if (e.station === station) matchingIndices.push(idx);
+        });
+        if (index < 0 || index >= matchingIndices.length) return false;
+        targetIdx = matchingIndices[index];
+      }
+      if (targetIdx < 0 || targetIdx >= this.craftReady.length) return false;
+      const entry = this.craftReady.splice(targetIdx, 1)[0];
       if (!entry) return false;
       this.addItem(entry.out, entry.qty);
       const outItem = Balaclava.ITEMS[entry.out];
       if (outItem && outItem.equipSlot) {
         const slotKey = outItem.equipSlot === 'helmet' ? 'helm' : outItem.equipSlot;
-        if (['armor', 'helm', 'shield', 'boots'].includes(slotKey)) {
+        if (['armor', 'helm', 'shield', 'boots', 'legs'].includes(slotKey)) {
           this.autoEquipCraftedArmor(slotKey, outItem.id, null);
           this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.autoEquipped', { name: outItem.name }) : `Equipado automáticamente: ${outItem.name}`, 'info');
         } else if (!this.equipped[slotKey] && (this.inventory[outItem.id] || 0) >= 1) {
@@ -1553,13 +1588,40 @@
       return true;
     }
 
-    claimAllCrafted() {
+    claimAllCrafted(station = null) {
       if (!Array.isArray(this.craftReady) || this.craftReady.length === 0) return 0;
-      const count = this.craftReady.length;
-      while (this.craftReady.length > 0) {
-        this.claimCrafted(0);
+      let count = 0;
+      for (let i = this.craftReady.length - 1; i >= 0; i--) {
+        if (!station || this.craftReady[i].station === station) {
+          const entry = this.craftReady.splice(i, 1)[0];
+          if (entry) {
+            this.addItem(entry.out, entry.qty);
+            const outItem = Balaclava.ITEMS[entry.out];
+            if (outItem && outItem.equipSlot) {
+              const slotKey = outItem.equipSlot === 'helmet' ? 'helm' : outItem.equipSlot;
+              if (['armor', 'helm', 'shield', 'boots', 'legs'].includes(slotKey)) {
+                this.autoEquipCraftedArmor(slotKey, outItem.id, null);
+              } else if (!this.equipped[slotKey] && (this.inventory[outItem.id] || 0) >= 1) {
+                this.removeItem(outItem.id, 1);
+                this.equipped[slotKey] = outItem.id;
+                this.recomputeModifiers();
+              }
+            }
+            if (outItem && (outItem.isLaserWeapon || outItem.isBomb || outItem.isRangedWeapon || outItem.isStaffWeapon || outItem.isSpecialBlade || outItem.weaponMelee)) {
+              this.placeInNearestAvailableHotbarSlot('item', outItem.id, false);
+            }
+            this.gainXp(entry.xp || 8);
+            this.stats.craftedTotal += entry.qty;
+            this.events.recordAction('craft', entry.qty);
+            count++;
+          }
+        }
       }
-      this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.claimedAll', { count }) : `¡Recogidos ${count} lote(s) terminados en tu inventario!`, 'success');
+      if (count > 0) {
+        Balaclava.Audio.play('pickup');
+        this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.claimedAll', { count }) : `¡Recogidos ${count} lote(s) terminados en tu inventario!`, 'success');
+        this.uiDirty = true;
+      }
       return count;
     }
 
@@ -3196,7 +3258,9 @@
         }
         this.shake(0.32, 6);
         Balaclava.Audio.play('explosion');
-      } else if (spellId === 'lluvia_minerales' || spellId === 'llamado_horda' || spellId === 'llamado_fauna') {
+      } else if (spellId === 'lluvia_minerales' || spellId === 'invocacion_minerales' ||
+                 spellId === 'llamado_horda' || spellId === 'invocacion_monstruos' ||
+                 spellId === 'llamado_fauna' || spellId === 'invocacion_fauna') {
         const refundSurfaceSpell = (msgEs, msgEn) => {
           if (cost > 0) this.player.energy = Math.min(this.player.maxEnergy, this.player.energy + cost);
           delete this.spellCooldowns[spellId];
@@ -3212,7 +3276,7 @@
           return false;
         }
         const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
-        if (spellId === 'lluvia_minerales') {
+        if (spellId === 'lluvia_minerales' || spellId === 'invocacion_minerales') {
           const occ = this.getOccupiedTileSet();
           const targetCount = 15;
           let spawned = 0;
@@ -3232,7 +3296,7 @@
             isEn ? `Mineral Surge! ${spawned} ore veins erupted across your islands.` : `¡Lluvia Mineral! Brotaron ${spawned} vetas minerales por tus islas.`,
             'success'
           );
-        } else if (spellId === 'llamado_horda') {
+        } else if (spellId === 'llamado_horda' || spellId === 'invocacion_monstruos') {
           const hostilePools = {
             pradera: ['slime', 'rat', 'spider', 'zombie', 'skeleton'],
             desierto: ['beetle', 'scorpion', 'sand_ghoul', 'cobra', 'rock_golem'],
@@ -3260,7 +3324,7 @@
             isEn ? `Call of the Horde! ${spawned} hostile monsters appeared on your islands.` : `¡Llamado de la Horda! Aparecieron ${spawned} monstruos por tus islas.`,
             'warn'
           );
-        } else if (spellId === 'llamado_fauna') {
+        } else if (spellId === 'llamado_fauna' || spellId === 'invocacion_fauna') {
           const faunaByBiome = {
             pradera: ['sheep', 'vaca', 'cerdo', 'conejo', 'pato'],
             desierto: ['conejo', 'pato', 'sheep'],
@@ -3548,10 +3612,6 @@
 
       // Priority A: Player explicitly selected/hovered a target in reach
       if (hovered && hovered.inReach) {
-        if (hovered.kind === 'dungeon_exit_portal' && this.activeDungeon) {
-          this.requestExitDungeon();
-          return;
-        }
         if (hovered.kind === 'dungeon_chest' && this.activeDungeon && typeof this.activeDungeon.openChest === 'function') {
           this.activeDungeon.openChest(hovered.entity, this);
           return;
@@ -3722,6 +3782,16 @@
     }
 
     destroyNode(node, toolStats, usedToolId) {
+      if (node.kind === 'meteor') {
+        const reqTier = (Balaclava.getRequiredPickTier && Balaclava.getRequiredPickTier('meteor')) || 9;
+        const currentPickTier = (this.equipped && this.equipped.pico)
+          ? (Balaclava.TOOLS?.pico?.tiers?.indexOf(this.equipped.pico) + 1 || 0)
+          : (this.toolTiers && this.toolTiers.pico ? (Balaclava.TOOLS?.pico?.tiers?.indexOf(this.toolTiers.pico) + 1 || 0) : 0);
+        if (usedToolId !== 'pico' || currentPickTier < reqTier) {
+          this.addFloatingText(node.x, node.y - 20, '¡Pico insuficiente! Requiere Pico Mitrilo (Tier 9)+', '#ff8a65');
+          return;
+        }
+      }
       this.world.nodes = this.world.nodes.filter(n => n !== node);
       if (node.kind === 'meteor') this.stats.meteorsMined++;
 
@@ -4312,20 +4382,41 @@
       this.uiDirty = true;
     }
 
-    enterDungeon(dungeonId) {
+    enterDungeon(dungeonId, isCorrupted = false) {
       if (Balaclava.UI && Balaclava.UI.activeModal) Balaclava.UI.closeModal();
+
+      if (!isCorrupted && Array.isArray(this.clearedDungeons) && this.clearedDungeons.includes(dungeonId)) {
+        const totalDungeons = (Balaclava.DUNGEON_TIER_LIST && Balaclava.DUNGEON_TIER_LIST.length) || Object.keys(Balaclava.DUNGEON_DEFS || {}).length || 24;
+        const allCleared = this.clearedDungeons.length >= totalDungeons;
+        if (allCleared) {
+          if (Balaclava.UI && typeof Balaclava.UI.openModal === 'function') {
+            Balaclava.UI.openModal('corrupted_dungeon_choice', { dungeonId });
+            return;
+          }
+        }
+        this.toast('Dungeon completada', 'warn');
+        if (Balaclava.Audio) Balaclava.Audio.play('error');
+        return;
+      }
+
+      if (isCorrupted && Array.isArray(this.corruptedClearedDungeons) && this.corruptedClearedDungeons.includes(dungeonId)) {
+        this.toast('Dungeon corrupta completada', 'warn');
+        if (Balaclava.Audio) Balaclava.Audio.play('error');
+        return;
+      }
+
       const def = (Balaclava.DUNGEON_DEFS && Balaclava.DUNGEON_DEFS[dungeonId])
         || (Balaclava.DUNGEONS && Balaclava.DUNGEONS[dungeonId])
         || null;
       const gate = (Balaclava.DUNGEON_GATES && Balaclava.DUNGEON_GATES[dungeonId]) || null;
-      const dName = (def && def.name) || (gate && gate.name) || 'Mazmorra';
+      const dName = (isCorrupted ? '[CORRUPTA] ' : '') + ((def && def.name) || (gate && gate.name) || 'Mazmorra');
       const tierList = Array.isArray(Balaclava.DUNGEON_TIER_LIST) ? Balaclava.DUNGEON_TIER_LIST : [];
       const tierIdx = Math.max(0, tierList.indexOf(dungeonId));
       const doEnter = () => {
         this.farming.fishing = null;
         this.placingBuildingId = null;
         this.placingItemId = null;
-        this.activeDungeon = new Balaclava.DungeonInstance(dungeonId, { x: this.player.x, y: this.player.y }, this.player.level);
+        this.activeDungeon = new Balaclava.DungeonInstance(dungeonId, { x: this.player.x, y: this.player.y }, this.player.level, { isCorrupted });
         this._savedOverworldDrops = Array.isArray(this.drops) ? this.drops : [];
         this.drops = [];
         this.enemyProjectiles = [];
@@ -4340,7 +4431,11 @@
         this.camera.y = this.player.y;
         Balaclava.Audio.play('portal');
         Balaclava.Audio.setMood('boss', { delayMs: 650, fadeOutMs: 320, fadeInMs: 4200 });
-        this.toast(Balaclava.I18n ? Balaclava.I18n.t('dungeon.enteredFull', { name: this.activeDungeon.def.name }) : `Entraste en ${this.activeDungeon.def.name}. ¡Activa las 2 Runas para abrir la Cámara del Jefe!`, 'info');
+        if (isCorrupted) {
+          this.toast(`¡Entraste en ${this.activeDungeon.def.name} en MODO CORRUPTO! Peligro extremo (25x Dificultad).`, 'warn');
+        } else {
+          this.toast(Balaclava.I18n ? Balaclava.I18n.t('dungeon.enteredFull', { name: this.activeDungeon.def.name }) : `Entraste en ${this.activeDungeon.def.name}. ¡Activa las 2 Runas para abrir la Cámara del Jefe!`, 'info');
+        }
         if (!this.dungeonIntroSeen) {
           this.dungeonIntroSeen = true;
           this.activeDungeonIntroTimer = 16.0;
@@ -4875,6 +4970,10 @@
 
     damageSingleNodeByMagic(n, rawDmg, fxColor = '#b388ff', fxAng = 0, usedId = 'spell', textColor = null) {
       if (!n || this.activeDungeon || this.isProtectedNode(n)) return false;
+      if (n.kind === 'meteor' || n.kind === 'obsidian_vein') {
+        this.addFloatingText(n.x, n.y - 18, '¡Inmune a la magia! Requiere pico', '#ff7043');
+        return false;
+      }
       const nodeDmg = Math.max(1, Math.round(rawDmg * (1 + (this.mods.gatherBonus || 0))));
       n.hp -= nodeDmg;
       n.hitAnim = 0.22;
@@ -4973,6 +5072,12 @@
       if (!this.activeDungeon) {
         for (const n of [...this.world.nodes]) {
           if (this.isProtectedNode(n)) continue;
+          if (n.kind === 'meteor' || n.kind === 'obsidian_vein') {
+            if (dist(b.x, b.y, n.x, n.y) <= b.radius + (n.radius || 16) * 0.45) {
+              this.addFloatingText(n.x, n.y - 18, '¡Inmune a explosivos!', '#ff7043');
+            }
+            continue;
+          }
           if (dist(b.x, b.y, n.x, n.y) <= b.radius + (n.radius || 16) * 0.45) {
             n.hp -= b.dmg;
             n.hitAnim = 0.25;
@@ -10293,17 +10398,19 @@
       }
 
       // Floating numbers & pickup texts
-      ctx.font = '15px BalaclavaPixel, monospace';
-      ctx.textAlign = 'center';
-      for (const ft of this.floatingTexts) {
-        ctx.globalAlpha = Math.min(1, ft.life * 1.4);
-        ctx.fillStyle = '#111111';
-        ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
-        ctx.fillStyle = ft.color;
-        ctx.fillText(ft.text, ft.x, ft.y);
+      if (!this.photoMode) {
+        ctx.font = '15px BalaclavaPixel, monospace';
+        ctx.textAlign = 'center';
+        for (const ft of this.floatingTexts) {
+          ctx.globalAlpha = Math.min(1, ft.life * 1.4);
+          ctx.fillStyle = '#111111';
+          ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, ft.x, ft.y);
+        }
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left';
       }
-      ctx.globalAlpha = 1;
-      ctx.textAlign = 'left';
     }
 
     renderCombatEffects(ctx) {
@@ -11188,16 +11295,18 @@
       }
 
       ctx.font = '16px BalaclavaPixel, monospace';
-      ctx.textAlign = 'center';
-      for (const ft of this.floatingTexts) {
-        ctx.globalAlpha = Math.min(1, ft.life * 1.4);
-        ctx.fillStyle = '#111111';
-        ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
-        ctx.fillStyle = ft.color;
-        ctx.fillText(ft.text, ft.x, ft.y);
+      if (!this.photoMode) {
+        ctx.textAlign = 'center';
+        for (const ft of this.floatingTexts) {
+          ctx.globalAlpha = Math.min(1, ft.life * 1.4);
+          ctx.fillStyle = '#111111';
+          ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, ft.x, ft.y);
+        }
+        ctx.globalAlpha = 1;
+        ctx.textAlign = 'left';
       }
-      ctx.globalAlpha = 1;
-      ctx.textAlign = 'left';
 
       // 7. Atmospheric Dungeon Torchlight Vignette (World -> Screen space overlay)
       const vw = this.canvas.width;
