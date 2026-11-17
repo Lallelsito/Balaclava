@@ -553,10 +553,10 @@
     }
 
     getMaxInventorySlots() {
-      const base = 25;
+      const base = 20;
       const skillSlots = (this.mods && this.mods.invSlotBonus) || (this.modifiers && this.modifiers.invSlotBonus) || 0;
       const bpSlots = (this.mods && this.mods.backpackSlots) || (this.modifiers && this.modifiers.backpackSlots) || 0;
-      return Math.min(80, Math.max(25, base + skillSlots + bpSlots));
+      return Math.min(80, Math.max(20, base + skillSlots + bpSlots));
     }
 
     getMaxStackSize() {
@@ -571,12 +571,22 @@
       let used = 0;
       for (const [id, count] of Object.entries(this.inventory || {})) {
         if (count > 0 && Balaclava.ITEMS[id]) {
-          used += Math.ceil(count / maxStack);
+          const hotbarSlotsWithItem = (this.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+          const hotbarCap = hotbarSlotsWithItem * maxStack;
+          const invQty = Math.max(0, count - hotbarCap);
+          if (invQty > 0) {
+            used += Math.ceil(invQty / maxStack);
+          }
         }
       }
       if (this.toolTiers) {
         for (const tId of Object.keys(Balaclava.TOOLS || {})) {
-          if (this.toolTiers[tId]) used += 1;
+          if (this.toolTiers[tId]) {
+            const inHotbar = (this.hotbar || []).some(s => s && s.kind === 'tool' && s.id === tId);
+            if (!inHotbar) {
+              used += 1;
+            }
+          }
         }
       }
       return used;
@@ -588,10 +598,17 @@
       const maxStack = this.getMaxStackSize();
       const usedSlots = this.getUsedInventorySlots();
       const freeSlots = Math.max(0, maxSlots - usedSlots);
-      const curQty = this.inventory[itemId] || 0;
-      const mod = curQty % maxStack;
+
+      const hotbarSlotsWithItem = (this.hotbar || []).filter(s => s && s.kind === 'item' && s.id === itemId).length;
+      const hotbarCap = hotbarSlotsWithItem * maxStack;
+      const totalQty = this.inventory[itemId] || 0;
+      const curInvQty = Math.max(0, totalQty - hotbarCap);
+      const curHbQty = Math.min(totalQty, hotbarCap);
+      const freeInHotbar = hotbarCap - curHbQty;
+
+      const mod = curInvQty % maxStack;
       const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
-      return (spaceInPartial + (freeSlots * maxStack)) >= qty;
+      return (freeInHotbar + spaceInPartial + (freeSlots * maxStack)) >= qty;
     }
 
     getToolEnchantBonuses(toolId) {
@@ -740,10 +757,16 @@
       const usedSlots = this.getUsedInventorySlots();
       const freeSlots = Math.max(0, maxSlots - usedSlots);
 
-      const curQty = this.inventory[itemId] || 0;
-      const mod = curQty % maxStack;
+      const hotbarSlotsWithItem = (this.hotbar || []).filter(s => s && s.kind === 'item' && s.id === itemId).length;
+      const hotbarCap = hotbarSlotsWithItem * maxStack;
+      const totalQty = this.inventory[itemId] || 0;
+      const curInvQty = Math.max(0, totalQty - hotbarCap);
+      const curHbQty = Math.min(totalQty, hotbarCap);
+      const freeInHotbar = hotbarCap - curHbQty;
+
+      const mod = curInvQty % maxStack;
       const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
-      const totalFit = spaceInPartial + (freeSlots * maxStack);
+      const totalFit = freeInHotbar + spaceInPartial + (freeSlots * maxStack);
 
       const toAdd = Math.min(qty, totalFit);
       const excess = qty - toAdd;
@@ -1430,16 +1453,73 @@
       if (targetIdx < 0) {
         targetIdx = this.hotbar.findIndex(s => s && s.kind === 'item' && (this.inventory[s.id] || 0) <= 0);
       }
-      if (targetIdx < 0) targetIdx = this.activeSlot || 0;
-      const displaced = this.hotbar[targetIdx] || null;
-      this.hotbar[targetIdx] = { kind, id };
-      if (displaced && (displaced.kind !== kind || displaced.id !== id)) {
-        const emptyIdx = this.hotbar.findIndex((s, i) => i !== targetIdx && !s);
-        if (emptyIdx >= 0) this.hotbar[emptyIdx] = displaced;
+      if (targetIdx < 0) {
+        this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.hotbarFull') : 'Barra rápida llena (9/9)', 'warn');
+        return -1;
       }
+      this.hotbar[targetIdx] = { kind, id };
       this.activeSlot = targetIdx;
       this.uiDirty = true;
       return targetIdx;
+    }
+
+    transferHotbarToInventory(slotIdx) {
+      if (slotIdx < 0 || slotIdx >= 9 || !Array.isArray(this.hotbar)) return false;
+      const s = this.hotbar[slotIdx];
+      if (!s) return false;
+
+      const maxSlots = this.getMaxInventorySlots();
+      const maxStack = this.getMaxStackSize();
+      const usedSlots = this.getUsedInventorySlots();
+
+      if (s.kind === 'tool') {
+        if (usedSlots >= maxSlots) {
+          this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.invFull') : 'Inventario lleno', 'warn');
+          return false;
+        }
+        this.hotbar[slotIdx] = null;
+        const toolDef = Balaclava.TOOLS[s.id];
+        const tName = toolDef ? toolDef.name : s.id;
+        this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.itemToInv', { name: tName }) : `${tName} guardado en inventario`, 'info');
+        if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+        this.uiDirty = true;
+        return true;
+      }
+
+      if (s.kind === 'item') {
+        const itemId = s.id;
+        const it = Balaclava.ITEMS[itemId];
+        const totalQty = this.inventory[itemId] || 0;
+        if (totalQty <= 0) {
+          this.hotbar[slotIdx] = null;
+          this.uiDirty = true;
+          return true;
+        }
+
+        const currentHbSlots = this.hotbar.filter(x => x && x.kind === 'item' && x.id === itemId).length;
+        const currentHbCap = currentHbSlots * maxStack;
+        const curInvCount = Math.max(0, totalQty - currentHbCap);
+        const curInvSlotsForThis = curInvCount > 0 ? Math.ceil(curInvCount / maxStack) : 0;
+
+        const newHbCap = Math.max(0, (currentHbSlots - 1) * maxStack);
+        const newInvCount = Math.max(0, totalQty - newHbCap);
+        const newInvSlotsForThis = Math.ceil(newInvCount / maxStack);
+
+        const additionalSlotsNeeded = newInvSlotsForThis - curInvSlotsForThis;
+        if (usedSlots + additionalSlotsNeeded > maxSlots) {
+          this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.invFull') : 'Inventario lleno', 'warn');
+          return false;
+        }
+
+        this.hotbar[slotIdx] = null;
+        const itName = it ? it.name : itemId;
+        this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.itemToInv', { name: itName }) : `${itName} guardado en inventario`, 'info');
+        if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+        this.uiDirty = true;
+        return true;
+      }
+
+      return false;
     }
 
     placeInNearestAvailableHotbarSlot(kind, id, selectSlot = true) {
@@ -1700,9 +1780,6 @@
           this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.autoEquipped', { name: outItem.name }) : `Equipado automáticamente: ${outItem.name}`, 'info');
         }
       }
-      if (outItem && (outItem.isLaserWeapon || outItem.isBomb || outItem.isRangedWeapon || outItem.isStaffWeapon || outItem.isSpecialBlade || outItem.weaponMelee)) {
-        this.placeInNearestAvailableHotbarSlot('item', outItem.id, false);
-      }
       this.gainXp(entry.xp || 8);
       this.stats.craftedTotal += entry.qty;
       this.events.recordAction('craft', entry.qty);
@@ -1729,9 +1806,6 @@
                 this.equipped[slotKey] = outItem.id;
                 this.recomputeModifiers();
               }
-            }
-            if (outItem && (outItem.isLaserWeapon || outItem.isBomb || outItem.isRangedWeapon || outItem.isStaffWeapon || outItem.isSpecialBlade || outItem.weaponMelee)) {
-              this.placeInNearestAvailableHotbarSlot('item', outItem.id, false);
             }
             this.gainXp(entry.xp || 8);
             this.stats.craftedTotal += entry.qty;
@@ -3954,12 +4028,14 @@
 
     destroyNode(node, toolStats, usedToolId) {
       if (node.kind === 'meteor') {
-        const reqTier = (Balaclava.getRequiredPickTier && Balaclava.getRequiredPickTier('meteor')) || 9;
-        const currentPickTier = (this.equipped && this.equipped.pico)
-          ? (Balaclava.TOOLS?.pico?.tiers?.indexOf(this.equipped.pico) + 1 || 0)
-          : (this.toolTiers && this.toolTiers.pico ? (Balaclava.TOOLS?.pico?.tiers?.indexOf(this.toolTiers.pico) + 1 || 0) : 0);
-        if (usedToolId !== 'pico' || currentPickTier < reqTier) {
-          this.addFloatingText(node.x, node.y - 20, '¡Pico insuficiente! Requiere Pico Mitrilo (Tier 9)+', '#ff8a65');
+        const reqTierIdx = (Balaclava.getRequiredPickTier && Balaclava.getRequiredPickTier('meteor')) ?? 8;
+        const pickTier = (this.toolTiers && this.toolTiers.pico) || 'basica';
+        const currentTierIdx = Balaclava.TIER_ORDER ? Balaclava.TIER_ORDER.indexOf(pickTier) : -1;
+        if (usedToolId !== 'pico' || currentTierIdx < reqTierIdx) {
+          const reqName = (Balaclava.TIER_ORDER && Balaclava.TIER_META && Balaclava.TIER_META[Balaclava.TIER_ORDER[reqTierIdx]])
+            ? Balaclava.TIER_META[Balaclava.TIER_ORDER[reqTierIdx]].name
+            : 'Cristal';
+          this.addFloatingText(node.x, node.y - 20, `¡Pico insuficiente! Requiere Pico ${reqName} (Tier ${reqTierIdx + 1})+`, '#ff8a65');
           return;
         }
       }
@@ -11325,7 +11401,7 @@
         ctx.save();
         const padStroke = r.active
           ? '#69f0ae'
-          : (r.kind === 'seq' ? (r.crestColor || '#ffca28') : '#4fc3f7');
+          : (r.kind === 'elemental_shrine' ? '#ff9800' : (r.kind === 'seq' ? (r.crestColor || '#ffca28') : '#4fc3f7'));
         ctx.fillStyle = r.active ? 'rgba(18, 52, 46, 0.76)' : 'rgba(26, 18, 12, 0.76)';
         ctx.fillRect(px + 6, py + 6, TILE_SIZE - 12, TILE_SIZE - 12);
         ctx.strokeStyle = padStroke;
@@ -11381,13 +11457,13 @@
           }
         }
 
-        // Center glyph mark: Crest Symbol ('S', 'L', 'E') before activation, Roman step ('I', 'II', 'III') once active
-        const romanStep = r.order === 1 ? 'I' : r.order === 2 ? 'II' : r.order === 3 ? 'III' : 'R';
+        // Center glyph mark: Crest Symbol ('S', 'L', 'E', 'C') before activation, Roman step ('I', 'II', 'III', 'IV') once active
+        const romanStep = r.order === 1 ? 'I' : r.order === 2 ? 'II' : r.order === 3 ? 'III' : r.order === 4 ? 'IV' : 'R';
         const glyph = r.id === 'alfa'
           ? 'A'
           : r.id === 'beta'
             ? 'B'
-            : (r.active ? romanStep : (r.glyph || romanStep));
+            : (r.kind === 'elemental_shrine' ? (r.shrineIdx === 1 ? 'I' : 'II') : (r.active ? romanStep : (r.glyph || romanStep)));
         ctx.font = '14px BalaclavaPixel, monospace';
         ctx.textAlign = 'center';
         ctx.fillStyle = r.active ? '#b9f6ca' : '#fff8e1';
@@ -11397,8 +11473,9 @@
         let rTxt = r.crestName || r.label || (r.active ? T('dungeon.activeLabel') : T('dungeon.runeLabel'));
         if (r.id === 'alfa') rTxt = T('dungeon.wingAlpha');
         else if (r.id === 'beta') rTxt = T('dungeon.wingBeta');
+        else if (r.kind === 'elemental_shrine') rTxt = `ALTAR ELEMENTAL ${r.shrineIdx || 1}`;
         const label = r.active
-          ? (r.kind === 'seq' ? `${rTxt} [${romanStep} OK]` : `${rTxt} [OK]`)
+          ? (r.kind === 'seq' ? `${rTxt} [${romanStep} OK]` : (r.kind === 'elemental_shrine' ? `${rTxt} [ENCENDIDO]` : `${rTxt} [OK]`))
           : rTxt;
         ctx.font = '14px BalaclavaPixel, monospace';
         const lw = Math.round(ctx.measureText(label).width + 12);

@@ -248,8 +248,8 @@
       rock: 0, ruin_pillar: 0, coal_vein: 0, copper_vein: 0, tin_vein: 0, sulfur_vein: 0, malachite_vein: 0,
       iron_vein: 2, silver_vein: 3, gold_vein: 4, ice_crystal: 4, jade_vein: 4, amber_vein: 4, star_sand_vein: 3,
       platinum_vein: 5, crystal_node: 6, emerald_vein: 6, ruby_node: 7, sapphire_node: 7, amethyst_vein: 7, azurite_vein: 7,
-      volcanic_rock: 8, diamond_vein: 8, bloodstone_vein: 8, abyssal_crystal_vein: 8,
-      mithril_vein: 9, meteor: 9, titanium_vein: 10, magma_core_vein: 10, adamantite_vein: 11,
+      volcanic_rock: 8, diamond_vein: 8, bloodstone_vein: 8, abyssal_crystal_vein: 8, meteor: 8,
+      mithril_vein: 9, titanium_vein: 10, magma_core_vein: 10, adamantite_vein: 11,
       orichalcum_vein: 12, oricalco_vein: 12, obsidian_vein: 12
     };
     return reqs[nodeKind] ?? 0;

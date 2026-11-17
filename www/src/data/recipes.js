@@ -16,7 +16,6 @@
     { id: 'r_tool_azada',   toolUnlock: 'azada',   qty: 1, station: 'mano', in: { madera: 3, piedra: 3, fibra_vegetal: 1 }, xp: 14 },
 
     // === MANO / BÁSICO ===
-    { id: 'r_cofre_madera_mano', out: 'cofre_madera', qty: 1, station: 'mano', in: { tablon: 4 }, xp: 8 },
     { id: 'r_flecha', out: 'flecha', qty: 8, station: 'mano', in: { madera: 2, piedra: 1 }, xp: 5, craftTime: 1.0 },
     { id: 'r_flecha_forja', out: 'flecha', qty: 20, station: 'forja', in: { madera: 3, lingote_hierro: 1 }, xp: 12, craftTime: 1.4 },
     { id: 'r_tablon', out: 'tablon', qty: 2, station: 'mano', in: { madera: 3 }, xp: 4 },
@@ -56,7 +55,6 @@
 
     // === ASERRADERO & MOLINO & TELAR & CUERO TIER 1 ===
     { id: 'r_tablon_ase', out: 'tablon', qty: 4, station: 'aserradero', in: { madera: 3 }, xp: 6 },
-    { id: 'r_cofre_madera_ase', out: 'cofre_madera', qty: 1, station: 'aserradero', in: { tablon: 4 }, xp: 10 },
     { id: 'r_viga_madera', out: 'viga_madera', qty: 2, station: 'aserradero', in: { madera: 8, hierro: 1 }, xp: 12 },
     { id: 'r_madera_refinada', out: 'madera_refinada', qty: 2, station: 'aserradero', in: { tablon: 4, cera_abeja: 1 }, xp: 14 },
     { id: 'r_harina', out: 'harina', qty: 2, station: 'molino', in: { trigo: 2 }, xp: 6 },

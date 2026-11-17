@@ -3130,7 +3130,8 @@
           }
         } else {
           const wingDone = dung.runes ? dung.runes.filter(x => x.kind === 'wing' && x.active).length : 0;
-          const seqTxt = dung.vaultOpen ? tr('hud.dungVaultOpen') : `${dung.seqProgress || 0}/3`;
+          const maxSeq = dung.seqTarget || 3;
+          const seqTxt = dung.vaultOpen ? tr('hud.dungVaultOpen') : `${dung.seqProgress || 0}/${maxSeq}`;
           const miniTxt = dung.miniBossDefeated ? tr('hud.dungDefeated') : tr('hud.dungPending');
           const gateTxt = dung.gateOpen ? tr('hud.dungGateOpen') : tr('hud.dungGateClosed');
           let phaseLine = '';
@@ -3144,7 +3145,17 @@
             phaseLine = tr('hud.dungConquered');
           }
           const dName = dung.def.name;
-          const dObj = tr('hud.dungObjLine', { wings: wingDone, seq: seqTxt, mini: miniTxt, gate: gateTxt, phaseLine });
+          let dObj = '';
+          if (dung.isLateBiome) {
+            const isEn = Balaclava.I18n && Balaclava.I18n.locale === 'en';
+            const mini2Txt = dung.miniBoss2Defeated ? tr('hud.dungDefeated') : tr('hud.dungPending');
+            const shrineTxt = `${dung.shrineProgress || 0}/${dung.shrineTarget || 2}`;
+            dObj = isEn
+              ? `Wings: ${wingDone}/2 · Runes: ${seqTxt} · Guardian 1: ${miniTxt} · Guardian 2: ${mini2Txt} · Shrines: ${shrineTxt} · Gate: ${gateTxt}${phaseLine}`
+              : `Alas: ${wingDone}/2 · Runas: ${seqTxt} · Guardián 1: ${miniTxt} · Guardián 2: ${mini2Txt} · Altares: ${shrineTxt} · Puerta: ${gateTxt}${phaseLine}`;
+          } else {
+            dObj = tr('hud.dungObjLine', { wings: wingDone, seq: seqTxt, mini: miniTxt, gate: gateTxt, phaseLine });
+          }
           const dKey = `${dName}|${dObj}`;
           if (force || dKey !== this._lastDungKey) {
             this._lastDungKey = dKey;
@@ -3430,8 +3441,9 @@
 
       const bossBar = document.getElementById('boss-bar');
       const dungPtx = g.activeDungeon ? Math.floor(g.player.x / TILE_SIZE) : 0;
+      const dungPty = g.activeDungeon ? Math.floor(g.player.y / TILE_SIZE) : 0;
       const bossMinX = (g.activeDungeon && g.activeDungeon.bossRoomMinX) || 34;
-      if (g.activeDungeon && g.activeDungeon.boss && g.activeDungeon.boss.hp > 0 && dungPtx >= bossMinX) {
+      if (g.activeDungeon && g.activeDungeon.boss && g.activeDungeon.boss.hp > 0 && dungPtx >= bossMinX && dungPty >= 9 && dungPty <= 29) {
         const b = g.activeDungeon.boss;
         bossBar.classList.remove('hidden');
         document.getElementById('boss-name').textContent = tr('hud.bossPhaseTitle', { name: b.name, phase: b.phase });
@@ -3523,12 +3535,15 @@
                 : (Balaclava.ITEMS[slot.id] ? Balaclava.ITEMS[slot.id].name : tr('hover.toolFallback'))) + tr('hud.hotbarTipSuffix'),
               onclick: (ev) => {
                 if (g.isPlayerDead && g.isPlayerDead()) return;
-                if (ev && ev.shiftKey && g.swapHotbarSlots && g.activeSlot !== idx) {
-                  g.swapHotbarSlots(g.activeSlot, idx);
-                  g.activeSlot = idx;
-                } else {
-                  g.activeSlot = idx;
+                if (ev && ev.shiftKey && g.transferHotbarToInventory) {
+                  const moved = g.transferHotbarToInventory(idx);
+                  if (moved) {
+                    this.updateHUD(true);
+                    if (this.hasOpenModal && this.hasOpenModal()) this.renderModal();
+                  }
+                  return;
                 }
+                g.activeSlot = idx;
                 this.updateHUD(true);
               }
             });
@@ -3970,11 +3985,16 @@
       const allowedCats = catGroups[this.invFilter];
       const showTools = !allowedCats || allowedCats.includes('herramientas');
       const ownedTools = showTools
-        ? Object.values(Balaclava.TOOLS).filter(t => Boolean(g.toolTiers && g.toolTiers[t.id]))
+        ? Object.values(Balaclava.TOOLS)
+            .filter(t => Boolean(g.toolTiers && g.toolTiers[t.id]))
+            .filter(t => !(g.hotbar || []).some(s => s && s.kind === 'tool' && s.id === t.id))
         : [];
       const ids = Object.keys(g.inventory).filter(id => {
         const it = Balaclava.ITEMS[id];
-        return it && g.inventory[id] > 0 && (!allowedCats || allowedCats.includes(it.category));
+        if (!it || !g.inventory[id] || (allowedCats && !allowedCats.includes(it.category))) return false;
+        const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+        const invCount = Math.max(0, g.inventory[id] - hbSlots * maxStack);
+        return invCount > 0;
       });
 
       if (this.selectedToolId && !g.toolTiers[this.selectedToolId]) {
@@ -4023,7 +4043,8 @@
         ids.forEach(id => {
           const it = Balaclava.ITEMS[id];
           const isSelected = !this.selectedToolId && this.selectedItemId === id;
-          const totalCount = g.inventory[id];
+          const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+          const totalCount = Math.max(0, (g.inventory[id] || 0) - hbSlots * maxStack);
           let remaining = totalCount;
           while (remaining > 0) {
             const stackQty = Math.min(remaining, maxStack);
@@ -4574,7 +4595,13 @@
 
       // 2. PLAYER INVENTORY SECTION
       const playerBox = this.el('div', { class: 'chest-panel-box' });
-      const playerItems = Object.entries(g.inventory).filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
+      const playerItems = Object.entries(g.inventory)
+        .map(([id, q]) => {
+          const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+          const invQ = Math.max(0, q - hbSlots * maxStack);
+          return [id, invQ];
+        })
+        .filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
       const bpName = g.backpackTier === 3 ? 'Mochila Astral (+24 slots)'
                    : g.backpackTier === 2 ? 'Mochila Reforzada (+16 slots)'
                    : g.backpackTier === 1 ? 'Mochila de Cuero (+8 slots)'
@@ -6085,7 +6112,7 @@
       ]));
 
       Object.values(Balaclava.BUILDINGS)
-        .filter(b => b.category === this.buildFilter)
+        .filter(b => b.category === this.buildFilter || b.altCategory === this.buildFilter)
         .sort((a, b) => (a.sortOrder || 999) - (b.sortOrder || 999))
         .forEach(b => {
         const buildCheck = g.canBuild(b.id);

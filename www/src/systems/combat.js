@@ -2097,7 +2097,7 @@
       if (game.activeDungeon) {
         game.activeDungeon.enemies = game.activeDungeon.enemies.filter(e => e !== enemy);
         if (enemy.isMiniBoss && typeof game.activeDungeon.onMiniBossDefeated === 'function') {
-          game.activeDungeon.onMiniBossDefeated(game);
+          game.activeDungeon.onMiniBossDefeated(game, enemy);
         }
       }
 

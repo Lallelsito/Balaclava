@@ -633,7 +633,13 @@
     'tierras_volcanicas', 'volcan_abismo', 'volcan_fragua', 'volcan_caldera', 'volcan_trono_ceniza'
   ];
 
-  // Unique 3-Attack movesets for each of the 24 dungeon bosses (72 distinct attacks, zero repeats)
+  const LATE_BIOME_DUNGEONS = new Set([
+    'bosque_oscuro', 'bosque_necro', 'bosque_laboratorio', 'bosque_arana', 'bosque_pantano',
+    'montanas_heladas', 'montanas_glaciar', 'montanas_mina', 'montanas_fortaleza',
+    'tierras_volcanicas', 'volcan_abismo', 'volcan_fragua', 'volcan_caldera', 'volcan_trono_ceniza'
+  ]);
+
+  // Unique attack movesets for each of the 24 dungeon bosses (expanded to 5 signature attacks for late biomes 3, 4, 5)
   const BOSS_SIGNATURE_MOVES = {
     pradera: {
       modes1: ['slime_colossal_bounce', 'slime_toxic_geyser', 'slime_acid_mitosis'],
@@ -656,34 +662,34 @@
       modes3: ['radiant_judgment_grid', 'solar_lance_beam', 'sun_disc_ricochet']
     },
     bosque_oscuro: {
-      modes1: ['abyssal_singularity', 'void_tendril_grasp', 'entropy_skull_spiral'],
-      modes2: ['entropy_skull_spiral', 'abyssal_singularity', 'void_tendril_grasp'],
-      modes3: ['abyssal_singularity', 'entropy_skull_spiral', 'void_tendril_grasp']
+      modes1: ['abyssal_singularity', 'void_tendril_grasp', 'entropy_skull_spiral', 'cosmic_black_hole', 'nether_chain_snare'],
+      modes2: ['entropy_skull_spiral', 'cosmic_black_hole', 'abyssal_singularity', 'nether_chain_snare', 'void_tendril_grasp'],
+      modes3: ['cosmic_black_hole', 'abyssal_singularity', 'nether_chain_snare', 'entropy_skull_spiral', 'void_tendril_grasp']
     },
     bosque_necro: {
-      modes1: ['death_scythe_reap', 'bone_cage_prison', 'soul_siphon_vortex'],
-      modes2: ['bone_cage_prison', 'death_scythe_reap', 'soul_siphon_vortex'],
-      modes3: ['soul_siphon_vortex', 'bone_cage_prison', 'death_scythe_reap']
+      modes1: ['death_scythe_reap', 'bone_cage_prison', 'soul_siphon_vortex', 'catacomb_legion_sweep', 'grave_rot_miasma'],
+      modes2: ['bone_cage_prison', 'catacomb_legion_sweep', 'death_scythe_reap', 'grave_rot_miasma', 'soul_siphon_vortex'],
+      modes3: ['soul_siphon_vortex', 'grave_rot_miasma', 'bone_cage_prison', 'catacomb_legion_sweep', 'death_scythe_reap']
     },
     montanas_heladas: {
-      modes1: ['ice_shard_gatling', 'glacial_avalanche', 'permafrost_shatter'],
-      modes2: ['glacial_avalanche', 'permafrost_shatter', 'ice_shard_gatling'],
-      modes3: ['permafrost_shatter', 'glacial_avalanche', 'ice_shard_gatling']
+      modes1: ['ice_shard_gatling', 'glacial_avalanche', 'permafrost_shatter', 'blizzard_cryo_quake', 'frozen_monolith_drop'],
+      modes2: ['glacial_avalanche', 'blizzard_cryo_quake', 'permafrost_shatter', 'frozen_monolith_drop', 'ice_shard_gatling'],
+      modes3: ['frozen_monolith_drop', 'permafrost_shatter', 'glacial_avalanche', 'blizzard_cryo_quake', 'ice_shard_gatling']
     },
     montanas_glaciar: {
-      modes1: ['boreal_needle_supernova', 'cryo_teleport_frostbite', 'absolute_zero_comet'],
-      modes2: ['cryo_teleport_frostbite', 'absolute_zero_comet', 'boreal_needle_supernova'],
-      modes3: ['absolute_zero_comet', 'boreal_needle_supernova', 'cryo_teleport_frostbite']
+      modes1: ['boreal_needle_supernova', 'cryo_teleport_frostbite', 'absolute_zero_comet', 'arctic_mirror_delusion', 'glacial_orb_orbit'],
+      modes2: ['cryo_teleport_frostbite', 'arctic_mirror_delusion', 'absolute_zero_comet', 'glacial_orb_orbit', 'boreal_needle_supernova'],
+      modes3: ['absolute_zero_comet', 'glacial_orb_orbit', 'boreal_needle_supernova', 'arctic_mirror_delusion', 'cryo_teleport_frostbite']
     },
     tierras_volcanicas: {
-      modes1: ['hellfire_wing_gust', 'dragon_magma_breath', 'inferno_meteor_cataclysm'],
-      modes2: ['dragon_magma_breath', 'inferno_meteor_cataclysm', 'hellfire_wing_gust'],
-      modes3: ['inferno_meteor_cataclysm', 'dragon_magma_breath', 'hellfire_wing_gust']
+      modes1: ['hellfire_wing_gust', 'dragon_magma_breath', 'inferno_meteor_cataclysm', 'draconic_roaring_supernova', 'volcanic_earth_rift'],
+      modes2: ['dragon_magma_breath', 'draconic_roaring_supernova', 'inferno_meteor_cataclysm', 'volcanic_earth_rift', 'hellfire_wing_gust'],
+      modes3: ['inferno_meteor_cataclysm', 'volcanic_earth_rift', 'draconic_roaring_supernova', 'dragon_magma_breath', 'hellfire_wing_gust']
     },
     volcan_abismo: {
-      modes1: ['chains_of_damnation', 'calamity_fissure_cross', 'pyroclastic_eruption'],
-      modes2: ['calamity_fissure_cross', 'pyroclastic_eruption', 'chains_of_damnation'],
-      modes3: ['pyroclastic_eruption', 'calamity_fissure_cross', 'chains_of_damnation']
+      modes1: ['chains_of_damnation', 'calamity_fissure_cross', 'pyroclastic_eruption', 'abyssal_hellfire_vortex', 'apocalyptic_meteor_storm'],
+      modes2: ['calamity_fissure_cross', 'abyssal_hellfire_vortex', 'pyroclastic_eruption', 'apocalyptic_meteor_storm', 'chains_of_damnation'],
+      modes3: ['pyroclastic_eruption', 'apocalyptic_meteor_storm', 'calamity_fissure_cross', 'abyssal_hellfire_vortex', 'chains_of_damnation']
     },
     pradera_madriguera: {
       modes1: ['buckshot_scatter', 'trapper_minefield', 'dynamite_lob'],
@@ -716,44 +722,44 @@
       modes3: ['sun_chariot_charge', 'prism_solar_flare', 'golden_dawn_barrage']
     },
     bosque_laboratorio: {
-      modes1: ['steam_vent_purge', 'volatile_flask_toss', 'overclock_laser_sweep'],
-      modes2: ['volatile_flask_toss', 'overclock_laser_sweep', 'steam_vent_purge'],
-      modes3: ['overclock_laser_sweep', 'volatile_flask_toss', 'steam_vent_purge']
+      modes1: ['steam_vent_purge', 'volatile_flask_toss', 'overclock_laser_sweep', 'tesla_chain_discharge', 'chemical_napalm_carpet'],
+      modes2: ['volatile_flask_toss', 'tesla_chain_discharge', 'overclock_laser_sweep', 'chemical_napalm_carpet', 'steam_vent_purge'],
+      modes3: ['overclock_laser_sweep', 'chemical_napalm_carpet', 'volatile_flask_toss', 'tesla_chain_discharge', 'steam_vent_purge']
     },
     bosque_arana: {
-      modes1: ['venomous_mandible_strike', 'silk_web_ensnare', 'broodmother_needle_burst'],
-      modes2: ['silk_web_ensnare', 'broodmother_needle_burst', 'venomous_mandible_strike'],
-      modes3: ['broodmother_needle_burst', 'silk_web_ensnare', 'venomous_mandible_strike']
+      modes1: ['venomous_mandible_strike', 'silk_web_ensnare', 'broodmother_needle_burst', 'arachnid_pounce_ambush', 'toxic_silk_cocoon'],
+      modes2: ['silk_web_ensnare', 'arachnid_pounce_ambush', 'broodmother_needle_burst', 'toxic_silk_cocoon', 'venomous_mandible_strike'],
+      modes3: ['broodmother_needle_burst', 'toxic_silk_cocoon', 'silk_web_ensnare', 'arachnid_pounce_ambush', 'venomous_mandible_strike']
     },
     bosque_pantano: {
-      modes1: ['furious_swamp_thrash', 'triple_acid_stream', 'swamp_mire_surge'],
-      modes2: ['triple_acid_stream', 'swamp_mire_surge', 'furious_swamp_thrash'],
-      modes3: ['swamp_mire_surge', 'triple_acid_stream', 'furious_swamp_thrash']
+      modes1: ['furious_swamp_thrash', 'triple_acid_stream', 'swamp_mire_surge', 'hydra_regrowth_breath', 'noxious_bog_geysers'],
+      modes2: ['triple_acid_stream', 'hydra_regrowth_breath', 'swamp_mire_surge', 'noxious_bog_geysers', 'furious_swamp_thrash'],
+      modes3: ['swamp_mire_surge', 'noxious_bog_geysers', 'triple_acid_stream', 'hydra_regrowth_breath', 'furious_swamp_thrash']
     },
     montanas_mina: {
-      modes1: ['gem_laser_refraction', 'diamond_shard_shatter', 'crystal_spire_eruption'],
-      modes2: ['diamond_shard_shatter', 'crystal_spire_eruption', 'gem_laser_refraction'],
-      modes3: ['crystal_spire_eruption', 'diamond_shard_shatter', 'gem_laser_refraction']
+      modes1: ['gem_laser_refraction', 'diamond_shard_shatter', 'crystal_spire_eruption', 'hyper_prism_cannon', 'diamond_core_overload'],
+      modes2: ['diamond_shard_shatter', 'hyper_prism_cannon', 'crystal_spire_eruption', 'diamond_core_overload', 'gem_laser_refraction'],
+      modes3: ['crystal_spire_eruption', 'diamond_core_overload', 'diamond_shard_shatter', 'hyper_prism_cannon', 'gem_laser_refraction']
     },
     montanas_fortaleza: {
-      modes1: ['thunder_shield_slam', 'valkyrie_storm_javelin', 'ride_of_the_valkyrie'],
-      modes2: ['valkyrie_storm_javelin', 'ride_of_the_valkyrie', 'thunder_shield_slam'],
-      modes3: ['ride_of_the_valkyrie', 'valkyrie_storm_javelin', 'thunder_shield_slam']
+      modes1: ['thunder_shield_slam', 'valkyrie_storm_javelin', 'ride_of_the_valkyrie', 'valhalla_sky_strike', 'vanguard_spear_whirlwind'],
+      modes2: ['valkyrie_storm_javelin', 'valhalla_sky_strike', 'ride_of_the_valkyrie', 'vanguard_spear_whirlwind', 'thunder_shield_slam'],
+      modes3: ['ride_of_the_valkyrie', 'vanguard_spear_whirlwind', 'valkyrie_storm_javelin', 'valhalla_sky_strike', 'thunder_shield_slam']
     },
     volcan_fragua: {
-      modes1: ['bellows_flame_burst', 'titanic_anvil_strike', 'molten_slag_shower'],
-      modes2: ['titanic_anvil_strike', 'molten_slag_shower', 'bellows_flame_burst'],
-      modes3: ['molten_slag_shower', 'titanic_anvil_strike', 'bellows_flame_burst']
+      modes1: ['bellows_flame_burst', 'titanic_anvil_strike', 'molten_slag_shower', 'forge_master_molten_hammer', 'liquid_metal_tsunami'],
+      modes2: ['titanic_anvil_strike', 'forge_master_molten_hammer', 'molten_slag_shower', 'liquid_metal_tsunami', 'bellows_flame_burst'],
+      modes3: ['molten_slag_shower', 'liquid_metal_tsunami', 'titanic_anvil_strike', 'forge_master_molten_hammer', 'bellows_flame_burst']
     },
     volcan_caldera: {
-      modes1: ['solar_feather_barrage', 'phoenix_dive_bomb', 'rebirth_flame_nova'],
-      modes2: ['phoenix_dive_bomb', 'rebirth_flame_nova', 'solar_feather_barrage'],
-      modes3: ['rebirth_flame_nova', 'phoenix_dive_bomb', 'solar_feather_barrage']
+      modes1: ['solar_feather_barrage', 'phoenix_dive_bomb', 'rebirth_flame_nova', 'phoenix_conflagration_spiral', 'sunfire_thermal_beam'],
+      modes2: ['phoenix_dive_bomb', 'phoenix_conflagration_spiral', 'rebirth_flame_nova', 'sunfire_thermal_beam', 'solar_feather_barrage'],
+      modes3: ['rebirth_flame_nova', 'sunfire_thermal_beam', 'phoenix_dive_bomb', 'phoenix_conflagration_spiral', 'solar_feather_barrage']
     },
     volcan_trono_ceniza: {
-      modes1: ['cataclysmic_stomp', 'ashen_obliteration_ray', 'cinder_cyclone'],
-      modes2: ['ashen_obliteration_ray', 'cinder_cyclone', 'cataclysmic_stomp'],
-      modes3: ['cinder_cyclone', 'ashen_obliteration_ray', 'cataclysmic_stomp']
+      modes1: ['cataclysmic_stomp', 'ashen_obliteration_ray', 'cinder_cyclone', 'ash_emperor_dominion_wave', 'cinder_execution_cleave'],
+      modes2: ['ashen_obliteration_ray', 'ash_emperor_dominion_wave', 'cinder_cyclone', 'cinder_execution_cleave', 'cataclysmic_stomp'],
+      modes3: ['cinder_cyclone', 'cinder_execution_cleave', 'ashen_obliteration_ray', 'ash_emperor_dominion_wave', 'cataclysmic_stomp']
     }
   };
 
@@ -1431,6 +1437,275 @@
         }
         return true;
 
+      // === EXPANSION: BIOMES 3, 4, 5 SIGNATURE ATTACKS (2 additional attacks per boss) ===
+
+      // 1. Archidruida del Vacío (bosque_oscuro)
+      case 'cosmic_black_hole':
+        Balaclava.Audio.play('curse');
+        game.spawnFx('pvfx_whirlpool', px, py, 0, 0.7, 1.8, 0.95);
+        game.spawnShockwave(px, py, 110, '#ce93d8');
+        dung.hazardZones.push({ kind: 'pool', x: px, y: py, radius: 72, duration: 3.5, timer: 0, dmg: b.dmg * 0.9, color: '#ba68c8', vfxKey: 'pvfx_whirlpool', status: { kind: 'stun', dur: 0.5 } });
+        return true;
+
+      case 'nether_chain_snare':
+        Balaclava.Audio.play('magic');
+        game.spawnFx('pvfx_power_up_aura', b.x, b.y, 0, 0.5, 1.3, 0.9);
+        for (const [dx, dy] of [[0, 0], [42, 0], [-42, 0], [0, 42], [0, -42]]) {
+          dung.hazardZones.push({ kind: 'pillar', x: px + dx, y: py + dy, radius: 44, delay: 0.65, oneShot: true, timer: 0, dmg: b.dmg * 1.3, color: '#ce93d8', vfxKey: 'pvfx_void_burst' });
+        }
+        return true;
+
+      // 2. Soberano Esqueleto Malakor (bosque_necro)
+      case 'catacomb_legion_sweep':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('pvfx_sword_combo', b.x, b.y, tAng, 0.45, 1.4, 0.95);
+        for (let i = -2; i <= 2; i++) {
+          const fa = tAng + i * 0.22;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(fa) * 310, Math.sin(fa) * 310, Math.round(b.dmg * 1.05), '#b39ddb', { vfxKey: 'pvfx_shadow_bolt' });
+        }
+        return true;
+
+      case 'grave_rot_miasma':
+        Balaclava.Audio.play('curse');
+        game.spawnShockwave(b.x, b.y, 130, '#9575cd');
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2;
+          const mx = px + Math.cos(a) * 48;
+          const my = py + Math.sin(a) * 48;
+          dung.hazardZones.push({ kind: 'pool', x: mx, y: my, radius: 52, duration: 3.6, timer: 0, dmg: b.dmg * 0.8, color: '#9575cd', vfxKey: 'pvfx_poison_cloud', status: { kind: 'poison', dur: 3.0 } });
+        }
+        return true;
+
+      // 3. Coloso de Escarcha (montanas_heladas)
+      case 'blizzard_cryo_quake':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.35, 9);
+        game.spawnShockwave(b.x, b.y, 160, '#80deea');
+        dung.hazardZones.push({ kind: 'fissure', x: b.x - 140, y: b.y, x2: b.x + 140, y2: b.y, halfW: 24, delay: 0.55, duration: 1.8, timer: 0, dmg: b.dmg * 1.3, color: '#80deea', vfxKey: 'pvfx_ice_burst' });
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y - 140, x2: b.x, y2: b.y + 140, halfW: 24, delay: 0.55, duration: 1.8, timer: 0, dmg: b.dmg * 1.3, color: '#80deea', vfxKey: 'pvfx_ice_burst' });
+        return true;
+
+      case 'frozen_monolith_drop':
+        Balaclava.Audio.play('bomb');
+        for (let i = 0; i < 3; i++) {
+          const ox = px + (i - 1) * 54;
+          const oy = py + (Math.random() - 0.5) * 40;
+          dung.hazardZones.push({ kind: 'meteor', x: ox, y: oy, radius: 56, delay: 0.6 + i * 0.16, duration: 2.2, timer: 0, detonated: false, dmg: b.dmg * 1.4, color: '#80deea', vfxKey: 'pvfx_ice_burst' });
+        }
+        return true;
+
+      // 4. Archimago Boreal Vael (montanas_glaciar)
+      case 'arctic_mirror_delusion':
+        Balaclava.Audio.play('magic');
+        b.dashTimer = 0.35;
+        b.dashVx = Math.cos(tAng + Math.PI / 2) * 360;
+        b.dashVy = Math.sin(tAng + Math.PI / 2) * 360;
+        game.spawnFx('pvfx_whirlpool', b.x, b.y, 0, 0.4, 1.2, 0.9);
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 270, Math.sin(a) * 270, Math.round(b.dmg * 0.9), '#4fc3f7', { vfxKey: 'pvfx_ice_needle' });
+        }
+        return true;
+
+      case 'glacial_orb_orbit':
+        Balaclava.Audio.play('magic');
+        for (let i = 0; i < 3; i++) {
+          const a = (i / 3) * Math.PI * 2 + tAng;
+          const ox = b.x + Math.cos(a) * 65;
+          const oy = b.y + Math.sin(a) * 65;
+          dung.hazardZones.push({ kind: 'pool', x: ox, y: oy, radius: 46, duration: 3.2, timer: 0, dmg: b.dmg * 0.85, color: '#4fc3f7', vfxKey: 'pvfx_ice_burst', status: { kind: 'slow', dur: 2.5 } });
+        }
+        return true;
+
+      // 5. Dragón Carmesí Ignis (tierras_volcanicas)
+      case 'draconic_roaring_supernova':
+        Balaclava.Audio.play('bomb');
+        game.shake(0.38, 10);
+        game.spawnShockwave(b.x, b.y, 180, '#ff5722');
+        game.spawnFx('pvfx_fire_nova', b.x, b.y, 0, 0.5, 1.6, 0.95);
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 290, Math.sin(a) * 290, Math.round(b.dmg * 1.1), '#ff5722', { vfxKey: 'pvfx_fire_burst', status: { kind: 'burn', dur: 3.0 } });
+        }
+        dung.hazardZones.push({ kind: 'pool', x: b.x, y: b.y, radius: 64, duration: 3.5, timer: 0, dmg: b.dmg * 0.9, color: '#ff5722', vfxKey: 'pvfx_fire_pillar', status: { kind: 'burn', dur: 3.0 } });
+        return true;
+
+      case 'volcanic_earth_rift':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.3, 8);
+        dung.hazardZones.push({ kind: 'fissure', x: b.x - 130, y: b.y - 130, x2: b.x + 130, y2: b.y + 130, halfW: 24, delay: 0.6, duration: 2.0, timer: 0, dmg: b.dmg * 1.35, color: '#ff7043', vfxKey: 'pvfx_fire_pillar', status: { kind: 'burn', dur: 3.0 } });
+        dung.hazardZones.push({ kind: 'fissure', x: b.x - 130, y: b.y + 130, x2: b.x + 130, y2: b.y - 130, halfW: 24, delay: 0.6, duration: 2.0, timer: 0, dmg: b.dmg * 1.35, color: '#ff7043', vfxKey: 'pvfx_fire_pillar', status: { kind: 'burn', dur: 3.0 } });
+        return true;
+
+      // 6. Señor Ígneo Balak (volcan_abismo)
+      case 'abyssal_hellfire_vortex':
+        Balaclava.Audio.play('curse');
+        game.spawnFx('pvfx_fire_tornado', px, py, 0, 0.65, 1.5, 0.95);
+        dung.hazardZones.push({ kind: 'pool', x: px, y: py, radius: 68, duration: 3.6, timer: 0, dmg: b.dmg * 1.0, color: '#ff1744', vfxKey: 'pvfx_fire_tornado', status: { kind: 'burn', dur: 3.5 } });
+        return true;
+
+      case 'apocalyptic_meteor_storm':
+        Balaclava.Audio.play('bomb');
+        game.shake(0.4, 11);
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2;
+          const mx = px + Math.cos(a) * 58;
+          const my = py + Math.sin(a) * 58;
+          dung.hazardZones.push({ kind: 'meteor', x: mx, y: my, radius: 52, delay: 0.5 + i * 0.14, duration: 2.2, timer: 0, detonated: false, dmg: b.dmg * 1.4, color: '#ff1744', vfxKey: 'pvfx_big_explosion' });
+        }
+        return true;
+
+      // 7. Autómata Alquímico X-09 (bosque_laboratorio)
+      case 'tesla_chain_discharge':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.28, 7);
+        game.spawnShockwave(b.x, b.y, 140, '#7e57c2');
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 340, Math.sin(a) * 340, Math.round(b.dmg * 1.15), '#7e57c2', { vfxKey: 'pvfx_lightning_burst' });
+        }
+        return true;
+
+      case 'chemical_napalm_carpet':
+        Balaclava.Audio.play('bomb');
+        for (let i = 1; i <= 4; i++) {
+          const nx = b.x + Math.cos(tAng) * (i * 50);
+          const ny = b.y + Math.sin(tAng) * (i * 50);
+          dung.hazardZones.push({ kind: 'meteor', x: nx, y: ny, radius: 46, delay: 0.4 + i * 0.14, duration: 2.0, timer: 0, detonated: false, dmg: b.dmg * 1.25, color: '#7e57c2', vfxKey: 'pvfx_fire_nova' });
+        }
+        return true;
+
+      // 8. Emperatriz Arácnea Syla (bosque_arana)
+      case 'arachnid_pounce_ambush':
+        Balaclava.Audio.play('hit');
+        b.leapDur = 0.38;
+        b.leapProg = 0.001;
+        b.leapStartX = b.x;
+        b.leapStartY = b.y;
+        b.targetX = px;
+        b.targetY = py;
+        game.spawnFx('pvfx_acid_splash', b.x, b.y, 0, 0.4, 1.3, 0.9);
+        return true;
+
+      case 'toxic_silk_cocoon':
+        Balaclava.Audio.play('magic');
+        game.spawnEnemyProjectile(b.x, b.y, Math.cos(tAng) * 360, Math.sin(tAng) * 360, Math.round(b.dmg * 1.2), '#9ccc65', { vfxKey: 'pvfx_poison_cloud', status: { kind: 'slow', dur: 3.0 } });
+        dung.hazardZones.push({ kind: 'pool', x: px, y: py, radius: 52, duration: 3.0, timer: 0, dmg: b.dmg * 0.75, color: '#9ccc65', vfxKey: 'pvfx_acid_splash', status: { kind: 'poison', dur: 2.5 } });
+        return true;
+
+      // 9. Hidra del Pantano Mog (bosque_pantano)
+      case 'hydra_regrowth_breath':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('pvfx_acid_splash', b.x, b.y, tAng, 0.4, 1.5, 0.95);
+        for (let i = 0; i < 8; i++) {
+          const spread = (Math.random() - 0.5) * 0.4;
+          const spd = 260 + Math.random() * 80;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(tAng + spread) * spd, Math.sin(tAng + spread) * spd, Math.round(b.dmg * 0.9), '#26a69a', { vfxKey: 'pvfx_acid_splash', status: { kind: 'poison', dur: 3.0 } });
+        }
+        return true;
+
+      case 'noxious_bog_geysers':
+        Balaclava.Audio.play('curse');
+        for (let i = 0; i < 4; i++) {
+          const gx = px + (i - 1.5) * 45;
+          const gy = py + (Math.random() - 0.5) * 45;
+          dung.hazardZones.push({ kind: 'pillar', x: gx, y: gy, radius: 46, delay: 0.55 + i * 0.12, oneShot: true, timer: 0, dmg: b.dmg * 1.2, color: '#26a69a', vfxKey: 'pvfx_poison_cloud', status: { kind: 'poison', dur: 2.5 } });
+        }
+        return true;
+
+      // 10. Gólem de Diamante Boreal (montanas_mina)
+      case 'hyper_prism_cannon':
+        Balaclava.Audio.play('magic');
+        game.spawnFx('pvfx_laser_charge', b.x, b.y, tAng, 0.45, 1.5, 0.95);
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 280, y2: b.y + Math.sin(tAng) * 280, halfW: 28, delay: 0.55, duration: 1.8, timer: 0, dmg: b.dmg * 1.5, color: '#4fc3f7', vfxKey: 'pvfx_ice_burst' });
+        return true;
+
+      case 'diamond_core_overload':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.32, 9);
+        game.spawnShockwave(b.x, b.y, 170, '#4fc3f7');
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 310, Math.sin(a) * 310, Math.round(b.dmg * 1.05), '#4fc3f7', { vfxKey: 'pvfx_ice_needle' });
+        }
+        return true;
+
+      // 11. Comandante Valkir Thrond (montanas_fortaleza)
+      case 'valhalla_sky_strike':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.35, 10);
+        dung.hazardZones.push({ kind: 'pillar', x: px, y: py, radius: 60, delay: 0.5, oneShot: true, timer: 0, dmg: b.dmg * 1.5, color: '#90caf9', vfxKey: 'pvfx_lightning_burst' });
+        return true;
+
+      case 'vanguard_spear_whirlwind':
+        Balaclava.Audio.play('slash');
+        b.dashTimer = 0.48;
+        b._dashHitCd = 0;
+        b.dashVx = Math.cos(tAng) * 510;
+        b.dashVy = Math.sin(tAng) * 510;
+        game.spawnFx('pa_slash2_gold', b.x, b.y, tAng, 0.4, 1.4, 0.95);
+        game.spawnShockwave(b.x, b.y, 120, '#90caf9');
+        return true;
+
+      // 12. Forjador Titánico Hephaest (volcan_fragua)
+      case 'forge_master_molten_hammer':
+        Balaclava.Audio.play('hit');
+        game.shake(0.36, 10);
+        b.leapDur = 0.42;
+        b.leapProg = 0.001;
+        b.leapStartX = b.x;
+        b.leapStartY = b.y;
+        b.targetX = px;
+        b.targetY = py;
+        dung.hazardZones.push({ kind: 'pillar', x: px, y: py, radius: 58, delay: 0.42, oneShot: true, timer: 0, dmg: b.dmg * 1.45, color: '#ff7043', vfxKey: 'pvfx_hammer_smash' });
+        return true;
+
+      case 'liquid_metal_tsunami':
+        Balaclava.Audio.play('magic');
+        game.spawnFx('pvfx_fire_nova', b.x, b.y, tAng, 0.4, 1.5, 0.95);
+        for (let i = -3; i <= 3; i++) {
+          const fa = tAng + i * 0.18;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(fa) * 280, Math.sin(fa) * 280, Math.round(b.dmg * 1.1), '#ff7043', { vfxKey: 'pvfx_fire_burst', status: { kind: 'burn', dur: 3.0 } });
+        }
+        return true;
+
+      // 13. Fénix Magmático Zyr (volcan_caldera)
+      case 'phoenix_conflagration_spiral':
+        Balaclava.Audio.play('magic');
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2 + tAng;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 300, Math.sin(a) * 300, Math.round(b.dmg * 1.05), '#ffca28', { vfxKey: 'pvfx_fire_feather', status: { kind: 'burn', dur: 2.5 } });
+        }
+        return true;
+
+      case 'sunfire_thermal_beam':
+        Balaclava.Audio.play('magic');
+        game.spawnFx('pvfx_fire_chargeburst_max', b.x, b.y, tAng, 0.5, 1.5, 0.95);
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 260, y2: b.y + Math.sin(tAng) * 260, halfW: 26, delay: 0.55, duration: 1.8, timer: 0, dmg: b.dmg * 1.4, color: '#ffca28', vfxKey: 'pvfx_fire_pillar', status: { kind: 'burn', dur: 3.0 } });
+        return true;
+
+      // 14. Emperador Ceniza Kael-Vorn (volcan_trono_ceniza)
+      case 'ash_emperor_dominion_wave':
+        Balaclava.Audio.play('curse');
+        game.shake(0.38, 11);
+        game.spawnShockwave(b.x, b.y, 140, '#ff1744');
+        setTimeout(() => { if (b.hp > 0) game.spawnShockwave(b.x, b.y, 200, '#ff1744'); }, 180);
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 320, Math.sin(a) * 320, Math.round(b.dmg * 1.15), '#ff1744', { vfxKey: 'pvfx_fire_burst', status: { kind: 'burn', dur: 3.0 } });
+        }
+        return true;
+
+      case 'cinder_execution_cleave':
+        Balaclava.Audio.play('slash');
+        b.dashTimer = 0.44;
+        b._dashHitCd = 0;
+        b.dashVx = Math.cos(tAng) * 520;
+        b.dashVy = Math.sin(tAng) * 520;
+        game.spawnFx('pa_slash2_gold', b.x, b.y, tAng, 0.4, 1.5, 0.95);
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 200, y2: b.y + Math.sin(tAng) * 200, halfW: 24, delay: 0.44, duration: 1.8, timer: 0, dmg: b.dmg * 1.3, color: '#ff1744', vfxKey: 'pvfx_fire_pillar', status: { kind: 'burn', dur: 3.0 } });
+        return true;
+
       default:
         return false;
     }
@@ -1456,10 +1731,15 @@
       this.chests = []; // { tx, ty, opened, bonus, isBossChest }
       this.enemies = [];
       this.boss = null;
+      this.isLateBiome = LATE_BIOME_DUNGEONS.has(this.id);
       this.wingsOpen = false;
       this.vaultOpen = false;
       this.miniBossDefeated = false;
-      this.seqProgress = 0; // 0 -> 1 -> 2 -> 3
+      this.miniBoss2Defeated = false;
+      this.seqProgress = 0; // 0 -> 1 -> 2 -> 3 (or 4 in late biomes)
+      this.seqTarget = this.isLateBiome ? 4 : 3;
+      this.shrineProgress = 0;
+      this.shrineTarget = this.isLateBiome ? 2 : 0;
       this.gateOpen = false;
       this.bossLocked = false;
       this.wingDoorTiles = [];
@@ -1526,6 +1806,7 @@
       let propCandidates = [];
       let mobSpots = [];
       let miniBossSpot = { tx: 39, ty: 31 };
+      let miniBoss2Spot = null;
       let bossSpawn = { tx: 67, ty: 19 };
       let carpetBoxes = [];
 
@@ -1914,6 +2195,72 @@
         mobSpots = [[15,9,1.02],[20,7,1.1],[18,20,1.2],[23,21,1.25],[21,32,1.3],[35,31,1.4],[32,6,1.35],[38,5,1.38],[31,19,1.42],[44,17,1.48],[47,20,1.52]];
       }
 
+      // === EXPANSION: Late-Biome Additional Rooms, Puzzles & Second Guardian ===
+      if (this.isLateBiome) {
+        // Carve Room A: Santuario del Segundo Guardián (x: 54..64, y: 2..8)
+        carveRect(54, 2, 64, 8, 1);
+        addRoom('Santuario del Segundo Guardián', 54, 2, 64, 8);
+        carveRect(46, 4, 54, 6, 1);
+
+        // Carve Room B: Santuario de los Sellos Abisales (x: 54..63, y: 30..36)
+        carveRect(54, 30, 63, 36, 1);
+        addRoom('Santuario de los Sellos Abisales', 54, 30, 63, 36);
+        carveRect(46, 32, 54, 34, 1);
+
+        // Carve Room C: Bóveda de los Arcanos Mayores (x: 65..72, y: 30..36)
+        carveRect(65, 30, 72, 36, 1);
+        addRoom('Bóveda de los Arcanos Mayores', 65, 30, 72, 36);
+        carveRect(63, 32, 65, 34, 1);
+
+        this.miniBoss2ChestPos = { tx: 63, ty: 3 };
+        miniBoss2Spot = { tx: 59, ty: 5 };
+
+        // Add 2 Elemental Shrines to this.runes
+        this.runes.push({
+          id: 'shrine_1',
+          tx: 55,
+          ty: 5,
+          active: false,
+          kind: 'elemental_shrine',
+          label: 'ALTAR I',
+          shrineIdx: 1
+        });
+        this.runes.push({
+          id: 'shrine_2',
+          tx: 58,
+          ty: 33,
+          active: false,
+          kind: 'elemental_shrine',
+          label: 'ALTAR II',
+          shrineIdx: 2
+        });
+
+        // Add 4th rune to sequence puzzle in late biomes
+        const seqRunes = this.runes.filter(r => r.kind === 'seq');
+        if (seqRunes.length >= 3 && !this.runes.some(r => r.id === 'seq_4')) {
+          this.runes.push({
+            id: 'seq_4',
+            tx: 47,
+            ty: 5,
+            active: false,
+            kind: 'seq',
+            order: 4,
+            label: 'RUNA IV'
+          });
+        }
+
+        // Add bonus chests in Bóveda de los Arcanos Mayores
+        this.chests.push({ tx: 68, ty: 32, opened: false, bonus: true, chestTheme: this.def.chestTheme || 'gold' });
+        this.chests.push({ tx: 70, ty: 34, opened: false, bonus: true, chestTheme: this.def.chestTheme || 'gold' });
+
+        // Add mob spots for extra rooms
+        mobSpots.push([58, 4, 1.8], [61, 6, 1.8], [57, 32, 1.85], [60, 34, 1.85], [67, 33, 1.9], [69, 32, 1.95]);
+
+        // Add torches and props for extra rooms
+        torchCandidates.push([55, 2], [63, 2], [55, 30], [62, 30], [66, 30], [71, 30]);
+        propCandidates.push([56, 7, 'urnGold'], [62, 7, 'urnGold'], [68, 35, 'sarcophagus'], [70, 31, 'urnGold']);
+      }
+
       // Point 12: Vertical symmetry flip (50% chance) so North & South wings swap unpredictably across runs
       const mirroredY = rng() < 0.5;
       if (mirroredY) {
@@ -1947,6 +2294,8 @@
         spawnTile.ty = flipY(spawnTile.ty);
         miniBossSpot.ty = flipY(miniBossSpot.ty);
         if (this.miniBossChestPos) this.miniBossChestPos.ty = flipY(this.miniBossChestPos.ty);
+        if (this.miniBoss2ChestPos) this.miniBoss2ChestPos.ty = flipY(this.miniBoss2ChestPos.ty);
+        if (miniBoss2Spot) miniBoss2Spot.ty = flipY(miniBoss2Spot.ty);
         bossSpawn.ty = flipY(bossSpawn.ty);
         if (this.bossArenaCenter) this.bossArenaCenter.ty = flipY(this.bossArenaCenter.ty);
       }
@@ -2069,6 +2418,9 @@
         }
       });
       this.enemies.push(this.makeMiniBoss(types[1 % types.length], miniBossSpot.tx, miniBossSpot.ty));
+      if (this.isLateBiome && miniBoss2Spot) {
+        this.enemies.push(this.makeMiniBoss2(types[2 % types.length], miniBoss2Spot.tx, miniBoss2Spot.ty));
+      }
 
       // Grand 3-Phase Boss in Arena
       const b = this.def.boss;
@@ -2077,8 +2429,12 @@
       const abHp = this.abyssScale ? this.abyssScale.hp : 1;
       const abDmg = this.abyssScale ? this.abyssScale.dmg : 1;
       const abSpd = this.abyssScale ? this.abyssScale.speed : 1;
-      const bossHpMult = (1.65 + tierProgress * 0.45) * (this.isCorrupted ? 24 : 1) * abHp;
-      const bossDmgMult = (1.25 + tierProgress * 0.25) * (this.isCorrupted ? 5.5 : 1) * abDmg;
+      let bossHpMult = (1.65 + tierProgress * 0.45) * (this.isCorrupted ? 24 : 1) * abHp;
+      let bossDmgMult = (1.25 + tierProgress * 0.25) * (this.isCorrupted ? 5.5 : 1) * abDmg;
+      if (this.isLateBiome) {
+        bossHpMult *= 5.0; // at least x5 HP in late biomes 3, 4, 5
+        bossDmgMult *= 2.6; // x2.6 damage
+      }
       const bossName = this.abyssFloor
         ? `[Abismo P${this.abyssFloor}] ${b.name}`
         : (this.isCorrupted ? `[CORRUPTO] ${b.name}` : b.name);
@@ -2102,7 +2458,7 @@
         hp: Math.min(9e14, Math.round(b.hp * bossHpMult * bLvScale)),
         maxHp: Math.min(9e14, Math.round(b.hp * bossHpMult * bLvScale)),
         dmg: Math.min(9e12, Math.round(b.dmg * bossDmgMult * (1 + (bLvScale - 1) * 0.65))),
-        speed: Math.min(260, Math.round(b.speed * (this.isCorrupted ? 1.25 : 1.0) * abSpd)),
+        speed: Math.min(260, Math.round(b.speed * (this.isLateBiome ? 1.25 : 1.0) * (this.isCorrupted ? 1.25 : 1.0) * abSpd)),
         color: this.abyssFloor ? '#e040fb' : (this.isCorrupted ? '#ab47bc' : b.color),
         facing: -1,
         radius: 34,
@@ -2111,7 +2467,7 @@
         bodyOffY: 30,
         phase: 1,
         phaseCycle: 0,
-        attackTimer: this.isCorrupted ? 0.85 : 1.25,
+        attackTimer: this.isLateBiome ? 0.75 : (this.isCorrupted ? 0.85 : 1.25),
         telegraph: 0,
         telegraphMode: null,
         dashTimer: 0,
@@ -2151,7 +2507,7 @@
       this.puzzleMode = modes[modeIdx];
       this._lastRunePadKey = null;
 
-      // 6 permutations of [1, 2, 3] for the 3 sequence pads
+      // 6 permutations of [1, 2, 3] for 3 pads, and permutations for 4 pads
       const perms = [
         [2, 3, 1],
         [3, 1, 2],
@@ -2160,17 +2516,24 @@
         [3, 2, 1],
         [1, 2, 3]
       ];
+      const perms4 = [
+        [2, 4, 1, 3],
+        [3, 1, 4, 2],
+        [4, 2, 3, 1],
+        [1, 3, 2, 4],
+        [2, 1, 4, 3]
+      ];
       // Prefer non-trivial permutations so the player reads the environmental clue rather than blindly walking left-to-right
       const permIdx = Math.floor((rng ? rng() : 0.2) * 5) % 5;
-      const chosenPerm = perms[permIdx];
+      const seqRunes = this.runes.filter(r => r.kind === 'seq');
+      const chosenPerm = seqRunes.length >= 4 ? perms4[permIdx % perms4.length] : perms[permIdx];
 
       const crestDefs = [
         { code: 'SOL', crestName: 'SELLO DEL SOL', glyph: 'S', color: '#ffb74d' },
         { code: 'LUNA', crestName: 'SELLO DE LA LUNA', glyph: 'L', color: '#81d4fa' },
-        { code: 'ESTRELLA', crestName: 'SELLO ASTRAL', glyph: 'E', color: '#ce93d8' }
+        { code: 'ESTRELLA', crestName: 'SELLO ASTRAL', glyph: 'E', color: '#ce93d8' },
+        { code: 'COMETA', crestName: 'SELLO DEL COMETA', glyph: 'C', color: '#69f0ae' }
       ];
-
-      const seqRunes = this.runes.filter(r => r.kind === 'seq');
       seqRunes.forEach((r, idx) => {
         const cDef = crestDefs[idx % crestDefs.length];
         r.slotIndex = idx;
@@ -2337,7 +2700,7 @@
           if (isBossDoor(nx, ny)) continue; // Closed boss gate
           const cell = this.grid[ny] && this.grid[ny][nx];
           if (cell === 1 || cell === 4 || cell === 5 || cell === 6) {
-            if (nx >= bossMinX) {
+            if (nx >= bossMinX && (ny >= 9 && ny <= 29)) {
               // Seal any unintentional shortcut or hole into boss room
               this.grid[ny][nx] = 0;
               leaks++;
@@ -2585,8 +2948,16 @@
       const cMultHp = (this.isCorrupted ? 22 : 1) * (this.abyssScale ? this.abyssScale.hp : 1);
       const cMultDmg = (this.isCorrupted ? 6.5 : 1) * (this.abyssScale ? this.abyssScale.dmg : 1);
       const abSpd = this.abyssScale ? this.abyssScale.speed : 1;
-      const hp = Math.min(9e14, Math.round((base.hp || 35) * 1.85 * powerScale * tierMult * hpMult * cMultHp));
-      const dmg = Math.min(9e12, Math.round((base.dmg || 8) * 1.35 * (1 + (tierMult - 1) * 0.58) * dmgMult * cMultDmg));
+      let hp = Math.min(9e14, Math.round((base.hp || 35) * 1.85 * powerScale * tierMult * hpMult * cMultHp));
+      let dmg = Math.min(9e12, Math.round((base.dmg || 8) * 1.35 * (1 + (tierMult - 1) * 0.58) * dmgMult * cMultDmg));
+      let speed = Math.min(220, Math.round((base.speed || 65) * 1.12 * abSpd));
+      let atkCd = 0.65 + Math.random() * 0.35;
+      if (this.isLateBiome) {
+        hp = Math.round(hp * 3.0); // at least x3 HP in late biomes
+        dmg = Math.round(dmg * 3.0); // at least x3 damage in late biomes
+        speed = Math.min(240, Math.round(speed * 1.22));
+        atkCd *= 0.70;
+      }
       const mName = this.abyssFloor ? `[Abismo P${this.abyssFloor}] ${base.name || type}` : (this.isCorrupted ? `[Corrupto] ${base.name || type}` : (base.name || type));
       return {
         id: 'dmob_' + tx + '_' + ty + '_' + Math.random().toString(36).slice(2, 7),
@@ -2600,14 +2971,14 @@
         hp,
         maxHp: hp,
         dmg,
-        speed: Math.min(220, Math.round((base.speed || 65) * 1.12 * abSpd)),
+        speed,
         facing: -1,
         radius: 20,
         hitW: 44,
         hitH: 50,
         bodyOffY: 17,
         hitFlash: 0,
-        atkCd: 0.65 + Math.random() * 0.35,
+        atkCd,
         xpMult: 1.45
       };
     }
@@ -2618,9 +2989,14 @@
       m.isMiniBoss = true;
       m.name = `Guardián ${m.name}`;
       m.hp = Math.max(m.hp, Math.round(this.def.boss.hp * (0.48 + tierProgress * 0.14)));
-      m.maxHp = m.hp;
       m.dmg = Math.round(Math.max(m.dmg, this.def.boss.dmg * (0.82 + tierProgress * 0.14)));
       m.speed = Math.max(m.speed, 84 + Math.round(tierProgress * 20));
+      if (this.isLateBiome) {
+        m.hp = Math.round(m.hp * 3.5);
+        m.dmg = Math.round(m.dmg * 3.0);
+        m.speed = Math.min(250, Math.round(m.speed * 1.2));
+      }
+      m.maxHp = m.hp;
       m.radius = 25;
       m.hitW = 54;
       m.hitH = 60;
@@ -2629,14 +3005,45 @@
       m.xpMult = 3.0;
       m.telegraph = 0;
       m.telegraphMode = null;
-      m.specialCd = 2.4;
+      m.specialCd = this.isLateBiome ? 1.5 : 2.4;
       m.miniCycle = 0;
       m.enraged = false;
       return m;
     }
 
-    onMiniBossDefeated(game) {
-      if (this.miniBossDefeated) return;
+    makeMiniBoss2(type, tx, ty) {
+      const m = this.makeMiniBoss(type, tx, ty);
+      m.isMiniBoss2 = true;
+      m.name = `Segundo Centinela Ancestral: ${m.name.replace('Guardián ', '')}`;
+      m.hp = Math.round(m.hp * 1.15);
+      m.maxHp = m.hp;
+      m.dmg = Math.round(m.dmg * 1.1);
+      m.speed = Math.round(m.speed * 1.05);
+      return m;
+    }
+
+    onMiniBossDefeated(game, enemy) {
+      if (enemy && enemy.isMiniBoss2) {
+        if (this.miniBoss2Defeated) return;
+        this.miniBoss2Defeated = true;
+        const mc = this.miniBoss2ChestPos || { tx: 59, ty: 5 };
+        this.chests.push({ tx: mc.tx, ty: mc.ty, opened: false, bonus: true, chestTheme: this.def.chestTheme || 'gold' });
+        game.addFloatingText(mc.tx * TILE_SIZE, mc.ty * TILE_SIZE - 16, '¡Segundo Guardián Derrotado!', '#ffd54f');
+        game.toast('¡El Segundo Guardián Ancestral ha caído! Un nuevo sello cede.', 'success');
+        this.checkBossGateUnlock(game);
+        return;
+      }
+      if (this.miniBossDefeated) {
+        if (!this.miniBoss2Defeated && this.isLateBiome) {
+          this.miniBoss2Defeated = true;
+          const mc = this.miniBoss2ChestPos || { tx: 59, ty: 5 };
+          this.chests.push({ tx: mc.tx, ty: mc.ty, opened: false, bonus: true, chestTheme: this.def.chestTheme || 'gold' });
+          game.addFloatingText(mc.tx * TILE_SIZE, mc.ty * TILE_SIZE - 16, '¡Segundo Guardián Derrotado!', '#ffd54f');
+          game.toast('¡El Segundo Guardián Ancestral ha caído! Un nuevo sello cede.', 'success');
+          this.checkBossGateUnlock(game);
+        }
+        return;
+      }
       this.miniBossDefeated = true;
       const mc = this.miniBossChestPos || { tx: 25, ty: 26 };
       this.chests.push({ tx: mc.tx, ty: mc.ty, opened: false, bonus: true, chestTheme: this.def.chestTheme || 'gold' });
@@ -2648,7 +3055,13 @@
 
     checkBossGateUnlock(game) {
       if (this.gateOpen || this.bossLocked || this.completed) return;
-      if (this.vaultOpen && this.miniBossDefeated) {
+      const isLate = this.isLateBiome;
+      const reqVault = this.vaultOpen;
+      const reqMini1 = this.miniBossDefeated;
+      const reqMini2 = !isLate || this.miniBoss2Defeated;
+      const reqShrines = !isLate || ((this.shrineProgress || 0) >= (this.shrineTarget || 0));
+
+      if (reqVault && reqMini1 && reqMini2 && reqShrines) {
         this.gateOpen = true;
         const gates = (this.bossGateTiles && this.bossGateTiles.length > 0)
           ? this.bossGateTiles
@@ -2657,7 +3070,10 @@
           if (this.grid[gy]) this.grid[gy][gx] = 1;
         }
         Balaclava.Audio.play('portal');
-        game.toast(Balaclava.I18n ? Balaclava.I18n.t('dungeon.bothSealsOpen') : '¡Los Sellos Norte y Sur ceden! La Gran Puerta del Jefe se abre.', 'success');
+        const msg = isLate
+          ? '¡Todos los Sellos, Guardianes y Altares han caído! La Gran Puerta del Jefe se abre.'
+          : (Balaclava.I18n ? Balaclava.I18n.t('dungeon.bothSealsOpen') : '¡Los Sellos Norte y Sur ceden! La Gran Puerta del Jefe se abre.');
+        game.toast(msg, 'success');
       }
     }
 
@@ -2751,9 +3167,34 @@
       const ptx = Math.floor(game.player.x / TILE_SIZE);
       const pty = Math.floor(game.player.y / TILE_SIZE);
 
-      // Trap damage
+      // Trap damage (scaled x3 in late biomes 3, 4, 5)
       if (this.trapsActive && this.grid[pty] && this.grid[pty][ptx] === 2) {
-        game.damagePlayer(this.def.boss.dmg * 0.45);
+        game.damagePlayer(this.def.boss.dmg * 0.45 * (this.isLateBiome ? 3.0 : 1.0));
+      }
+
+      // Boss gate status proximity check
+      if (!this.gateOpen && this.bossGateTiles && this.bossGateTiles.length > 0) {
+        const g0 = this.bossGateTiles[0];
+        const distGate = Math.hypot(ptx - g0[0], pty - g0[1]);
+        if (distGate <= 3.2) {
+          this._gatePromptTimer = (this._gatePromptTimer || 0) + dt;
+          if (this._gatePromptTimer >= 2.5) {
+            this._gatePromptTimer = 0;
+            if (this.isLateBiome) {
+              const vSt = this.vaultOpen ? 'OK' : 'FALTA';
+              const g1St = this.miniBossDefeated ? 'OK' : 'FALTA';
+              const g2St = this.miniBoss2Defeated ? 'OK' : 'FALTA';
+              const shSt = `${this.shrineProgress || 0}/${this.shrineTarget || 2}`;
+              game.toast(`Puerta Sellada: Boveda [${vSt}] | Guardian 1 [${g1St}] | Guardian 2 [${g2St}] | Altares [${shSt}]`, 'info');
+            } else {
+              const vSt = this.vaultOpen ? 'OK' : 'FALTA';
+              const gSt = this.miniBossDefeated ? 'OK' : 'FALTA';
+              game.toast(`Puerta Sellada: Boveda [${vSt}] | Guardian [${gSt}]`, 'info');
+            }
+          }
+        } else {
+          this._gatePromptTimer = 2.0;
+        }
       }
 
       // Active ground hazard zones (meteors, bombs, pillars, elemental pools, cross fissures)
@@ -2771,6 +3212,8 @@
         if (r.id === 'seq_1') return T('dungeon.runeRoman1');
         if (r.id === 'seq_2') return T('dungeon.runeRoman2');
         if (r.id === 'seq_3') return T('dungeon.runeRoman3');
+        if (r.id === 'seq_4') return 'RUNA IV';
+        if (r.kind === 'elemental_shrine') return `ALTAR ELEMENTAL ${r.shrineIdx || 1}`;
         return r.label || T('dungeon.runeLabel');
       };
 
@@ -2822,14 +3265,23 @@
             Balaclava.Audio.play('portal');
             game.toast(T('dungeon.wingsOpen'), 'success');
           }
+        } else if (r.kind === 'elemental_shrine' && !r.active) {
+          r.active = true;
+          this.shrineProgress = (this.shrineProgress || 0) + 1;
+          Balaclava.Audio.play('chest');
+          game.spawnParticles(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE + 24, '#ff9800', 16);
+          game.addFloatingText(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE, `¡Altar Elemental [${this.shrineProgress}/${this.shrineTarget}]!`, '#ff9800');
+          game.toast(`¡Sello Elemental activado! (${this.shrineProgress}/${this.shrineTarget})`, 'success');
+          this.checkBossGateUnlock(game);
         } else if (r.kind === 'seq' && !this.vaultOpen && !r.active) {
+          const maxSeq = this.seqTarget || 3;
           if (r.order === this.seqProgress + 1) {
             r.active = true;
             this.seqProgress = r.order;
             Balaclava.Audio.play('chest');
             game.spawnParticles(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE + 24, '#69f0ae', 12);
-            game.addFloatingText(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE, `${rLbl} [${this.seqProgress}/3]`, '#ffd54f');
-            if (this.seqProgress >= 3) {
+            game.addFloatingText(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE, `${rLbl} [${this.seqProgress}/${maxSeq}]`, '#ffd54f');
+            if (this.seqProgress >= maxSeq) {
               this.vaultOpen = true;
               const vDoors = (this.vaultDoorTiles && this.vaultDoorTiles.length > 0)
                 ? this.vaultDoorTiles
@@ -2851,7 +3303,7 @@
               this.seqProgress = 1;
               Balaclava.Audio.play('chest');
               game.spawnParticles(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE + 24, '#ffd54f', 10);
-              game.addFloatingText(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE, `REINICIO -> ${rLbl} [1/3]`, '#ffd54f');
+              game.addFloatingText(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE, `REINICIO -> ${rLbl} [1/${maxSeq}]`, '#ffd54f');
             } else {
               Balaclava.Audio.play('error');
               game.spawnParticles(r.tx * TILE_SIZE + 24, r.ty * TILE_SIZE + 24, '#ef5350', 10);
@@ -2961,14 +3413,14 @@
         this.phaseBanner.timer = Math.max(0, this.phaseBanner.timer - dt);
       }
       const bossMinTileX = (this.bossRoomMinX || 34);
-      if (this.boss && this.boss.hp > 0 && this.gateOpen && !this.bossLocked && game.player.x >= (bossMinTileX + 1.15) * TILE_SIZE) {
+      if (this.boss && this.boss.hp > 0 && this.gateOpen && !this.bossLocked && game.player.x >= (bossMinTileX + 1.15) * TILE_SIZE && pty >= 9 && pty <= 29) {
         this.lockBossGateForFight(game);
       }
-      if (this.boss && this.boss.hp > 0 && (this.bossLocked || ptx >= bossMinTileX + 1)) {
+      if (this.boss && this.boss.hp > 0 && (this.bossLocked || (ptx >= bossMinTileX + 1 && pty >= 9 && pty <= 29))) {
         const b = this.boss;
         const bMinX = (this.bossRoomMinX || 34) + 3;
         const bMaxX = Math.max(bMinX + 6, this.width - 5);
-        const isBossWalkable = (wx, wy) => Number.isFinite(wx) && Number.isFinite(wy) && Math.floor(wx / TILE_SIZE) >= bMinX - 1 && this.isTileWalkable(Math.floor(wx / TILE_SIZE), Math.floor(wy / TILE_SIZE));
+        const isBossWalkable = (wx, wy) => Number.isFinite(wx) && Number.isFinite(wy) && Math.floor(wx / TILE_SIZE) >= bMinX - 1 && Math.floor(wy / TILE_SIZE) >= 9 && Math.floor(wy / TILE_SIZE) <= 29 && this.isTileWalkable(Math.floor(wx / TILE_SIZE), Math.floor(wy / TILE_SIZE));
         const enemyApi = Balaclava.EnemyAttacks;
         const theme = (enemyApi && enemyApi.getBossTheme)
           ? enemyApi.getBossTheme(this.id)
@@ -3287,6 +3739,7 @@
           if (b.attackTimer <= 0) {
             b.phaseCycle = (b.phaseCycle || 0) + 1;
             b.attackTimer = b.phase === 3 ? 1.38 : b.phase === 2 ? 1.80 : 2.35;
+            if (this.isLateBiome) b.attackTimer *= 0.65;
             b.targetAngle = ang;
             b.targetX = game.player.x;
             b.targetY = game.player.y;
@@ -3312,6 +3765,7 @@
               b.dashCharges = b.telegraphMode === 'dash_combo' ? 2 : 0;
             }
             b.telegraph = b.phase === 3 ? 0.52 : b.phase === 2 ? 0.60 : 0.68;
+            if (this.isLateBiome) b.telegraph = Math.max(0.40, b.telegraph * 0.82);
           }
         }
       }
