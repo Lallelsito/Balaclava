@@ -2762,6 +2762,9 @@
       }
       backdrop.classList.toggle('drawer-left', leftDrawers.has(name));
       backdrop.classList.toggle('drawer-wide', wideDrawers.has(name));
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.classList.toggle('modal-drawer-open', leftDrawers.has(name));
+      }
       backdrop.classList.remove('hidden');
       this.hideTooltip();
       this.renderModal();
@@ -2806,6 +2809,9 @@
       }
       backdrop.classList.add('hidden');
       backdrop.classList.remove('drawer-left', 'drawer-wide', 'fullscreen-modal');
+      if (typeof document !== 'undefined' && document.body) {
+        document.body.classList.remove('modal-drawer-open');
+      }
       if (modalBox) modalBox.classList.remove('modal-fullscreen', 'skills-cosmic-fullscreen', 'map-atlas-fullscreen', 'quests-modal', 'pause-pixel-modal', 'pause-root-compact', 'pause-settings-compact');
     }
 
@@ -3886,9 +3892,8 @@
       if (this.selectedToolId && !g.toolTiers[this.selectedToolId]) {
         this.selectedToolId = null;
       }
-      if (!this.selectedToolId && (!this.selectedItemId || !g.inventory[this.selectedItemId])) {
-        this.selectedItemId = ids[0] || null;
-        if (!this.selectedItemId && ownedTools.length > 0) this.selectedToolId = ownedTools[0].id;
+      if (this.selectedItemId && !g.inventory[this.selectedItemId]) {
+        this.selectedItemId = null;
       }
       if (ownedTools.length === 0 && ids.length === 0) {
         grid.appendChild(this.el('div', { class: 'card', style: 'grid-column:1/-1;' }, tr('inv.emptyCat')));
@@ -3897,9 +3902,10 @@
           const tierId = g.toolTiers[tool.id] || 'basica';
           const tierMeta = Balaclava.TIER_META[tierId] || Balaclava.TIER_META.basica;
           const rarity = tierMeta.rarity || 'comun';
+          const isSelected = this.selectedToolId === tool.id;
           const slot = this.el('div', {
-            class: `inv-slot rarity-${rarity}` + (this.selectedToolId === tool.id ? ' selected' : ''),
-            'data-tip': this.tipAttr(this._buildToolTipSpec(tool.id, { context: 'inv' })),
+            class: `inv-slot rarity-${rarity}` + (isSelected ? ' selected' : ''),
+            title: `${tool.name} (${tierMeta.name})`,
             'aria-label': `${tool.name} (${tierMeta.name})`,
             onmouseenter: () => { this._hoveredInvSlot = { kind: 'tool', id: tool.id }; },
             onmouseleave: () => { if (this._hoveredInvSlot && this._hoveredInvSlot.id === tool.id) this._hoveredInvSlot = null; },
@@ -3912,8 +3918,12 @@
                 this.renderModal();
                 return;
               }
-              this.selectedToolId = tool.id;
-              this.selectedItemId = null;
+              if (this.selectedToolId === tool.id) {
+                this.selectedToolId = null;
+              } else {
+                this.selectedToolId = tool.id;
+                this.selectedItemId = null;
+              }
               this.renderModal();
             }
           }, [
@@ -3924,9 +3934,10 @@
         });
         ids.forEach(id => {
           const it = Balaclava.ITEMS[id];
+          const isSelected = !this.selectedToolId && this.selectedItemId === id;
           const slot = this.el('div', {
-            class: `inv-slot rarity-${it.rarity || 'comun'}` + (!this.selectedToolId && this.selectedItemId === id ? ' selected' : ''),
-            'data-tip': this.tipAttr(this._buildItemTipSpec(id, { count: g.inventory[id], context: 'inv' })),
+            class: `inv-slot rarity-${it.rarity || 'comun'}` + (isSelected ? ' selected' : ''),
+            title: `${it.name} (x${g.inventory[id]})`,
             'aria-label': it.name,
             onmouseenter: () => { this._hoveredInvSlot = { kind: 'item', id }; },
             onmouseleave: () => { if (this._hoveredInvSlot && this._hoveredInvSlot.id === id) this._hoveredInvSlot = null; },
@@ -3939,8 +3950,12 @@
                 this.renderModal();
                 return;
               }
-              this.selectedToolId = null;
-              this.selectedItemId = id;
+              if (this.selectedItemId === id) {
+                this.selectedItemId = null;
+              } else {
+                this.selectedToolId = null;
+                this.selectedItemId = id;
+              }
               this.renderModal();
             }
           }, [
@@ -4010,6 +4025,15 @@
           }, String(slotNum + 1)));
         }
         det.appendChild(hbRow);
+        det.appendChild(this.el('button', {
+          class: 'btn btn-stone btn-sm',
+          style: 'margin-top:8px;font-size:13px;width:100%;',
+          onclick: () => {
+            this.selectedToolId = null;
+            this.selectedItemId = null;
+            this.renderModal();
+          }
+        }, '← Volver a Equipo / Estadísticas'));
         rightCol.appendChild(det);
       } else if (sel) {
         const rar = RARITIES[sel.rarity] || RARITIES.comun;
@@ -4131,8 +4155,26 @@
           }, String(slotNum + 1)));
         }
         det.appendChild(hbRow);
+        det.appendChild(this.el('button', {
+          class: 'btn btn-stone btn-sm',
+          style: 'margin-top:8px;font-size:13px;width:100%;',
+          onclick: () => {
+            this.selectedToolId = null;
+            this.selectedItemId = null;
+            this.renderModal();
+          }
+        }, '← Volver a Equipo / Estadísticas'));
         rightCol.appendChild(det);
-      }
+      } else {
+        // Character Overview: Equipment Paperdoll + Live Stats (no wrap, NO emojis) + Permanent Relics
+        rightCol.appendChild(this.el('div', {
+          class: 'parchment-box',
+          style: 'display:flex;align-items:center;gap:10px;padding:9px 12px;'
+        }, [
+          this.uiIcon('backpack', 28),
+          this.el('div', { style: 'font-size:13px;color:#cbd5e1;line-height:1.4;' },
+            'Selecciona un objeto o herramienta de la mochila para ver sus detalles, equiparlo, consumirlo o asignarlo a la barra rápida.')
+        ]));
 
       // 10-Slot Dedicated Equipment Paperdoll with FDA Slot Frames
       const equipDefs = [
@@ -4179,19 +4221,31 @@
         ]));
       });
 
-      // Live Stat Panel
+      // Live Stat Panel (Zero Emojis, Clean Pixel Icons, Single-Line Space-Between Layout)
+      const statItems = [
+        { icon: 'iconHeart', label: 'Vida', val: `${Math.round(g.player.hp)} / ${Math.round(g.player.maxHp)}`, color: '#ef5350' },
+        { icon: 'manaOrb', label: 'Energía', val: `${Math.round(g.player.energy)} / ${Math.round(g.player.maxEnergy)}`, color: '#4fc3f7' },
+        { icon: 'iconSword', label: 'Daño', val: `+${Math.round((g.mods.dmgBonus || 0) * 100)}%`, color: '#ffb74d' },
+        { icon: 'iconBow', label: 'Vel. Ataque', val: `+${Math.round((g.mods.attackSpeed || 0) * 100)}%`, color: '#80deea' },
+        { icon: 'iconShield', label: 'Armadura', val: `${Math.round((g.mods.armor || 0) + (g.mods.defense || 0))}`, color: '#81c784' },
+        { icon: 'iconReset', label: 'Vel. Mov.', val: `+${Math.round((g.mods.moveSpeed || 0) * 100)}%`, color: '#ba68c8' },
+        { icon: 'iconSparkle', label: 'Suerte / Drop', val: `+${Math.round((g.mods.doubleDropChance || 0) * 100)}%`, color: '#ffd54f', full: true }
+      ];
+
       const statGrid = this.el('div', {
-        class: 'parchment-box',
-        style: 'margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;'
-      }, [
-        this.el('div', { style: 'color:#ef5350;font-weight:700;' }, `❤️ Vida: ${Math.round(g.player.hp)} / ${Math.round(g.player.maxHp)}`),
-        this.el('div', { style: 'color:#4fc3f7;font-weight:700;' }, `⚡ Energía: ${Math.round(g.player.energy)} / ${Math.round(g.player.maxEnergy)}`),
-        this.el('div', { style: 'color:#ffb74d;font-weight:700;' }, `⚔️ Daño: +${Math.round((g.mods.dmgBonus || 0) * 100)}%`),
-        this.el('div', { style: 'color:#80deea;font-weight:700;' }, `🗡️ Vel. Ataque: +${Math.round((g.mods.attackSpeed || 0) * 100)}%`),
-        this.el('div', { style: 'color:#81c784;font-weight:700;' }, `🛡️ Armadura: ${Math.round((g.mods.armor || 0) + (g.mods.defense || 0))}`),
-        this.el('div', { style: 'color:#ba68c8;font-weight:700;' }, `👟 Vel. Mov.: +${Math.round((g.mods.moveSpeed || 0) * 100)}%`),
-        this.el('div', { style: 'color:#ffd54f;font-weight:700;grid-column:1/-1;' }, `✨ Suerte / Doble Drop: +${Math.round((g.mods.doubleDropChance || 0) * 100)}%`)
-      ]);
+        class: 'parchment-box inv-stat-grid',
+        style: 'margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px;padding:8px 10px;'
+      }, statItems.map(st => {
+        return this.el('div', {
+          style: `display:flex;align-items:center;justify-content:space-between;white-space:nowrap;gap:6px;${st.full ? 'grid-column:1/-1;border-top:1px solid rgba(255,255,255,0.08);padding-top:4px;margin-top:2px;' : ''}`
+        }, [
+          this.el('span', { style: 'display:inline-flex;align-items:center;gap:5px;color:#d5e2f0;font-weight:600;' }, [
+            this.uiIcon(st.icon, 14),
+            st.label + ':'
+          ]),
+          this.el('span', { style: `color:${st.color};font-weight:700;font-family:\'BalaclavaPixel\',monospace;` }, st.val)
+        ]);
+      }));
 
       const eqPanel = this.el('div', { class: 'parchment-box' }, [
         this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;' }, [
@@ -4233,90 +4287,10 @@
           relStrip
         ]));
       }
+      }
 
       layout.appendChild(rightCol);
       body.appendChild(layout);
-
-      // Interactive Hotbar Strip [1..9] directly inside Inventory (click to swap/assign/inspect, Shift+Click / right-click removes item)
-      const hbPanel = this.el('div', { class: 'parchment-box inv-hotbar-strip' }, [
-        this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;' }, [
-          this.el('strong', { style: 'font-size:16px;' }, tr('inv.interactiveHotbar')),
-          this.el('span', { style: 'font-size:16px;color:#bfd0ea;' },
-            this._invSwapIdx != null
-              ? tr('inv.swapChoose', { slot: this._invSwapIdx + 1 })
-              : tr('inv.hotbarInstructions'))
-        ])
-      ]);
-      const hbRowInv = this.el('div', { class: 'inv-hotbar-row' });
-      for (let idx = 0; idx < 9; idx++) {
-        const slot = g.hotbar[idx];
-        const isTool = slot && slot.kind === 'tool' && g.toolTiers[slot.id];
-        const isItem = slot && slot.kind === 'item' && (g.inventory[slot.id] || 0) > 0 && Balaclava.ITEMS[slot.id];
-        const isSwapSrc = this._invSwapIdx === idx;
-        const slotKids = [this.el('span', { class: 'slot-key' }, String(idx + 1))];
-        let tip = tr('inv.hotbarFreeSlot', { slot: idx + 1 });
-        if (isTool) {
-          const tier = g.toolTiers[slot.id] || 'basica';
-          slotKids.push(this.toolIcon(slot.id, tier, 34));
-          tip = `${Balaclava.TOOLS[slot.id].name} (${Balaclava.TIER_META[tier].name})`;
-        } else if (isItem) {
-          const it = Balaclava.ITEMS[slot.id];
-          slotKids.push(this.itemIcon(it.icon, 34));
-          slotKids.push(this.el('span', { class: 'slot-qty' }, String(g.inventory[slot.id])));
-          tip = tr('inv.hotbarRemoveTip', { name: it.name, qty: g.inventory[slot.id] });
-        }
-        const hbBtn = this.el('div', {
-          class: 'inv-hb-slot' + (g.activeSlot === idx ? ' active-slot' : '') + (isSwapSrc ? ' is-swap-src' : ''),
-          title: tip,
-          onclick: (ev) => {
-            if (ev && ev.shiftKey) {
-              g.hotbar[idx] = null;
-              this._invSwapIdx = null;
-              this.updateHUD(true);
-              this.renderModal();
-              return;
-            }
-            if (this._invSwapIdx != null) {
-              if (this._invSwapIdx !== idx && g.swapHotbarSlots) {
-                g.swapHotbarSlots(this._invSwapIdx, idx);
-                Balaclava.Audio.play('pickup');
-              }
-              this._invSwapIdx = null;
-              this.updateHUD(true);
-              this.renderModal();
-              return;
-            }
-            if (!isTool && !isItem && this.selectedToolId && g.toolTiers && g.toolTiers[this.selectedToolId]) {
-              if (g.assignHotbarSlot) g.assignHotbarSlot(idx, 'tool', this.selectedToolId);
-              else g.hotbar[idx] = { kind: 'tool', id: this.selectedToolId };
-              Balaclava.Audio.play('pickup');
-              this.updateHUD(true);
-              this.renderModal();
-              return;
-            }
-            if (!isTool && !isItem && this.selectedItemId && (g.inventory[this.selectedItemId] || 0) > 0) {
-              if (g.assignHotbarSlot) g.assignHotbarSlot(idx, 'item', this.selectedItemId);
-              else g.hotbar[idx] = { kind: 'item', id: this.selectedItemId };
-              Balaclava.Audio.play('pickup');
-              this.updateHUD(true);
-              this.renderModal();
-              return;
-            }
-            this._invSwapIdx = idx;
-            this.renderModal();
-          },
-          oncontextmenu: (ev) => {
-            ev.preventDefault();
-            g.hotbar[idx] = null;
-            this._invSwapIdx = null;
-            this.updateHUD(true);
-            this.renderModal();
-          }
-        }, slotKids);
-        hbRowInv.appendChild(hbBtn);
-      }
-      hbPanel.appendChild(hbRowInv);
-      body.appendChild(hbPanel);
     }
 
     renderStats(body) {
@@ -4805,17 +4779,53 @@
     }
 
     _sortRecipes(recs) {
-      const score = (rec) => {
-        if (rec.toolUnlock) return 0;
-        const out = rec.out === '_coin' ? null : Balaclava.ITEMS[rec.out];
-        if (!out) return 10;
-        if (out.cat === 'materiales' || out.cat === 'recursos') return 20 + (out.value || 0);
-        if (out.cat === 'herramientas' || out.cat === 'equipamiento') return 500 + (out.value || 0);
-        if (out.cat === 'comida' || out.cat === 'pociones' || out.cat === 'alimentos') return 1200 + (out.value || 0);
-        if (out.cat === 'construccion') return 2400 + (out.value || 0);
-        return 1800 + (out.value || 0);
+      const getTierScore = (id, item) => {
+        if (!id) return 500;
+        const s = id.toLowerCase();
+        if (s.includes('omega') || s.includes('singularidad') || s.includes('antimateria') || s.includes('cronal')) return 900;
+        if (s.includes('celestial') || s.includes('estelar') || s.includes('arcano') || s.includes('vacio')) return 800;
+        if (s.includes('obsidiana') || s.includes('magma') || s.includes('fuego')) return 700;
+        if (s.includes('platino') || s.includes('plata') || s.includes('titanio')) return 600;
+        if (s.includes('acero')) return 500;
+        if (s.includes('oro')) return 400;
+        if (s.includes('hierro')) return 300;
+        if (s.includes('cobre') || s.includes('bronce')) return 200;
+        if (s.includes('piedra') || s.includes('hueso')) return 150;
+        if (s.includes('madera') || s.includes('cuero') || s.includes('fibra')) return 100;
+        if (item && item.tier) return Number(item.tier) * 50;
+        return 250;
       };
-      return [...recs].sort((a, b) => score(a) - score(b));
+
+      const getCatScore = (out) => {
+        if (!out) return 10;
+        const cat = (out.category || out.cat || '').toLowerCase();
+        if (cat === 'materiales' || cat === 'recursos' || out.type === 'material') return 1000;
+        if (cat === 'herramientas' || out.type === 'tool') return 2000;
+        if (cat === 'armas' || out.type === 'weapon' || out.equipSlot === 'weapon') return 3000;
+        if (cat === 'armaduras' || cat === 'equipamiento' || out.equipSlot) return 4000;
+        if (cat === 'comida' || cat === 'pociones' || cat === 'alimentos' || cat === 'consumibles') return 5000;
+        if (cat === 'construccion' || cat === 'bloques') return 6000;
+        return 3500;
+      };
+
+      const score = (rec) => {
+        if (rec.toolUnlock) return 50;
+        if (rec.out === '_coin') return 10;
+        const out = Balaclava.ITEMS[rec.out];
+        const tier = getTierScore(rec.out, out);
+        const cat = getCatScore(out);
+        const val = out && out.value ? Math.min(out.value, 999) : 0;
+        return cat + tier * 10 + val * 0.01;
+      };
+
+      return [...recs].sort((a, b) => {
+        const sa = score(a);
+        const sb = score(b);
+        if (sa !== sb) return sa - sb;
+        const nameA = (Balaclava.ITEMS[a.out] ? Balaclava.ITEMS[a.out].name : (a.out || '')).toLowerCase();
+        const nameB = (Balaclava.ITEMS[b.out] ? Balaclava.ITEMS[b.out].name : (b.out || '')).toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
     }
 
     _buildRecipeCard(rec, showStationLabel = true) {
@@ -4932,6 +4942,288 @@
       ]);
     }
 
+    _renderCraftingWorkspace(body, recList, opts = {}) {
+      const g = this.game;
+      const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+      const showStationLabel = opts.showStationLabel !== false;
+      const sortedRecs = this._sortRecipes(recList || []);
+
+      if (!sortedRecs.length) {
+        body.appendChild(this.el('div', { class: 'parchment-box craft-inspector-empty', style: 'padding:24px;text-align:center;' }, [
+          this.uiIcon('backpack', 32),
+          this.el('strong', { style: 'color:#cbd5e1;font-size:16px;' }, isEn ? 'No recipes available in this category' : 'No hay recetas disponibles en esta categoría.')
+        ]));
+        return;
+      }
+
+      // If active selection is in the list, preserve it; otherwise null so details show only when clicked
+      const currentSelected = sortedRecs.find(r => {
+        const key = r.id || r.toolUnlock || r.out;
+        return this.selectedCraftRecipeId && this.selectedCraftRecipeId === key;
+      });
+
+      const layout = this.el('div', { class: 'craft-layout' });
+      const palette = this.el('div', { class: 'craft-palette' });
+
+      // Live search bar for recipes & materials
+      const searchBox = this._buildSearchBar(this.craftSearch || '', isEn ? 'Search recipes or materials...' : 'Buscar recetas o materiales...', (q) => {
+        this.craftSearch = q;
+        const needle = (q || '').trim().toLowerCase();
+        Array.from(gridEl.children).forEach(slotEl => {
+          const title = slotEl.getAttribute('data-search') || '';
+          slotEl.style.display = (!needle || title.includes(needle)) ? '' : 'none';
+        });
+      });
+      palette.appendChild(searchBox);
+
+      // Recipe Slot Grid
+      const gridEl = this.el('div', { class: 'craft-recipe-grid' });
+      palette.appendChild(gridEl);
+      layout.appendChild(palette);
+
+      // Detail Inspector Panel (Master-Detail layout)
+      const inspectorEl = this.el('div', { class: 'craft-inspector parchment-box' });
+      layout.appendChild(inspectorEl);
+      body.appendChild(layout);
+
+      const renderInspector = (rec) => {
+        inspectorEl.innerHTML = '';
+        if (!rec) {
+          inspectorEl.appendChild(this.el('div', { class: 'craft-inspector-empty' }, [
+            this.uiIcon('anvil', 36),
+            this.el('strong', { style: 'color:#ffd54f;font-size:16px;' }, isEn ? 'Select a Recipe' : 'Selecciona una Receta'),
+            this.el('div', { style: 'font-size:13px;line-height:1.45;color:#94a3b8;' },
+              isEn ? 'Click any item on the left to inspect its required materials, statistics, and craft it.'
+                   : 'Haz clic en cualquier objeto de la izquierda para ver sus materiales requeridos, atributos y fabricarlo.'),
+            this.el('div', { style: 'font-size:12px;color:#81c784;border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;' }, [
+              this.uiIcon('iconCheck', 12),
+              this.el('span', {}, isEn ? 'Green indicator = Ready to craft!' : 'Punto verde = Listo para fabricar')
+            ])
+          ]));
+          return;
+        }
+
+        const isCoin = rec.out === '_coin';
+        const isTool = Boolean(rec.toolUnlock);
+        const tDef = isTool ? Balaclava.TOOLS[rec.toolUnlock] : null;
+        const outItem = isTool
+          ? { name: tDef ? tDef.name : rec.toolUnlock, icon: rec.toolUnlock, desc: tDef ? (tDef.desc || tDef.role) : '' }
+          : (isCoin ? { name: tr('craft.coinName'), icon: 'coin_gold', desc: tr('craft.coinDesc'), category: 'economia' } : Balaclava.ITEMS[rec.out]);
+
+        if (!outItem) {
+          inspectorEl.appendChild(this.el('div', { class: 'craft-inspector-empty' }, 'Información de receta no disponible.'));
+          return;
+        }
+
+        const dur = g.getCraftDuration ? g.getCraftDuration(rec) : (rec.craftTime || 2.0);
+        const hasStation = g.hasStationAvailable(rec.station);
+        const reqSkill = rec.reqSkill ? (Balaclava.SKILLS && Balaclava.SKILLS[rec.reqSkill]) : null;
+        const hasSkill = !rec.reqSkill || (Array.isArray(g.unlockedSkills) && g.unlockedSkills.includes(rec.reqSkill));
+        const canAfford = hasStation && hasSkill && Object.entries(rec.in || {}).every(([id, q]) => this._checkCraftIngredient(id, q).ok);
+        const alreadyOwnedTool = isTool && Boolean(g.toolTiers && g.toolTiers[rec.toolUnlock]);
+
+        // Calculate max batches player can craft right now
+        let maxBatches = 9999;
+        Object.entries(rec.in || {}).forEach(([id, q]) => {
+          const check = this._checkCraftIngredient(id, q);
+          maxBatches = Math.min(maxBatches, Math.floor(check.have / q));
+        });
+        if (maxBatches === 9999) maxBatches = 0;
+
+        // Header: Big Icon + Name + Category/Rarity Badge
+        const header = this.el('div', { style: 'display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:10px;' }, [
+          isTool ? this.toolIcon(rec.toolUnlock, 'basica', 44) : this.itemIcon(outItem.icon, 44),
+          this.el('div', { style: 'flex:1;min-width:0;' }, [
+            this.el('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:6px;' }, [
+              this.el('strong', { style: 'font-size:17px;color:#ffd54f;' }, isTool ? outItem.name : `${outItem.name}${rec.qty > 1 ? ` x${rec.qty}` : ''}`),
+              outItem.rarity ? this.el('span', { class: `rarity-badge rarity-${outItem.rarity}`, style: 'font-size:11px;' }, outItem.rarity.toUpperCase()) : null
+            ]),
+            this.el('div', { style: 'display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;' }, [
+              this.el('span', { style: 'font-size:12px;color:#90caf9;background:rgba(33,150,243,0.15);border:1px solid rgba(33,150,243,0.3);padding:1px 6px;border-radius:3px;' },
+                (Balaclava.I18n && Balaclava.I18n.getStationName ? Balaclava.I18n.getStationName(rec.station) : rec.station) || 'Mesa'),
+              this.el('span', { style: 'font-size:12px;color:#cfd8dc;background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:3px;' },
+                `Tiempo: ${dur.toFixed(1)}s`)
+            ])
+          ])
+        ]);
+        inspectorEl.appendChild(header);
+
+        // Description / Lore
+        if (outItem.desc) {
+          inspectorEl.appendChild(this.el('div', { style: 'font-size:13px;color:#cbd5e1;line-height:1.45;margin-top:6px;' }, outItem.desc));
+        }
+
+        // Weapon Stats / Armor Stats if applicable
+        const wBox = this._buildWeaponStatsBox(outItem);
+        if (wBox) inspectorEl.appendChild(wBox);
+
+        if (outItem.equipSlot && (outItem.stats || outItem.bonus)) {
+          const sk = outItem.equipSlot === 'helmet' ? 'helm' : outItem.equipSlot;
+          const eqId = g.equipped && g.equipped[sk];
+          const eqIt = eqId && eqId !== outItem.id ? Balaclava.ITEMS[eqId] : null;
+          const armBox = this._buildArmorComparisonBox(eqIt, outItem);
+          if (armBox) inspectorEl.appendChild(armBox);
+        }
+
+        // Skill requirement
+        if (reqSkill) {
+          inspectorEl.appendChild(this.el('div', {
+            style: `font-size:12px;font-weight:700;padding:5px 8px;border-radius:4px;background:${hasSkill ? 'rgba(46,125,50,0.22)' : 'rgba(183,28,28,0.28)'};border:1px solid ${hasSkill ? '#66bb6a' : '#ef5350'};color:${hasSkill ? '#a5d6a7' : '#ffab91'};margin-top:6px;`
+          }, hasSkill ? `Habilidad aprendida: ${reqSkill.name}` : `Requiere Habilidad: ${reqSkill.name}`));
+        }
+
+        // Station warning if not available
+        if (!hasStation) {
+          const stLabel = (Balaclava.I18n && Balaclava.I18n.getStationName) ? Balaclava.I18n.getStationName(rec.station) : rec.station;
+          inspectorEl.appendChild(this.el('div', {
+            style: 'font-size:12px;font-weight:700;padding:5px 8px;border-radius:4px;background:rgba(239,83,80,0.2);border:1px solid #ef5350;color:#ffab91;margin-top:6px;'
+          }, `Requiere estación cercana: ${stLabel}`));
+        }
+
+        // Ingredients Checklist
+        const ingCard = this.el('div', { style: 'margin-top:8px;display:flex;flex-direction:column;gap:5px;' }, [
+          this.el('strong', { style: 'font-size:13px;color:#d5e2f0;margin-bottom:2px;' }, 'Materiales Necesarios:')
+        ]);
+        Object.entries(rec.in || {}).forEach(([ingId, needQty]) => {
+          const check = this._checkCraftIngredient(ingId, needQty);
+          const ingDef = Balaclava.ITEMS[ingId] || { name: ingId, icon: 'item_default' };
+          const row = this.el('div', {
+            class: `craft-ing-row ${check.ok ? 'ing-ok' : 'ing-missing'}`
+          }, [
+            this.el('div', { style: 'display:flex;align-items:center;gap:6px;' }, [
+              this.itemIcon(ingDef.icon, 22),
+              this.el('span', { style: `color:${check.ok ? '#e2e8f0' : '#ffa4a2'};font-size:13px;` },
+                `${ingDef.name}${check.viaEquipped ? ' (equipado)' : ''}`)
+            ]),
+            this.el('strong', { style: `color:${check.ok ? '#81c784' : '#ef5350'};font-family:'BalaclavaPixel',monospace;font-size:14px;` },
+              `${check.have} / ${needQty}`)
+          ]);
+          ingCard.appendChild(row);
+        });
+        inspectorEl.appendChild(ingCard);
+
+        // Action Buttons
+        const actionArea = this.el('div', { style: 'display:flex;flex-direction:column;gap:6px;margin-top:10px;' });
+
+        if (isTool && alreadyOwnedTool) {
+          actionArea.appendChild(this.el('div', {
+            class: 'card',
+            style: 'text-align:center;padding:8px;color:#81c784;font-weight:bold;font-size:14px;'
+          }, 'Herramienta ya desbloqueada'));
+        } else {
+          const queuedJob = (g.craftQueue || []).find(j => (isTool ? j.toolUnlock === rec.toolUnlock : j.recipeId === rec.id));
+          if (queuedJob) {
+            const rem = Math.max(0, (queuedJob.totalTime || 0) - (queuedJob.elapsed || 0)).toFixed(1);
+            actionArea.appendChild(this.el('div', {
+              class: 'card',
+              style: 'text-align:center;padding:8px;color:#ffd54f;font-weight:bold;'
+            }, `Fabricando... (${rem}s)`));
+          } else {
+            const btnRow = this.el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;' });
+            const btnX1 = this.el('button', {
+              class: 'btn btn-green',
+              style: 'flex:1 1 120px;padding:7px 10px;font-size:14px;',
+              disabled: canAfford ? null : 'disabled',
+              onclick: () => {
+                g.craftRecipe(rec.id, 1);
+                this.updateHUD(true);
+                this.renderModal();
+              }
+            }, `Fabricar x1 (${dur.toFixed(1)}s)`);
+            btnRow.appendChild(btnX1);
+
+            if (maxBatches >= 5 && !isTool) {
+              btnRow.appendChild(this.el('button', {
+                class: 'btn btn-gold btn-sm',
+                style: 'min-width:44px;',
+                onclick: () => {
+                  g.craftRecipe(rec.id, 5);
+                  this.updateHUD(true);
+                  this.renderModal();
+                }
+              }, 'x5'));
+            }
+
+            if (maxBatches >= 10 && !isTool) {
+              btnRow.appendChild(this.el('button', {
+                class: 'btn btn-gold btn-sm',
+                style: 'min-width:48px;',
+                onclick: () => {
+                  g.craftRecipe(rec.id, 10);
+                  this.updateHUD(true);
+                  this.renderModal();
+                }
+              }, 'x10'));
+            }
+
+            if (maxBatches > 1 && maxBatches !== 5 && maxBatches !== 10 && !isTool) {
+              btnRow.appendChild(this.el('button', {
+                class: 'btn btn-gold btn-sm',
+                style: 'flex:1 1 auto;',
+                onclick: () => {
+                  g.craftRecipe(rec.id, maxBatches);
+                  this.updateHUD(true);
+                  this.renderModal();
+                }
+              }, `Todo (x${maxBatches})`));
+            }
+
+            actionArea.appendChild(btnRow);
+          }
+        }
+        inspectorEl.appendChild(actionArea);
+      };
+
+      // Populate Palette Slots
+      sortedRecs.forEach(rec => {
+        const key = rec.id || rec.toolUnlock || rec.out;
+        const isTool = Boolean(rec.toolUnlock);
+        const tDef = isTool ? Balaclava.TOOLS[rec.toolUnlock] : null;
+        const outItem = isTool
+          ? { name: tDef ? tDef.name : rec.toolUnlock, icon: rec.toolUnlock }
+          : (rec.out === '_coin' ? { name: tr('craft.coinName'), icon: 'coin_gold' } : Balaclava.ITEMS[rec.out]);
+
+        if (!outItem) return;
+
+        const hasStation = g.hasStationAvailable(rec.station);
+        const hasSkill = !rec.reqSkill || (Array.isArray(g.unlockedSkills) && g.unlockedSkills.includes(rec.reqSkill));
+        const canAfford = hasStation && hasSkill && Object.entries(rec.in || {}).every(([id, q]) => this._checkCraftIngredient(id, q).ok);
+        const isSelected = Boolean(this.selectedCraftRecipeId && this.selectedCraftRecipeId === key);
+
+        const slotKids = [
+          isTool ? this.toolIcon(rec.toolUnlock, 'basica', 34) : this.itemIcon(outItem.icon, 34)
+        ];
+
+        const outCount = rec.qty || rec.count || 1;
+        if (outCount > 1) {
+          slotKids.push(this.el('span', { class: 'slot-out-badge' }, `x${outCount}`));
+        }
+
+        const slotEl = this.el('div', {
+          class: `craft-recipe-slot ${isSelected ? 'selected' : ''} ${canAfford ? 'can-craft' : 'cant-craft'}`,
+          title: `${outItem.name}${canAfford ? ' (Listo para fabricar)' : ''}`,
+          'data-search': `${outItem.name} ${outItem.category || ''} ${Object.keys(rec.in || {}).join(' ')}`.toLowerCase(),
+          onclick: () => {
+            if (this.selectedCraftRecipeId === key) {
+              this.selectedCraftRecipeId = null;
+              Array.from(gridEl.children).forEach(c => c.classList.remove('selected'));
+              renderInspector(null);
+              return;
+            }
+            this.selectedCraftRecipeId = key;
+            Array.from(gridEl.children).forEach(c => c.classList.remove('selected'));
+            slotEl.classList.add('selected');
+            renderInspector(rec);
+          }
+        }, slotKids);
+
+        gridEl.appendChild(slotEl);
+      });
+
+      // Initial inspector view
+      renderInspector(currentSelected || null);
+    }
+
     renderCrafting(body, opts = {}) {
       const g = this.game;
       const onlyStation = opts && opts.onlyStation ? opts.onlyStation : null;
@@ -4999,27 +5291,13 @@
         return s === activeFilter;
       };
 
-      const grid = this.el('div', { class: 'grid-cards' });
-      const applyCraftSearch = (q) => {
-        this.craftSearch = q;
-        const needle = (q || '').trim().toLowerCase();
-        Array.from(grid.children).forEach(ch => {
-          const txt = (ch.textContent || '').toLowerCase();
-          ch.style.display = (!needle || txt.includes(needle)) ? '' : 'none';
-        });
-      };
-      body.appendChild(this._buildSearchBar(this.craftSearch, tr('craft.searchPlaceholder'), applyCraftSearch));
-      this._sortRecipes(Balaclava.RECIPES.filter(r => {
+      const filteredRecs = Balaclava.RECIPES.filter(r => {
         if (!matchStation(r.station)) return false;
         const pa = Balaclava.isProgressiveArmorItem && Balaclava.isProgressiveArmorItem(r.out);
         if (pa && pa.tierIdx > 0) return false;
         return true;
-      })).forEach(rec => {
-        const card = this._buildRecipeCard(rec, !onlyStation);
-        if (card) grid.appendChild(card);
       });
-      if (this.craftSearch) applyCraftSearch(this.craftSearch);
-      body.appendChild(grid);
+      this._renderCraftingWorkspace(body, filteredRecs, { showStationLabel: !onlyStation });
     }
 
     _buildToolsGrid(gridStyle = '') {
@@ -5305,12 +5583,7 @@
 
       if (this.artesaniaTab === 'economia') {
         const stRecs = Balaclava.RECIPES.filter(r => r.station === 'mano' && (r.out === '_coin' || r.coinIcon));
-        const grid = this.el('div', { class: 'grid-cards', style: 'margin-bottom:12px;' });
-        this._sortRecipes(stRecs).forEach(rec => {
-          const card = this._buildRecipeCard(rec, showStationLabel);
-          if (card) grid.appendChild(card);
-        });
-        body.appendChild(grid);
+        this._renderCraftingWorkspace(body, stRecs, { showStationLabel });
         return;
       }
 
@@ -5324,22 +5597,7 @@
           return true;
         });
 
-        const grid = this.el('div', { class: 'grid-cards', style: 'margin-bottom:12px;' });
-        const applyOtherSearch = (q) => {
-          this.craftSearch = q;
-          const needle = (q || '').trim().toLowerCase();
-          Array.from(grid.children).forEach(ch => {
-            const txt = (ch.textContent || '').toLowerCase();
-            ch.style.display = (!needle || txt.includes(needle)) ? '' : 'none';
-          });
-        };
-        body.appendChild(this._buildSearchBar(this.craftSearch, tr('craft.searchPlaceholder'), applyOtherSearch));
-        this._sortRecipes(otherRecs).forEach(rec => {
-          const card = this._buildRecipeCard(rec, showStationLabel);
-          if (card) grid.appendChild(card);
-        });
-        if (this.craftSearch) applyOtherSearch(this.craftSearch);
-        body.appendChild(grid);
+        this._renderCraftingWorkspace(body, otherRecs, { showStationLabel });
         return;
       }
     }
@@ -5380,12 +5638,7 @@
           const isStd = standardWeaponTypes.includes(r.out);
           return isSpecialTab ? !isStd : isStd;
         });
-        const grid = this.el('div', { class: 'grid-cards', style: 'margin-bottom:12px;' });
-        this._sortRecipes(stRecs).forEach(rec => {
-          const card = this._buildRecipeCard(rec, showStationLabel);
-          if (card) grid.appendChild(card);
-        });
-        body.appendChild(grid);
+        this._renderCraftingWorkspace(body, stRecs, { stationId, showStationLabel });
         return;
       }
 
@@ -5409,12 +5662,7 @@
 
         if (exoticRecs.length > 0) {
           body.appendChild(this.el('h4', { style: 'margin:12px 0 8px;color:#ce93d8;' }, tr('craft.exoticArmorTitle')));
-          const exGrid = this.el('div', { class: 'grid-cards' });
-          this._sortRecipes(exoticRecs).forEach(r => {
-            const c = this._buildRecipeCard(r, showStationLabel);
-            if (c) exGrid.appendChild(c);
-          });
-          body.appendChild(exGrid);
+          this._renderCraftingWorkspace(body, exoticRecs, { stationId, showStationLabel });
         }
         return;
       }
@@ -5432,22 +5680,7 @@
           return true;
         });
 
-        const grid = this.el('div', { class: 'grid-cards', style: 'margin-bottom:12px;' });
-        const applyOtherSearch = (q) => {
-          this.craftSearch = q;
-          const needle = (q || '').trim().toLowerCase();
-          Array.from(grid.children).forEach(ch => {
-            const txt = (ch.textContent || '').toLowerCase();
-            ch.style.display = (!needle || txt.includes(needle)) ? '' : 'none';
-          });
-        };
-        body.appendChild(this._buildSearchBar(this.craftSearch, tr('craft.searchPlaceholder'), applyOtherSearch));
-        this._sortRecipes(otherRecs).forEach(rec => {
-          const card = this._buildRecipeCard(rec, showStationLabel);
-          if (card) grid.appendChild(card);
-        });
-        if (this.craftSearch) applyOtherSearch(this.craftSearch);
-        body.appendChild(grid);
+        this._renderCraftingWorkspace(body, otherRecs, { stationId, showStationLabel });
         return;
       }
     }
@@ -6822,7 +7055,7 @@
             card.appendChild(this.el('div', {
               style: 'background:linear-gradient(135deg, rgba(74,20,140,0.5), rgba(136,14,79,0.5));border:1.5px solid #e040fb;border-radius:6px;padding:8px 10px;font-size:13px;color:#f3e5f5;margin-top:6px;box-shadow:0 0 10px rgba(224,64,251,0.25);'
             }, [
-              this.el('strong', { style: 'color:#ea80fc;display:block;' }, '🌌 ISLA ASCENDIDA (PRESTIGIO OMEGA)'),
+              this.el('strong', { style: 'color:#ea80fc;display:block;' }, '[OMEGA] ISLA ASCENDIDA (PRESTIGIO OMEGA)'),
               this.el('div', {}, 'Enemigos: 10x HP / 10x Daño (Sueltan Materia Comprimida) · Extractores: 2x Velocidad')
             ]));
           } else if (g.clearedDungeons && g.clearedDungeons.length >= 24) {
@@ -6842,7 +7075,7 @@
                   g.toast(res.reason, 'warn');
                 }
               }
-            }, '🌌 Ascender Isla (Costo: 1x Singularidad + 50x Materia)'));
+            }, 'Ascender Isla (Costo: 1x Singularidad + 50x Materia)'));
           }
         }
         card.appendChild(this.el('div', { style: 'margin-top:6px;font-size:14px;color:#8bb3d1;line-height:1.4;' }, tr('map.controlsHint')));
@@ -9147,7 +9380,7 @@
             this.closeModal();
             g.enterDungeon(dId, true);
           }
-        }, '⚔️ Entrar en Modo Corrupto (25x Dificultad)')
+        }, 'Entrar en Modo Corrupto (25x Dificultad)')
       ]);
       body.appendChild(btnRow);
     }
@@ -9581,7 +9814,7 @@
               g.enterDungeon('abismo_infinito');
             }
           }, [
-            this.el('span', {}, `🌌 El Abismo Infinito (Piso ${abFl} · Récord: ${abBest})`),
+            this.el('span', {}, `El Abismo Infinito (Piso ${abFl} · Récord: ${abBest})`),
             this.el('span', { style: 'color:#ffd54f;font-size:12px;font-weight:900;' }, 'T16 ENDGAME')
           ]));
         }
@@ -10269,12 +10502,7 @@
       const stRecs = this._sortRecipes(filteredRecs);
       if (stRecs.length) {
         body.appendChild(this.el('h4', { style: 'margin:8px 0;color:#ffd54f;' }, tr('bldg.stationRecipesTitle')));
-        const rGrid = this.el('div', { class: 'grid-cards', style: 'margin-bottom:12px;' });
-        stRecs.forEach(r => {
-          const card = this._buildRecipeCard(r, false);
-          if (card) rGrid.appendChild(card);
-        });
-        body.appendChild(rGrid);
+        this._renderCraftingWorkspace(body, stRecs, { stationId, showStationLabel: false });
       } else {
         body.appendChild(this.el('div', { class: 'card', style: 'margin-bottom:12px;color:#90a4ae;' }, 'No hay recetas en esta categoría.'));
       }

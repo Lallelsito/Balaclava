@@ -2057,6 +2057,11 @@ input:focus-visible,
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  z-index: 60;
+  pointer-events: auto;
+}
+body.modal-drawer-open #hud-root {
+  z-index: 60;
 }
 
 .warning-banner {
@@ -2331,7 +2336,7 @@ input:focus-visible,
 #modal-backdrop.drawer-left {
   background: rgba(10, 8, 14, 0.36);
   justify-content: flex-start;
-  align-items: stretch;
+  align-items: flex-start;
   padding: 14px 16px;
 }
 
@@ -2508,21 +2513,22 @@ input:focus-visible,
   max-height: 100%;
 }
 #modal-backdrop.drawer-left .modal-box {
-  width: min(560px, 92%);
-  max-height: calc(100% - 28px);
+  width: min(780px, 94vw);
+  max-height: calc(100vh - 108px);
   margin: 0;
   padding: 12px 16px 14px;
 }
 #modal-backdrop.drawer-left.drawer-wide .modal-box {
-  width: min(630px, 94%);
+  width: min(840px, 95vw);
+  max-height: calc(100vh - 108px);
 }
 #modal-backdrop.drawer-left .grid-cards {
   grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
   gap: 9px;
 }
 #modal-backdrop.drawer-left .inv-layout {
-  grid-template-columns: 1fr 292px;
-  gap: 11px;
+  grid-template-columns: 1fr 340px;
+  gap: 14px;
 }
 #modal-backdrop.drawer-left .inv-grid {
   grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
@@ -2534,6 +2540,121 @@ input:focus-visible,
 #modal-backdrop.drawer-left .inv-slot img {
   width: 40px !important;
   height: 40px !important;
+}
+
+/* Master-Detail Crafting & Station Workspace */
+.craft-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 14px;
+  align-items: start;
+}
+.craft-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.craft-recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: 7px;
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.craft-recipe-slot {
+  position: relative;
+  height: 64px;
+  border-style: solid;
+  border-width: 6px;
+  border-image-source: url('../assets/ui/rpg_slot_slate.png');
+  border-image-slice: 6 fill;
+  border-image-repeat: stretch;
+  background-color: rgba(14, 18, 28, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.08s ease, filter 0.12s ease;
+}
+.craft-recipe-slot:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.12);
+}
+.craft-recipe-slot.selected {
+  border-image-source: url('../assets/ui/rpg_slot_active.png');
+  border-image-slice: 6 fill;
+  box-shadow: 0 0 14px rgba(255, 213, 79, 0.65);
+  transform: scale(1.05);
+  z-index: 2;
+}
+.craft-recipe-slot.can-craft {
+  box-shadow: inset 0 0 8px rgba(76, 175, 80, 0.35);
+}
+.craft-recipe-slot.can-craft::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #4caf50;
+  box-shadow: 0 0 5px #81c784;
+}
+.craft-recipe-slot.cant-craft {
+  opacity: 0.65;
+}
+.craft-recipe-slot.cant-craft:hover {
+  opacity: 0.9;
+}
+.craft-recipe-slot .slot-out-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  color: #ffd54f;
+  background: rgba(8, 11, 20, 0.88);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  pointer-events: none;
+}
+.craft-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.craft-inspector-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px;
+  color: #94a3b8;
+  gap: 12px;
+}
+.craft-ing-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  gap: 8px;
+  font-size: 14px;
+}
+.craft-ing-row.ing-ok {
+  border-color: rgba(76, 175, 80, 0.35);
+}
+.craft-ing-row.ing-missing {
+  border-color: rgba(239, 83, 80, 0.4);
 }
 
 .modal-header {

@@ -4448,13 +4448,13 @@
           this.camera.y = this.player.y;
           Balaclava.Audio.play('portal');
           Balaclava.Audio.setMood('boss', { delayMs: 650, fadeOutMs: 320, fadeInMs: 4200 });
-          this.toast(`🌌 Has descendido al Piso ${floor} del Abismo Infinito. Modificadores: ${mods.join(', ') || 'Estándar'}.`, 'warn');
+          this.toast(`Has descendido al Piso ${floor} del Abismo Infinito. Modificadores: ${mods.join(', ') || 'Estándar'}.`, 'warn');
           this.uiDirty = true;
           if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
         };
         if (Balaclava.UI && typeof Balaclava.UI.playSceneTransition === 'function') {
           Balaclava.UI.playSceneTransition({
-            title: `🌌 El Abismo Infinito — Piso ${floor}`,
+            title: `El Abismo Infinito — Piso ${floor}`,
             subtitle: `HP x${scale.hpMult.toFixed(1)} | Daño x${scale.dmgMult.toFixed(1)} | Modificadores: ${mods.join(', ') || 'Estándar'}`,
             duration: 1200,
             onMidpoint: doEnterAbyss

@@ -114,7 +114,7 @@
       'intro.slide3.sub': 'Gather, build, expand the islands, and awaken the elemental runes.',
       'intro.slide3.hint': 'Your journey to restore the archipelago begins today!',
       'intro.controls': '[ SPACE / CLICK to continue • {step}/{total} ]     [ ESC to skip ]',
-      'intro.day1Title': '⚔ DAY 1 — THE AWAKENING ⚔',
+      'intro.day1Title': 'DAY 1 — THE AWAKENING',
       'intro.day1Sub': 'Balaclava Archipelago • [WASD] Move • [SPACE] Gather',
       'intro.wakeToast': 'You awaken on the shore! There is a message in a bottle near you.',
 
@@ -1255,7 +1255,7 @@
       'intro.slide3.sub': 'Recolecta, construye, expande las islas y despierta las runas elementales.',
       'intro.slide3.hint': '¡Tu viaje para restaurar el archipiélago comienza hoy!',
       'intro.controls': '[ ESPACIO / CLIC para continuar • {step}/{total} ]     [ ESC para saltar ]',
-      'intro.day1Title': '⚔ DÍA 1 — EL DESPERTAR ⚔',
+      'intro.day1Title': 'DÍA 1 — EL DESPERTAR',
       'intro.day1Sub': 'Archipiélago de Balaclava • [WASD] Moverse • [ESPACIO] Recolectar',
       'intro.wakeToast': '¡Despiertas en la orilla! Hay una botella con un mensaje cerca de ti.',
 
