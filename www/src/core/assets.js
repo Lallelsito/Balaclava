@@ -6,7 +6,7 @@
   const BASE = window.BALACLAVA_ASSET_BASE || 'assets/packs/';
   const ROOT = window.BALACLAVA_ROOT_BASE || '';
   const PATHS = {
-    pawn_custom_sheet: 'assets/sprites_extra/player_pawn_sheet.png',
+    pawn_custom_sheet: ROOT + 'assets/sprites_extra/player_pawn_sheet.png',
     pawn_idle: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Idle.png',
     pawn_run: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Run.png',
     pawn_axe: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Interact Axe.png',

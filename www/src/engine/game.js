@@ -8852,9 +8852,6 @@
       if (p.invuln > 0 && !p.deadTimer && Math.floor(this.time * 20) % 2 === 0) return;
 
       const assets = Balaclava.Assets;
-      const skins = Balaclava.SKINS || [];
-      const currentSkinId = p.skinId || (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || 'monk_yellow';
-      p.skinId = currentSkinId;
       const skinDef = skins.find(s => s.id === currentSkinId) || skins[0] || {
         id: 'monk_yellow',
         idle: 'monk_yellow_idle',
