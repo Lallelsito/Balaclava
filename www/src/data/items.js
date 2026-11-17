@@ -1141,6 +1141,12 @@
       uses: 'Úsalo o colócalo para construir murallas defensivas de piedra', desc: 'Bloque sólido que frena enemigos.',
       placeBuilding: 'muro_piedra', icon: 'prop_stone_block'
     },
+    cofre_madera: {
+      id: 'cofre_madera', name: 'Cofre de Madera', category: 'construccion', rarity: 'comun',
+      sellValue: 8, buyValue: 20, source: 'Aserradero / Artesanía',
+      uses: 'Colócalo en tu isla para tener 30 ranuras de cofre (hasta 100 objetos por stack)', desc: 'Cofre artesanal de tablones de madera con 30 ranuras de almacenamiento.',
+      placeBuilding: 'cofre_madera', icon: 'chest_wood'
+    },
     bloque_muro_madera: {
       id: 'bloque_muro_madera', name: 'Bloque: Empalizada', category: 'construccion', rarity: 'comun',
       sellValue: 6, buyValue: 14, source: 'Artesanía / Aserradero',

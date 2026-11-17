@@ -255,8 +255,8 @@
     },
     cofre_madera: {
       id: 'cofre_madera', name: 'Cofre de Madera', category: 'economia', size: 1, placeOn: 'land',
-      cost: { madera: 15, piedra: 5 },
-      desc: 'Cofre rústico con 30 ranuras de almacenamiento gestionable.',
+      cost: { tablon: 4 },
+      desc: 'Cofre artesanal de tablones de madera con 30 ranuras (hasta 100 objetos por stack). Fabricable en Aserradero o Menú de Construcción.',
       sprite: 'chest_wood', chestSpriteKey: 'wood', isChest: true, capacity: 30, tier: 1
     },
     cofre_hierro: {

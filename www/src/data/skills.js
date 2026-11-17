@@ -100,8 +100,8 @@
   const BRANCH_STARS = {
     recoleccion: [
       ['Manos Ágiles', 'wood', { chopSpeed: 0.20 }, '+20% velocidad al talar árboles y recolectar plantas.'],
-      ['Pico Certero', 'iron_ore', { mineSpeed: 0.25 }, '+25% poder y velocidad al minar rocas y minerales.'],
-      ['Abundancia Natural', 'berries', { extraDrop: 1 }, '+1 recurso adicional garantizado en árboles, rocas y cultivos.'],
+      ['Pico Certero', 'iron_ore', { mineSpeed: 0.25, invSlotBonus: 5, stackBonus: 10 }, '+25% poder y velocidad al minar rocas y minerales, +5 ranuras de inventario y +10 de stack máximo.'],
+      ['Abundancia Natural', 'berries', { extraDrop: 1, invSlotBonus: 5, stackBonus: 10 }, '+1 recurso adicional garantizado, +5 ranuras de inventario y +10 de stack máximo.'],
       ['Cosecha Doble', 'crystal', { doubleDropChance: 0.25 }, '+25% probabilidad de duplicar cualquier recurso recolectado.'],
       ['Maestría Elemental', 'diamond', { gemFinder: 0.12, gatherPower: 0.35 }, 'Permite hallar gemas raras en rocas comunes y +35% eficiencia.'],
       ['Tala Sagrada', 'wood', { chopSpeed: 0.28, extraDrop: 1 }, '+28% velocidad de tala y +1 tronco adicional al derribar árboles.'],
@@ -322,8 +322,8 @@
 
     produccion: [
       ['Artesanía Eficiente', 'plank', { craftXp: 0.25 }, '+25% experiencia al fabricar objetos y construir edificios.'],
-      ['Engranajes Aceitados', 'gear', { machineSpeed: 0.25 }, 'Todas tus máquinas y hornos trabajan un +25% más rápido.'],
-      ['Ahorro Industrial', 'brick', { buildDiscount: 0.20 }, '-20% coste de recursos al construir edificios.'],
+      ['Engranajes Aceitados', 'gear', { machineSpeed: 0.25, invSlotBonus: 5, stackBonus: 10 }, 'Máquinas un +25% más rápidas, +5 ranuras de inventario y +10 de stack máximo.'],
+      ['Ahorro Industrial', 'brick', { buildDiscount: 0.20, invSlotBonus: 5, stackBonus: 10 }, '-20% coste en edificios, +5 ranuras de inventario y +10 de stack máximo.'],
       ['Doble Hornada', 'gold_ore', { doubleCraft: 0.25 }, '25% probabilidad de obtener el doble de objetos al fabricar.'],
       ['Automatización Suprema', 'ancient_fragment', { machineSpeed: 0.40, freeFuel: true }, '+40% velocidad de producción y carbón auto-sostenido en hornos.'],
       ['Fábrica Modular', 'steel_ingot', { buildDiscount: 0.12, machineSpeed: 0.25 }, '-12% coste de estructuras y +25% velocidad industrial.'],
@@ -396,8 +396,8 @@
 
     exploracion: [
       ['Paso Ligero', 'cloth', { moveSpeed: 0.18, maxEnergy: 25 }, '+18% velocidad de movimiento y +25 Energía máxima.'],
-      ['Ojo de Pescador', 'fish_gold', { luckBonus: 0.25 }, 'Peces muerden más rápido y +25% tesoros marinos.'],
-      ['Brújula de Tesoros', 'amulet', { eventRate: 0.35, magnetBonus: 45 }, 'Más meteoritos y tesoros enterrados +45 de alcance de imán.'],
+      ['Ojo de Pescador', 'fish_gold', { luckBonus: 0.25, invSlotBonus: 5, stackBonus: 10 }, 'Peces muerden más rápido, +25% tesoros marinos, +5 ranuras de inventario y +10 de stack máximo.'],
+      ['Brújula de Tesoros', 'amulet', { eventRate: 0.35, magnetBonus: 45, invSlotBonus: 5, stackBonus: 10 }, 'Más meteoritos y tesoros, +45 imán, +5 ranuras de inventario y +10 de stack máximo.'],
       ['Resistencia Climática', 'armor_crystal', { energySave: 0.30, dashBonus: 0.25 }, '-30% gasto de energía en herramientas y dash más largo.'],
       ['Señor del Archipiélago', 'emerald', { xpBonus: 0.30, luckBonus: 0.30, nightVision: 0.45 }, '+30% Experiencia global, +30% suerte y +45% visión nocturna.'],
       ['Navegante Estelar', 'relic_compass', { moveSpeed: 0.18, magnetBonus: 55 }, '+18% velocidad y +55 de radio magnético de recogida.'],

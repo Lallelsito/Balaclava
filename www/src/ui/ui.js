@@ -3555,8 +3555,10 @@
             } else if (slot.kind === 'item' && (g.inventory[slot.id] || 0) > 0) {
               const it = Balaclava.ITEMS[slot.id];
               if (it) {
+                const maxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
+                const showQty = Math.min(g.inventory[slot.id], maxStack);
                 sDiv.appendChild(this.itemIcon(it.icon, 36));
-                sDiv.appendChild(this.el('span', { class: 'slot-qty' }, String(g.inventory[slot.id])));
+                sDiv.appendChild(this.el('span', { class: 'slot-qty' }, String(showQty)));
               }
             }
             hb.appendChild(sDiv);
@@ -4021,34 +4023,41 @@
         ids.forEach(id => {
           const it = Balaclava.ITEMS[id];
           const isSelected = !this.selectedToolId && this.selectedItemId === id;
-          const slot = this.el('div', {
-            class: `inv-slot rarity-${it.rarity || 'comun'}` + (isSelected ? ' selected' : ''),
-            title: `${it.name} (x${g.inventory[id]})`,
-            'aria-label': it.name,
-            onmouseenter: () => { this._hoveredInvSlot = { kind: 'item', id }; },
-            onmouseleave: () => { if (this._hoveredInvSlot && this._hoveredInvSlot.id === id) this._hoveredInvSlot = null; },
-            onclick: (ev) => {
-              if (ev && ev.shiftKey && g.quickTransferToHotbar) {
-                const idx = g.quickTransferToHotbar('item', id);
-                Balaclava.Audio.play('pickup');
-                g.toast(tr('inv.sentHotbar', { name: it.name, slot: idx + 1 }), 'success');
-                this.updateHUD(true);
+          const totalCount = g.inventory[id];
+          let remaining = totalCount;
+          while (remaining > 0) {
+            const stackQty = Math.min(remaining, maxStack);
+            remaining -= stackQty;
+
+            const slot = this.el('div', {
+              class: `inv-slot rarity-${it.rarity || 'comun'}` + (isSelected ? ' selected' : ''),
+              title: `${it.name} (x${stackQty}/${maxStack})`,
+              'aria-label': `${it.name} ${stackQty}`,
+              onmouseenter: () => { this._hoveredInvSlot = { kind: 'item', id }; },
+              onmouseleave: () => { if (this._hoveredInvSlot && this._hoveredInvSlot.id === id) this._hoveredInvSlot = null; },
+              onclick: (ev) => {
+                if (ev && ev.shiftKey && g.quickTransferToHotbar) {
+                  const idx = g.quickTransferToHotbar('item', id);
+                  Balaclava.Audio.play('pickup');
+                  g.toast(tr('inv.sentHotbar', { name: it.name, slot: idx + 1 }), 'success');
+                  this.updateHUD(true);
+                  this.renderModal();
+                  return;
+                }
+                if (this.selectedItemId === id) {
+                  this.selectedItemId = null;
+                } else {
+                  this.selectedToolId = null;
+                  this.selectedItemId = id;
+                }
                 this.renderModal();
-                return;
               }
-              if (this.selectedItemId === id) {
-                this.selectedItemId = null;
-              } else {
-                this.selectedToolId = null;
-                this.selectedItemId = id;
-              }
-              this.renderModal();
-            }
-          }, [
-            this.itemIcon(it.icon, 46),
-            this.el('span', { class: 'slot-qty' }, String(g.inventory[id]))
-          ]);
-          grid.appendChild(slot);
+            }, [
+              this.itemIcon(it.icon, 46),
+              this.el('span', { class: 'slot-qty' }, String(stackQty))
+            ]);
+            grid.appendChild(slot);
+          }
         });
         if (this.invFilter === 'todos' || !this.invFilter) {
           const emptyCount = Math.max(0, maxSlots - usedSlots);
@@ -4391,15 +4400,45 @@
       b.storage = b.storage || {};
       const def = Balaclava.BUILDINGS[b.type || b.defId] || { name: 'Cofre', capacity: 30 };
       const chestCapacity = def.capacity || 30;
+      const CHEST_MAX_STACK = 100;
       const maxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
       const maxPlayerSlots = g.getMaxInventorySlots ? g.getMaxInventorySlots() : 24;
       const usedPlayerSlots = g.getUsedInventorySlots ? g.getUsedInventorySlots() : Object.keys(g.inventory).length;
 
-      const chestItems = Object.entries(b.storage).filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
-      const chestUsedSlots = chestItems.length;
+      const getChestUsedSlots = () => {
+        let used = 0;
+        for (const [id, q] of Object.entries(b.storage || {})) {
+          if (q > 0 && Balaclava.ITEMS[id]) {
+            used += Math.ceil(q / CHEST_MAX_STACK);
+          }
+        }
+        return used;
+      };
+
+      const getChestFit = (itemId) => {
+        const used = getChestUsedSlots();
+        const curQ = b.storage[itemId] || 0;
+        const mod = curQ % CHEST_MAX_STACK;
+        const spaceInPartial = mod === 0 ? 0 : (CHEST_MAX_STACK - mod);
+        const freeSlots = Math.max(0, chestCapacity - used);
+        return spaceInPartial + (freeSlots * CHEST_MAX_STACK);
+      };
+
+      const getPlayerFit = (itemId) => {
+        const pMaxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
+        const pMaxSlots = g.getMaxInventorySlots ? g.getMaxInventorySlots() : 24;
+        const pUsed = g.getUsedInventorySlots ? g.getUsedInventorySlots() : Object.keys(g.inventory).length;
+        const curP = g.inventory[itemId] || 0;
+        const mod = curP % pMaxStack;
+        const spaceInPartial = mod === 0 ? 0 : (pMaxStack - mod);
+        const freeSlots = Math.max(0, pMaxSlots - pUsed);
+        return spaceInPartial + (freeSlots * pMaxStack);
+      };
+
+      const chestUsedSlots = getChestUsedSlots();
 
       if (titleEl) {
-        titleEl.textContent = `${def.name} (${chestUsedSlots} / ${chestCapacity} Ranuras)`;
+        titleEl.textContent = `${def.name} (${chestUsedSlots} / ${chestCapacity} Ranuras · Stacks de 100)`;
       }
 
       const container = this.el('div', { class: 'chest-layout' });
@@ -4410,7 +4449,7 @@
         this.el('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
           this.el('span', { class: 'chest-title-lbl' }, def.name),
           this.el('span', { class: 'inv-cap-pill' }, `${chestUsedSlots} / ${chestCapacity} Slots`),
-          this.el('span', { style: 'font-size:12px;color:#94a3b8;' }, `(Click: Mover · Clic Der: 1 · Shift+Clic: Todo)`)
+          this.el('span', { style: 'font-size:12px;color:#94a3b8;' }, `(Stacks de 100 · Click: Mover · Clic Der: 1 · Shift+Clic: Todo)`)
         ]),
         this.el('div', { class: 'chest-actions-row' }, [
           this.el('button', {
@@ -4420,16 +4459,20 @@
               let anyMoved = false;
               for (const [id, count] of Object.entries(g.inventory)) {
                 if (count <= 0) continue;
-                const currentChestSlots = Object.keys(b.storage).filter(k => (b.storage[k] || 0) > 0).length;
-                if (!b.storage[id] && currentChestSlots >= chestCapacity) continue;
-                b.storage[id] = (b.storage[id] || 0) + count;
-                delete g.inventory[id];
-                anyMoved = true;
+                const fit = getChestFit(id);
+                const toMove = Math.min(count, fit);
+                if (toMove > 0) {
+                  b.storage[id] = (b.storage[id] || 0) + toMove;
+                  g.removeItem(id, toMove);
+                  anyMoved = true;
+                }
               }
               if (anyMoved) {
                 if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
                 this.updateHUD(true);
                 this.renderModal();
+              } else {
+                g.toast('Cofre lleno', 'warning');
               }
             }
           }, 'Depositar Todo'),
@@ -4440,12 +4483,8 @@
               let anyMoved = false;
               for (const [id, count] of Object.entries(b.storage)) {
                 if (count <= 0) continue;
-                const curP = g.inventory[id] || 0;
-                const mod = curP % maxStack;
-                const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
-                const freeSlots = Math.max(0, maxPlayerSlots - g.getUsedInventorySlots());
-                const totalFit = spaceInPartial + (freeSlots * maxStack);
-                const toMove = Math.min(count, totalFit);
+                const fit = getPlayerFit(id);
+                const toMove = Math.min(count, fit);
                 if (toMove > 0) {
                   g.addItem(id, toMove);
                   b.storage[id] -= toMove;
@@ -4457,6 +4496,8 @@
                 if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
                 this.updateHUD(true);
                 this.renderModal();
+              } else {
+                g.toast('Inventario lleno', 'warning');
               }
             }
           }, 'Retirar Todo'),
@@ -4474,55 +4515,54 @@
       chestBox.appendChild(chestHead);
 
       const chestGrid = this.el('div', { class: 'chest-grid' });
+      const chestItems = Object.entries(b.storage).filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
       chestItems.forEach(([id, qty]) => {
         const it = Balaclava.ITEMS[id];
-        const slot = this.el('div', {
-          class: `inv-slot rarity-${it.rarity || 'comun'}`,
-          title: `${it.name} (x${qty})`,
-          'aria-label': `${it.name} (x${qty})`,
-          onclick: (ev) => {
-            const moveCount = (ev && ev.shiftKey) ? qty : Math.min(qty, maxStack);
-            const curP = g.inventory[id] || 0;
-            const mod = curP % maxStack;
-            const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
-            const freeSlots = Math.max(0, maxPlayerSlots - g.getUsedInventorySlots());
-            const totalFit = spaceInPartial + (freeSlots * maxStack);
-            const actualMove = Math.min(moveCount, totalFit);
-            if (actualMove > 0) {
-              g.addItem(id, actualMove);
-              b.storage[id] -= actualMove;
-              if (b.storage[id] <= 0) delete b.storage[id];
-              if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
-              this.updateHUD(true);
-              this.renderModal();
-            } else {
-              g.toast('Inventario lleno', 'warning');
+        let rem = qty;
+        while (rem > 0) {
+          const stackQty = Math.min(rem, CHEST_MAX_STACK);
+          rem -= stackQty;
+
+          const slot = this.el('div', {
+            class: `inv-slot rarity-${it.rarity || 'comun'}`,
+            title: `${it.name} (x${stackQty}/${CHEST_MAX_STACK})`,
+            'aria-label': `${it.name} ${stackQty}`,
+            onclick: (ev) => {
+              const wantMove = (ev && ev.shiftKey) ? (b.storage[id] || 0) : stackQty;
+              const fit = getPlayerFit(id);
+              const actualMove = Math.min(wantMove, fit);
+              if (actualMove > 0) {
+                g.addItem(id, actualMove);
+                b.storage[id] -= actualMove;
+                if (b.storage[id] <= 0) delete b.storage[id];
+                if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                this.updateHUD(true);
+                this.renderModal();
+              } else {
+                g.toast('Inventario lleno', 'warning');
+              }
+            },
+            oncontextmenu: (ev) => {
+              ev.preventDefault();
+              if ((b.storage[id] || 0) <= 0) return;
+              const fit = getPlayerFit(id);
+              if (fit >= 1) {
+                g.addItem(id, 1);
+                b.storage[id] -= 1;
+                if (b.storage[id] <= 0) delete b.storage[id];
+                if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                this.updateHUD(true);
+                this.renderModal();
+              } else {
+                g.toast('Inventario lleno', 'warning');
+              }
             }
-          },
-          oncontextmenu: (ev) => {
-            ev.preventDefault();
-            if (qty <= 0) return;
-            const curP = g.inventory[id] || 0;
-            const mod = curP % maxStack;
-            const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
-            const freeSlots = Math.max(0, maxPlayerSlots - g.getUsedInventorySlots());
-            const totalFit = spaceInPartial + (freeSlots * maxStack);
-            if (totalFit >= 1) {
-              g.addItem(id, 1);
-              b.storage[id] -= 1;
-              if (b.storage[id] <= 0) delete b.storage[id];
-              if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
-              this.updateHUD(true);
-              this.renderModal();
-            } else {
-              g.toast('Inventario lleno', 'warning');
-            }
-          }
-        }, [
-          this.itemIcon(it.icon, 44),
-          this.el('span', { class: 'slot-qty' }, String(qty))
-        ]);
-        chestGrid.appendChild(slot);
+          }, [
+            this.itemIcon(it.icon, 44),
+            this.el('span', { class: 'slot-qty' }, String(stackQty))
+          ]);
+          chestGrid.appendChild(slot);
+        }
       });
 
       const emptyChestSlots = Math.max(0, chestCapacity - chestUsedSlots);
@@ -4553,41 +4593,49 @@
       const playerGrid = this.el('div', { class: 'chest-grid' });
       playerItems.forEach(([id, qty]) => {
         const it = Balaclava.ITEMS[id];
-        const slot = this.el('div', {
-          class: `inv-slot rarity-${it.rarity || 'comun'}`,
-          title: `${it.name} (x${qty})`,
-          'aria-label': `${it.name} (x${qty})`,
-          onclick: (ev) => {
-            const currentChestSlots = Object.keys(b.storage).filter(k => (b.storage[k] || 0) > 0).length;
-            if (!b.storage[id] && currentChestSlots >= chestCapacity) {
-              g.toast('Cofre lleno', 'warning');
-              return;
+        let rem = qty;
+        while (rem > 0) {
+          const stackQty = Math.min(rem, maxStack);
+          rem -= stackQty;
+
+          const slot = this.el('div', {
+            class: `inv-slot rarity-${it.rarity || 'comun'}`,
+            title: `${it.name} (x${stackQty}/${maxStack})`,
+            'aria-label': `${it.name} ${stackQty}`,
+            onclick: (ev) => {
+              const wantMove = (ev && ev.shiftKey) ? (g.inventory[id] || 0) : stackQty;
+              const fit = getChestFit(id);
+              const actualMove = Math.min(wantMove, fit);
+              if (actualMove > 0) {
+                b.storage[id] = (b.storage[id] || 0) + actualMove;
+                g.removeItem(id, actualMove);
+                if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                this.updateHUD(true);
+                this.renderModal();
+              } else {
+                g.toast('Cofre lleno', 'warning');
+              }
+            },
+            oncontextmenu: (ev) => {
+              ev.preventDefault();
+              if ((g.inventory[id] || 0) <= 0) return;
+              const fit = getChestFit(id);
+              if (fit >= 1) {
+                b.storage[id] = (b.storage[id] || 0) + 1;
+                g.removeItem(id, 1);
+                if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                this.updateHUD(true);
+                this.renderModal();
+              } else {
+                g.toast('Cofre lleno', 'warning');
+              }
             }
-            const moveCount = (ev && ev.shiftKey) ? qty : Math.min(qty, maxStack);
-            b.storage[id] = (b.storage[id] || 0) + moveCount;
-            g.removeItem(id, moveCount);
-            if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
-            this.updateHUD(true);
-            this.renderModal();
-          },
-          oncontextmenu: (ev) => {
-            ev.preventDefault();
-            const currentChestSlots = Object.keys(b.storage).filter(k => (b.storage[k] || 0) > 0).length;
-            if (!b.storage[id] && currentChestSlots >= chestCapacity) {
-              g.toast('Cofre lleno', 'warning');
-              return;
-            }
-            b.storage[id] = (b.storage[id] || 0) + 1;
-            g.removeItem(id, 1);
-            if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
-            this.updateHUD(true);
-            this.renderModal();
-          }
-        }, [
-          this.itemIcon(it.icon, 44),
-          this.el('span', { class: 'slot-qty' }, String(qty))
-        ]);
-        playerGrid.appendChild(slot);
+          }, [
+            this.itemIcon(it.icon, 44),
+            this.el('span', { class: 'slot-qty' }, String(stackQty))
+          ]);
+          playerGrid.appendChild(slot);
+        }
       });
 
       const emptyPlayerSlots = Math.max(0, maxPlayerSlots - usedPlayerSlots);
