@@ -39,16 +39,19 @@
     omega:      { color: '#e040fb', highlight: '#ea80fc', glow: 'rgba(224, 64, 251, 0.90)' }
   };
 
-  // Base socket offsets calibrated for the tall heroic 21px pawn (head y=3..11, torso y=12..19, legs y=20..23)
+  // Base socket offsets calibrated for the original 17px chaparro pawn
+  // Head y=7..14 (center ~11.0), Torso y=15..19 (center ~17.5), Legs y=20..22 (~21.0), Feet y=23
   // Screen coords: x = (socket.x - 12) * DRAW_SCALE; y = socket.y * DRAW_SCALE + DRAW_OFFSET_Y
   const DEFAULT_SOCKETS = {
-    head:    { x: 11.5, y: 7.0 },   // Screen: (-1, -24) - Top of head at y = -32
-    torso:   { x: 11.5, y: 15.5 },  // Screen: (-1, -7)  - Chest & waist
-    legs:    { x: 11.5, y: 21.0 },  // Screen: (-1, +4)  - Leg joints
-    feet:    { x: 11.5, y: 23.0 },  // Screen: (-1, +8)  - Feet touching ground shadow
-    mainHand:{ x: 16.5, y: 15.5 },  // Screen: (+9, -7)  - Dominant hand at waist level
-    offHand: { x: 6.5,  y: 15.5 },  // Screen: (-11, -7) - Off-hand at side
-    back:    { x: 5.5,  y: 13.5 }   // Screen: (-13, -11)- Backpack / quiver anchor
+    head:          { x: 11.5, y: 11.0 }, // Screen: (-1, -16) - Center of head
+    torso:         { x: 11.5, y: 17.5 }, // Screen: (-1, -3)  - Center of chest
+    legs:          { x: 11.5, y: 21.0 }, // Screen: (-1, +4)  - Leg joints
+    feet:          { x: 11.5, y: 23.0 }, // Screen: (-1, +8)  - Feet touching ground shadow
+    mainHand:      { x: 15.0, y: 17.5 }, // Screen: (+6, -3)  - Dominant hand at waist level
+    offHand:       { x: 8.0,  y: 17.5 }, // Screen: (-8, -3)  - Off-hand at side
+    back:          { x: 7.0,  y: 16.0 }, // Screen: (-10, -6) - Backpack / quiver anchor
+    shoulderRight: { x: 13.5, y: 16.5 }, // Screen: (+3, -5)  - Right arm shoulder joint
+    shoulderLeft:  { x: 9.5,  y: 16.5 }  // Screen: (-5, -5)  - Left arm shoulder joint
   };
 
   function getIcon(key) {
@@ -116,7 +119,7 @@
     }
 
     // Resolves row and col in the 8x6 sheet, plus local progress within state
-    // All action states keep the character standing tall and upright without squashing!
+    // All action states keep the cute 17px chaparro stance standing upright without squatting!
     getFrame(state, game, p) {
       let r = 0, c = 0;
       let prog = 0;
@@ -160,7 +163,7 @@
           } else if (prog < 0.75) {
             r = 4; c = 3; // Downward strike onto mineral block
           } else {
-            r = 0; c = 2; // Natural rebound
+            r = 0; c = 2; // Natural upright rebound
           }
           break;
         }
@@ -171,7 +174,7 @@
           } else if (prog < 0.75) {
             r = 4; c = 4; // Diagonal/horizontal slash across chest
           } else {
-            r = 4; c = 2; // Follow-through
+            r = 4; c = 2; // Follow-through recovery
           }
           break;
         }
@@ -189,11 +192,11 @@
 
         case 'harvesting': {
           if (prog < 0.30) {
-            r = 0; c = 2; // Reaping stance
+            r = 0; c = 2; // Upright reaping stance
           } else if (prog < 0.72) {
-            r = 4; c = 5; // Sweeping cut at crop roots
+            r = 4; c = 1; // Sweeping cut at crop roots
           } else {
-            r = 5; c = 0; // Cheerful gather
+            r = 0; c = 0; // Return upright
           }
           break;
         }
@@ -202,7 +205,7 @@
           if (prog < 0.48) {
             r = 0; c = 6; // Upright, dual hands raised aloft channeling
           } else if (prog < 0.72) {
-            r = 3; c = 3; // Focused arcane gathering
+            r = 0; c = 2; // Focused arcane gathering
           } else {
             r = 4; c = 1; // Forward thrust spell release
           }
@@ -211,7 +214,7 @@
 
         case 'bow_shooting': {
           if (prog < 0.65) {
-            r = 0; c = 2; // Archer profile, drawing string
+            r = 0; c = 2; // Archer profile, upright drawing string
           } else {
             r = 4; c = 2; // Recoil release
           }
@@ -277,14 +280,75 @@
     getSockets(r, c) {
       const base = DEFAULT_SOCKETS;
       return {
-        head:     { x: (base.head.x - 12) * DRAW_SCALE,     y: base.head.y * DRAW_SCALE + DRAW_OFFSET_Y },
-        torso:    { x: (base.torso.x - 12) * DRAW_SCALE,    y: base.torso.y * DRAW_SCALE + DRAW_OFFSET_Y },
-        legs:     { x: (base.legs.x - 12) * DRAW_SCALE,     y: base.legs.y * DRAW_SCALE + DRAW_OFFSET_Y },
-        feet:     { x: (base.feet.x - 12) * DRAW_SCALE,     y: base.feet.y * DRAW_SCALE + DRAW_OFFSET_Y },
-        mainHand: { x: (base.mainHand.x - 12) * DRAW_SCALE, y: base.mainHand.y * DRAW_SCALE + DRAW_OFFSET_Y },
-        offHand:  { x: (base.offHand.x - 12) * DRAW_SCALE,  y: base.offHand.y * DRAW_SCALE + DRAW_OFFSET_Y },
-        back:     { x: (base.back.x - 12) * DRAW_SCALE,     y: base.back.y * DRAW_SCALE + DRAW_OFFSET_Y }
+        head:          { x: (base.head.x - 12) * DRAW_SCALE,          y: base.head.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        torso:         { x: (base.torso.x - 12) * DRAW_SCALE,         y: base.torso.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        legs:          { x: (base.legs.x - 12) * DRAW_SCALE,          y: base.legs.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        feet:          { x: (base.feet.x - 12) * DRAW_SCALE,          y: base.feet.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        mainHand:      { x: (base.mainHand.x - 12) * DRAW_SCALE,      y: base.mainHand.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        offHand:       { x: (base.offHand.x - 12) * DRAW_SCALE,       y: base.offHand.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        back:          { x: (base.back.x - 12) * DRAW_SCALE,          y: base.back.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        shoulderRight: { x: (base.shoulderRight.x - 12) * DRAW_SCALE, y: base.shoulderRight.y * DRAW_SCALE + DRAW_OFFSET_Y },
+        shoulderLeft:  { x: (base.shoulderLeft.x - 12) * DRAW_SCALE,  y: base.shoulderLeft.y * DRAW_SCALE + DRAW_OFFSET_Y }
       };
+    }
+
+    // Helper to get armor tier color for sleeves/pauldrons
+    getArmorColor(game) {
+      const eq = game.equipped || {};
+      const tiers = game.armorTiers || {};
+      if (eq.armor) {
+        const item = Balaclava.ITEMS[eq.armor];
+        const tierName = (item && item.tier && TIERS[item.tier]) || (tiers.armor) || 'basica';
+        const tDef = TIER_FX[tierName] || TIER_FX.basica;
+        return tDef ? tDef.color : '#cfd8dc';
+      }
+      return null;
+    }
+
+    // Draws a procedural pixel-art arm extending from shoulder to weapon/hand grip
+    drawPixelArm(ctx, sx, sy, hx, hy, armorColor) {
+      const dx = hx - sx;
+      const dy = hy - sy;
+      const dist = Math.hypot(dx, dy);
+      const ang = Math.atan2(dy, dx);
+
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(ang);
+
+      const armLen = Math.max(3, dist);
+
+      // 1. Arm outline (1px dark border, 6px width)
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(0, -3, armLen, 6);
+
+      // 2. Arm core flesh (matching pawn's skin #f5f5f5)
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(0, -2, armLen, 4);
+
+      // 3. Underside pixel shading (#d0d4dc)
+      ctx.fillStyle = '#d0d4dc';
+      ctx.fillRect(0, 1, armLen, 1);
+
+      // 4. Armor sleeve / pauldron at shoulder root if equipped
+      if (armorColor) {
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(-1, -4, 5, 8);
+        ctx.fillStyle = armorColor;
+        ctx.fillRect(0, -3, 4, 6);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.fillRect(1, -3, 2, 2);
+      }
+
+      // 5. Hand fist at tip
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(armLen - 3, -3, 6, 6);
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(armLen - 2, -2, 4, 4);
+      ctx.fillStyle = '#d0d4dc';
+      ctx.fillRect(armLen - 1, 0, 2, 2);
+
+      ctx.restore();
     }
 
     // Primary entry point called every render frame from game.js
@@ -315,21 +379,21 @@
       if (state !== 'death' || p.deadTimer > (p.deadMax || 10.0) - 0.46) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
         ctx.beginPath();
-        const shadowW = state === 'dash' ? 18 : 14;
-        const shadowH = state === 'dash' ? 4 : 6;
-        ctx.ellipse(0, 10, shadowW, shadowH, 0, 0, Math.PI * 2);
+        const shadowW = state === 'dash' ? 16 : 12;
+        const shadowH = state === 'dash' ? 4 : 5;
+        ctx.ellipse(0, 9, shadowW, shadowH, 0, 0, Math.PI * 2);
         ctx.fill();
       } else {
         // Quantized death mound shadow
         ctx.fillStyle = 'rgba(10, 4, 8, 0.48)';
-        ctx.fillRect(-14, 8, 28, 6);
-        ctx.fillRect(-10, 6, 20, 2);
+        ctx.fillRect(-12, 7, 24, 5);
+        ctx.fillRect(-8, 5, 16, 2);
       }
 
       // Facing orientation: flip horizontally if facing left
       ctx.scale(p.facing || 1, 1);
 
-      // Natural weight transfer / athletic impulse on strikes (NEVER squashing!)
+      // Natural weight transfer / athletic impulse on strikes (NEVER squashing height!)
       let impulseX = 0;
       let impulseTilt = 0;
       if (p.swingTimer > 0 && state !== 'death') {
@@ -355,7 +419,7 @@
       // Layer 0: Back items (Backpack, Quiver, Stowed Shield)
       this.drawBackLayer(ctx, game, p, sockets, state);
 
-      // Layer 1: Base Character Pawn Body (Tall 21px heroic proportions)
+      // Layer 1: Base Character Pawn Body (original 17px chaparro proportions)
       if (sheet && sheet.complete && sheet.naturalWidth > 0) {
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
@@ -366,19 +430,19 @@
       } else {
         // High-contrast pixel-art fallback placeholder
         ctx.fillStyle = '#f5f5f5';
-        ctx.fillRect(-10, -32, 20, 32);
+        ctx.fillRect(-8, -24, 16, 24);
         ctx.fillStyle = '#111111';
-        ctx.fillRect(-6, -26, 3, 5);
-        ctx.fillRect(3, -26, 3, 5);
+        ctx.fillRect(-5, -18, 2, 4);
+        ctx.fillRect(3, -18, 2, 4);
       }
 
-      // Layer 2: Armor Overlays (Legs, Boots, Torso, Helmet)
+      // Layer 2: Armor Overlays (Legs, Boots, Torso, Helmet calibrated to chaparro sockets)
       this.drawArmorOverlays(ctx, game, p, sockets, state, r, c);
 
-      // Layer 3: Off-Hand Equipment (Combat Shield or Bow Stave)
+      // Layer 3: Off-Hand Equipment & Arm (Combat Shield with holding arm)
       this.drawOffHand(ctx, game, p, sockets, state);
 
-      // Layer 4: Main-Hand Tool / Weapon with visible Grip Hand Pixel
+      // Layer 4: Main-Hand Tool / Weapon with procedural pixel arm and grip hand
       this.drawMainHand(ctx, game, p, sockets, state, prog);
 
       // Layer 5: Weapon Trails & Slashes
@@ -409,13 +473,13 @@
         ctx.translate(bSocket.x, bSocket.y);
         const bImg = getIcon(backpackItem.icon || 'mochila_cuero');
         if (bImg) {
-          ctx.drawImage(bImg, -10, -10, 20, 20);
+          ctx.drawImage(bImg, -9, -9, 18, 18);
         } else {
           // Pixel-art styled leather backpack
           ctx.fillStyle = backpackItem.id === 'mochila_astral' ? '#7e57c2' : backpackItem.id === 'mochila_reforzada' ? '#78909c' : '#795548';
-          ctx.fillRect(-8, -8, 10, 14);
+          ctx.fillRect(-7, -7, 9, 12);
           ctx.fillStyle = '#ffd54f';
-          ctx.fillRect(-5, -3, 4, 3); // buckle
+          ctx.fillRect(-4, -2, 3, 2); // buckle
         }
         ctx.restore();
       }
@@ -451,8 +515,8 @@
         const color = itemId.includes('hierro') ? '#90caf9' : itemId.includes('acero') ? '#64b5f6' : '#8d6e63';
         ctx.save();
         ctx.fillStyle = color;
-        ctx.fillRect(sockets.legs.x - 5, sockets.legs.y - 2, 4, 5);
-        ctx.fillRect(sockets.legs.x + 1, sockets.legs.y - 2, 4, 5);
+        ctx.fillRect(sockets.legs.x - 4, sockets.legs.y - 3, 3, 4);
+        ctx.fillRect(sockets.legs.x + 1, sockets.legs.y - 3, 3, 4);
         ctx.restore();
       }
 
@@ -463,12 +527,12 @@
         const color = itemId.includes('hierro') ? '#78909c' : itemId.includes('viento') ? '#4fc3f7' : '#5d4037';
         ctx.save();
         ctx.fillStyle = color;
-        ctx.fillRect(sockets.feet.x - 6, sockets.feet.y - 2, 4, 3);
-        ctx.fillRect(sockets.feet.x + 2, sockets.feet.y - 2, 4, 3);
+        ctx.fillRect(sockets.feet.x - 5, sockets.feet.y - 2, 4, 3);
+        ctx.fillRect(sockets.feet.x + 1, sockets.feet.y - 2, 4, 3);
         ctx.restore();
       }
 
-      // 3. Torso Armor / Chestplate Layer (fits the elongated 8px torso)
+      // 3. Torso Armor / Chestplate Layer (calibrated for 17px chaparro torso)
       if (eq.armor) {
         const item = Balaclava.ITEMS[eq.armor];
         const tierName = (item && item.tier && TIERS[item.tier]) || (tiers.armor) || 'basica';
@@ -481,21 +545,21 @@
 
         // Armor Plate Pixel Art
         ctx.fillStyle = '#263238'; // Dark metal outline
-        ctx.fillRect(-6, -7, 12, 13);
+        ctx.fillRect(-6, -4, 12, 8);
         ctx.fillStyle = color;
-        ctx.fillRect(-5, -6, 10, 11);
+        ctx.fillRect(-5, -3, 10, 6);
         ctx.fillStyle = hl;
-        ctx.fillRect(-4, -5, 3, 2); // Highlight gleam
+        ctx.fillRect(-4, -2, 3, 2); // Highlight gleam
 
         // Tier specialty glow
         if (tDef && tDef.glow) {
           ctx.fillStyle = tDef.glow;
-          ctx.fillRect(-6, -7, 12, 13);
+          ctx.fillRect(-6, -4, 12, 8);
         }
         ctx.restore();
       }
 
-      // 4. Helmet / Hat / Crown Layer (aligned with raised head socket)
+      // 4. Helmet / Hat / Crown Layer (aligned with chaparro head center socket)
       if (eq.helm) {
         const item = Balaclava.ITEMS[eq.helm];
         const itemId = item ? item.id : String(eq.helm);
@@ -510,40 +574,40 @@
         if (itemId === 'corona_soberana' || itemId.includes('oro') || itemId.includes('cristal')) {
           // Radiant Crown
           ctx.fillStyle = '#ff8f00';
-          ctx.fillRect(-7, -10, 14, 4);
+          ctx.fillRect(-7, -8, 14, 3);
           ctx.fillStyle = color;
-          ctx.fillRect(-6, -11, 3, 4);
-          ctx.fillRect(-1, -12, 2, 5);
-          ctx.fillRect(3, -11, 3, 4);
+          ctx.fillRect(-6, -9, 3, 3);
+          ctx.fillRect(-1, -10, 2, 4);
+          ctx.fillRect(3, -9, 3, 3);
           // Gem
           ctx.fillStyle = itemId.includes('cristal') ? '#80d8ff' : '#ef5350';
-          ctx.fillRect(-1, -10, 2, 2);
+          ctx.fillRect(-1, -8, 2, 2);
         } else if (itemId.includes('balaclava')) {
           // Royal Balaclava Hood
           ctx.fillStyle = '#ffb300';
-          ctx.fillRect(-8, -11, 16, 5);
+          ctx.fillRect(-8, -9, 16, 4);
           ctx.fillStyle = '#b71c1c';
-          ctx.fillRect(-6, -9, 12, 3);
+          ctx.fillRect(-6, -7, 12, 3);
         } else {
           // Knight Visor / Cap
           ctx.fillStyle = '#37474f';
-          ctx.fillRect(-8, -11, 16, 6);
+          ctx.fillRect(-8, -9, 16, 5);
           ctx.fillStyle = color;
-          ctx.fillRect(-7, -10, 14, 4);
+          ctx.fillRect(-7, -8, 14, 3);
           ctx.fillStyle = hl;
-          ctx.fillRect(-6, -9, 4, 1);
+          ctx.fillRect(-6, -7, 4, 1);
         }
 
         // Helmet Tier Aura
         if (tDef && tDef.glow) {
           ctx.fillStyle = tDef.glow;
-          ctx.fillRect(-8, -12, 16, 7);
+          ctx.fillRect(-8, -10, 16, 6);
         }
         ctx.restore();
       }
     }
 
-    // Renders off-hand items: combat shield or bow stave
+    // Renders off-hand items: combat shield or bow stave with holding arm
     drawOffHand(ctx, game, p, sockets, state) {
       if (state === 'death') return;
       const off = sockets.offHand;
@@ -553,6 +617,9 @@
       if (eqShield && (state === 'attack' || p.swingTool === 'espada' || p.swingTool === 'guadana' || (game.selectedEnemy && game.selectedEnemy.hp > 0))) {
         const shieldItem = Balaclava.ITEMS[eqShield];
         if (shieldItem) {
+          const armArmorColor = this.getArmorColor(game);
+          this.drawPixelArm(ctx, sockets.shoulderLeft.x, sockets.shoulderLeft.y, off.x - 3, off.y, armArmorColor);
+
           ctx.save();
           ctx.translate(off.x - 3, off.y);
           const sImg = getIcon(shieldItem.icon);
@@ -569,7 +636,7 @@
       }
     }
 
-    // Renders tools and weapons strictly anchored to the main hand socket with visible hand grip
+    // Renders tools and weapons with procedural pixel arm stretching from shoulder
     drawMainHand(ctx, game, p, sockets, state, prog) {
       if (state === 'death') return;
       const hand = sockets.mainHand;
@@ -607,8 +674,6 @@
         }
         if (!toolImg) return;
 
-        ctx.save();
-
         let toolAngle = p.swingAngle || 0;
         let reachX = hand.x;
         let reachY = hand.y;
@@ -639,9 +704,13 @@
           // Smooth sweeping horizontal reap
           const reapRot = (prog - 0.5) * 1.8 * facing;
           toolAngle = toolAngle + reapRot + Math.PI / 4;
+          reachX += Math.cos(toolAngle) * 6;
+          reachY += Math.sin(toolAngle) * 3;
         } else if (state === 'spellcasting') {
           // Staff raised aloft then thrust forward
           toolAngle = prog < 0.5 ? (-Math.PI / 2) : (toolAngle + Math.PI / 4);
+          reachY -= (prog < 0.5 ? 5 : 2);
+          reachX += (prog < 0.5 ? 2 : 6);
         } else {
           // Melee slash / sword attack
           const swingRot = (prog - 0.40) * 2.6 * facing + Math.PI / 4;
@@ -651,6 +720,19 @@
           reachY += Math.sin(toolAngle) * reach;
         }
 
+        const armArmorColor = this.getArmorColor(game);
+
+        // Procedural pixel arm stretching from right shoulder to weapon grip
+        this.drawPixelArm(ctx, sockets.shoulderRight.x, sockets.shoulderRight.y, reachX, reachY, armArmorColor);
+
+        // For spellcasting, draw dual arms: off-hand arm also reaching aloft!
+        if (state === 'spellcasting') {
+          const offReachX = sockets.shoulderLeft.x - 2;
+          const offReachY = (prog < 0.5) ? (reachY + 2) : (sockets.shoulderLeft.y - 4);
+          this.drawPixelArm(ctx, sockets.shoulderLeft.x, sockets.shoulderLeft.y, offReachX, offReachY, armArmorColor);
+        }
+
+        ctx.save();
         ctx.translate(reachX, reachY);
         ctx.rotate(toolAngle);
 
@@ -670,17 +752,19 @@
         // Anchor tool by its handle (pivot near base -sz/3)
         ctx.drawImage(toolImg, -sz / 3, -sz / 2, sz, sz);
 
-        // Hand pixel holding weapon grip
+        // Hand fingers wrapping over weapon grip
         ctx.fillStyle = '#111111';
         ctx.fillRect(-3, -3, 6, 6);
         ctx.fillStyle = '#f5f5f5';
         ctx.fillRect(-2, -2, 4, 4);
+        ctx.fillStyle = '#d0d4dc';
+        ctx.fillRect(-1, 0, 2, 2);
 
         ctx.restore();
       }
     }
 
-    // Bow drawing, taut string, and arrow release
+    // Bow drawing, taut string, and arrow release with procedural dual arms
     drawBowInHand(ctx, game, p, sockets, state, prog) {
       const bowTier = (game.toolTiers && game.toolTiers.arco) || 'basica';
       const bowImg = Balaclava.Assets.getToolImg ? Balaclava.Assets.getToolImg('arco', bowTier) : null;
@@ -691,13 +775,25 @@
       const isFiring = state === 'bow_shooting';
       const drawPhase = isFiring ? (prog < 0.65 ? (prog / 0.65) : 1 - ((prog - 0.65) / 0.35)) : 0.85;
       const recoil = (isFiring && prog >= 0.65) ? (prog - 0.65) * 8 : 0;
+      const bowX = hand.x - recoil * Math.cos(ang);
+      const bowY = hand.y - recoil * Math.sin(ang);
+      const pullBack = -4 - drawPhase * 8;
+      const pullX = bowX + Math.cos(ang) * pullBack;
+      const pullY = bowY + Math.sin(ang) * pullBack;
+
+      const armArmorColor = this.getArmorColor(game);
+
+      // Procedural off-hand arm drawing the bowstring back
+      this.drawPixelArm(ctx, sockets.shoulderLeft.x, sockets.shoulderLeft.y, pullX, pullY, armArmorColor);
+
+      // Procedural main arm holding bow stave steadily forward
+      this.drawPixelArm(ctx, sockets.shoulderRight.x, sockets.shoulderRight.y, bowX, bowY, armArmorColor);
 
       ctx.save();
-      ctx.translate(hand.x - recoil * Math.cos(ang), hand.y - recoil * Math.sin(ang));
+      ctx.translate(bowX, bowY);
       ctx.rotate(ang);
 
       // Taut Bowstring
-      const pullBack = -4 - drawPhase * 8;
       ctx.strokeStyle = 'rgba(255, 248, 225, 0.95)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -753,7 +849,7 @@
       }
     }
 
-    // Arcane Laser Wand Aiming & Continuous Alignment
+    // Arcane Laser Wand Aiming & Continuous Alignment with procedural arm
     drawLaserWandInHand(ctx, game, p, sockets, state) {
       const heldSlot = game.hotbar && game.hotbar[game.activeSlot];
       const heldItem = heldSlot && heldSlot.kind === 'item' ? Balaclava.ITEMS[heldSlot.id] : null;
@@ -764,6 +860,9 @@
 
       const hand = sockets.mainHand;
       const aim = (p.swingTimer > 0) ? (p.swingAngle || 0) : ((p.facing || 1) > 0 ? -0.2 : -Math.PI + 0.2);
+
+      const armArmorColor = this.getArmorColor(game);
+      this.drawPixelArm(ctx, sockets.shoulderRight.x, sockets.shoulderRight.y, hand.x, hand.y, armArmorColor);
 
       ctx.save();
       ctx.translate(hand.x, hand.y);
@@ -782,7 +881,7 @@
 
       ctx.drawImage(ic, -11, -11, 22, 22);
 
-      // Hand pixel
+      // Hand fingers gripping wand
       ctx.fillStyle = '#111111';
       ctx.fillRect(-2, -2, 5, 5);
       ctx.fillStyle = '#f5f5f5';
@@ -791,7 +890,7 @@
       ctx.restore();
     }
 
-    // Bomb Windup in Hand before Release
+    // Bomb Windup in Hand before Release with procedural arm
     drawBombInHand(ctx, game, p, sockets, prog) {
       if (prog >= 0.40) return; // Released into projectile physics
       const heldSlot = game.hotbar && game.hotbar[game.activeSlot];
@@ -801,6 +900,9 @@
       if (!ic) return;
 
       const hand = sockets.mainHand;
+      const armArmorColor = this.getArmorColor(game);
+      this.drawPixelArm(ctx, sockets.shoulderRight.x, sockets.shoulderRight.y, hand.x, hand.y - 4, armArmorColor);
+
       ctx.save();
       ctx.translate(hand.x, hand.y - 4);
       ctx.rotate(p.facing > 0 ? 0.2 : -0.2);
