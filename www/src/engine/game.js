@@ -165,7 +165,7 @@
         moving: false,
         godMode: false,
         bonusStats: {},
-        skinId: (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || 'monk_yellow'
+        skinId: (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin') && window.localStorage.getItem('balaclava_player_skin') !== 'monk_yellow') ? window.localStorage.getItem('balaclava_player_skin') : 'pawn_hero'
       };
     }
 
@@ -5236,6 +5236,11 @@
 
       this.removeItem(item.id, 1);
       this.player.facing = targetX >= px ? 1 : -1;
+      this.player.swingAngle = Math.atan2(targetY - py, targetX - px);
+      this.player.swingTool = 'bomba';
+      this.player.swingItemId = item.id;
+      this.player.swingDur = 0.38;
+      this.player.swingTimer = 0.38;
       const eff = item.consumableEffect || {};
       const radius = eff.bombRadius || item.bombRadius || 128;
       const dmg = eff.bombDmg || item.bombDmg || 65;
@@ -8822,7 +8827,8 @@
     cyclePlayerSkin(dir = 1) {
       const skins = Balaclava.SKINS || [];
       if (!skins.length) return;
-      const curId = this.player.skinId || (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || 'monk_yellow';
+      const rawSavedSkin = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || null;
+      const curId = this.player.skinId || ((rawSavedSkin && rawSavedSkin !== 'monk_yellow') ? rawSavedSkin : 'pawn_hero');
       let idx = skins.findIndex(s => s.id === curId);
       if (idx === -1) idx = 0;
       let nextIdx = (idx + dir + skins.length) % skins.length;
@@ -8831,6 +8837,18 @@
 
     drawPlayer(ctx) {
       const p = this.player;
+      if (!p) return;
+
+      const skins = Balaclava.SKINS || [];
+      const rawSavedSkin = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || null;
+      const currentSkinId = p.skinId || ((rawSavedSkin && rawSavedSkin !== 'monk_yellow') ? rawSavedSkin : 'pawn_hero');
+      p.skinId = currentSkinId;
+
+      if ((!currentSkinId || currentSkinId === 'pawn_hero') && Balaclava.PlayerAnimator) {
+        Balaclava.PlayerAnimator.draw(this, ctx);
+        return;
+      }
+
       if (p.invuln > 0 && !p.deadTimer && Math.floor(this.time * 20) % 2 === 0) return;
 
       const assets = Balaclava.Assets;

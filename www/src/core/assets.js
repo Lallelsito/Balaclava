@@ -6,6 +6,7 @@
   const BASE = window.BALACLAVA_ASSET_BASE || 'assets/packs/';
   const ROOT = window.BALACLAVA_ROOT_BASE || '';
   const PATHS = {
+    pawn_custom_sheet: 'assets/sprites_extra/player_pawn_sheet.png',
     pawn_idle: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Idle.png',
     pawn_run: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Run.png',
     pawn_axe: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Interact Axe.png',
@@ -875,6 +876,17 @@
   Balaclava.Assets = new AssetManager();
 
   Balaclava.SKINS = [
+    {
+      id: 'pawn_hero',
+      name: 'Protagonista Balaclava',
+      name_en: 'Balaclava Protagonist',
+      role: 'Héroe de la Aventura',
+      role_en: 'Adventure Hero',
+      desc: 'El personaje definitivo con animaciones artesanales completas para todas las acciones, herramientas, armas y armaduras.',
+      desc_en: 'The definitive protagonist with handcrafted animations for all actions, tools, weapons, and armors.',
+      sheet: 'pawn_custom_sheet',
+      type: 'pawn_hero'
+    },
     {
       id: 'monk_yellow',
       name: 'Monje de Túnica Café',
