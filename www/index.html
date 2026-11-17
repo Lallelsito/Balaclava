@@ -136,15 +136,25 @@
         </div>
 
         <div id="objective-banner" class="hud-slate-card">
-          <strong data-i18n="hud.currentObjective">Current Objective</strong>
-          <div id="objective-text">Gather stone, wood, and build your Crafting Table.</div>
-          <div id="objective-progress" class="objective-progress"></div>
-          <div id="objective-reward" class="objective-reward"></div>
+          <div class="obj-head">
+            <strong data-i18n="hud.currentObjective">Current Objective</strong>
+            <button id="btn-objective-toggle" class="btn-obj-icon" title="Ocultar / Mostrar misión" aria-label="Toggle Misión">-</button>
+          </div>
+          <div id="objective-body">
+            <div id="objective-text">Gather stone, wood, and build your Crafting Table.</div>
+            <div id="objective-progress" class="objective-progress"></div>
+            <div id="objective-reward" class="objective-reward"></div>
+          </div>
         </div>
         <div id="dungeon-hud" class="hud-slate-card dungeon-hud-card hidden">
-          <strong data-i18n="hud.dungeonObjective">Dungeon Objective</strong>
-          <div id="dungeon-hud-name" class="dungeon-hud-name"></div>
-          <div id="dungeon-hud-obj" class="dungeon-hud-obj"></div>
+          <div class="obj-head">
+            <strong data-i18n="hud.dungeonObjective">Dungeon Objective</strong>
+            <button id="btn-dungeon-obj-toggle" class="btn-obj-icon" title="Ocultar / Mostrar objetivo" aria-label="Toggle Objetivo Mazmorra">-</button>
+          </div>
+          <div id="dungeon-hud-body">
+            <div id="dungeon-hud-name" class="dungeon-hud-name"></div>
+            <div id="dungeon-hud-obj" class="dungeon-hud-obj"></div>
+          </div>
         </div>
       </div>
 

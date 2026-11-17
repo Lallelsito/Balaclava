@@ -475,22 +475,43 @@
       id: 'pantalones_cuero', name: 'Pantalones de Cuero', category: 'armaduras', rarity: 'comun',
       equipSlot: 'legs', sellValue: 25, buyValue: 60, source: 'Telar / Forja',
       uses: 'Equipamiento inferior (+8 Defensa)',
-      desc: 'Pantalones resistentes cosidos a mano.',
-      stats: { def: 8 }, icon: 'armor_leather'
+      desc: 'Pantalones resistentes cosidos a mano con perneras de cuero auténtico.',
+      stats: { def: 8 }, icon: 'leggings_leather'
     },
     pantalones_hierro: {
       id: 'pantalones_hierro', name: 'Pantalones de Hierro', category: 'armaduras', rarity: 'poco_comun',
       equipSlot: 'legs', sellValue: 55, buyValue: 130, source: 'Forja',
       uses: 'Equipamiento inferior (+22 Defensa)',
       desc: 'Grebas de hierro forjado que protegen las piernas.',
-      stats: { def: 22 }, icon: 'armor_iron'
+      stats: { def: 22 }, icon: 'leggings_iron'
     },
     pantalones_acero: {
       id: 'pantalones_acero', name: 'Pantalones de Acero Glacial', category: 'armaduras', rarity: 'raro',
       equipSlot: 'legs', sellValue: 110, buyValue: 260, source: 'Forja / Yunque Rúnico',
       uses: 'Equipamiento inferior (+42 Defensa, +10% Resistencia)',
       desc: 'Placas templadas contra frío y golpes contundentes.',
-      stats: { def: 42, moveSpeed: 0.05 }, icon: 'armor_iron'
+      stats: { def: 42, moveSpeed: 0.05 }, icon: 'leggings_steel'
+    },
+    mochila_cuero: {
+      id: 'mochila_cuero', name: 'Mochila de Cuero Rústica', category: 'equipamiento', rarity: 'poco_comun',
+      equipSlot: 'backpack', backpackTier: 1, sellValue: 60, buyValue: 140, source: 'Telar / Mesa de Artesanías',
+      uses: 'Expansión de Inventario (+15 Slots y +25 Capacidad de Stack)',
+      desc: 'Mochila espaciosa de piel curtida que expande el límite de carga y apilado.',
+      backpackBonus: { slots: 15, stack: 25 }, icon: 'mochila_cuero'
+    },
+    mochila_reforzada: {
+      id: 'mochila_reforzada', name: 'Mochila Reforzada con Placas', category: 'equipamiento', rarity: 'raro',
+      equipSlot: 'backpack', backpackTier: 2, sellValue: 180, buyValue: 420, source: 'Telar / Forja',
+      uses: 'Expansión de Inventario (+20 Slots y +25 Capacidad de Stack)',
+      desc: 'Costuras de hilo reforzado y remaches metálicos para transportar grandes cargas.',
+      backpackBonus: { slots: 20, stack: 25 }, icon: 'mochila_reforzada'
+    },
+    mochila_astral: {
+      id: 'mochila_astral', name: 'Mochila Dimensional Astral', category: 'equipamiento', rarity: 'epico',
+      equipSlot: 'backpack', backpackTier: 3, sellValue: 500, buyValue: 1200, source: 'Mesa de Hechicería / Forja',
+      uses: 'Expansión de Inventario (+25 Slots y +25 Capacidad de Stack)',
+      desc: 'Artefacto imbuido con magia espacial que dobla el espacio interior hasta 100 de stack y 80 slots.',
+      backpackBonus: { slots: 25, stack: 25 }, icon: 'mochila_astral'
     },
     lingote_bronce: {
       id: 'lingote_bronce', name: 'Lingote de Bronce Antiguo', category: 'minerales', rarity: 'comun',
@@ -2395,7 +2416,7 @@
       sellValue: 1350, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Pantalones de Acero + Lingote Omega)',
       uses: 'Equipa en Pantalones (Tier 16): +78 Defensa, +220 Vida, +15% Vel. y +15% Reducción',
       desc: 'Articulaciones de aleación Omega que estabilizan cada zancada.',
-      equipSlot: 'legs', stats: { def: 78, maxHp: 220, speedPct: 0.15, defPct: 0.15 }, icon: 'armor_paladin_gold'
+      equipSlot: 'legs', stats: { def: 78, maxHp: 220, speedPct: 0.15, defPct: 0.15 }, icon: 'leggings_legendary'
     },
     escudo_omega: {
       id: 'escudo_omega', name: 'Égida del Horizonte Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,

@@ -2359,6 +2359,47 @@
         });
       }
 
+      const objToggleBtn = document.getElementById('btn-objective-toggle');
+      const objBanner = document.getElementById('objective-banner');
+      if (objToggleBtn && objBanner) {
+        try {
+          if (localStorage.getItem('balaclava_obj_minimized') === '1') {
+            objBanner.classList.add('minimized');
+            objToggleBtn.textContent = '+';
+          }
+        } catch (_) {}
+        const toggleObj = (e) => {
+          if (e) e.stopPropagation();
+          const isMin = objBanner.classList.toggle('minimized');
+          objToggleBtn.textContent = isMin ? '+' : '-';
+          try { localStorage.setItem('balaclava_obj_minimized', isMin ? '1' : '0'); } catch (_) {}
+        };
+        objToggleBtn.addEventListener('click', toggleObj);
+        const objHead = objBanner.querySelector('.obj-head');
+        if (objHead) {
+          objHead.addEventListener('click', (e) => {
+            if (e.target !== objToggleBtn) toggleObj(e);
+          });
+        }
+      }
+
+      const dungToggleBtn = document.getElementById('btn-dungeon-obj-toggle');
+      const dungHudEl = document.getElementById('dungeon-hud');
+      if (dungToggleBtn && dungHudEl) {
+        const toggleDung = (e) => {
+          if (e) e.stopPropagation();
+          const isMin = dungHudEl.classList.toggle('minimized');
+          dungToggleBtn.textContent = isMin ? '+' : '-';
+        };
+        dungToggleBtn.addEventListener('click', toggleDung);
+        const dungHead = dungHudEl.querySelector('.obj-head');
+        if (dungHead) {
+          dungHead.addEventListener('click', (e) => {
+            if (e.target !== dungToggleBtn) toggleDung(e);
+          });
+        }
+      }
+
       const lvlBadge = document.getElementById('lvl-text');
       if (lvlBadge) {
         lvlBadge.addEventListener('click', (e) => {
@@ -2750,8 +2791,8 @@
       const backdrop = document.getElementById('modal-backdrop');
       const modalBox = document.getElementById('modal-box');
       const fullModals = new Set(['skills', 'map']);
-      const leftDrawers = new Set(['inventory', 'crafting', 'build', 'market', 'quests', 'achievements', 'enchant', 'building', 'npc']);
-      const wideDrawers = new Set(['build', 'inventory', 'crafting', 'quests', 'achievements']);
+      const leftDrawers = new Set(['inventory', 'crafting', 'build', 'market', 'quests', 'achievements', 'enchant', 'building', 'npc', 'chest']);
+      const wideDrawers = new Set(['build', 'inventory', 'crafting', 'quests', 'achievements', 'chest']);
       backdrop.classList.toggle('fullscreen-modal', fullModals.has(name));
       const compactStyled = new Set(['pause', 'title_settings', 'credits', 'quit_confirm', 'quit_web_fallback', 'discord_fallback', 'exit_dungeon_confirm']);
       const isCompactModal = compactStyled.has(name);
@@ -2777,6 +2818,17 @@
     }
 
     openBuildingModal(b) {
+      if (!b) return;
+      const def = Balaclava.BUILDINGS[b.type || b.defId];
+      if (b.isChest || (def && def.isChest)) {
+        b.isOpen = true;
+        if (this.game) this.game.activeChestBuilding = b;
+        if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') {
+          Balaclava.Audio.play('chest');
+        }
+        this.openModal('chest', b);
+        return;
+      }
       this.openModal('building', b);
     }
 
@@ -2787,6 +2839,13 @@
     closeModal() {
       const closingModal = this.activeModal;
       this.hideTooltip();
+      if (this.game && this.game.activeChestBuilding) {
+        this.game.activeChestBuilding.isOpen = false;
+        this.game.activeChestBuilding = null;
+        if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') {
+          Balaclava.Audio.play('chest');
+        }
+      }
       if (this._mapCleanup) { this._mapCleanup(); this._mapCleanup = null; }
       if (this._skillBoardCleanup) { this._skillBoardCleanup(); this._skillBoardCleanup = null; }
       if (this._skillHoldCleanup) { this._skillHoldCleanup(); this._skillHoldCleanup = null; }
@@ -3715,7 +3774,8 @@
         quit_confirm: tr('quit.title'),
         quit_web_fallback: tr('quit.webFallbackTitle'),
         discord_fallback: tr('title.discord'),
-        exit_dungeon_confirm: tr('dungeon.exitTitle')
+        exit_dungeon_confirm: tr('dungeon.exitTitle'),
+        chest: (this.modalData && Balaclava.BUILDINGS[this.modalData.type] && Balaclava.BUILDINGS[this.modalData.type].name) || 'Cofre'
       };
       const backdrop = document.getElementById('modal-backdrop');
       const modalBox = document.getElementById('modal-box');
@@ -3759,6 +3819,7 @@
       else if (this.activeModal === 'exit_dungeon_confirm') this.renderExitDungeonConfirmModal(body);
       else if (this.activeModal === 'corrupted_dungeon_choice') this.renderCorruptedDungeonChoice(titleEl, body);
       else if (this.activeModal === 'building') this.renderBuildingInspector(titleEl, body, this.modalData);
+      else if (this.activeModal === 'chest') this.renderChestModal(titleEl, body, this.modalData);
       else if (this.activeModal === 'npc') this.renderNpcDialog(titleEl, body, this.modalData);
       else if (this.activeModal === 'controls') {
         this.pauseView = 'settings';
@@ -3847,6 +3908,25 @@
 
     renderInventory(body) {
       const g = this.game;
+      const maxSlots = g.getMaxInventorySlots ? g.getMaxInventorySlots() : 24;
+      const maxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
+      const usedSlots = g.getUsedInventorySlots ? g.getUsedInventorySlots() : Object.keys(g.inventory).length;
+      const bpLabel = g.backpackTier === 3 ? 'Mochila Astral (+24 ranuras, +35 stack)'
+                    : g.backpackTier === 2 ? 'Mochila Reforzada (+16 ranuras, +20 stack)'
+                    : g.backpackTier === 1 ? 'Mochila de Cuero (+8 ranuras, +10 stack)'
+                    : 'Básica (Sin Mochila)';
+
+      const capBar = this.el('div', {
+        style: 'display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:rgba(12,18,28,0.78);border-radius:6px;border:1px solid rgba(255,213,79,0.25);margin-bottom:8px;'
+      }, [
+        this.el('div', { style: 'display:flex;align-items:center;gap:10px;' }, [
+          this.el('span', { class: 'inv-cap-pill' }, `${usedSlots} / ${maxSlots} Ranuras`),
+          this.el('span', { style: 'font-size:13px;color:#cbd5e1;' }, `Stack Máximo: ${maxStack}`)
+        ]),
+        this.el('span', { style: 'font-size:12px;color:#a3e635;font-weight:600;' }, bpLabel)
+      ]);
+      body.appendChild(capBar);
+
       const catGroups = {
         todos: null,
         recursos: ['recursos', 'minerales', 'gemas', 'monstruo'],
@@ -3970,6 +4050,12 @@
           ]);
           grid.appendChild(slot);
         });
+        if (this.invFilter === 'todos' || !this.invFilter) {
+          const emptyCount = Math.max(0, maxSlots - usedSlots);
+          for (let i = 0; i < emptyCount; i++) {
+            grid.appendChild(this.el('div', { class: 'inv-slot empty-slot' }));
+          }
+        }
       }
       if (this.invSearch) applyInvSearch(this.invSearch);
       layout.appendChild(grid);
@@ -4119,11 +4205,11 @@
               this.updateHUD(true);
             }
           }, tr('inv.equipUse')));
-        } else if (sel.consumable || sel.equipSlot) {
+        } else if (sel.consumable || sel.equipSlot || sel.backpackTier) {
           actRow.appendChild(this.el('button', {
             class: 'btn btn-green btn-sm',
             onclick: () => { g.useOrEquipItem(sel.id); this.renderModal(); }
-          }, sel.equipSlot ? tr('common.equip') : sel.isBomb ? tr('inv.throwExplosive') : tr('inv.useConsume')));
+          }, sel.backpackTier ? 'Equipar Mochila' : sel.equipSlot ? tr('common.equip') : sel.isBomb ? tr('inv.throwExplosive') : tr('inv.useConsume')));
         }
         actRow.appendChild(this.el('button', {
           class: 'btn btn-gold btn-sm',
@@ -4297,6 +4383,221 @@
 
       layout.appendChild(rightCol);
       body.appendChild(layout);
+    }
+
+    renderChestModal(titleEl, body, b) {
+      const g = this.game;
+      if (!b) return;
+      b.storage = b.storage || {};
+      const def = Balaclava.BUILDINGS[b.type || b.defId] || { name: 'Cofre', capacity: 30 };
+      const chestCapacity = def.capacity || 30;
+      const maxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
+      const maxPlayerSlots = g.getMaxInventorySlots ? g.getMaxInventorySlots() : 24;
+      const usedPlayerSlots = g.getUsedInventorySlots ? g.getUsedInventorySlots() : Object.keys(g.inventory).length;
+
+      const chestItems = Object.entries(b.storage).filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
+      const chestUsedSlots = chestItems.length;
+
+      if (titleEl) {
+        titleEl.textContent = `${def.name} (${chestUsedSlots} / ${chestCapacity} Ranuras)`;
+      }
+
+      const container = this.el('div', { class: 'chest-layout' });
+
+      // 1. CHEST SECTION
+      const chestBox = this.el('div', { class: 'chest-panel-box' });
+      const chestHead = this.el('div', { class: 'chest-section-title' }, [
+        this.el('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
+          this.el('span', { class: 'chest-title-lbl' }, def.name),
+          this.el('span', { class: 'inv-cap-pill' }, `${chestUsedSlots} / ${chestCapacity} Slots`),
+          this.el('span', { style: 'font-size:12px;color:#94a3b8;' }, `(Click: Mover · Clic Der: 1 · Shift+Clic: Todo)`)
+        ]),
+        this.el('div', { class: 'chest-actions-row' }, [
+          this.el('button', {
+            class: 'btn btn-stone btn-sm',
+            title: 'Mover todos los objetos de tu inventario al cofre',
+            onclick: () => {
+              let anyMoved = false;
+              for (const [id, count] of Object.entries(g.inventory)) {
+                if (count <= 0) continue;
+                const currentChestSlots = Object.keys(b.storage).filter(k => (b.storage[k] || 0) > 0).length;
+                if (!b.storage[id] && currentChestSlots >= chestCapacity) continue;
+                b.storage[id] = (b.storage[id] || 0) + count;
+                delete g.inventory[id];
+                anyMoved = true;
+              }
+              if (anyMoved) {
+                if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                this.updateHUD(true);
+                this.renderModal();
+              }
+            }
+          }, 'Depositar Todo'),
+          this.el('button', {
+            class: 'btn btn-stone btn-sm',
+            title: 'Mover todos los objetos del cofre a tu inventario',
+            onclick: () => {
+              let anyMoved = false;
+              for (const [id, count] of Object.entries(b.storage)) {
+                if (count <= 0) continue;
+                const curP = g.inventory[id] || 0;
+                const mod = curP % maxStack;
+                const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
+                const freeSlots = Math.max(0, maxPlayerSlots - g.getUsedInventorySlots());
+                const totalFit = spaceInPartial + (freeSlots * maxStack);
+                const toMove = Math.min(count, totalFit);
+                if (toMove > 0) {
+                  g.addItem(id, toMove);
+                  b.storage[id] -= toMove;
+                  if (b.storage[id] <= 0) delete b.storage[id];
+                  anyMoved = true;
+                }
+              }
+              if (anyMoved) {
+                if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                this.updateHUD(true);
+                this.renderModal();
+              }
+            }
+          }, 'Retirar Todo'),
+          this.el('button', {
+            class: 'btn btn-danger btn-sm',
+            title: 'Demoler este cofre (arroja todo su contenido al suelo)',
+            onclick: () => {
+              g.demolishBuilding(b);
+              if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('destroy');
+              this.closeModal();
+            }
+          }, 'Demoler')
+        ])
+      ]);
+      chestBox.appendChild(chestHead);
+
+      const chestGrid = this.el('div', { class: 'chest-grid' });
+      chestItems.forEach(([id, qty]) => {
+        const it = Balaclava.ITEMS[id];
+        const slot = this.el('div', {
+          class: `inv-slot rarity-${it.rarity || 'comun'}`,
+          title: `${it.name} (x${qty})`,
+          'aria-label': `${it.name} (x${qty})`,
+          onclick: (ev) => {
+            const moveCount = (ev && ev.shiftKey) ? qty : Math.min(qty, maxStack);
+            const curP = g.inventory[id] || 0;
+            const mod = curP % maxStack;
+            const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
+            const freeSlots = Math.max(0, maxPlayerSlots - g.getUsedInventorySlots());
+            const totalFit = spaceInPartial + (freeSlots * maxStack);
+            const actualMove = Math.min(moveCount, totalFit);
+            if (actualMove > 0) {
+              g.addItem(id, actualMove);
+              b.storage[id] -= actualMove;
+              if (b.storage[id] <= 0) delete b.storage[id];
+              if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+              this.updateHUD(true);
+              this.renderModal();
+            } else {
+              g.toast('Inventario lleno', 'warning');
+            }
+          },
+          oncontextmenu: (ev) => {
+            ev.preventDefault();
+            if (qty <= 0) return;
+            const curP = g.inventory[id] || 0;
+            const mod = curP % maxStack;
+            const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
+            const freeSlots = Math.max(0, maxPlayerSlots - g.getUsedInventorySlots());
+            const totalFit = spaceInPartial + (freeSlots * maxStack);
+            if (totalFit >= 1) {
+              g.addItem(id, 1);
+              b.storage[id] -= 1;
+              if (b.storage[id] <= 0) delete b.storage[id];
+              if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+              this.updateHUD(true);
+              this.renderModal();
+            } else {
+              g.toast('Inventario lleno', 'warning');
+            }
+          }
+        }, [
+          this.itemIcon(it.icon, 44),
+          this.el('span', { class: 'slot-qty' }, String(qty))
+        ]);
+        chestGrid.appendChild(slot);
+      });
+
+      const emptyChestSlots = Math.max(0, chestCapacity - chestUsedSlots);
+      for (let i = 0; i < emptyChestSlots; i++) {
+        chestGrid.appendChild(this.el('div', { class: 'inv-slot empty-slot' }));
+      }
+      chestBox.appendChild(chestGrid);
+      container.appendChild(chestBox);
+
+      // 2. PLAYER INVENTORY SECTION
+      const playerBox = this.el('div', { class: 'chest-panel-box' });
+      const playerItems = Object.entries(g.inventory).filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
+      const bpName = g.backpackTier === 3 ? 'Mochila Astral (+24 slots)'
+                   : g.backpackTier === 2 ? 'Mochila Reforzada (+16 slots)'
+                   : g.backpackTier === 1 ? 'Mochila de Cuero (+8 slots)'
+                   : 'Sin Mochila (Básica)';
+
+      const playerHead = this.el('div', { class: 'chest-section-title' }, [
+        this.el('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
+          this.el('span', { class: 'chest-title-lbl' }, 'Tu Inventario'),
+          this.el('span', { class: 'inv-cap-pill' }, `${usedPlayerSlots} / ${maxPlayerSlots} Slots`),
+          this.el('span', { style: 'font-size:13px;color:#a3e635;font-weight:600;' }, bpName)
+        ]),
+        this.el('div', { style: 'font-size:12px;color:#94a3b8;' }, `Stack Máximo: ${maxStack}`)
+      ]);
+      playerBox.appendChild(playerHead);
+
+      const playerGrid = this.el('div', { class: 'chest-grid' });
+      playerItems.forEach(([id, qty]) => {
+        const it = Balaclava.ITEMS[id];
+        const slot = this.el('div', {
+          class: `inv-slot rarity-${it.rarity || 'comun'}`,
+          title: `${it.name} (x${qty})`,
+          'aria-label': `${it.name} (x${qty})`,
+          onclick: (ev) => {
+            const currentChestSlots = Object.keys(b.storage).filter(k => (b.storage[k] || 0) > 0).length;
+            if (!b.storage[id] && currentChestSlots >= chestCapacity) {
+              g.toast('Cofre lleno', 'warning');
+              return;
+            }
+            const moveCount = (ev && ev.shiftKey) ? qty : Math.min(qty, maxStack);
+            b.storage[id] = (b.storage[id] || 0) + moveCount;
+            g.removeItem(id, moveCount);
+            if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+            this.updateHUD(true);
+            this.renderModal();
+          },
+          oncontextmenu: (ev) => {
+            ev.preventDefault();
+            const currentChestSlots = Object.keys(b.storage).filter(k => (b.storage[k] || 0) > 0).length;
+            if (!b.storage[id] && currentChestSlots >= chestCapacity) {
+              g.toast('Cofre lleno', 'warning');
+              return;
+            }
+            b.storage[id] = (b.storage[id] || 0) + 1;
+            g.removeItem(id, 1);
+            if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+            this.updateHUD(true);
+            this.renderModal();
+          }
+        }, [
+          this.itemIcon(it.icon, 44),
+          this.el('span', { class: 'slot-qty' }, String(qty))
+        ]);
+        playerGrid.appendChild(slot);
+      });
+
+      const emptyPlayerSlots = Math.max(0, maxPlayerSlots - usedPlayerSlots);
+      for (let i = 0; i < emptyPlayerSlots; i++) {
+        playerGrid.appendChild(this.el('div', { class: 'inv-slot empty-slot' }));
+      }
+      playerBox.appendChild(playerGrid);
+      container.appendChild(playerBox);
+
+      body.appendChild(container);
     }
 
     renderStats(body) {
@@ -5656,7 +5957,7 @@
 
         body.appendChild(this._buildArmorGrid('margin-bottom:14px;'));
 
-        const armorSlots = ['helm', 'armor', 'shield', 'boots'];
+        const armorSlots = ['helm', 'armor', 'legs', 'shield', 'boots'];
         const exoticRecs = Balaclava.RECIPES.filter(r => {
           if (r.station !== stationId && r.station !== 'forja' && r.station !== 'yunque_runico') return false;
           const it = Balaclava.ITEMS[r.out];
@@ -5674,7 +5975,7 @@
       }
 
       if (this.forjaTab === 'otros') {
-        const armorSlots = ['helm', 'armor', 'shield', 'boots'];
+        const armorSlots = ['helm', 'armor', 'legs', 'shield', 'boots'];
         const otherRecs = Balaclava.RECIPES.filter(r => {
           if (r.station !== stationId && r.station !== 'forja' && r.station !== 'yunque_runico') return false;
           if (isWeaponOut(r.out)) return false;

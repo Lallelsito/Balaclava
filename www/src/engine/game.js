@@ -382,6 +382,27 @@
         if (st.thorns) m.thorns += st.thorns;
       }
 
+      // Backpack capacity & stack bonuses
+      let bpSlots = 0, bpStack = 0;
+      const bpEquipped = this.equipped && this.equipped.backpack && Balaclava.ITEMS[this.equipped.backpack];
+      if (bpEquipped && bpEquipped.backpackBonus) {
+        bpSlots = bpEquipped.backpackBonus.slots || 0;
+        bpStack = bpEquipped.backpackBonus.stack || 0;
+      } else if (this.inventory) {
+        if (this.inventory.mochila_astral > 0 && Balaclava.ITEMS.mochila_astral) {
+          bpSlots = Balaclava.ITEMS.mochila_astral.backpackBonus.slots;
+          bpStack = Balaclava.ITEMS.mochila_astral.backpackBonus.stack;
+        } else if (this.inventory.mochila_reforzada > 0 && Balaclava.ITEMS.mochila_reforzada) {
+          bpSlots = Balaclava.ITEMS.mochila_reforzada.backpackBonus.slots;
+          bpStack = Balaclava.ITEMS.mochila_reforzada.backpackBonus.stack;
+        } else if (this.inventory.mochila_cuero > 0 && Balaclava.ITEMS.mochila_cuero) {
+          bpSlots = Balaclava.ITEMS.mochila_cuero.backpackBonus.slots;
+          bpStack = Balaclava.ITEMS.mochila_cuero.backpackBonus.stack;
+        }
+      }
+      m.backpackSlots = bpSlots;
+      m.backpackStack = bpStack;
+
       // Passive spell Power bonus when holding a staff/wand in active hotbar slot
       const actSlot = this.hotbar && this.hotbar[this.activeSlot];
       const actItem = actSlot && actSlot.kind === 'item' ? Balaclava.ITEMS[actSlot.id] : null;
@@ -531,6 +552,48 @@
       return true;
     }
 
+    getMaxInventorySlots() {
+      const base = 25;
+      const skillSlots = (this.mods && this.mods.invSlotBonus) || (this.modifiers && this.modifiers.invSlotBonus) || 0;
+      const bpSlots = (this.mods && this.mods.backpackSlots) || (this.modifiers && this.modifiers.backpackSlots) || 0;
+      return Math.min(80, Math.max(25, base + skillSlots + bpSlots));
+    }
+
+    getMaxStackSize() {
+      const base = 25;
+      const skillStack = (this.mods && this.mods.stackBonus) || (this.modifiers && this.modifiers.stackBonus) || 0;
+      const bpStack = (this.mods && this.mods.backpackStack) || (this.modifiers && this.modifiers.backpackStack) || 0;
+      return Math.min(100, Math.max(25, base + skillStack + bpStack));
+    }
+
+    getUsedInventorySlots() {
+      const maxStack = this.getMaxStackSize();
+      let used = 0;
+      for (const [id, count] of Object.entries(this.inventory || {})) {
+        if (count > 0 && Balaclava.ITEMS[id]) {
+          used += Math.ceil(count / maxStack);
+        }
+      }
+      if (this.toolTiers) {
+        for (const tId of Object.keys(Balaclava.TOOLS || {})) {
+          if (this.toolTiers[tId]) used += 1;
+        }
+      }
+      return used;
+    }
+
+    canAddItem(itemId, qty = 1) {
+      if (!Balaclava.ITEMS[itemId] || qty <= 0) return false;
+      const maxSlots = this.getMaxInventorySlots();
+      const maxStack = this.getMaxStackSize();
+      const usedSlots = this.getUsedInventorySlots();
+      const freeSlots = Math.max(0, maxSlots - usedSlots);
+      const curQty = this.inventory[itemId] || 0;
+      const mod = curQty % maxStack;
+      const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
+      return (spaceInPartial + (freeSlots * maxStack)) >= qty;
+    }
+
     getToolEnchantBonuses(toolId) {
       const out = { gatherMult: 0, speedMult: 0, doubleChance: 0, gemChance: 0, dmgBonus: 0, critChance: 0, autoSmelt: false, fireDmg: 0, reachBonus: 0 };
       const map = this.toolEnchants && this.toolEnchants[toolId];
@@ -671,19 +734,49 @@
 
     addItem(itemId, qty = 1) {
       if (!Balaclava.ITEMS[itemId] || qty <= 0) return;
-      this.inventory[itemId] = (this.inventory[itemId] || 0) + qty;
-      this.stats.byItem[itemId] = (this.stats.byItem[itemId] || 0) + qty;
-      this.stats.gatheredTotal += qty;
-      this.events.recordAction('gather', qty);
-      this.recordEncyclopedia('items', itemId);
-      if (itemId === 'nucleo_balaclava') this.stats.craftedCore = true;
 
-      const it = Balaclava.ITEMS[itemId];
-      const rar = RARITIES[it.rarity] || RARITIES.comun;
-      this.addFloatingText(this.player.x, this.player.y - 34, `+${qty} ${it.name}`, rar.color);
-      this.pushPickupFeed(itemId, it.name, it.icon, qty, rar.color);
-      if (itemId === 'flecha' && this.player && !this.player.bowLoaded && (this.player.bowReloadTimer || 0) <= 0 && this.toolTiers && this.toolTiers.arco) {
-        this.reloadBow(true);
+      const maxSlots = this.getMaxInventorySlots();
+      const maxStack = this.getMaxStackSize();
+      const usedSlots = this.getUsedInventorySlots();
+      const freeSlots = Math.max(0, maxSlots - usedSlots);
+
+      const curQty = this.inventory[itemId] || 0;
+      const mod = curQty % maxStack;
+      const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
+      const totalFit = spaceInPartial + (freeSlots * maxStack);
+
+      const toAdd = Math.min(qty, totalFit);
+      const excess = qty - toAdd;
+
+      if (toAdd > 0) {
+        this.inventory[itemId] = curQty + toAdd;
+        this.stats.byItem[itemId] = (this.stats.byItem[itemId] || 0) + toAdd;
+        this.stats.gatheredTotal += toAdd;
+        this.events.recordAction('gather', toAdd);
+        this.recordEncyclopedia('items', itemId);
+        if (itemId === 'nucleo_balaclava') this.stats.craftedCore = true;
+
+        const it = Balaclava.ITEMS[itemId];
+        const rar = RARITIES[it.rarity] || RARITIES.comun;
+        const px = (this.player && this.player.x) || 0;
+        const py = (this.player && this.player.y) || 0;
+        this.addFloatingText(px, py - 34, `+${toAdd} ${it.name}`, rar.color);
+        this.pushPickupFeed(itemId, it.name, it.icon, toAdd, rar.color);
+        if (itemId === 'flecha' && this.player && !this.player.bowLoaded && (this.player.bowReloadTimer || 0) <= 0 && this.toolTiers && this.toolTiers.arco) {
+          this.reloadBow(true);
+        }
+      }
+
+      if (excess > 0) {
+        const px = (this.player && this.player.x) || 0;
+        const py = (this.player && this.player.y) || 0;
+        if (typeof this.spawnDrop === 'function') {
+          this.spawnDrop(px + (Math.random() - 0.5) * 18, py + (Math.random() - 0.5) * 18, itemId, excess);
+        }
+        if (!this._lastFullInvToast || this.time - this._lastFullInvToast > 1.2) {
+          this._lastFullInvToast = this.time;
+          this.toast(`Inventario lleno (${maxSlots}/${maxSlots} slots). Objeto en el suelo.`, 'warning');
+        }
       }
       this.uiDirty = true;
     }
@@ -895,6 +988,23 @@
         return true;
       }
 
+      if (item.backpackTier) {
+        const curTier = this.backpackTier || 0;
+        if (item.backpackTier <= curTier) {
+          this.toast(`Ya posees una mochila de rango igual o superior (${item.name}).`, 'info');
+          return false;
+        }
+        this.removeItem(itemId, 1);
+        this.backpackTier = item.backpackTier;
+        if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') {
+          Balaclava.Audio.play('equip');
+        }
+        this.toast(`Mochila equipada: ${item.name} (+${item.backpackTier * 8} slots, +${item.backpackTier === 3 ? 35 : item.backpackTier * 10} stack).`, 'success');
+        this.recomputeModifiers();
+        this.uiDirty = true;
+        return true;
+      }
+
       if (item.equipSlot) {
         let slotKey = item.equipSlot === 'helmet' ? 'helm' : item.equipSlot;
         if (slotKey === 'relic') {
@@ -1022,9 +1132,10 @@
       const hasBuff = Boolean(item.buff || (ed && (ed.speedBoost || ed.dmgBoost || ed.luckBoost)));
       if (hpGain > 0 || enGain > 0 || hasBuff) {
         if ((this.consumeCooldown || 0) > 0) {
-          if (!this._lastConsumeCdToast || this.time - this._lastConsumeCdToast > 0.7) {
+          if (!this._lastConsumeCdToast || this.time - this._lastConsumeCdToast > 0.5) {
             this._lastConsumeCdToast = this.time;
-            this.toast(Balaclava.I18n ? Balaclava.I18n.t('toast.consumeWait') : 'Espera un instante antes de consumir otro objeto.', 'info');
+            const secLeft = Math.max(0.1, this.consumeCooldown).toFixed(1);
+            this.toast(`Espera ${secLeft}s antes de volver a comer.`, 'info');
           }
           return false;
         }
@@ -1039,7 +1150,8 @@
           return false;
         }
         this.removeItem(itemId, 1);
-        this.consumeCooldown = 0.65;
+        const foodCd = (item.edible && item.edible.cooldown) ? item.edible.cooldown : (item.cooldown || 2.0);
+        this.consumeCooldown = foodCd;
         if (enGain > 0) this.healPlayer(0, enGain);
         if (hpGain > 0) {
           if (!Array.isArray(this.hotHeals)) this.hotHeals = [];
@@ -2190,7 +2302,9 @@
           storage: {},
           queue: [],
           autoRefuel: true,
-          autoPull: true
+          autoPull: true,
+          isChest: Boolean(def.isChest),
+          isOpen: false
         };
         if (def && def.omega) {
           bObj.omega = {
@@ -2220,6 +2334,30 @@
       }
       this.uiDirty = true;
       return true;
+    }
+
+    demolishBuilding(b) {
+      if (!b) return;
+      const def = Balaclava.BUILDINGS[b.type || b.defId];
+      if (b.storage) {
+        const cx = (b.tx * TILE_SIZE) + 24;
+        const cy = (b.ty * TILE_SIZE) + 24;
+        for (const [id, qty] of Object.entries(b.storage)) {
+          if (qty > 0 && typeof this.spawnDrop === 'function') {
+            this.spawnDrop(cx + (Math.random() - 0.5) * 20, cy + (Math.random() - 0.5) * 20, id, qty);
+          }
+        }
+        b.storage = {};
+      }
+      if (this.automation && this.automation.collectFromBuilding) {
+        this.automation.collectFromBuilding(this, b);
+      }
+      this.buildings = this.buildings.filter(x => x !== b);
+      if (def && def.cost) {
+        Object.entries(def.cost).forEach(([id, q]) => this.addItem(id, Math.max(1, Math.floor(q * 0.5))));
+      }
+      this.recomputeModifiers();
+      this.uiDirty = true;
     }
 
     // === ACTIONS, REACH & TARGET PRIORITY ===
@@ -7793,7 +7931,17 @@
         const sy = !up ? 0 : !dn ? 128 : 64;
 
         if (bSheet) {
-          ctx.drawImage(bSheet, sx, sy, 64, 64, px, py, TILE_SIZE, TILE_SIZE);
+          if (!lt && !rt) {
+            // Both left and right open: render left edge and right edge composited
+            ctx.drawImage(bSheet, 0, sy, 32, 64, px, py, TILE_SIZE / 2, TILE_SIZE);
+            ctx.drawImage(bSheet, 160, sy, 32, 64, px + TILE_SIZE / 2, py, TILE_SIZE / 2, TILE_SIZE);
+          } else if (!up && !dn) {
+            // Both top and bottom open: render top edge and bottom edge composited
+            ctx.drawImage(bSheet, sx, 0, 64, 32, px, py, TILE_SIZE, TILE_SIZE / 2);
+            ctx.drawImage(bSheet, sx, 160, 64, 32, px, py + TILE_SIZE / 2, TILE_SIZE, TILE_SIZE / 2);
+          } else {
+            ctx.drawImage(bSheet, sx, sy, 64, 64, px, py, TILE_SIZE, TILE_SIZE);
+          }
         } else {
           ctx.fillStyle = BIOMES[biome].color;
           ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
@@ -9674,6 +9822,24 @@
       const bImg = assets.getBuildingImg(def.sprite);
       const exImg = assets.extraImages && assets.extraImages[def.sprite];
       const isFlushTile = ['Bridge_Tile', 'Fish_Pond', 'Corral_Pen', 'Plot_Garden'].includes(def.sprite);
+      if (def.isChest || b.isChest) {
+        const cKey = def.chestSpriteKey || 'wood';
+        const isOpen = Boolean(b.isOpen || this.activeChestBuilding === b);
+        const spriteId = isOpen ? `${cKey}_open` : `${cKey}_closed`;
+        const cImg = assets.chestImages && (assets.chestImages[spriteId] || assets.chestImages[`${cKey}_closed`]);
+        if (cImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(cImg))) {
+          ctx.fillStyle = 'rgba(0,0,0,0.32)';
+          ctx.beginPath();
+          ctx.ellipse(cx, py + h - 2, Math.round(w * 0.48), Math.round(h * 0.16), 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const bounce = isOpen ? -3 : 0;
+          const dw = Math.round(w * 1.08);
+          const dh = Math.round(dw * (cImg.height / Math.max(1, cImg.width)));
+          ctx.drawImage(cImg, cx - dw / 2, py + h - dh + 2 + bounce, dw, dh);
+          return;
+        }
+      }
       if (def.sprite === 'Campfire_Anim') {
         ctx.fillStyle = 'rgba(255, 160, 64, 0.26)';
         ctx.beginPath(); ctx.arc(cx, cy + 4, 30 + Math.sin(this.time * 8) * 3, 0, Math.PI * 2); ctx.fill();

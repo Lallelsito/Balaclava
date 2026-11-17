@@ -657,6 +657,24 @@
         }
       }
 
+      // Guarantee no 1-tile wide spikes, single-faced blocks or isolated bottlenecks without faces
+      for (let pass = 0; pass < 2; pass++) {
+        for (let ly = 0; ly < PLOT_TILES; ly++) {
+          for (let lx = 0; lx < PLOT_TILES; lx++) {
+            if (!land[ly][lx]) continue;
+            if (lx >= 4 && lx <= 7 && ly >= 4 && ly <= 7) continue; // Keep center core
+            const nUp = (ly > 0 && land[ly - 1][lx]) ? 1 : 0;
+            const nDn = (ly < PLOT_TILES - 1 && land[ly + 1][lx]) ? 1 : 0;
+            const nLt = (lx > 0 && land[ly][lx - 1]) ? 1 : 0;
+            const nRt = (lx < PLOT_TILES - 1 && land[ly][lx + 1]) ? 1 : 0;
+            const neighbors = nUp + nDn + nLt + nRt;
+            if (neighbors <= 1 || (!nLt && !nRt && (nUp || nDn)) || (!nUp && !nDn && (nLt || nRt))) {
+              land[ly][lx] = 0;
+            }
+          }
+        }
+      }
+
       // Paint tiles & build cohesive volcanic lava basins (clustered 2..6 tile molten craters inset from cliffs/paths)
       for (let ly = 0; ly < PLOT_TILES; ly++) {
         for (let lx = 0; lx < PLOT_TILES; lx++) {
@@ -1661,7 +1679,8 @@
         if (plotDist >= 2.2) pool.push('gold_vein', 'jade_vein');
       } else if (biome === 'desierto') {
         pool.push('cactus', 'cactus', 'cactus', 'rock', 'rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'star_sand_vein');
-        if (plotDist >= 1.4) pool.push('silver_vein', 'gold_vein', 'sulfur_vein', 'amber_vein');
+        if (Math.random() < 0.45) pool.push('malachite_vein'); // Spawn equilibrado de malaquita en desierto
+        if (plotDist >= 1.4) pool.push('silver_vein', 'gold_vein', 'sulfur_vein', 'amber_vein', 'malachite_vein');
         if (Math.random() < 0.55) pool.push('platinum_vein'); // Low-density platinum veins in desert biome
         if (plotDist >= 2.3) pool.push('gold_vein', 'crystal_node', 'amber_vein', 'titanium_vein');
       } else if (biome === 'bosque_oscuro') {
@@ -1698,7 +1717,8 @@
         if (plotDist >= 2.2) pool.push('jade_vein', 'gold_vein');
       } else if (biome === 'desierto') {
         pool.push('rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'sulfur_vein', 'gold_vein');
-        if (plotDist >= 1.4) pool.push('silver_vein', 'amber_vein', 'platinum_vein');
+        if (Math.random() < 0.40) pool.push('malachite_vein'); // Spawn de malaquita en desierto
+        if (plotDist >= 1.4) pool.push('silver_vein', 'amber_vein', 'platinum_vein', 'malachite_vein');
         else if (Math.random() < 0.25) pool.push('platinum_vein');
         if (plotDist >= 2.3) pool.push('crystal_node', 'titanium_vein');
       } else if (biome === 'bosque_oscuro') {

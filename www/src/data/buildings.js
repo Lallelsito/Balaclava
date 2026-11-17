@@ -252,6 +252,24 @@
       sprite: 'prop_chest', visualScale: 1.15, badge: 'chest',
       capacity: 300, isLogisticChest: true,
       opensPanel: 'cofre_logistico'
+    },
+    cofre_madera: {
+      id: 'cofre_madera', name: 'Cofre de Madera', category: 'economia', size: 1, placeOn: 'land',
+      cost: { madera: 15, piedra: 5 },
+      desc: 'Cofre rústico con 30 ranuras de almacenamiento gestionable.',
+      sprite: 'chest_wood', chestSpriteKey: 'wood', isChest: true, capacity: 30, tier: 1
+    },
+    cofre_hierro: {
+      id: 'cofre_hierro', name: 'Cofre de Hierro', category: 'economia', size: 1, placeOn: 'land',
+      cost: { lingote_hierro: 10, tablon: 10 },
+      desc: 'Cofre acorazado con 50 ranuras de almacenamiento de alta capacidad.',
+      sprite: 'chest_sapphire', chestSpriteKey: 'sapphire', isChest: true, capacity: 50, tier: 2
+    },
+    cofre_dorado: {
+      id: 'cofre_dorado', name: 'Cofre Dorado', category: 'economia', size: 1, placeOn: 'land',
+      cost: { lingote_oro: 12, lingote_acero: 6, diamantes: 2 },
+      desc: 'Arca regia con 70 ranuras de almacenamiento masivo.',
+      sprite: 'chest_gold', chestSpriteKey: 'gold', isChest: true, capacity: 70, tier: 3
     }
   };
 
@@ -545,6 +563,8 @@
     casa_comercio: 'eco_2',
     banco: 'eco_3',
     tesoreria: 'eco_4',
+    cofre_hierro: 'eco_2',
+    cofre_dorado: 'eco_3',
     monumento: 'eco_5',
     cocina: 'com_1',
     ahumador: 'com_1',
@@ -579,7 +599,7 @@
     'mesa_artesania', 'fogata', 'horno', 'puente', 'suelo_hierba', 'mercado', 'tablon_logros',
     'aserradero', 'telar', 'molino', 'cocina', 'ahumador', 'forja', 'yunque_runico', 'mesa_encantamientos', 'mesa_hechiceria',
     'plantacion', 'aspersor', 'colmena', 'jardin_mariposas', 'estanque', 'muelle_pesca', 'corral', 'granja', 'invernadero',
-    'barriles_bodega', 'casa_comercio', 'banco', 'tesoreria', 'biblioteca', 'estanteria_arcana',
+    'barriles_bodega', 'cofre_madera', 'cofre_hierro', 'cofre_dorado', 'casa_comercio', 'banco', 'tesoreria', 'biblioteca', 'estanteria_arcana',
     'cantera_piedra', 'taller_mecanico', 'alquimia', 'laboratorio', 'fundicion', 'taladro', 'tuberias_conduit', 'cofre_logistico', 'recolector', 'observatorio_astral', 'centro_investigacion',
     'torre_magica', 'torre_rayos', 'balista', 'faro_costero', 'portal', 'monumento', 'altar', 'mazmorra_santuario',
     'banco_madera', 'camino_piedra', 'camino_hierba', 'valla_madera', 'muro_madera', 'muro_piedra',
