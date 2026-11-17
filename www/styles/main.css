@@ -2049,7 +2049,7 @@ input:focus-visible,
 
 /* Bottom HUD & Subtle 9-Slot Hotbar */
 #bottom-hud {
-  position: absolute;
+  position: fixed;
   bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
@@ -2060,8 +2060,28 @@ input:focus-visible,
   z-index: 60;
   pointer-events: auto;
 }
-body.modal-drawer-open #hud-root {
-  z-index: 60;
+
+/* Modal isolation: Suppress in-game HUD popups and hero panel while a modal is open */
+body.modal-open #top-hud,
+body.modal-drawer-open #top-hud,
+body.modal-open #tutorial-hud,
+body.modal-drawer-open #tutorial-hud,
+body.modal-open #objective-banner,
+body.modal-drawer-open #objective-banner,
+body.modal-open #dungeon-hud,
+body.modal-drawer-open #dungeon-hud,
+body.modal-open #hud-controls-helper,
+body.modal-drawer-open #hud-controls-helper,
+body.modal-open #altar-blessing-stack,
+body.modal-drawer-open #altar-blessing-stack,
+body.modal-open #pickup-feed,
+body.modal-drawer-open #pickup-feed {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+body.modal-fullscreen-active #bottom-hud {
+  display: none !important;
 }
 
 .warning-banner {

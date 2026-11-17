@@ -2254,6 +2254,8 @@
         titleScreen.classList.add('hidden');
       }
       document.getElementById('hud-root').classList.remove('hidden');
+      const bHud = document.getElementById('bottom-hud');
+      if (bHud) bHud.classList.remove('hidden');
       this.closeMenuDropdown();
       this._lastResKey = '';
       this._lastHotbarKey = '';
@@ -2299,6 +2301,8 @@
       }
       document.getElementById('title-screen').classList.remove('hidden');
       document.getElementById('hud-root').classList.add('hidden');
+      const bHud = document.getElementById('bottom-hud');
+      if (bHud) bHud.classList.add('hidden');
       this.triggerTitleIntro();
       if (Balaclava.Audio && typeof Balaclava.Audio.setMood === 'function') {
         Balaclava.Audio.setMood('title', { delayMs: 480, fadeOutMs: 420, fadeInMs: 4200 });
@@ -2763,7 +2767,9 @@
       backdrop.classList.toggle('drawer-left', leftDrawers.has(name));
       backdrop.classList.toggle('drawer-wide', wideDrawers.has(name));
       if (typeof document !== 'undefined' && document.body) {
+        document.body.classList.add('modal-open');
         document.body.classList.toggle('modal-drawer-open', leftDrawers.has(name));
+        document.body.classList.toggle('modal-fullscreen-active', fullModals.has(name));
       }
       backdrop.classList.remove('hidden');
       this.hideTooltip();
@@ -2810,7 +2816,7 @@
       backdrop.classList.add('hidden');
       backdrop.classList.remove('drawer-left', 'drawer-wide', 'fullscreen-modal');
       if (typeof document !== 'undefined' && document.body) {
-        document.body.classList.remove('modal-drawer-open');
+        document.body.classList.remove('modal-open', 'modal-drawer-open', 'modal-fullscreen-active');
       }
       if (modalBox) modalBox.classList.remove('modal-fullscreen', 'skills-cosmic-fullscreen', 'map-atlas-fullscreen', 'quests-modal', 'pause-pixel-modal', 'pause-root-compact', 'pause-settings-compact');
     }
