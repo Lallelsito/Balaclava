@@ -39,55 +39,16 @@
     omega:      { color: '#e040fb', highlight: '#ea80fc', glow: 'rgba(224, 64, 251, 0.90)' }
   };
 
-  // Base socket offsets for cells (in 24x24 pixel coordinates, top-left of cell)
-  // When scaled 2x: screen_x = (socket.x - 12) * 2; screen_y = socket.y * 2 - 38
+  // Base socket offsets calibrated for the tall heroic 21px pawn (head y=3..11, torso y=12..19, legs y=20..23)
+  // Screen coords: x = (socket.x - 12) * DRAW_SCALE; y = socket.y * DRAW_SCALE + DRAW_OFFSET_Y
   const DEFAULT_SOCKETS = {
-    head:    { x: 11.5, y: 11.0 },
-    torso:   { x: 11.5, y: 17.5 },
-    legs:    { x: 11.5, y: 21.0 },
-    feet:    { x: 11.5, y: 23.0 },
-    mainHand:{ x: 16.0, y: 18.0 },
-    offHand: { x: 7.0,  y: 18.0 },
-    back:    { x: 6.5,  y: 16.5 }
-  };
-
-  // Dedicated socket overrides for specialized poses in sheet
-  const CELL_SOCKETS = {
-    // Row 0 Col 4: Crouch / Anticipation
-    '0_4': { head: { x: 11.5, y: 13.0 }, torso: { x: 11.5, y: 19.0 }, legs: { x: 11.5, y: 22.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 12.0, y: 10.0 }, offHand: { x: 8.0, y: 12.0 }, back: { x: 6.0, y: 18.0 } },
-    // Row 0 Col 6: Arms Raised / Channeling
-    '0_6': { head: { x: 11.0, y: 11.0 }, torso: { x: 11.0, y: 17.0 }, legs: { x: 11.0, y: 21.0 }, feet: { x: 11.0, y: 23.0 }, mainHand: { x: 14.5, y: 8.0 }, offHand: { x: 7.5, y: 8.0 }, back: { x: 6.0, y: 16.0 } },
-    // Row 3 Col 0: Melee Windup / Coil
-    '3_0': { head: { x: 11.5, y: 12.0 }, torso: { x: 11.5, y: 18.0 }, legs: { x: 11.5, y: 21.5 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 8.0, y: 14.0 }, offHand: { x: 14.0, y: 17.0 }, back: { x: 6.0, y: 17.0 } },
-    // Row 3 Col 1: Bomb Windup
-    '3_1': { head: { x: 11.5, y: 13.0 }, torso: { x: 11.5, y: 19.0 }, legs: { x: 11.5, y: 22.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 7.0, y: 11.0 }, offHand: { x: 15.0, y: 18.0 }, back: { x: 6.0, y: 18.0 } },
-    // Row 3 Col 2: Axe High Windup
-    '3_2': { head: { x: 11.5, y: 10.0 }, torso: { x: 11.5, y: 16.0 }, legs: { x: 11.5, y: 21.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 8.0, y: 10.0 }, offHand: { x: 13.0, y: 14.0 }, back: { x: 6.0, y: 16.0 } },
-    // Row 3 Col 3: Channeling Focus
-    '3_3': { head: { x: 11.5, y: 9.0 }, torso: { x: 11.5, y: 15.0 }, legs: { x: 11.5, y: 20.0 }, feet: { x: 11.5, y: 22.0 }, mainHand: { x: 15.0, y: 12.0 }, offHand: { x: 8.0, y: 12.0 }, back: { x: 6.0, y: 15.0 } },
-    // Row 3 Col 4: Dash Aerodynamic Lean
-    '3_4': { head: { x: 13.0, y: 10.0 }, torso: { x: 12.0, y: 16.0 }, legs: { x: 10.0, y: 21.0 }, feet: { x: 9.0, y: 23.0 }, mainHand: { x: 16.0, y: 17.0 }, offHand: { x: 6.0, y: 17.0 }, back: { x: 5.0, y: 15.0 } },
-    // Row 3 Col 5: Low Shovel Crouch
-    '3_5': { head: { x: 11.5, y: 13.0 }, torso: { x: 11.5, y: 19.0 }, legs: { x: 11.5, y: 22.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 14.0, y: 20.0 }, offHand: { x: 8.0, y: 18.0 }, back: { x: 6.0, y: 18.0 } },
-    // Row 4 Col 0: Shovel Scoop Lift
-    '4_0': { head: { x: 11.5, y: 12.0 }, torso: { x: 11.5, y: 18.0 }, legs: { x: 11.5, y: 22.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 15.0, y: 15.0 }, offHand: { x: 9.0, y: 16.0 }, back: { x: 6.0, y: 17.0 } },
-    // Row 4 Col 1: Forward Strike / Pitch / Release
-    '4_1': { head: { x: 12.5, y: 11.0 }, torso: { x: 12.0, y: 17.0 }, legs: { x: 11.0, y: 21.5 }, feet: { x: 11.0, y: 23.0 }, mainHand: { x: 18.0, y: 16.0 }, offHand: { x: 6.0, y: 17.0 }, back: { x: 5.0, y: 16.0 } },
-    // Row 4 Col 2: Recovery Follow-Through
-    '4_2': { head: { x: 11.5, y: 10.0 }, torso: { x: 11.5, y: 16.0 }, legs: { x: 11.5, y: 21.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 16.0, y: 17.0 }, offHand: { x: 7.0, y: 17.0 }, back: { x: 6.0, y: 16.0 } },
-    // Row 4 Col 3: Downward Hammer / Pickaxe Strike
-    '4_3': { head: { x: 12.0, y: 11.5 }, torso: { x: 12.0, y: 17.5 }, legs: { x: 11.0, y: 21.5 }, feet: { x: 11.0, y: 23.0 }, mainHand: { x: 17.0, y: 21.0 }, offHand: { x: 8.0, y: 18.0 }, back: { x: 6.0, y: 17.0 } },
-    // Row 4 Col 4: Diagonal Axe Chop
-    '4_4': { head: { x: 12.0, y: 11.5 }, torso: { x: 12.0, y: 17.5 }, legs: { x: 11.0, y: 21.5 }, feet: { x: 11.0, y: 23.0 }, mainHand: { x: 17.5, y: 18.0 }, offHand: { x: 7.0, y: 17.0 }, back: { x: 6.0, y: 17.0 } },
-    // Row 4 Col 5: Low Harvest Reap
-    '4_5': { head: { x: 12.5, y: 12.0 }, torso: { x: 12.0, y: 18.0 }, legs: { x: 11.5, y: 22.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 16.0, y: 21.0 }, offHand: { x: 8.0, y: 19.0 }, back: { x: 6.0, y: 17.5 } },
-    // Row 4 Col 6: Death Stagger Falling
-    '4_6': { head: { x: 15.0, y: 14.0 }, torso: { x: 13.0, y: 19.0 }, legs: { x: 10.0, y: 22.0 }, feet: { x: 9.0, y: 23.0 }, mainHand: { x: 16.0, y: 20.0 }, offHand: { x: 8.0, y: 20.0 }, back: { x: 6.0, y: 18.0 } },
-    // Row 4 Col 7: Death Lying Flat on Ground
-    '4_7': { head: { x: 17.0, y: 18.0 }, torso: { x: 13.0, y: 21.0 }, legs: { x: 9.0, y: 22.5 }, feet: { x: 8.0, y: 23.0 }, mainHand: { x: 15.0, y: 22.0 }, offHand: { x: 11.0, y: 22.0 }, back: { x: 10.0, y: 20.0 } },
-    // Row 5 Col 0 & Col 1: Triumph
-    '5_0': { head: { x: 11.5, y: 12.0 }, torso: { x: 11.5, y: 18.0 }, legs: { x: 11.5, y: 21.5 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 16.0, y: 14.0 }, offHand: { x: 7.0, y: 14.0 }, back: { x: 6.0, y: 17.0 } },
-    '5_1': { head: { x: 11.5, y: 13.0 }, torso: { x: 11.5, y: 19.0 }, legs: { x: 11.5, y: 22.0 }, feet: { x: 11.5, y: 23.0 }, mainHand: { x: 17.0, y: 15.0 }, offHand: { x: 6.0, y: 15.0 }, back: { x: 6.0, y: 18.0 } }
+    head:    { x: 11.5, y: 7.0 },   // Screen: (-1, -24) - Top of head at y = -32
+    torso:   { x: 11.5, y: 15.5 },  // Screen: (-1, -7)  - Chest & waist
+    legs:    { x: 11.5, y: 21.0 },  // Screen: (-1, +4)  - Leg joints
+    feet:    { x: 11.5, y: 23.0 },  // Screen: (-1, +8)  - Feet touching ground shadow
+    mainHand:{ x: 16.5, y: 15.5 },  // Screen: (+9, -7)  - Dominant hand at waist level
+    offHand: { x: 6.5,  y: 15.5 },  // Screen: (-11, -7) - Off-hand at side
+    back:    { x: 5.5,  y: 13.5 }   // Screen: (-13, -11)- Backpack / quiver anchor
   };
 
   function getIcon(key) {
@@ -100,10 +61,6 @@
   class PlayerAnimator {
     constructor() {
       this.cachedSheet = null;
-      this.currentAction = 'idle';
-      this.actionTimer = 0;
-      this.actionDur = 0.35;
-      this.actionProg = 0;
       this.trailParticles = [];
     }
 
@@ -159,6 +116,7 @@
     }
 
     // Resolves row and col in the 8x6 sheet, plus local progress within state
+    // All action states keep the character standing tall and upright without squashing!
     getFrame(state, game, p) {
       let r = 0, c = 0;
       let prog = 0;
@@ -187,9 +145,9 @@
 
         case 'attack': {
           if (prog < 0.28) {
-            r = 3; c = 0; // Anticipation / coil back
+            r = 3; c = 0; // Standing tall, coil back
           } else if (prog < 0.72) {
-            r = 4; c = 1; // Decisive forward slash
+            r = 4; c = 1; // Decisive forward strike
           } else {
             r = 4; c = 2; // Follow-through recovery
           }
@@ -197,32 +155,32 @@
         }
 
         case 'mining': {
-          if (prog < 0.35) {
-            r = 0; c = 4; // Raise pickaxe high overhead
+          if (prog < 0.32) {
+            r = 3; c = 2; // Upright stance, pickaxe raised high
           } else if (prog < 0.75) {
-            r = 4; c = 3; // Powerful downward smash onto mineral
+            r = 4; c = 3; // Downward strike onto mineral block
           } else {
-            r = 0; c = 5; // Rebound & return
+            r = 0; c = 2; // Natural rebound
           }
           break;
         }
 
         case 'chopping': {
-          if (prog < 0.35) {
-            r = 3; c = 2; // High lateral windup at shoulder
+          if (prog < 0.32) {
+            r = 3; c = 2; // Upright stance, axe raised sideways
           } else if (prog < 0.75) {
             r = 4; c = 4; // Diagonal/horizontal slash across chest
           } else {
-            r = 4; c = 2; // Natural follow-through
+            r = 4; c = 2; // Follow-through
           }
           break;
         }
 
         case 'digging': {
           if (prog < 0.32) {
-            r = 3; c = 5; // Low crouch, shovel angled at soil
-          } else if (prog < 0.74) {
-            r = 4; c = 0; // Scoop dirt up
+            r = 0; c = 2; // Upright, shovel angled to soil
+          } else if (prog < 0.75) {
+            r = 4; c = 1; // Scoop dirt forward & lift
           } else {
             r = 0; c = 0; // Return upright
           }
@@ -231,18 +189,18 @@
 
         case 'harvesting': {
           if (prog < 0.30) {
-            r = 4; c = 5; // Crouch low towards plant base
+            r = 0; c = 2; // Reaping stance
           } else if (prog < 0.72) {
             r = 4; c = 5; // Sweeping cut at crop roots
           } else {
-            r = 5; c = 0; // Triumphant gather
+            r = 5; c = 0; // Cheerful gather
           }
           break;
         }
 
         case 'spellcasting': {
-          if (prog < 0.45) {
-            r = 0; c = 6; // Both hands raised high aloft channeling
+          if (prog < 0.48) {
+            r = 0; c = 6; // Upright, dual hands raised aloft channeling
           } else if (prog < 0.72) {
             r = 3; c = 3; // Focused arcane gathering
           } else {
@@ -253,7 +211,7 @@
 
         case 'bow_shooting': {
           if (prog < 0.65) {
-            r = 0; c = 1; // Torso profile, drawing string
+            r = 0; c = 2; // Archer profile, drawing string
           } else {
             r = 4; c = 2; // Recoil release
           }
@@ -261,7 +219,7 @@
         }
 
         case 'bow_reload': {
-          r = 0; c = 2; // Ready aiming stance with bow
+          r = 0; c = 2; // Upright aiming stance with bow
           break;
         }
 
@@ -277,9 +235,9 @@
 
         case 'throw_bomb': {
           if (prog < 0.38) {
-            r = 3; c = 1; // Arm wound back holding bomb
-          } else if (prog < 0.70) {
-            r = 4; c = 1; // Pitch forward release
+            r = 3; c = 2; // Standing tall, arm wound back holding bomb
+          } else if (prog < 0.72) {
+            r = 4; c = 1; // Athletic overhand pitch forward
           } else {
             r = 4; c = 2; // Recovery
           }
@@ -292,14 +250,12 @@
         }
 
         case 'run': {
-          // Row 2: 8-frame run cycle
           const frameIdx = Math.floor(p.animTimer * 12) % 8;
           r = 2; c = frameIdx;
           break;
         }
 
         case 'walk': {
-          // Row 1: 8-frame walk cycle
           const frameIdx = Math.floor(p.animTimer * 8.5) % 8;
           r = 1; c = frameIdx;
           break;
@@ -307,8 +263,7 @@
 
         case 'idle':
         default: {
-          // Row 0: Subtle breathing loop across cols 0..3 (or ping-pong 0, 1, 0, 7)
-          const breatheIdx = Math.floor(p.animTimer * 4.2) % 4;
+          const breatheIdx = Math.floor(p.animTimer * 3.8) % 4;
           const map = [0, 1, 2, 1];
           r = 0; c = map[breatheIdx];
           break;
@@ -320,8 +275,7 @@
 
     // Get screen-space sockets for the active frame
     getSockets(r, c) {
-      const key = `${r}_${c}`;
-      const base = CELL_SOCKETS[key] || DEFAULT_SOCKETS;
+      const base = DEFAULT_SOCKETS;
       return {
         head:     { x: (base.head.x - 12) * DRAW_SCALE,     y: base.head.y * DRAW_SCALE + DRAW_OFFSET_Y },
         torso:    { x: (base.torso.x - 12) * DRAW_SCALE,    y: base.torso.y * DRAW_SCALE + DRAW_OFFSET_Y },
@@ -357,7 +311,7 @@
       ctx.save();
       ctx.translate(Math.round(p.x), Math.round(p.y));
 
-      // 1. Ground Shadow (adapted when flat on ground or mid-air)
+      // 1. Ground Shadow
       if (state !== 'death' || p.deadTimer > (p.deadMax || 10.0) - 0.46) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
         ctx.beginPath();
@@ -375,10 +329,33 @@
       // Facing orientation: flip horizontally if facing left
       ctx.scale(p.facing || 1, 1);
 
+      // Natural weight transfer / athletic impulse on strikes (NEVER squashing!)
+      let impulseX = 0;
+      let impulseTilt = 0;
+      if (p.swingTimer > 0 && state !== 'death') {
+        if (prog < 0.25) {
+          // Subtle athletic windup: weight shifts back 1.5px
+          const pNorm = prog / 0.25;
+          impulseX = -1.5 * Math.sin(pNorm * Math.PI * 0.5);
+          impulseTilt = -0.04;
+        } else if (prog < 0.72) {
+          // Decisive strike: body drives forward 2.5px into the hit!
+          const pNorm = (prog - 0.25) / 0.47;
+          impulseX = 2.5 * Math.sin(pNorm * Math.PI);
+          impulseTilt = 0.06 * Math.sin(pNorm * Math.PI);
+        }
+      } else if (state === 'dash') {
+        impulseTilt = 0.18; // Aerodynamic forward lean
+        impulseX = 3.0;
+      }
+
+      ctx.translate(impulseX, 0);
+      if (impulseTilt !== 0) ctx.rotate(impulseTilt);
+
       // Layer 0: Back items (Backpack, Quiver, Stowed Shield)
       this.drawBackLayer(ctx, game, p, sockets, state);
 
-      // Layer 1: Base Character Pawn Body
+      // Layer 1: Base Character Pawn Body (Tall 21px heroic proportions)
       if (sheet && sheet.complete && sheet.naturalWidth > 0) {
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(
@@ -401,7 +378,7 @@
       // Layer 3: Off-Hand Equipment (Combat Shield or Bow Stave)
       this.drawOffHand(ctx, game, p, sockets, state);
 
-      // Layer 4: Main-Hand Tool / Weapon (Strictly anchored to hand socket)
+      // Layer 4: Main-Hand Tool / Weapon with visible Grip Hand Pixel
       this.drawMainHand(ctx, game, p, sockets, state, prog);
 
       // Layer 5: Weapon Trails & Slashes
@@ -474,9 +451,8 @@
         const color = itemId.includes('hierro') ? '#90caf9' : itemId.includes('acero') ? '#64b5f6' : '#8d6e63';
         ctx.save();
         ctx.fillStyle = color;
-        // Two subtle pant cuffs tracking leg socket
-        ctx.fillRect(sockets.legs.x - 5, sockets.legs.y - 2, 4, 4);
-        ctx.fillRect(sockets.legs.x + 1, sockets.legs.y - 2, 4, 4);
+        ctx.fillRect(sockets.legs.x - 5, sockets.legs.y - 2, 4, 5);
+        ctx.fillRect(sockets.legs.x + 1, sockets.legs.y - 2, 4, 5);
         ctx.restore();
       }
 
@@ -492,7 +468,7 @@
         ctx.restore();
       }
 
-      // 3. Torso Armor / Chestplate Layer
+      // 3. Torso Armor / Chestplate Layer (fits the elongated 8px torso)
       if (eq.armor) {
         const item = Balaclava.ITEMS[eq.armor];
         const tierName = (item && item.tier && TIERS[item.tier]) || (tiers.armor) || 'basica';
@@ -505,21 +481,21 @@
 
         // Armor Plate Pixel Art
         ctx.fillStyle = '#263238'; // Dark metal outline
-        ctx.fillRect(-6, -6, 12, 10);
+        ctx.fillRect(-6, -7, 12, 13);
         ctx.fillStyle = color;
-        ctx.fillRect(-5, -5, 10, 8);
+        ctx.fillRect(-5, -6, 10, 11);
         ctx.fillStyle = hl;
-        ctx.fillRect(-4, -4, 3, 2); // Highlight gleam
+        ctx.fillRect(-4, -5, 3, 2); // Highlight gleam
 
         // Tier specialty glow
         if (tDef && tDef.glow) {
           ctx.fillStyle = tDef.glow;
-          ctx.fillRect(-6, -6, 12, 10);
+          ctx.fillRect(-6, -7, 12, 13);
         }
         ctx.restore();
       }
 
-      // 4. Helmet / Hat / Crown Layer
+      // 4. Helmet / Hat / Crown Layer (aligned with raised head socket)
       if (eq.helm) {
         const item = Balaclava.ITEMS[eq.helm];
         const itemId = item ? item.id : String(eq.helm);
@@ -534,34 +510,34 @@
         if (itemId === 'corona_soberana' || itemId.includes('oro') || itemId.includes('cristal')) {
           // Radiant Crown
           ctx.fillStyle = '#ff8f00';
-          ctx.fillRect(-7, -11, 14, 4);
+          ctx.fillRect(-7, -10, 14, 4);
           ctx.fillStyle = color;
-          ctx.fillRect(-6, -12, 3, 4);
-          ctx.fillRect(-1, -13, 2, 5);
-          ctx.fillRect(3, -12, 3, 4);
+          ctx.fillRect(-6, -11, 3, 4);
+          ctx.fillRect(-1, -12, 2, 5);
+          ctx.fillRect(3, -11, 3, 4);
           // Gem
           ctx.fillStyle = itemId.includes('cristal') ? '#80d8ff' : '#ef5350';
-          ctx.fillRect(-1, -11, 2, 2);
+          ctx.fillRect(-1, -10, 2, 2);
         } else if (itemId.includes('balaclava')) {
           // Royal Balaclava Hood
           ctx.fillStyle = '#ffb300';
-          ctx.fillRect(-8, -12, 16, 5);
+          ctx.fillRect(-8, -11, 16, 5);
           ctx.fillStyle = '#b71c1c';
-          ctx.fillRect(-6, -10, 12, 3);
+          ctx.fillRect(-6, -9, 12, 3);
         } else {
           // Knight Visor / Cap
           ctx.fillStyle = '#37474f';
-          ctx.fillRect(-8, -12, 16, 6);
+          ctx.fillRect(-8, -11, 16, 6);
           ctx.fillStyle = color;
-          ctx.fillRect(-7, -11, 14, 4);
+          ctx.fillRect(-7, -10, 14, 4);
           ctx.fillStyle = hl;
-          ctx.fillRect(-6, -10, 4, 1);
+          ctx.fillRect(-6, -9, 4, 1);
         }
 
         // Helmet Tier Aura
         if (tDef && tDef.glow) {
           ctx.fillStyle = tDef.glow;
-          ctx.fillRect(-8, -13, 16, 7);
+          ctx.fillRect(-8, -12, 16, 7);
         }
         ctx.restore();
       }
@@ -578,7 +554,7 @@
         const shieldItem = Balaclava.ITEMS[eqShield];
         if (shieldItem) {
           ctx.save();
-          ctx.translate(off.x - 3, off.y - 1);
+          ctx.translate(off.x - 3, off.y);
           const sImg = getIcon(shieldItem.icon);
           if (sImg) {
             ctx.drawImage(sImg, -10, -10, 20, 20);
@@ -593,7 +569,7 @@
       }
     }
 
-    // Renders tools and weapons strictly anchored to the main hand socket
+    // Renders tools and weapons strictly anchored to the main hand socket with visible hand grip
     drawMainHand(ctx, game, p, sockets, state, prog) {
       if (state === 'death') return;
       const hand = sockets.mainHand;
@@ -633,41 +609,44 @@
 
         ctx.save();
 
-        // Calculate dynamic swing angle and trajectory based on the specific action
         let toolAngle = p.swingAngle || 0;
         let reachX = hand.x;
         let reachY = hand.y;
         const facing = p.facing || 1;
 
         if (state === 'mining') {
-          // Overhead downward pickaxe swing
-          const swingArc = (prog - 0.40) * 3.0 * facing;
+          // Overhead downward pickaxe swing - starting high, striking low
+          const swingArc = (prog < 0.32)
+            ? (-1.4 + prog * 1.2) * facing
+            : (-1.0 + (prog - 0.32) / 0.68 * 2.4) * facing;
           toolAngle = toolAngle + swingArc + Math.PI / 4;
-          reachX += Math.cos(toolAngle) * 8;
-          reachY += Math.sin(toolAngle) * 8;
+          reachX += Math.cos(toolAngle) * 6;
+          reachY += Math.sin(toolAngle) * 6;
         } else if (state === 'chopping') {
           // Horizontal diagonal axe slash
-          const swingArc = (prog - 0.38) * 2.8 * facing;
+          const swingArc = (prog < 0.32)
+            ? (-1.2 + prog * 0.8) * facing
+            : (-0.9 + (prog - 0.32) / 0.68 * 2.2) * facing;
           toolAngle = toolAngle + swingArc + Math.PI / 4;
-          reachX += Math.cos(toolAngle) * 10;
-          reachY += Math.sin(toolAngle) * 6;
+          reachX += Math.cos(toolAngle) * 8;
+          reachY += Math.sin(toolAngle) * 4;
         } else if (state === 'digging') {
-          // Low scoop into ground and lift
-          const scoopRot = Math.sin(prog * Math.PI) * 0.8 * facing;
-          toolAngle = (Math.PI * 0.35) * facing + scoopRot;
-          reachY += (prog < 0.5 ? prog * 10 : (1 - prog) * 10);
+          // Shovel angled forward into dirt & scooped up
+          const scoopRot = Math.sin(prog * Math.PI) * 0.7 * facing;
+          toolAngle = (Math.PI * 0.32) * facing + scoopRot;
+          reachY += (prog < 0.5 ? prog * 6 : (1 - prog) * 6);
         } else if (state === 'harvesting') {
-          // Low sweeping curved reap
-          const reapRot = (prog - 0.5) * 2.2 * facing;
+          // Smooth sweeping horizontal reap
+          const reapRot = (prog - 0.5) * 1.8 * facing;
           toolAngle = toolAngle + reapRot + Math.PI / 4;
         } else if (state === 'spellcasting') {
-          // Staff raised aloft then cast forward
+          // Staff raised aloft then thrust forward
           toolAngle = prog < 0.5 ? (-Math.PI / 2) : (toolAngle + Math.PI / 4);
         } else {
-          // Standard melee slash / attack
-          const swingRot = (prog - 0.42) * 2.8 * facing + Math.PI / 4;
+          // Melee slash / sword attack
+          const swingRot = (prog - 0.40) * 2.6 * facing + Math.PI / 4;
           toolAngle = toolAngle + swingRot;
-          const reach = 10 + Math.sin(prog * Math.PI) * 12;
+          const reach = 8 + Math.sin(prog * Math.PI) * 10;
           reachX += Math.cos(toolAngle) * reach;
           reachY += Math.sin(toolAngle) * reach;
         }
@@ -690,6 +669,13 @@
         const sz = isSpecial ? 28 : (p.swingTool === 'guadana' ? 32 : 26);
         // Anchor tool by its handle (pivot near base -sz/3)
         ctx.drawImage(toolImg, -sz / 3, -sz / 2, sz, sz);
+
+        // Hand pixel holding weapon grip
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(-3, -3, 6, 6);
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(-2, -2, 4, 4);
+
         ctx.restore();
       }
     }
@@ -725,6 +711,12 @@
       ctx.rotate(Math.PI / 4);
       ctx.drawImage(bowImg, -13, -13, 26, 26);
       ctx.restore();
+
+      // Hand pixel gripping bow stave
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(-1, -3, 5, 6);
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(0, -2, 3, 4);
 
       // Nocked arrow (visible while drawing string before release)
       if (!isFiring || prog < 0.68) {
@@ -789,6 +781,13 @@
       }
 
       ctx.drawImage(ic, -11, -11, 22, 22);
+
+      // Hand pixel
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(-2, -2, 5, 5);
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(-1, -1, 3, 3);
+
       ctx.restore();
     }
 
@@ -803,18 +802,25 @@
 
       const hand = sockets.mainHand;
       ctx.save();
-      ctx.translate(hand.x, hand.y);
-      ctx.rotate(p.facing > 0 ? 0.3 : -0.3);
+      ctx.translate(hand.x, hand.y - 4);
+      ctx.rotate(p.facing > 0 ? 0.2 : -0.2);
       ctx.drawImage(ic, -10, -10, 20, 20);
 
       // Sparkling burning fuse
       const sparkCol = Math.random() < 0.5 ? '#ffd54f' : '#ff7043';
       ctx.fillStyle = sparkCol;
       ctx.fillRect(4, -12, 3, 3);
+
+      // Hand pixel holding bomb
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(-2, 2, 5, 5);
+      ctx.fillStyle = '#f5f5f5';
+      ctx.fillRect(-1, 3, 3, 3);
+
       ctx.restore();
     }
 
-    // Blade slashes, sweep trails, and magic particle burts
+    // Blade slashes, sweep trails, and magic particle bursts
     drawCombatVfx(ctx, game, p, sockets, state, prog) {
       if (p.swingTimer <= 0) return;
       const assets = Balaclava.Assets;
