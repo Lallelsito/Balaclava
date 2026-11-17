@@ -402,7 +402,10 @@
       fallbackName: 'Pantalones',
       baseItem: 'pantalones_cuero',
       tiers: [
-        'pantalones_cuero', 'pantalones_hierro', 'pantalones_acero', 'pantalones_omega'
+        'pantalones_cuero', 'pantalones_bronce', 'pantalones_cobre', 'pantalones_hierro',
+        'pantalones_plata', 'pantalones_oro', 'pantalones_platino', 'pantalones_acero',
+        'pantalones_cristal', 'pantalones_mitrilo', 'pantalones_titanio', 'pantalones_adamantita',
+        'pantalones_oricalco', 'pantalones_volcanicos', 'pantalones_celestiales', 'pantalones_omega'
       ]
     }
   };

@@ -841,6 +841,38 @@
         return;
       }
 
+      if (iconType.startsWith('leggings_') || iconType.startsWith('pantalones_')) {
+        const lc = {
+          leggings_leather: ['#a1887f', '#5d4037'],
+          pantalones_cuero: ['#a1887f', '#5d4037'],
+          pantalones_bronce: ['#cd7f32', '#703810'],
+          pantalones_cobre: ['#d35400', '#782800'],
+          pantalones_hierro: ['#90a4ae', '#37474f'],
+          pantalones_plata: ['#cfd8dc', '#546e7a'],
+          pantalones_oro: ['#ffb300', '#b26a00'],
+          pantalones_platino: ['#80deea', '#006064'],
+          pantalones_acero: ['#42a5f5', '#0d47a1'],
+          pantalones_cristal: ['#ab47bc', '#4a148c'],
+          pantalones_mitrilo: ['#26c6da', '#004d40'],
+          pantalones_titanio: ['#78909c', '#263238'],
+          pantalones_adamantita: ['#43a047', '#1b5e20'],
+          pantalones_oricalco: ['#e64a19', '#bf360c'],
+          pantalones_volcanicos: ['#ff9100', '#212121'],
+          pantalones_celestiales: ['#29b6f6', '#01579b'],
+          pantalones_omega: ['#e040fb', '#311b92']
+        }[iconType] || ['#90a4ae', '#37474f'];
+        this.paintPixelGrid(ctx, [
+          '.bbbbbbbb.',
+          '.bMMMMMMb.',
+          '.bMM..MMb.',
+          '.bMM..MMb.',
+          '.bDD..DDb.',
+          '.bDD..DDb.',
+          '.bb....bb.'
+        ], { b: '#1a1118', M: lc[0], D: lc[1] }, 2, 2, 4);
+        return;
+      }
+
       // Specific clean colors for remaining items (bone, sand, clay, brick, glass, cloth, wheat, carrot, pumpkin, wool, egg, milk, mushroom, cactus, ring, amulet, etc.)
       const fallbackColors = {
         leather: ['#a1887f', '#d7ccc8', '#5d4037'],

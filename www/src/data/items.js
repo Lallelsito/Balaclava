@@ -474,23 +474,107 @@
     pantalones_cuero: {
       id: 'pantalones_cuero', name: 'Pantalones de Cuero', category: 'armaduras', rarity: 'comun',
       equipSlot: 'legs', sellValue: 25, buyValue: 60, source: 'Telar / Forja',
-      uses: 'Equipamiento inferior (+8 Defensa)',
+      uses: 'Equipamiento inferior (+8 Defensa, +12 Vida)',
       desc: 'Pantalones resistentes cosidos a mano con perneras de cuero auténtico.',
-      stats: { def: 8 }, icon: 'leggings_leather'
+      stats: { def: 8, maxHp: 12 }, icon: 'pantalones_cuero'
+    },
+    pantalones_bronce: {
+      id: 'pantalones_bronce', name: 'Pantalones de Bronce', category: 'armaduras', rarity: 'comun',
+      equipSlot: 'legs', sellValue: 40, buyValue: 95, source: 'Forja',
+      uses: 'Equipamiento inferior (+12 Defensa, +20 Vida)',
+      desc: 'Perneras reforzadas con placas de bronce forjado.',
+      stats: { def: 12, maxHp: 20 }, icon: 'pantalones_bronce'
+    },
+    pantalones_cobre: {
+      id: 'pantalones_cobre', name: 'Pantalones de Cobre', category: 'armaduras', rarity: 'poco_comun',
+      equipSlot: 'legs', sellValue: 55, buyValue: 120, source: 'Forja',
+      uses: 'Equipamiento inferior (+16 Defensa, +28 Vida)',
+      desc: 'Espinilleras y musleras de cobre martillado y remachado.',
+      stats: { def: 16, maxHp: 28 }, icon: 'pantalones_cobre'
     },
     pantalones_hierro: {
       id: 'pantalones_hierro', name: 'Pantalones de Hierro', category: 'armaduras', rarity: 'poco_comun',
-      equipSlot: 'legs', sellValue: 55, buyValue: 130, source: 'Forja',
-      uses: 'Equipamiento inferior (+22 Defensa)',
-      desc: 'Grebas de hierro forjado que protegen las piernas.',
-      stats: { def: 22 }, icon: 'leggings_iron'
+      equipSlot: 'legs', sellValue: 75, buyValue: 160, source: 'Forja',
+      uses: 'Equipamiento inferior (+22 Defensa, +38 Vida)',
+      desc: 'Grebas de hierro forjado que protegen las piernas en combate.',
+      stats: { def: 22, maxHp: 38 }, icon: 'pantalones_hierro'
+    },
+    pantalones_plata: {
+      id: 'pantalones_plata', name: 'Pantalones de Plata', category: 'armaduras', rarity: 'raro',
+      equipSlot: 'legs', sellValue: 95, buyValue: 210, source: 'Forja',
+      uses: 'Equipamiento inferior (+28 Defensa, +50 Vida)',
+      desc: 'Perneras de plata pulida que repelen la malevolencia nocturna.',
+      stats: { def: 28, maxHp: 50 }, icon: 'pantalones_plata'
+    },
+    pantalones_oro: {
+      id: 'pantalones_oro', name: 'Pantalones de Oro', category: 'armaduras', rarity: 'raro',
+      equipSlot: 'legs', sellValue: 125, buyValue: 280, source: 'Forja',
+      uses: 'Equipamiento inferior (+34 Defensa, +64 Vida, +10% Monedas)',
+      desc: 'Elegantes grebas de oro cincelado con incrustaciones decorativas.',
+      stats: { def: 34, maxHp: 64, coinPct: 0.10 }, icon: 'pantalones_oro'
+    },
+    pantalones_platino: {
+      id: 'pantalones_platino', name: 'Pantalones de Platino', category: 'armaduras', rarity: 'raro',
+      equipSlot: 'legs', sellValue: 160, buyValue: 350, source: 'Forja',
+      uses: 'Equipamiento inferior (+40 Defensa, +78 Vida)',
+      desc: 'Sólidas placas de platino templadas contra armas afiladas.',
+      stats: { def: 40, maxHp: 78 }, icon: 'pantalones_platino'
     },
     pantalones_acero: {
-      id: 'pantalones_acero', name: 'Pantalones de Acero Glacial', category: 'armaduras', rarity: 'raro',
-      equipSlot: 'legs', sellValue: 110, buyValue: 260, source: 'Forja / Yunque Rúnico',
-      uses: 'Equipamiento inferior (+42 Defensa, +10% Resistencia)',
-      desc: 'Placas templadas contra frío y golpes contundentes.',
-      stats: { def: 42, moveSpeed: 0.05 }, icon: 'leggings_steel'
+      id: 'pantalones_acero', name: 'Pantalones de Acero Glacial', category: 'armaduras', rarity: 'epico',
+      equipSlot: 'legs', sellValue: 200, buyValue: 440, source: 'Forja',
+      uses: 'Equipamiento inferior (+46 Defensa, +94 Vida, +5% Vel. Mov.)',
+      desc: 'Placas templadas con azurita glacial contra el frío y la fatiga.',
+      stats: { def: 46, maxHp: 94, moveSpeed: 0.05 }, icon: 'pantalones_acero'
+    },
+    pantalones_cristal: {
+      id: 'pantalones_cristal', name: 'Pantalones de Cristal', category: 'armaduras', rarity: 'epico',
+      equipSlot: 'legs', sellValue: 250, buyValue: 540, source: 'Forja',
+      uses: 'Equipamiento inferior (+52 Defensa, +110 Vida, +6% Vel. Mov.)',
+      desc: 'Grebas forjadas con cristal resonante que aligeran el peso corporal.',
+      stats: { def: 52, maxHp: 110, moveSpeed: 0.06 }, icon: 'pantalones_cristal'
+    },
+    pantalones_mitrilo: {
+      id: 'pantalones_mitrilo', name: 'Pantalones de Mitrilo', category: 'armaduras', rarity: 'epico',
+      equipSlot: 'legs', sellValue: 320, buyValue: 680, source: 'Forja',
+      uses: 'Equipamiento inferior (+58 Defensa, +128 Vida, +5% Reducción)',
+      desc: 'Aleación élfica ultraligera pero impenetrable a estocadas críticas.',
+      stats: { def: 58, maxHp: 128, moveSpeed: 0.07, defPct: 0.05 }, icon: 'pantalones_mitrilo'
+    },
+    pantalones_titanio: {
+      id: 'pantalones_titanio', name: 'Pantalones de Titanio', category: 'armaduras', rarity: 'epico',
+      equipSlot: 'legs', sellValue: 410, buyValue: 880, source: 'Forja',
+      uses: 'Equipamiento inferior (+64 Defensa, +148 Vida, +7% Reducción)',
+      desc: 'Armadura pesada de titanio que amortigua los mayores impactos.',
+      stats: { def: 64, maxHp: 148, moveSpeed: 0.08, defPct: 0.07 }, icon: 'pantalones_titanio'
+    },
+    pantalones_adamantita: {
+      id: 'pantalones_adamantita', name: 'Pantalones de Adamantita', category: 'armaduras', rarity: 'legendario',
+      equipSlot: 'legs', sellValue: 530, buyValue: 1150, source: 'Forja',
+      uses: 'Equipamiento inferior (+70 Defensa, +170 Vida, +9% Reducción)',
+      desc: 'Imponentes grebas forjadas con mineral de adamantita de las profundidades.',
+      stats: { def: 70, maxHp: 170, moveSpeed: 0.09, defPct: 0.09 }, icon: 'pantalones_adamantita'
+    },
+    pantalones_oricalco: {
+      id: 'pantalones_oricalco', name: 'Pantalones de Oricalco', category: 'armaduras', rarity: 'legendario',
+      equipSlot: 'legs', sellValue: 680, buyValue: 1480, source: 'Forja',
+      uses: 'Equipamiento inferior (+76 Defensa, +195 Vida, +11% Reducción)',
+      desc: 'Placas volcánicas incandescentes que resisten calor extremo y magias.',
+      stats: { def: 76, maxHp: 195, moveSpeed: 0.10, defPct: 0.11 }, icon: 'pantalones_oricalco'
+    },
+    pantalones_volcanicos: {
+      id: 'pantalones_volcanicos', name: 'Pantalones Volcánicos', category: 'armaduras', rarity: 'legendario',
+      equipSlot: 'legs', sellValue: 860, buyValue: 1900, source: 'Forja',
+      uses: 'Equipamiento inferior (+82 Defensa, +220 Vida, +13% Reducción)',
+      desc: 'Grebas de obsidiana y magma sellado con un aura protectora ígnea.',
+      stats: { def: 82, maxHp: 220, moveSpeed: 0.12, defPct: 0.13 }, icon: 'pantalones_volcanicos'
+    },
+    pantalones_celestiales: {
+      id: 'pantalones_celestiales', name: 'Pantalones Celestiales', category: 'armaduras', rarity: 'legendario',
+      equipSlot: 'legs', sellValue: 1100, buyValue: 2400, source: 'Forja',
+      uses: 'Equipamiento inferior (+90 Defensa, +250 Vida, +15% Reducción)',
+      desc: 'Tejidas con polvo de estrellas y aleación celestial para ingravidez.',
+      stats: { def: 90, maxHp: 250, moveSpeed: 0.14, defPct: 0.15 }, icon: 'pantalones_celestiales'
     },
     mochila_cuero: {
       id: 'mochila_cuero', name: 'Mochila de Cuero Rústica', category: 'equipamiento', rarity: 'poco_comun',
@@ -2413,10 +2497,24 @@
     },
     pantalones_omega: {
       id: 'pantalones_omega', name: 'Grebas Gravitatorias Omega (T16)', category: 'armaduras', rarity: 'legendario', tier: 16,
-      sellValue: 1350, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Pantalones de Acero + Lingote Omega)',
-      uses: 'Equipa en Pantalones (Tier 16): +78 Defensa, +220 Vida, +15% Vel. y +15% Reducción',
-      desc: 'Articulaciones de aleación Omega que estabilizan cada zancada.',
-      equipSlot: 'legs', stats: { def: 78, maxHp: 220, speedPct: 0.15, defPct: 0.15 }, icon: 'leggings_legendary'
+      sellValue: 1550, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Pantalones Celestiales + Lingote Omega)',
+      uses: 'Equipa en Pantalones (Tier 16): +105 Defensa, +320 Vida, +18% Vel. y +20% Reducción',
+      desc: 'Articulaciones de aleación Omega y singularidad que anulan el retroceso y estabilizan la zancada.',
+      equipSlot: 'legs', stats: { def: 105, maxHp: 320, speedPct: 0.18, defPct: 0.20 }, icon: 'pantalones_omega'
+    },
+    tuberias_conduit: {
+      id: 'tuberias_conduit', name: 'Tuberías Conduit de Aleación', category: 'materiales', rarity: 'poco_comun',
+      sellValue: 20, buyValue: 45, source: 'Taller',
+      uses: 'Componente de automatización y transporte de fluidos',
+      desc: 'Tuberías reforzadas con aleación de cobre y hierro diseñadas para sistemas industriales.',
+      icon: 'engrane'
+    },
+    cofre_logistico: {
+      id: 'cofre_logistico', name: 'Cofre Logístico Reforzado', category: 'almacenamiento', rarity: 'raro',
+      sellValue: 90, buyValue: 200, source: 'Taller',
+      uses: 'Almacenamiento de alta capacidad para rutas automatizadas',
+      desc: 'Cofre acorazado con engranajes de precisión compatible con automatizaciones.',
+      icon: 'chest'
     },
     escudo_omega: {
       id: 'escudo_omega', name: 'Égida del Horizonte Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
