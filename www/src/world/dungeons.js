@@ -638,6 +638,9 @@
       this.def = DUNGEON_DEFS[dungeonId] || DUNGEON_DEFS.pradera;
       this.id = this.def.id;
       this.isCorrupted = Boolean(opts && opts.isCorrupted);
+      this.abyssFloor = (opts && opts.abyssFloor) ? Math.max(1, Math.floor(opts.abyssFloor)) : 0;
+      this.abyssMods = (opts && Array.isArray(opts.abyssMods)) ? opts.abyssMods : [];
+      this.abyssScale = (opts && opts.abyssScale) || null;
       this.tier = Math.max(0, DUNGEON_TIER_LIST.indexOf(this.id));
       this.playerLevel = Math.max(1, playerLevel || 1);
       this.levelScale = 1 + Math.max(0, this.playerLevel - (1 + this.tier * 2)) * 0.10;
@@ -1257,6 +1260,9 @@
       mobSpots.forEach(([mx, my, pow], idx) => {
         if (this.grid[my] && this.grid[my][mx] === 1) {
           this.enemies.push(this.makeMob(tPick(idx), mx, my, pow));
+          if (this.abyssScale && this.abyssScale.horde && idx % 2 === 0) {
+            this.enemies.push(this.makeMob(tPick(idx + 1), mx, my, pow * 0.9));
+          }
         }
       });
       this.enemies.push(this.makeMiniBoss(types[1 % types.length], miniBossSpot.tx, miniBossSpot.ty));
@@ -1265,14 +1271,22 @@
       const b = this.def.boss;
       const bLvScale = this.levelScale || 1;
       const tierProgress = Math.min(1, this.tier / Math.max(1, DUNGEON_TIER_LIST.length - 1));
-      const bossHpMult = (1.65 + tierProgress * 0.45) * (this.isCorrupted ? 24 : 1);
-      const bossDmgMult = (1.25 + tierProgress * 0.25) * (this.isCorrupted ? 5.5 : 1);
-      const bossName = this.isCorrupted ? `⚔️ [CORRUPTO] ${b.name}` : b.name;
+      const abHp = this.abyssScale ? this.abyssScale.hp : 1;
+      const abDmg = this.abyssScale ? this.abyssScale.dmg : 1;
+      const abSpd = this.abyssScale ? this.abyssScale.speed : 1;
+      const bossHpMult = (1.65 + tierProgress * 0.45) * (this.isCorrupted ? 24 : 1) * abHp;
+      const bossDmgMult = (1.25 + tierProgress * 0.25) * (this.isCorrupted ? 5.5 : 1) * abDmg;
+      const bossName = this.abyssFloor
+        ? `[Abismo P${this.abyssFloor}] ${b.name}`
+        : (this.isCorrupted ? `[CORRUPTO] ${b.name}` : b.name);
       const bossDrops = { ...b.drops };
       if (this.isCorrupted) {
         bossDrops.esencia_corrupta = (Balaclava.Utils && Balaclava.Utils.randInt) ? Balaclava.Utils.randInt(6, 14) : Math.floor(rng() * 9) + 6;
         bossDrops.gema_vacio = (Balaclava.Utils && Balaclava.Utils.randInt) ? Balaclava.Utils.randInt(1, 4) : Math.floor(rng() * 4) + 1;
         if (rng() < 0.35) bossDrops.reliquia_vacio = 1;
+      }
+      if (this.abyssFloor) {
+        bossDrops.materia_comprimida = Math.max(1, Math.floor(1 + this.abyssFloor / 10));
       }
       this.boss = {
         id: 'boss_' + this.id,
@@ -1282,11 +1296,11 @@
         type: 'boss_' + this.id,
         x: bossSpawn.tx * TILE_SIZE,
         y: bossSpawn.ty * TILE_SIZE,
-        hp: Math.round(b.hp * bossHpMult * bLvScale),
-        maxHp: Math.round(b.hp * bossHpMult * bLvScale),
-        dmg: Math.round(b.dmg * bossDmgMult * (1 + (bLvScale - 1) * 0.65)),
-        speed: Math.round(b.speed * (this.isCorrupted ? 1.25 : 1.0)),
-        color: this.isCorrupted ? '#ab47bc' : b.color,
+        hp: Math.min(9e14, Math.round(b.hp * bossHpMult * bLvScale)),
+        maxHp: Math.min(9e14, Math.round(b.hp * bossHpMult * bLvScale)),
+        dmg: Math.min(9e12, Math.round(b.dmg * bossDmgMult * (1 + (bLvScale - 1) * 0.65))),
+        speed: Math.min(260, Math.round(b.speed * (this.isCorrupted ? 1.25 : 1.0) * abSpd)),
+        color: this.abyssFloor ? '#e040fb' : (this.isCorrupted ? '#ab47bc' : b.color),
         facing: -1,
         radius: 34,
         hitW: 78,
@@ -1765,24 +1779,25 @@
       const base = Balaclava.CombatSystem ? Balaclava.CombatSystem.getEnemyDef(type) : { hp: 35, dmg: 8, speed: 65 };
       const tierMult = (1 + this.tier * 0.18 + Math.pow(this.tier, 1.25) * 0.03) * (this.levelScale || 1);
       const { hpMult, dmgMult } = this.getDungeonEnemyMultipliers(type, base);
-      const cMultHp = this.isCorrupted ? 22 : 1;
-      const cMultDmg = this.isCorrupted ? 6.5 : 1;
-      const hp = Math.round((base.hp || 35) * 1.85 * powerScale * tierMult * hpMult * cMultHp);
-      const dmg = Math.round((base.dmg || 8) * 1.35 * (1 + (tierMult - 1) * 0.58) * dmgMult * cMultDmg);
-      const mName = this.isCorrupted ? `[Corrupto] ${base.name || type}` : (base.name || type);
+      const cMultHp = (this.isCorrupted ? 22 : 1) * (this.abyssScale ? this.abyssScale.hp : 1);
+      const cMultDmg = (this.isCorrupted ? 6.5 : 1) * (this.abyssScale ? this.abyssScale.dmg : 1);
+      const abSpd = this.abyssScale ? this.abyssScale.speed : 1;
+      const hp = Math.min(9e14, Math.round((base.hp || 35) * 1.85 * powerScale * tierMult * hpMult * cMultHp));
+      const dmg = Math.min(9e12, Math.round((base.dmg || 8) * 1.35 * (1 + (tierMult - 1) * 0.58) * dmgMult * cMultDmg));
+      const mName = this.abyssFloor ? `[Abismo P${this.abyssFloor}] ${base.name || type}` : (this.isCorrupted ? `[Corrupto] ${base.name || type}` : (base.name || type));
       return {
         id: 'dmob_' + tx + '_' + ty + '_' + Math.random().toString(36).slice(2, 7),
         seed: Math.random() * 100,
         type,
         name: mName,
-        level: Math.max(2, this.tier * 2 + 2, Math.floor(this.playerLevel * 0.85)),
+        level: Math.max(2, this.tier * 2 + 2, Math.floor(this.playerLevel * 0.85)) + (this.abyssFloor ? this.abyssFloor * 2 : 0),
         ranged: !!base.ranged,
         x: (tx + 0.5) * TILE_SIZE,
         y: (ty + 0.5) * TILE_SIZE,
         hp,
         maxHp: hp,
         dmg,
-        speed: Math.round((base.speed || 65) * 1.12),
+        speed: Math.min(220, Math.round((base.speed || 65) * 1.12 * abSpd)),
         facing: -1,
         radius: 20,
         hitW: 44,

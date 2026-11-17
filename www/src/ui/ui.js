@@ -6814,6 +6814,37 @@
             }
           }, tr('map.fastTravel')));
         }
+
+        if (unlocked && g.omega) {
+          const plotKey = `${sgx},${sgy}`;
+          const isAscended = Boolean(g.omega.state.ascension && g.omega.state.ascension[plotKey]);
+          if (isAscended) {
+            card.appendChild(this.el('div', {
+              style: 'background:linear-gradient(135deg, rgba(74,20,140,0.5), rgba(136,14,79,0.5));border:1.5px solid #e040fb;border-radius:6px;padding:8px 10px;font-size:13px;color:#f3e5f5;margin-top:6px;box-shadow:0 0 10px rgba(224,64,251,0.25);'
+            }, [
+              this.el('strong', { style: 'color:#ea80fc;display:block;' }, '🌌 ISLA ASCENDIDA (PRESTIGIO OMEGA)'),
+              this.el('div', {}, 'Enemigos: 10x HP / 10x Daño (Sueltan Materia Comprimida) · Extractores: 2x Velocidad')
+            ]));
+          } else if (g.clearedDungeons && g.clearedDungeons.length >= 24) {
+            card.appendChild(this.el('button', {
+              class: 'btn btn-primary',
+              style: 'margin-top:6px;background:linear-gradient(90deg, #4a148c, #7b1fa2);border:1px solid #e040fb;color:#fff;font-weight:bold;',
+              onclick: () => {
+                const res = g.omega.ascendIsland(g, plotKey);
+                if (res.ok) {
+                  Balaclava.Audio.play('levelup');
+                  g.toast(`¡Isla (${sgx}, ${sgy}) ascendida a Rango Omega!`, 'success');
+                  drawMapCanvas();
+                  renderInspector();
+                  this.updateHUD(true);
+                } else {
+                  Balaclava.Audio.play('error');
+                  g.toast(res.reason, 'warn');
+                }
+              }
+            }, '🌌 Ascender Isla (Costo: 1x Singularidad + 50x Materia)'));
+          }
+        }
         card.appendChild(this.el('div', { style: 'margin-top:6px;font-size:14px;color:#8bb3d1;line-height:1.4;' }, tr('map.controlsHint')));
         if (this.showDungeonAtlas) {
           const atlasBox = this.el('div', { class: 'dungeon-atlas-list', style: 'margin-top:8px;' });
@@ -9426,6 +9457,50 @@
         body.appendChild(foot);
       };
 
+      const appendOmegaFooter = () => {
+        const foot = this.el('div', { style: 'display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;' });
+        foot.appendChild(this.el('button', {
+          class: 'btn btn-danger',
+          onclick: () => {
+            g.buildings = g.buildings.filter(x => x !== b);
+            if (def.cost) {
+              Object.entries(def.cost).forEach(([id, q]) => g.addItem(id, Math.max(1, Math.floor(q * 0.5))));
+            }
+            g.recomputeModifiers();
+            this.closeModal();
+            g.toast(tr('bldg.demolishToast', { name: def.name }), 'info');
+          }
+        }, tr('bldg.demolishBtn')));
+        body.appendChild(foot);
+      };
+
+      if (def.omega) {
+        titleEl.textContent = `${def.name} [OMEGA]`;
+        if (def.omega.kind === 'nexus') {
+          this.renderOmegaNexus(body, b, def);
+          appendOmegaFooter();
+          return;
+        }
+        if (def.omega.kind === 'press') {
+          this.renderOmegaPress(body, b, def);
+          appendOmegaFooter();
+          return;
+        }
+        if (def.omega.kind === 'chamber') {
+          this.renderOmegaChamber(body, b, def);
+          appendOmegaFooter();
+          return;
+        }
+        if (def.omega.kind === 'altar') {
+          this.renderOmegaAltar(body, b, def);
+          appendOmegaFooter();
+          return;
+        }
+        this.renderOmegaMachine(body, b, def);
+        appendOmegaFooter();
+        return;
+      }
+
       if (def.opensPanel === 'market') {
         this.renderMarket(body);
         appendFooter();
@@ -9495,6 +9570,21 @@
       }
       if (def.opensPanel === 'dungeons') {
         const dList = this.el('div', { class: 'dungeon-atlas-list', style: 'margin-top:8px;' });
+        if (g.clearedDungeons && g.clearedDungeons.length >= 24) {
+          const abFl = (g.omega && g.omega.state.abyss && g.omega.state.abyss.current) || 1;
+          const abBest = (g.omega && g.omega.state.abyss && g.omega.state.abyss.best) || 0;
+          dList.appendChild(this.el('button', {
+            class: 'btn btn-primary btn-sm',
+            style: 'background:linear-gradient(90deg, #4a148c, #880e4f);border:1.5px solid #e040fb;color:#fff;font-weight:bold;margin-bottom:6px;width:100%;display:flex;justify-content:space-between;align-items:center;box-shadow:0 0 10px rgba(224,64,251,0.3);',
+            onclick: () => {
+              this.closeModal();
+              g.enterDungeon('abismo_infinito');
+            }
+          }, [
+            this.el('span', {}, `🌌 El Abismo Infinito (Piso ${abFl} · Récord: ${abBest})`),
+            this.el('span', { style: 'color:#ffd54f;font-size:12px;font-weight:900;' }, 'T16 ENDGAME')
+          ]));
+        }
         Object.values(Balaclava.DUNGEON_DEFS).forEach(d => {
           const dmBiome = BIOMES[d.themeKey || d.biomeId || d.id] || BIOMES.pradera;
           dList.appendChild(this.el('button', {
@@ -9527,6 +9617,565 @@
       }
 
       appendFooter();
+    }
+
+    renderOmegaNexus(body, b, def) {
+      const g = this.game;
+      if (!g.omega) return;
+      const plotKey = Balaclava.OmegaSystem.plotKeyOf(b.tx, b.ty);
+      this.omegaNexusTab = this.omegaNexusTab || 'storage';
+
+      const tabRow = this.el('div', { style: 'display:flex;gap:8px;margin-bottom:12px;border-bottom:1px solid rgba(255,213,79,0.25);padding-bottom:8px;' }, [
+        this.el('button', {
+          class: 'btn btn-sm ' + (this.omegaNexusTab === 'storage' ? 'btn-gold' : 'btn-stone'),
+          onclick: () => { this.omegaNexusTab = 'storage'; this.renderModal(); }
+        }, 'Almacén Virtual'),
+        this.el('button', {
+          class: 'btn btn-sm ' + (this.omegaNexusTab === 'energy' ? 'btn-gold' : 'btn-stone'),
+          onclick: () => { this.omegaNexusTab = 'energy'; this.renderModal(); }
+        }, 'Red de Energía'),
+        this.el('button', {
+          class: 'btn btn-sm ' + (this.omegaNexusTab === 'research' ? 'btn-gold' : 'btn-stone'),
+          onclick: () => { this.omegaNexusTab = 'research'; this.renderModal(); }
+        }, 'Investigación Omega')
+      ]);
+      body.appendChild(tabRow);
+
+      if (this.omegaNexusTab === 'storage') {
+        const nData = g.omega.nexusData(plotKey);
+        const cap = g.omega.nexusCapacity(plotKey, b);
+        const used = g.omega.nexusUsed(plotKey);
+        const pct = Math.min(100, Math.round((used / Math.max(1, cap)) * 100));
+
+        const barCard = this.el('div', { class: 'card', style: 'margin-bottom:10px;padding:10px;' }, [
+          this.el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;font-weight:bold;margin-bottom:6px;' }, [
+            this.el('span', { style: 'color:#b8d4ec;' }, `Capacidad de Almacén: ${used} / ${cap} unidades`),
+            this.el('span', { style: `color:${pct >= 95 ? '#ff5252' : '#80d8ff'};` }, `${pct}%`)
+          ]),
+          this.el('div', { style: 'width:100%;height:10px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden;border:1px solid rgba(128,216,255,0.3);' }, [
+            this.el('div', { style: `width:${pct}%;height:100%;background:${pct >= 95 ? '#ff5252' : 'linear-gradient(90deg, #00b0ff, #00e676)'};transition:width 0.2s;` })
+          ])
+        ]);
+        body.appendChild(barCard);
+
+        const actionsRow = this.el('div', { style: 'display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;' }, [
+          this.el('button', {
+            class: 'btn btn-primary btn-sm',
+            onclick: () => {
+              let count = 0;
+              for (const [id, q] of Object.entries(g.inventory || {})) {
+                if (q > 0) {
+                  const it = Balaclava.ITEMS[id];
+                  if (it && (it.isOre || it.isIngot || it.isCrop || it.category === 'minerales' || it.category === 'cultivos' || it.category === 'especiales' || /fragmento_|polvo_|cristal_datos_|lingote_|mineral_|materia_/.test(id))) {
+                    const r = g.omega.depositFromInventory(g, plotKey, id, q);
+                    if (r.ok) count += q;
+                  }
+                }
+              }
+              if (count > 0) {
+                Balaclava.Audio.play('pickup');
+                g.toast(`Depositados ${count} objetos en el Nexo.`, 'success');
+                this.renderModal();
+              } else {
+                g.toast('No tienes recursos válidos para depositar.', 'warn');
+              }
+            }
+          }, 'Depositar Recursos Compatibles'),
+          this.el('button', {
+            class: 'btn btn-stone btn-sm',
+            onclick: () => {
+              let count = 0;
+              for (const [id, q] of Object.entries(nData.items || {})) {
+                if (q > 0) {
+                  const r = g.omega.withdrawToInventory(g, plotKey, id, q);
+                  if (r.ok) count += q;
+                }
+              }
+              if (count > 0) {
+                Balaclava.Audio.play('pickup');
+                g.toast(`Retirados ${count} objetos al inventario.`, 'info');
+                this.renderModal();
+              } else {
+                g.toast('Almacén virtual vacío.', 'warn');
+              }
+            }
+          }, 'Retirar Todo')
+        ]);
+        body.appendChild(actionsRow);
+
+        const itemsGrid = this.el('div', {
+          style: 'display:grid;grid-template-columns:repeat(auto-fill, minmax(70px, 1fr));gap:6px;max-height:240px;overflow-y:auto;background:rgba(0,0,0,0.35);padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);'
+        });
+        const entries = Object.entries(nData.items || {}).filter(([k, q]) => q > 0);
+        if (!entries.length) {
+          itemsGrid.appendChild(this.el('div', { style: 'grid-column:1/-1;text-align:center;padding:20px;color:#8ba2b8;font-size:13px;' },
+            'Almacén virtual vacío. Los extractores, domos y procesadoras conectadas depositarán automáticamente sus productos aquí.'));
+        } else {
+          for (const [id, q] of entries) {
+            const it = Balaclava.ITEMS[id] || { name: id, icon: 'piedra' };
+            const itemBox = this.el('button', {
+              class: 'btn btn-stone',
+              style: 'padding:4px;display:flex;flex-direction:column;align-items:center;position:relative;min-height:64px;justify-content:center;',
+              title: `${it.name} (Clic para retirar 1, Shift para 10)`,
+              onclick: (e) => {
+                const takeQty = e.shiftKey ? Math.min(10, q) : 1;
+                const r = g.omega.withdrawToInventory(g, plotKey, id, takeQty);
+                if (r.ok) {
+                  Balaclava.Audio.play('pickup');
+                  this.renderModal();
+                } else {
+                  g.toast(r.reason, 'warn');
+                }
+              }
+            }, [
+              this.itemIcon(it.icon || id, 28),
+              this.el('span', { style: 'font-size:11px;font-weight:bold;color:#ffd54f;margin-top:2px;' }, `x${q}`)
+            ]);
+            itemsGrid.appendChild(itemBox);
+          }
+        }
+        body.appendChild(itemsGrid);
+      } else if (this.omegaNexusTab === 'energy') {
+        const nets = g.omega.networks(g);
+        const net = nets.get(plotKey) || { gens: [], consumers: [], pylons: [] };
+        let totalGen = 0;
+        let totalDem = 0;
+        for (const gEntry of net.gens) {
+          totalGen += g.omega.genOutput(gEntry, plotKey);
+        }
+        for (const cEntry of net.consumers) {
+          totalDem += g.omega.consumerDemand(cEntry);
+        }
+        const bal = totalGen - totalDem;
+
+        const statGrid = this.el('div', { style: 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;' }, [
+          this.el('div', { class: 'card', style: 'padding:8px;text-align:center;' }, [
+            this.el('div', { style: 'font-size:12px;color:#a5d6a7;' }, 'Generación'),
+            this.el('strong', { style: 'font-size:16px;color:#69f0ae;' }, `+${Math.round(totalGen)} W`)
+          ]),
+          this.el('div', { class: 'card', style: 'padding:8px;text-align:center;' }, [
+            this.el('div', { style: 'font-size:12px;color:#ffab91;' }, 'Demanda'),
+            this.el('strong', { style: 'font-size:16px;color:#ff7043;' }, `-${Math.round(totalDem)} W`)
+          ]),
+          this.el('div', { class: 'card', style: 'padding:8px;text-align:center;' }, [
+            this.el('div', { style: 'font-size:12px;color:#b8d4ec;' }, 'Balance Neto'),
+            this.el('strong', { style: `font-size:16px;color:${bal >= 0 ? '#69f0ae' : '#ff5252'};` }, `${bal >= 0 ? '+' : ''}${Math.round(bal)} W`)
+          ])
+        ]);
+        body.appendChild(statGrid);
+
+        const listWrap = this.el('div', { style: 'max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;' });
+        const allNodes = [...net.gens, ...net.consumers];
+        if (!allNodes.length) {
+          listWrap.appendChild(this.el('div', { style: 'text-align:center;padding:16px;color:#8ba2b8;font-size:13px;' },
+            'No hay generadores ni máquinas conectadas a este Nexo. Coloca generadores y pilones de enlace para extender la red.'));
+        } else {
+          for (const node of allNodes) {
+            const bDef = Balaclava.BUILDINGS[node.b.type];
+            const isGen = node.def.omega.kind === 'generator';
+            const statText = isGen ? `+${Math.round(g.omega.genOutput(node, plotKey))} W` : `-${Math.round(g.omega.consumerDemand(node))} W`;
+            const row = this.el('div', {
+              class: 'card',
+              style: 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;font-size:13px;'
+            }, [
+              this.el('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
+                this.makeBuildingThumb(bDef, 30),
+                this.el('div', {}, [
+                  this.el('strong', { style: 'color:#fff;' }, bDef.name),
+                  this.el('div', { style: 'font-size:11px;color:#80d8ff;' }, node.b.omega ? node.b.omega.reason || node.b.omega.state : '')
+                ])
+              ]),
+              this.el('div', { style: 'display:flex;align-items:center;gap:10px;' }, [
+                this.el('span', { style: `font-weight:bold;color:${isGen ? '#69f0ae' : '#ffd54f'};` }, statText),
+                !isGen ? this.el('button', {
+                  class: 'btn btn-stone btn-sm',
+                  style: 'font-size:11px;padding:2px 6px;',
+                  title: 'Cambiar prioridad energética (1: Baja, 2: Media, 3: Alta)',
+                  onclick: () => {
+                    node.b.omega.prio = (node.b.omega.prio % 3) + 1;
+                    this.renderModal();
+                  }
+                }, `Prio: ${node.b.omega.prio || 2}`) : null
+              ])
+            ]);
+            listWrap.appendChild(row);
+          }
+        }
+        body.appendChild(listWrap);
+      } else if (this.omegaNexusTab === 'research') {
+        const state = g.omega.state;
+        const R_LIST = Balaclava.OmegaSystem.RESEARCH || [];
+        const researchedCount = Object.keys(state.research || {}).length;
+
+        const headerCard = this.el('div', { class: 'card', style: 'padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;' }, [
+          this.el('strong', { style: 'color:#e040fb;' }, `Tecnologías Omega: ${researchedCount} / ${R_LIST.length}`),
+          this.el('span', { style: 'font-size:12px;color:#b8d4ec;' }, `Singularidades en almacén: ${g.omega.nexusCount(plotKey, 'singularidad') + (g.inventory.singularidad || 0)}`)
+        ]);
+        body.appendChild(headerCard);
+
+        const treeGrid = this.el('div', {
+          style: 'display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:8px;max-height:260px;overflow-y:auto;padding-right:4px;'
+        });
+
+        for (const r of R_LIST) {
+          const status = g.omega.researchStatus(g, r.id);
+          const isDone = g.omega.hasResearch(r.id);
+          const isAvail = status.ok;
+
+          const rCard = this.el('div', {
+            class: 'card',
+            style: `padding:8px;border:1px solid ${isDone ? '#69f0ae' : (isAvail ? '#ffd54f' : 'rgba(255,255,255,0.15)')};background:${isDone ? 'rgba(46,125,50,0.15)' : (isAvail ? 'rgba(255,213,79,0.08)' : 'rgba(0,0,0,0.3)')};display:flex;flex-direction:column;gap:4px;`
+          }, [
+            this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;' }, [
+              this.el('strong', { style: `color:${isDone ? '#a5d6a7' : (isAvail ? '#ffe082' : '#90a4ae')};font-size:13px;` }, r.name),
+              this.el('span', {
+                style: `font-size:10px;font-weight:900;padding:2px 5px;border-radius:3px;background:${isDone ? '#2e7d32' : (isAvail ? '#f57f17' : '#37474f')};color:#fff;`
+              }, isDone ? 'INVESTIGADO' : (isAvail ? 'DISPONIBLE' : 'BLOQUEADO'))
+            ]),
+            this.el('div', { style: 'font-size:12px;color:#dce8f5;line-height:1.35;' }, r.desc),
+            this.el('div', { style: 'font-size:11px;color:#b0bec5;margin-top:2px;' }, `Coste: ${g.omega.fmtMap(r.cost)}`),
+            !isDone ? this.el('button', {
+              class: isAvail ? 'btn btn-gold btn-sm' : 'btn btn-stone btn-sm',
+              disabled: isAvail ? null : 'disabled',
+              style: 'margin-top:4px;align-self:flex-start;',
+              onclick: () => {
+                const res = g.omega.researchAtomic(g, plotKey, r.id);
+                if (res.ok) {
+                  Balaclava.Audio.play('levelup');
+                  g.toast(`¡Investigado: ${r.name}!`, 'success');
+                  this.renderModal();
+                } else {
+                  Balaclava.Audio.play('error');
+                  g.toast(res.reason, 'warn');
+                }
+              }
+            }, isAvail ? 'Investigar Tecnología' : (status.reason || 'Bloqueado')) : null
+          ]);
+          treeGrid.appendChild(rCard);
+        }
+        body.appendChild(treeGrid);
+      }
+    }
+
+    renderOmegaPress(body, b, def) {
+      const g = this.game;
+      if (!g.omega) return;
+      const plotKey = Balaclava.OmegaSystem.plotKeyOf(b.tx, b.ty);
+      const o = g.omega.ensureOmegaState(b);
+      const cost = g.omega.pressCost();
+      const CATS = Balaclava.OmegaSystem.PRESS_CATEGORIES;
+      const currentCat = o.category;
+
+      const catSelectRow = this.el('div', { style: 'display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;' });
+      for (const catId of Object.keys(CATS)) {
+        const isSel = currentCat === catId;
+        catSelectRow.appendChild(this.el('button', {
+          class: 'btn btn-sm ' + (isSel ? 'btn-gold' : 'btn-stone'),
+          onclick: () => {
+            const r = g.omega.pressSetCategory(b, catId);
+            if (r.ok) {
+              this.renderModal();
+            } else {
+              g.toast(r.reason, 'warn');
+            }
+          }
+        }, catId.charAt(0).toUpperCase() + catId.slice(1)));
+      }
+      body.appendChild(catSelectRow);
+
+      if (!currentCat) {
+        body.appendChild(this.el('div', { class: 'parchment-box', style: 'text-align:center;padding:24px;color:#b8d4ec;' },
+          'Selecciona una categoría de recursos para calibrar la Prensa de Singularidades. Requiere 10.000 recursos compatibles de dicha categoría para condensar 1 Singularidad.'));
+        return;
+      }
+
+      const dep = o.deposit || {};
+      let totalDep = 0;
+      for (const q of Object.values(dep)) totalDep += q;
+      const pct = Math.min(100, Math.round((totalDep / cost) * 100));
+
+      const compCard = this.el('div', { class: 'card', style: 'padding:12px;margin-bottom:12px;' }, [
+        this.el('div', { style: 'display:flex;justify-content:space-between;margin-bottom:6px;' }, [
+          this.el('strong', { style: 'color:#ea80fc;font-size:15px;' }, `Compresión de ${currentCat.toUpperCase()}`),
+          this.el('span', { style: 'color:#ffd54f;font-weight:bold;' }, `${totalDep} / ${cost} (${pct}%)`)
+        ]),
+        this.el('div', { style: 'width:100%;height:12px;background:rgba(0,0,0,0.5);border-radius:6px;overflow:hidden;border:1px solid #ba68c8;margin-bottom:10px;' }, [
+          this.el('div', { style: `width:${pct}%;height:100%;background:linear-gradient(90deg, #7b1fa2, #e040fb);transition:width 0.2s;` })
+        ]),
+        this.el('div', { style: 'font-size:13px;color:#dce8f5;line-height:1.45;' },
+          `Objetivo: 1x Singularidad. La prensa extraerá recursos de la categoría «${currentCat}» automáticamente del Nexo mientras reciba suficiente energía (200 W).`),
+        this.el('div', { style: 'display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;' }, [
+          this.el('button', {
+            class: 'btn btn-primary btn-sm',
+            onclick: () => {
+              const it = g.omega.nexusData(plotKey).items;
+              let added = 0;
+              for (const id of CATS[currentCat] || []) {
+                const avail = it[id] || 0;
+                if (avail > 0 && totalDep + added < cost) {
+                  const take = Math.min(avail, cost - (totalDep + added));
+                  if (take > 0 && g.omega.nexusTake(plotKey, { [id]: take })) {
+                    o.deposit[id] = (o.deposit[id] || 0) + take;
+                    added += take;
+                  }
+                }
+              }
+              if (added > 0) {
+                Balaclava.Audio.play('pickup');
+                g.toast(`Transferidos ${added} recursos del Nexo a la prensa.`, 'success');
+                this.renderModal();
+              } else {
+                g.toast('No hay más recursos compatibles en el Nexo.', 'warn');
+              }
+            }
+          }, 'Cargar Recursos del Nexo'),
+          totalDep > 0 ? this.el('button', {
+            class: 'btn btn-stone btn-sm',
+            onclick: () => {
+              const r = g.omega.pressCancel(plotKey, b);
+              if (r.ok) {
+                Balaclava.Audio.play('pickup');
+                g.toast('Compresión cancelada. Materiales devueltos al Nexo.', 'info');
+                this.renderModal();
+              } else {
+                g.toast(r.reason, 'warn');
+              }
+            }
+          }, 'Cancelar y Devolver Materiales') : null
+        ])
+      ]);
+      body.appendChild(compCard);
+    }
+
+    renderOmegaChamber(body, b, def) {
+      const g = this.game;
+      if (!g.omega) return;
+      const plotKey = Balaclava.OmegaSystem.plotKeyOf(b.tx, b.ty);
+      const o = g.omega.ensureOmegaState(b);
+
+      const statusCard = this.el('div', { class: 'card', style: 'padding:10px;margin-bottom:12px;' }, [
+        this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;' }, [
+          this.el('strong', { style: 'color:#80d8ff;font-size:15px;' }, 'Estado de la Simulación'),
+          this.el('span', {
+            style: `font-size:11px;font-weight:900;padding:2px 6px;border-radius:3px;background:${o.crystal ? '#00c853' : '#37474f'};color:#fff;`
+          }, o.crystal ? 'SIMULANDO' : 'INACTIVA')
+        ]),
+        o.crystal ? this.el('div', {}, [
+          this.el('div', { style: 'font-size:13px;color:#e1f5fe;margin-bottom:4px;' },
+            `Jefe Simulado: ${Balaclava.DUNGEON_DEFS[o.crystal.did]?.boss?.name || o.crystal.did} (Ciclos restantes: ${o.crystal.cycles})`),
+          this.el('div', { style: 'width:100%;height:8px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden;border:1px solid #00e5ff;' }, [
+            this.el('div', { style: `width:${Math.min(100, Math.round(((o.progress || 0) / 30) * 100))}%;height:100%;background:#00e5ff;` })
+          ])
+        ]) : this.el('div', { style: 'font-size:13px;color:#90a4ae;' },
+          'Inserta un Cristal de Datos de Jefe sintetizado para comenzar la simulación de combate continua.')
+      ]);
+      body.appendChild(statusCard);
+
+      const bossListWrap = this.el('div', { style: 'max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;' });
+      const dungDefs = Object.values(Balaclava.DUNGEON_DEFS || {});
+
+      for (const d of dungDefs) {
+        if (!d.boss) continue;
+        const kills = g.omega.state.bossKills[d.id] || 0;
+        const canMake = g.omega.canMakeCrystal(g, d.id);
+        const crystalId = 'cristal_datos_' + d.id;
+        const hasCrystal = (g.inventory[crystalId] || 0) > 0 || (g.omega.nexusCount(plotKey, crystalId) > 0);
+
+        const row = this.el('div', {
+          class: 'card',
+          style: 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;font-size:13px;'
+        }, [
+          this.el('div', {}, [
+            this.el('strong', { style: 'color:#fff;' }, d.boss.name),
+            this.el('div', { style: 'font-size:11px;color:#b0bec5;' }, `Derrotas registradas: ${kills} / 3 necesarias`)
+          ]),
+          this.el('div', { style: 'display:flex;gap:6px;' }, [
+            hasCrystal ? this.el('button', {
+              class: 'btn btn-primary btn-sm',
+              disabled: o.crystal ? 'disabled' : null,
+              onclick: () => {
+                if ((g.inventory[crystalId] || 0) > 0 && g.omega.nexusCount(plotKey, crystalId) === 0) {
+                  g.omega.depositFromInventory(g, plotKey, crystalId, 1);
+                }
+                const r = g.omega.insertCrystal(g, plotKey, b, d.id);
+                if (r.ok) {
+                  Balaclava.Audio.play('portal');
+                  g.toast(`¡Iniciada simulación de ${d.boss.name}!`, 'success');
+                  this.renderModal();
+                } else {
+                  g.toast(r.reason, 'warn');
+                }
+              }
+            }, 'Insertar y Simular') : this.el('button', {
+              class: canMake.ok ? 'btn btn-gold btn-sm' : 'btn btn-stone btn-sm',
+              disabled: canMake.ok ? null : 'disabled',
+              onclick: () => {
+                const r = g.omega.craftCrystal(g, plotKey, d.id);
+                if (r.ok) {
+                  Balaclava.Audio.play('pickup');
+                  g.toast(`Cristal de ${d.boss.name} sintetizado.`, 'success');
+                  this.renderModal();
+                } else {
+                  Balaclava.Audio.play('error');
+                  g.toast(r.reason, 'warn');
+                }
+              }
+            }, canMake.ok ? 'Sintetizar Cristal' : 'Bloqueado')
+          ])
+        ]);
+        bossListWrap.appendChild(row);
+      }
+      body.appendChild(bossListWrap);
+    }
+
+    renderOmegaAltar(body, b, def) {
+      const g = this.game;
+      if (!g.omega) return;
+      const plotKey = Balaclava.OmegaSystem.plotKeyOf(b.tx, b.ty);
+      this.omegaAltarTarget = this.omegaAltarTarget || 'tool:espada';
+
+      const candidateKeys = [];
+      for (const tid of ['espada', 'arco', 'pico', 'hacha', 'pala']) {
+        if (g.toolTiers && g.toolTiers[tid]) candidateKeys.push('tool:' + tid);
+      }
+      for (const [slot, id] of Object.entries(g.equipped || {})) {
+        if (id && Balaclava.ITEMS[id]) candidateKeys.push(id);
+      }
+
+      const selRow = this.el('div', { style: 'display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:6px;' });
+      for (const k of candidateKeys) {
+        const info = g.omega.overloadKeyInfo(g, k);
+        if (!info) continue;
+        const isSel = this.omegaAltarTarget === k;
+        const lvl = g.omega.overloadLevel(k);
+        selRow.appendChild(this.el('button', {
+          class: 'btn btn-sm ' + (isSel ? 'btn-gold' : 'btn-stone'),
+          style: 'white-space:nowrap;',
+          onclick: () => { this.omegaAltarTarget = k; this.renderModal(); }
+        }, `${info.name} (+${lvl})`));
+      }
+      body.appendChild(selRow);
+
+      const targetKey = this.omegaAltarTarget;
+      const info = g.omega.overloadKeyInfo(g, targetKey);
+      if (!info) {
+        body.appendChild(this.el('div', { class: 'parchment-box', style: 'text-align:center;padding:16px;' }, 'Selecciona un equipo o herramienta para sobrecargar.'));
+        return;
+      }
+
+      const curLvl = g.omega.overloadLevel(targetKey);
+      const curPct = g.omega.overloadPct(info.cat, curLvl);
+      const nextPct = g.omega.overloadPct(info.cat, curLvl + 1);
+
+      const infoCard = this.el('div', { class: 'card', style: 'padding:12px;margin-bottom:12px;' }, [
+        this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;' }, [
+          this.el('strong', { style: 'color:#ffd54f;font-size:16px;' }, `${info.name} — Nivel +${curLvl}`),
+          this.el('span', { style: 'color:#80d8ff;font-weight:bold;' }, `Bonus Actual: +${curPct}%`)
+        ]),
+        this.el('div', { style: 'font-size:13px;color:#dce8f5;line-height:1.45;' },
+          `Tipo de Sobrecarga: ${info.cat === 'damage' ? 'Daño Bruto' : (info.cat === 'defense' ? 'Defensa y Salud' : 'Potencia de Extracción')}. Siguiente nivel: +${nextPct}%. Fórmulas de coste exponencial Base × 1.35^Nivel.`)
+      ]);
+      body.appendChild(infoCard);
+
+      const buyRows = this.el('div', { style: 'display:grid;grid-template-columns:1fr 1fr;gap:8px;' });
+      const counts = [1, 10, 50];
+      for (const n of counts) {
+        const q = g.omega.overloadQuote(g, targetKey, n, plotKey);
+        const costStr = q.ok ? g.omega.fmtMap(q.cost) : 'N/A';
+        buyRows.appendChild(this.el('button', {
+          class: q.ok && q.affordable ? 'btn btn-primary' : 'btn btn-stone',
+          disabled: q.ok && q.affordable ? null : 'disabled',
+          style: 'padding:8px;display:flex;flex-direction:column;align-items:center;gap:3px;',
+          onclick: () => {
+            const r = g.omega.overloadBuy(g, targetKey, n, plotKey);
+            if (r.ok) {
+              Balaclava.Audio.play('levelup');
+              g.toast(`¡Sobrecargado ${info.name} a +${r.to}!`, 'success');
+              this.renderModal();
+            } else {
+              Balaclava.Audio.play('error');
+              g.toast(r.reason, 'warn');
+            }
+          }
+        }, [
+          this.el('strong', {}, `+${n} Niveles`),
+          this.el('span', { style: 'font-size:11px;color:#ffd54f;' }, costStr)
+        ]));
+      }
+
+      const maxN = g.omega.overloadMaxAffordable(g, targetKey, plotKey, 500);
+      const maxQuote = maxN > 0 ? g.omega.overloadQuote(g, targetKey, maxN, plotKey) : null;
+      buyRows.appendChild(this.el('button', {
+        class: maxN > 0 ? 'btn btn-gold' : 'btn btn-stone',
+        disabled: maxN > 0 ? null : 'disabled',
+        style: 'padding:8px;display:flex;flex-direction:column;align-items:center;gap:3px;',
+        onclick: () => {
+          if (maxN <= 0) return;
+          const r = g.omega.overloadBuy(g, targetKey, maxN, plotKey);
+          if (r.ok) {
+            Balaclava.Audio.play('levelup');
+            g.toast(`¡Sobrecargado al máximo posible: +${r.to}!`, 'success');
+            this.renderModal();
+          } else {
+            Balaclava.Audio.play('error');
+            g.toast(r.reason, 'warn');
+          }
+        }
+      }, [
+        this.el('strong', {}, `Máximo Posible (+${maxN})`),
+        this.el('span', { style: 'font-size:11px;' }, maxQuote ? g.omega.fmtMap(maxQuote.cost) : 'Sin recursos suficientes')
+      ]));
+
+      body.appendChild(buyRows);
+    }
+
+    renderOmegaMachine(body, b, def) {
+      const g = this.game;
+      if (!g.omega) return;
+      const plotKey = Balaclava.OmegaSystem.plotKeyOf(b.tx, b.ty);
+      const o = g.omega.ensureOmegaState(b);
+      const kind = def.omega.kind;
+      const isGen = kind === 'generator';
+      const powerVal = isGen ? (def.omega.power || 40) : (def.omega.power || 25);
+
+      const card = this.el('div', { class: 'card', style: 'padding:12px;margin-bottom:12px;' }, [
+        this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;' }, [
+          this.el('strong', { style: 'color:#fff;font-size:15px;' }, def.name),
+          this.el('span', {
+            style: `font-size:11px;font-weight:900;padding:2px 6px;border-radius:3px;background:${o.state === 'activa' ? '#2e7d32' : '#c62828'};color:#fff;`
+          }, o.state ? o.state.toUpperCase() : 'DESCONOCIDO')
+        ]),
+        this.el('div', { style: 'font-size:13px;color:#dce8f5;margin-bottom:8px;' },
+          `Energía: ${isGen ? `+${powerVal} W (Producción)` : `-${powerVal} W (Consumo)`} · Radio / Conexión: Activa en red`),
+        o.reason ? this.el('div', { style: 'font-size:12px;color:#ffd54f;margin-bottom:8px;' }, o.reason) : null,
+        !isGen ? this.el('div', { style: 'display:flex;align-items:center;gap:8px;margin-top:6px;' }, [
+          this.el('span', { style: 'font-size:12px;color:#b8d4ec;' }, 'Prioridad de energía:'),
+          this.el('button', {
+            class: 'btn btn-stone btn-sm ' + ((o.prio || 2) === 1 ? 'btn-gold' : ''),
+            onclick: () => { o.prio = 1; this.renderModal(); }
+          }, 'Baja'),
+          this.el('button', {
+            class: 'btn btn-stone btn-sm ' + ((o.prio || 2) === 2 ? 'btn-gold' : ''),
+            onclick: () => { o.prio = 2; this.renderModal(); }
+          }, 'Media'),
+          this.el('button', {
+            class: 'btn btn-stone btn-sm ' + ((o.prio || 2) === 3 ? 'btn-gold' : ''),
+            onclick: () => { o.prio = 3; this.renderModal(); }
+          }, 'Alta')
+        ]) : null
+      ]);
+      body.appendChild(card);
+
+      if (kind === 'extractor') {
+        const biomeId = g.world.getBiomeAtPixel(b.tx * Balaclava.CONST.TILE_SIZE, b.ty * Balaclava.CONST.TILE_SIZE);
+        const tbl = Balaclava.OmegaSystem.EXTRACT_TABLES[biomeId] || [];
+        const resCard = this.el('div', { class: 'parchment-box', style: 'padding:10px;font-size:13px;' }, [
+          this.el('strong', { style: 'color:#ffe082;display:block;margin-bottom:4px;' }, 'Vetas del Bioma Detectadas:'),
+          this.el('div', { style: 'color:#dce8f5;line-height:1.4;' },
+            tbl.length ? tbl.map(k => (Balaclava.ITEMS[k] && Balaclava.ITEMS[k].name) || k).join(', ') : 'Minerales estándar')
+        ]);
+        body.appendChild(resCard);
+      }
     }
 
     renderStationCategories(body, stationId) {

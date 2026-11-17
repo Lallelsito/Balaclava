@@ -12,6 +12,8 @@
 
       this.world = new Balaclava.WorldManager();
       this.farming = new Balaclava.FarmingAndFishing();
+      this.omega = Balaclava.OmegaSystem ? new Balaclava.OmegaSystem() : null;
+      if (this.omega) Balaclava.OmegaRuntime = this.omega;
       this.automation = new Balaclava.AutomationSystem();
       this.combat = new Balaclava.CombatSystem();
       this.economy = new Balaclava.EconomySystem();
@@ -74,6 +76,8 @@
       this.npcQuestProgress = {};
       this.claimedContracts = [];
       this.clearedDungeons = [];
+      this.corruptedClearedDungeons = [];
+      if (this.omega) { this.omega.reset(); Balaclava.OmegaRuntime = this.omega; }
       this.dungeonIntroSeen = false;
       this.activeDungeonIntroTimer = 0;
       this.unlockedAchievements = [];
@@ -229,6 +233,8 @@
       this.npcQuestProgress = {};
       this.claimedContracts = [];
       this.clearedDungeons = [];
+      this.corruptedClearedDungeons = [];
+      if (this.omega) { this.omega.reset(); Balaclava.OmegaRuntime = this.omega; }
       this.dungeonIntroSeen = false;
       this.activeDungeonIntroTimer = 0;
       this.unlockedAchievements = [];
@@ -471,6 +477,11 @@
         const evId = this.events.activeEvent.id;
         if (evId === 'viento_favorable') m.moveSpeed += 0.30;
         if (evId === 'anomalia_temporal') m.machineSpeed += 1.0;
+      }
+
+      // Omega equipment set bonuses & research bonuses
+      if (this.omega && typeof this.omega.applyEquipMods === 'function') {
+        this.omega.applyEquipMods(this, m);
       }
 
       // Soft-caps and diminishing returns for attack speed and bonus damage
@@ -2100,6 +2111,10 @@
       const def = Balaclava.BUILDINGS[buildingId];
       if (!def || this.activeDungeon) return false;
       if (def.reqSkill && !this.unlockedSkills.includes(def.reqSkill)) return false;
+      if (this.omega && typeof this.omega.canPlace === 'function') {
+        const oChk = this.omega.canPlace(this, buildingId, tx, ty);
+        if (!oChk.ok) return false;
+      }
       const size = def.size || 1;
       for (let dy = 0; dy < size; dy++) {
         for (let dx = 0; dx < size; dx++) {
@@ -2135,6 +2150,13 @@
       if (this.isPlayerDead()) return false;
       if (!this.canPlaceBuilding(buildingId, tx, ty)) {
         Balaclava.Audio.play('error');
+        if (this.omega && typeof this.omega.canPlace === 'function') {
+          const chk = this.omega.canPlace(this, buildingId, tx, ty);
+          if (!chk.ok) {
+            this.toast(chk.reason, 'warn');
+            return false;
+          }
+        }
         this.toast(Balaclava.I18n ? Balaclava.I18n.t('build.cannotPlaceHere') : 'No se puede construir aquí o faltan recursos.', 'warn');
         return false;
       }
@@ -2157,7 +2179,7 @@
           this.world.terraformedTiles.push([tx, ty]);
         }
       } else {
-        this.buildings.push({
+        const bObj = {
           id: this.nextBuildingId++,
           type: buildingId,
           tx, ty,
@@ -2169,7 +2191,18 @@
           queue: [],
           autoRefuel: true,
           autoPull: true
-        });
+        };
+        if (def && def.omega) {
+          bObj.omega = {
+            priority: 2,
+            job: null,
+            timer: 0,
+            status: 'activa'
+          };
+          if (def.omega.kind === 'press') bObj.omega.category = null;
+          if (def.omega.kind === 'chamber') bObj.omega.activeCrystal = null;
+        }
+        this.buildings.push(bObj);
       }
 
       this.recordEncyclopedia('buildings', buildingId);
@@ -4385,6 +4418,53 @@
     enterDungeon(dungeonId, isCorrupted = false) {
       if (Balaclava.UI && Balaclava.UI.activeModal) Balaclava.UI.closeModal();
 
+      if (dungeonId === 'abismo_infinito') {
+        const floor = (this.omega && this.omega.state.abyssFloor) || 1;
+        const scale = this.omega ? this.omega.abyssScale(floor) : { hpMult: 1, dmgMult: 1, spdMult: 1, lootMult: 1 };
+        const mods = this.omega ? this.omega.abyssModifiersForFloor(floor) : [];
+        const doEnterAbyss = () => {
+          this.farming.fishing = null;
+          this.placingBuildingId = null;
+          this.placingItemId = null;
+          const dKeys = Object.keys(Balaclava.DUNGEON_DEFS || {});
+          const baseKey = dKeys[(floor - 1) % (dKeys.length || 1)] || 'catacumbas_olvidadas';
+          this.activeDungeon = new Balaclava.DungeonInstance(baseKey, { x: this.player.x, y: this.player.y }, this.player.level, {
+            isAbyss: true,
+            abyssFloor: floor,
+            abyssScale: scale,
+            abyssMods: mods
+          });
+          this._savedOverworldDrops = Array.isArray(this.drops) ? this.drops : [];
+          this.drops = [];
+          this.enemyProjectiles = [];
+          this.thrownBombs = [];
+          this.laserBeams = [];
+          this.player.statusEffects = {};
+          if (this.combat) this.combat.worldHazards = [];
+          this.resetAmbientParticles();
+          this.player.x = this.activeDungeon.spawnPos.x;
+          this.player.y = this.activeDungeon.spawnPos.y;
+          this.camera.x = this.player.x;
+          this.camera.y = this.player.y;
+          Balaclava.Audio.play('portal');
+          Balaclava.Audio.setMood('boss', { delayMs: 650, fadeOutMs: 320, fadeInMs: 4200 });
+          this.toast(`🌌 Has descendido al Piso ${floor} del Abismo Infinito. Modificadores: ${mods.join(', ') || 'Estándar'}.`, 'warn');
+          this.uiDirty = true;
+          if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
+        };
+        if (Balaclava.UI && typeof Balaclava.UI.playSceneTransition === 'function') {
+          Balaclava.UI.playSceneTransition({
+            title: `🌌 El Abismo Infinito — Piso ${floor}`,
+            subtitle: `HP x${scale.hpMult.toFixed(1)} | Daño x${scale.dmgMult.toFixed(1)} | Modificadores: ${mods.join(', ') || 'Estándar'}`,
+            duration: 1200,
+            onMidpoint: doEnterAbyss
+          });
+        } else {
+          doEnterAbyss();
+        }
+        return;
+      }
+
       if (!isCorrupted && Array.isArray(this.clearedDungeons) && this.clearedDungeons.includes(dungeonId)) {
         const totalDungeons = (Balaclava.DUNGEON_TIER_LIST && Balaclava.DUNGEON_TIER_LIST.length) || Object.keys(Balaclava.DUNGEON_DEFS || {}).length || 24;
         const allCleared = this.clearedDungeons.length >= totalDungeons;
@@ -5503,6 +5583,7 @@
       }
 
       this.automation.update(dt, this);
+      if (this.omega) this.omega.update(dt, this);
       this.economy.update(dt, this);
       this.events.update(dt, this);
       this.updateEntities(dt);
@@ -10331,6 +10412,47 @@
           ctx.lineWidth = 3;
           ctx.strokeRect(tx * TILE_SIZE, ty * TILE_SIZE, w, w);
         }
+      }
+
+      // Omega Energy Grid visualization when placing Omega building or inspecting
+      const isPlacingOmega = this.placingBuildingId && Balaclava.BUILDINGS[this.placingBuildingId] && Balaclava.BUILDINGS[this.placingBuildingId].omega;
+      const isOpenOmegaModal = Balaclava.UI && Balaclava.UI.activeModal === 'building' && Balaclava.UI.modalData && Balaclava.BUILDINGS[Balaclava.UI.modalData.type] && Balaclava.BUILDINGS[Balaclava.UI.modalData.type].omega;
+      if ((isPlacingOmega || isOpenOmegaModal) && !this.activeDungeon && Array.isArray(this.buildings)) {
+        ctx.save();
+        const pulse = 0.5 + 0.5 * Math.sin(this.time * 4);
+        ctx.lineWidth = 1.8;
+        ctx.setLineDash([5, 5]);
+        ctx.lineDashOffset = -this.time * 20;
+
+        const omegaBldgs = this.buildings.filter(b => Balaclava.BUILDINGS[b.type] && Balaclava.BUILDINGS[b.type].omega);
+        const pylons = omegaBldgs.filter(b => b.type === 'pilon_enlace' || b.type === 'nexo_central');
+        
+        for (const p of pylons) {
+          const pDef = Balaclava.BUILDINGS[p.type];
+          const px = (p.tx + (pDef.size || 1) * 0.5) * TILE_SIZE;
+          const py = (p.ty + (pDef.size || 1) * 0.5) * TILE_SIZE;
+          const r = ((pDef.omega && pDef.omega.radius) || 8) * TILE_SIZE;
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(0, 229, 255, 0.22)';
+          ctx.stroke();
+
+          for (const p2 of pylons) {
+            if (p2.id <= p.id) continue;
+            const p2Def = Balaclava.BUILDINGS[p2.type];
+            const p2x = (p2.tx + (p2Def.size || 1) * 0.5) * TILE_SIZE;
+            const p2y = (p2.ty + (p2Def.size || 1) * 0.5) * TILE_SIZE;
+            const d = Math.hypot(px - p2x, py - p2y);
+            if (d <= r + 8) {
+              ctx.beginPath();
+              ctx.moveTo(px, py);
+              ctx.lineTo(p2x, p2y);
+              ctx.strokeStyle = `rgba(0, 229, 255, ${0.4 + pulse * 0.3})`;
+              ctx.stroke();
+            }
+          }
+        }
+        ctx.restore();
       }
 
       // Target Hitbox Indicator + Hover Inspector + Animated [E] Prompt over interactables

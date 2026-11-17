@@ -1825,6 +1825,8 @@
         img.style.filter = 'drop-shadow(0 0 3px rgba(255, 145, 0, 0.85))';
       } else if (tierId === 'celestial') {
         img.style.filter = 'drop-shadow(0 0 4px rgba(79, 195, 247, 0.9))';
+      } else if (tierId === 'omega') {
+        img.style.filter = 'drop-shadow(0 0 5px rgba(224, 64, 251, 0.95)) brightness(1.12)';
       }
       return img;
     }

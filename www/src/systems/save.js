@@ -117,8 +117,11 @@
           id: b.id, type: b.type, tx: b.tx, ty: b.ty, level: b.level,
           timer: b.timer, fuel: b.fuel, coinsStored: b.coinsStored,
           storage: { ...b.storage }, autoRefuel: b.autoRefuel, autoPull: b.autoPull,
-          queue: b.queue ? [...b.queue] : []
+          queue: b.queue ? [...b.queue] : [],
+          filters: Array.isArray(b.filters) ? [...b.filters] : undefined,
+          omega: b.omega ? JSON.parse(JSON.stringify(b.omega)) : undefined
         })),
+        omega: game.omega ? game.omega.serialize() : null,
         worldSeed: game.world.worldSeed,
         plotBiomes: game.world.plotBiomes ? game.world.plotBiomes.map(r => [...r]) : null,
         plotElevation: game.world.plotElevation ? game.world.plotElevation.map(r => [...r]) : null,
@@ -320,7 +323,21 @@
       }
       if (typeof game.syncEncyclopedia === 'function') game.syncEncyclopedia();
       if (data.stats) game.stats = { ...game.makeInitialStats(), ...data.stats };
-      game.buildings = (data.buildings || []).map(b => ({ ...b, storage: b.storage || {}, queue: b.queue || [] }));
+      game.buildings = (data.buildings || []).map(b => ({
+        ...b,
+        storage: b.storage || {},
+        queue: b.queue || [],
+        filters: Array.isArray(b.filters) ? [...b.filters] : [],
+        omega: b.omega ? JSON.parse(JSON.stringify(b.omega)) : undefined
+      }));
+      if (game.omega && typeof game.omega.load === 'function') {
+        game.omega.load(data.omega || null, game, true);
+        if (game.omega.report && Object.keys(game.omega.report.gained || {}).length > 0 && typeof game.toast === 'function') {
+          const mins = Math.max(1, Math.round(game.omega.report.elapsed / 60));
+          const summary = game.omega.fmtMap(game.omega.report.gained);
+          game.toast(`Producción offline Omega (${mins} min): ${summary}`, 'success');
+        }
+      }
       for (const b of game.buildings) {
         if (b && Number.isFinite(b.tx) && Number.isFinite(b.ty) && game.world.tiles[b.ty] && game.world.tiles[b.ty][b.tx] === 0) {
           game.world.tiles[b.ty][b.tx] = 1;

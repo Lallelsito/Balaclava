@@ -6,7 +6,7 @@
   const TIER_ORDER = [
     'basica', 'mejorada', 'cobre', 'hierro', 'plata',
     'oro', 'platino', 'acero', 'cristal', 'mitrilo',
-    'titanio', 'adamantita', 'oricalco', 'legendaria', 'celestial'
+    'titanio', 'adamantita', 'oricalco', 'legendaria', 'celestial', 'omega'
   ];
 
   const TIER_META = {
@@ -24,7 +24,8 @@
     adamantita: { id: 'adamantita', name: 'De Adamantita',  color: '#66bb6a', mult: 12.2, speed: 2.48, rareBonus: 0.72, rarity: 'legendario' },
     oricalco:   { id: 'oricalco',   name: 'De Oricalco',    color: '#ff7043', mult: 14.4, speed: 2.68, rareBonus: 0.80, rarity: 'legendario' },
     legendaria: { id: 'legendaria', name: 'Legendaria',     color: '#ffb74d', mult: 17.0, speed: 2.90, rareBonus: 0.88, rarity: 'legendario' },
-    celestial:  { id: 'celestial',  name: 'Celestial',      color: '#4fc3f7', mult: 20.5, speed: 3.20, rareBonus: 1.00, rarity: 'legendario' }
+    celestial:  { id: 'celestial',  name: 'Celestial',      color: '#4fc3f7', mult: 20.5, speed: 3.20, rareBonus: 1.00, rarity: 'legendario' },
+    omega:      { id: 'omega',      name: 'Omega',          color: '#e040fb', mult: 26.0, speed: 3.65, rareBonus: 1.25, rarity: 'legendario' }
   };
 
   const TOOLS = {
@@ -45,7 +46,8 @@
         adamantita: { coins: 1920, items: { lingote_adamantita: 20, diamantes: 12, material_volcanico: 24 } },
         oricalco:   { coins: 2350, items: { lingote_oricalco: 24, obsidiana_refinada: 14, esencia_magma: 8 } },
         legendaria: { coins: 2950, items: { lingote_celestial: 18, polvo_estelar: 12, escamas_dragon: 8 } },
-        celestial:  { coins: 3800, items: { lingote_celestial: 28, gema_alma: 10, runa_tierra: 8, fragmentos_antiguos: 16 } }
+        celestial:  { coins: 3800, items: { lingote_celestial: 28, gema_alma: 10, runa_tierra: 8, fragmentos_antiguos: 16 } },
+        omega:      { coins: 12000, items: { lingote_omega: 6, singularidad: 1, malaquita_pradera: 12, arena_estelar: 12, esquirla_hielo: 12, esencia_oscura: 12, esencia_magma: 12 }, reqOmega: 'omega_equipo' }
       }
     },
     hacha: {
@@ -65,7 +67,8 @@
         adamantita: { coins: 1840, items: { lingote_adamantita: 20, diamantes: 12, esencia_oscura: 20 } },
         oricalco:   { coins: 2240, items: { lingote_oricalco: 24, cristal_abismal: 10, esencia_magma: 8 } },
         legendaria: { coins: 2800, items: { lingote_celestial: 18, polvo_estelar: 10, rubi: 12 } },
-        celestial:  { coins: 3600, items: { lingote_celestial: 28, gema_alma: 10, runa_vida: 10, fragmentos_antiguos: 15 } }
+        celestial:  { coins: 3600, items: { lingote_celestial: 28, gema_alma: 10, runa_vida: 10, fragmentos_antiguos: 15 } },
+        omega:      { coins: 11500, items: { lingote_omega: 6, singularidad: 1, malaquita_pradera: 10, arena_estelar: 10, esquirla_hielo: 10, esencia_oscura: 10, esencia_magma: 10 }, reqOmega: 'omega_equipo' }
       }
     },
     espada: {
@@ -85,7 +88,8 @@
         adamantita: { coins: 2050, items: { lingote_adamantita: 22, diamantes: 14, fragmentos_antiguos: 12 } },
         oricalco:   { coins: 2480, items: { lingote_oricalco: 26, esencia_magma: 10, cristal_abismal: 12 } },
         legendaria: { coins: 3050, items: { lingote_celestial: 20, polvo_estelar: 14, cuerno_demonio: 12 } },
-        celestial:  { coins: 4100, items: { lingote_celestial: 30, gema_alma: 12, runa_fuego: 10, runa_luz: 10 } }
+        celestial:  { coins: 4100, items: { lingote_celestial: 30, gema_alma: 12, runa_fuego: 10, runa_luz: 10 } },
+        omega:      { coins: 15000, items: { lingote_omega: 8, singularidad: 2, malaquita_pradera: 14, arena_estelar: 14, esquirla_hielo: 14, esencia_oscura: 14, esencia_magma: 14 }, reqOmega: 'omega_equipo' }
       }
     },
     pala: {
@@ -105,7 +109,8 @@
         adamantita: { coins: 1650, items: { lingote_adamantita: 18, diamantes: 10, fragmentos_antiguos: 10 } },
         oricalco:   { coins: 1980, items: { lingote_oricalco: 22, obsidiana_refinada: 12 } },
         legendaria: { coins: 2450, items: { lingote_celestial: 16, polvo_estelar: 10, onice: 10 } },
-        celestial:  { coins: 3250, items: { lingote_celestial: 25, gema_alma: 10, runa_tierra: 8 } }
+        celestial:  { coins: 3250, items: { lingote_celestial: 25, gema_alma: 10, runa_tierra: 8 } },
+        omega:      { coins: 10000, items: { lingote_omega: 5, singularidad: 1, arena_estelar: 12, esquirla_hielo: 12 }, reqOmega: 'omega_equipo' }
       }
     },
     cana: {
@@ -125,7 +130,8 @@
         adamantita: { coins: 1740, items: { lingote_adamantita: 18, esmeraldas: 10, pez_abismal: 4 } },
         oricalco:   { coins: 2080, items: { lingote_oricalco: 22, gema_marina: 10, coral_brillante: 10 } },
         legendaria: { coins: 2550, items: { lingote_celestial: 16, perla: 12, pez_lava: 3 } },
-        celestial:  { coins: 3400, items: { lingote_celestial: 26, gema_marina: 12, runa_agua: 10 } }
+        celestial:  { coins: 3400, items: { lingote_celestial: 26, gema_marina: 12, runa_agua: 10 } },
+        omega:      { coins: 10500, items: { lingote_omega: 5, singularidad: 1, gema_marina: 15, pez_legendario_kraken: 1 }, reqOmega: 'omega_equipo' }
       }
     },
     guadana: {
@@ -145,7 +151,8 @@
         adamantita: { coins: 1820, items: { lingote_adamantita: 18, esmeraldas: 12, esencia_oscura: 14 } },
         oricalco:   { coins: 2160, items: { lingote_oricalco: 22, esencia_magma: 10, flor_cristal: 8 } },
         legendaria: { coins: 2620, items: { lingote_celestial: 16, polvo_estelar: 10, flor_cristal: 10 } },
-        celestial:  { coins: 3450, items: { lingote_celestial: 26, gema_alma: 10, runa_vida: 10 } }
+        celestial:  { coins: 3450, items: { lingote_celestial: 26, gema_alma: 10, runa_vida: 10 } },
+        omega:      { coins: 11000, items: { lingote_omega: 5, singularidad: 1, malaquita_pradera: 12, esencia_oscura: 12 }, reqOmega: 'omega_equipo' }
       }
     },
     arco: {
@@ -165,7 +172,8 @@
         adamantita: { coins: 2040, items: { lingote_adamantita: 20, diamantes: 12, material_volcanico: 18 } },
         oricalco:   { coins: 2450, items: { lingote_oricalco: 24, cristal_abismal: 10, pluma_oscura: 10 } },
         legendaria: { coins: 2980, items: { lingote_celestial: 18, polvo_estelar: 12, pluma_fenix: 8 } },
-        celestial:  { coins: 3950, items: { lingote_celestial: 28, gema_alma: 12, runa_aire: 10 } }
+        celestial:  { coins: 3950, items: { lingote_celestial: 28, gema_alma: 12, runa_aire: 10 } },
+        omega:      { coins: 14000, items: { lingote_omega: 7, singularidad: 2, arena_estelar: 12, esencia_magma: 12 }, reqOmega: 'omega_equipo' }
       }
     },
     azada: {
@@ -185,7 +193,8 @@
         adamantita: { coins: 1710, items: { lingote_adamantita: 18, esmeraldas: 10 } },
         oricalco:   { coins: 2050, items: { lingote_oricalco: 22, cristal_abismal: 10, flor_cristal: 8 } },
         legendaria: { coins: 2490, items: { lingote_celestial: 16, polvo_estelar: 10, flor_cristal: 8 } },
-        celestial:  { coins: 3280, items: { lingote_celestial: 26, gema_alma: 10, runa_vida: 8 } }
+        celestial:  { coins: 3280, items: { lingote_celestial: 26, gema_alma: 10, runa_vida: 8 } },
+        omega:      { coins: 10000, items: { lingote_omega: 5, singularidad: 1, malaquita_pradera: 10, flor_cristal: 10 }, reqOmega: 'omega_equipo' }
       }
     }
   };
@@ -351,7 +360,7 @@
       tiers: [
         'casco_cuero', 'casco_bronce', 'casco_cobre', 'casco_hierro', 'casco_plata',
         'casco_oro', 'casco_platino', 'casco_acero', 'casco_cristal', 'casco_mitrilo',
-        'casco_titanio', 'casco_adamantita', 'casco_oricalco', 'casco_balaclava', 'casco_solar'
+        'casco_titanio', 'casco_adamantita', 'casco_oricalco', 'casco_balaclava', 'casco_solar', 'casco_omega'
       ]
     },
     armor: {
@@ -362,7 +371,7 @@
       tiers: [
         'armadura_cuero', 'armadura_bronce', 'armadura_cobre', 'armadura_hierro', 'armadura_plata',
         'armadura_oro', 'armadura_platino', 'armadura_acero', 'armadura_cristal', 'armadura_mitrilo',
-        'armadura_titanio', 'armadura_adamantita', 'armadura_oricalco', 'armadura_volcanica', 'armadura_celestial'
+        'armadura_titanio', 'armadura_adamantita', 'armadura_oricalco', 'armadura_volcanica', 'armadura_celestial', 'armadura_omega'
       ]
     },
     shield: {
@@ -373,7 +382,7 @@
       tiers: [
         'escudo_madera', 'escudo_bronce', 'escudo_cobre', 'escudo_hierro', 'escudo_plata',
         'escudo_oro', 'escudo_platino', 'escudo_acero', 'escudo_cristal', 'escudo_mitrilo',
-        'escudo_titanio', 'escudo_adamantita', 'escudo_oricalco', 'escudo_solar', 'escudo_celestial'
+        'escudo_titanio', 'escudo_adamantita', 'escudo_oricalco', 'escudo_solar', 'escudo_celestial', 'escudo_omega'
       ]
     },
     boots: {
@@ -384,7 +393,7 @@
       tiers: [
         'botas_cuero', 'botas_bronce', 'botas_cobre', 'botas_hierro', 'botas_plata',
         'botas_oro', 'botas_platino', 'botas_acero', 'botas_cristal', 'botas_mitrilo',
-        'botas_titanio', 'botas_adamantita', 'botas_oricalco', 'botas_viento', 'botas_celestiales'
+        'botas_titanio', 'botas_adamantita', 'botas_oricalco', 'botas_viento', 'botas_celestiales', 'botas_omega'
       ]
     },
     legs: {
@@ -393,7 +402,7 @@
       fallbackName: 'Pantalones',
       baseItem: 'pantalones_cuero',
       tiers: [
-        'pantalones_cuero', 'pantalones_hierro', 'pantalones_acero'
+        'pantalones_cuero', 'pantalones_hierro', 'pantalones_acero', 'pantalones_omega'
       ]
     }
   };

@@ -1755,6 +1755,12 @@
         dmgScale *= 0.78;
       }
 
+      if (game.omega && typeof game.omega.creatureMult === 'function') {
+        const asc = game.omega.creatureMult(x, y);
+        hpScale *= asc.hp;
+        dmgScale *= asc.dmg;
+      }
+
       const mob = {
         id: this.nextId++,
         type,
@@ -2032,22 +2038,28 @@
         if (typeof dung.unlockBossGateAfterVictory === 'function') {
           dung.unlockBossGateAfterVictory();
         }
-        if (dung.isCorrupted) {
+        if (dung.abyssFloor) {
+          if (game.omega && typeof game.omega.onAbyssBossDefeated === 'function') {
+            game.omega.onAbyssBossDefeated(game, dung);
+          }
+        } else if (dung.isCorrupted) {
           if (!Array.isArray(game.corruptedClearedDungeons)) game.corruptedClearedDungeons = [];
           if (!game.corruptedClearedDungeons.includes(dung.id)) {
             game.corruptedClearedDungeons.push(dung.id);
           }
+          if (game.omega && typeof game.omega.recordBossKill === 'function') game.omega.recordBossKill(dung.id);
         } else {
           if (!game.clearedDungeons.includes(dung.id)) {
             game.clearedDungeons.push(dung.id);
           }
+          if (game.omega && typeof game.omega.recordBossKill === 'function') game.omega.recordBossKill(dung.id);
         }
         game.addCoins(enemy.coins);
         game.gainXp(enemy.xp);
         for (const [id, qty] of Object.entries(enemy.drops)) {
           game.addItem(id, qty);
         }
-        if (dung.def.bossRelicId && typeof game.unlockPermanentRelic === 'function') {
+        if (!dung.abyssFloor && dung.def.bossRelicId && typeof game.unlockPermanentRelic === 'function') {
           game.unlockPermanentRelic(dung.def.bossRelicId);
         }
         const cx = dung.bossArenaCenter ? dung.bossArenaCenter.tx : 31;
