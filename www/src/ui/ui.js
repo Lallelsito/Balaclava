@@ -1038,6 +1038,30 @@
 
       box.appendChild(navStack);
 
+      const isEnTitle = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+      const patchBtn = this.el('button', {
+        id: 'btn-title-patch-notes',
+        type: 'button',
+        class: 'title-patch-notes-btn',
+        'data-tip-text': isEnTitle
+          ? 'View recent changes and new content in Beta 1.2.0'
+          : 'Ver todos los cambios recientes y contenido nuevo de la Beta 1.2.0',
+        onclick: () => this.openModal('patch_notes')
+      }, [
+        this.el('img', { class: 'pixel-img', src: 'assets/icons/scroll_map.png', width: 18, height: 18, alt: '' }),
+        this.el('span', { class: 'title-patch-notes-label' }, isEnTitle ? 'Patch Notes' : 'Cambios recientes'),
+        this.el('span', { class: 'title-patch-notes-badge' }, 'Beta 1.2.0')
+      ]);
+      box.appendChild(patchBtn);
+
+      const verEl = document.querySelector('#title-screen .title-version');
+      if (verEl) {
+        verEl.textContent = 'Balaclava Beta v1.2.0';
+        verEl.style.pointerEvents = 'auto';
+        verEl.style.cursor = 'pointer';
+        verEl.onclick = () => this.openModal('patch_notes');
+      }
+
       const cornerActions = this.el('div', { class: 'title-corner-actions' }, [
         this.el('button', {
           id: 'btn-title-discord',
@@ -3788,6 +3812,7 @@
         title_settings: tr('settings.title'),
         controls: tr('settings.title'),
         credits: tr('credits.title'),
+        patch_notes: (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') ? 'Patch Notes — Beta 1.2.0' : 'Cambios Recientes — Beta 1.2.0',
         quit_confirm: tr('quit.title'),
         quit_web_fallback: tr('quit.webFallbackTitle'),
         discord_fallback: tr('title.discord'),
@@ -3809,6 +3834,7 @@
         modalBox.classList.toggle('pause-root-compact', (this.activeModal === 'pause' && this.pauseView === 'root') || isCompactMenu);
         modalBox.classList.toggle('pause-settings-compact', this.pauseView === 'settings' || this.activeModal === 'title_settings');
         modalBox.classList.toggle('steam-dialog-box', isCompactMenu);
+        modalBox.classList.toggle('patch-notes-modal', this.activeModal === 'patch_notes');
       }
       if (titles[this.activeModal]) titleEl.textContent = titles[this.activeModal];
 
@@ -3830,6 +3856,7 @@
       else if (this.activeModal === 'pause' || this.activeModal === 'settings') this.renderPauseMenu(body);
       else if (this.activeModal === 'title_settings') this.renderTitleAudioSettings(body);
       else if (this.activeModal === 'credits') this.renderCreditsModal(body);
+      else if (this.activeModal === 'patch_notes') this.renderPatchNotesModal(body);
       else if (this.activeModal === 'quit_confirm') this.renderQuitModal(body, false);
       else if (this.activeModal === 'quit_web_fallback') this.renderQuitModal(body, true);
       else if (this.activeModal === 'discord_fallback') this.renderDiscordFallbackModal(body);
@@ -9696,6 +9723,200 @@
           onclick: () => this.closeModal()
         }, tr('common.back'))
       ]));
+    }
+
+    renderPatchNotesModal(body) {
+      const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+      const sections = isEn ? [
+        {
+          badge: 'INVENTORY & HOTBAR',
+          color: '#ffd54f',
+          icon: 'mochila_astral',
+          title: 'Slot-Based Inventory, Backpacks & Independent Hotbar',
+          items: [
+            'Slot-based inventory (20 base slots) decoupled from the 9-slot Hotbar (29 base slots in total).',
+            'Base stack size increased to 25 items per slot (expandable up to 100 via skills and backpacks).',
+            'Quick item transfer between Inventory [Q] and Hotbar [1-9] using Shift + Click.',
+            '3 Craftable Backpacks at the Loom: Leather Backpack (Tier 2), Reinforced Backpack (Tier 5), and Astral Backpack (Tier 9), plus 3 early inventory nodes in the Gathering Constellation.',
+            'Legacy Save Protection: existing saves with over-capacity inventories automatically spawn on the Main Island with excess stacks neatly dropped around the player for safe chest storage.'
+          ]
+        },
+        {
+          badge: 'STORAGE [R]',
+          color: '#4fc3f7',
+          icon: 'tablon',
+          title: 'Storage Chests in the Build Menu [R]',
+          items: [
+            '3 placeable Storage Chest tiers in the Build Menu [R]: Wooden Chest (30 slots), Iron Chest (50 slots), and Runic Golden Chest (70 slots).',
+            'Chest stack capacity increased to 100 items per slot across all storage chests.',
+            'Quick deposit and withdraw controls (x1, x5, x10, Half, Full Stack, Deposit All) and Shift + Click support.'
+          ]
+        },
+        {
+          badge: 'EQUIPMENT & ORES',
+          color: '#81c784',
+          icon: 'pantalones_omega',
+          title: 'New Armor Slot: Leggings / Greaves (16 Tiers)',
+          items: [
+            '5th Paperdoll Armor Slot: 16 complete tiers from Leather Pants (Tier 1) to Graviton Greaves Omega (Tier 16), granting Defense, Max HP, and Movement Speed.',
+            'Full recipe and mineral progression rebalance across all 16 tiers and biome rings.'
+          ]
+        },
+        {
+          badge: 'DUNGEONS & BOSSES',
+          color: '#ff8a65',
+          icon: 'espada_omega',
+          title: 'Expanded Late-Biome Dungeons (Biomes 3, 4 & 5) & Corrupted Mode',
+          items: [
+            'Desert, Volcano, and Shadow Crypt dungeons expanded with 3x difficulty, 3 new side chambers, and reinforced 3-tile boss chamber stone walls.',
+            'New Boss Gate requirements: defeat 2 Guardians (North & South), purify 2 Elemental Shrines, and solve a 4-Rune sequence puzzle.',
+            'Late-biome Bosses feature 5x HP and 3 new attack patterns: Spiral Barrage, Expanding Shockwave Ring, and Meteor Rain.',
+            'Unrestricted dungeon re-entry after death, plus Corrupted Dungeon Mode (25x difficulty) after clearing all 24 dungeons.'
+          ]
+        },
+        {
+          badge: 'OMEGA ENDGAME',
+          color: '#ea80fc',
+          icon: 'singularidad',
+          title: 'Omega Energy Grid, Automation & Tier 16 Endgame',
+          items: [
+            'Power Grid & Virtual Storage: Omega Central Nexus, Link Pylons, Quantum Battery (+5,000 to +40,000 W·s reserve), and 4 Generators (Combustion, Geothermal, Arcane Solar, Singularity Reactor).',
+            '6 Processing Machines & Harvesters: Crusher, Arcane Washer, Omega Smelter, Gem Synthesizer, Omega Runic Inscriber, Pure Matter Condenser, Deep Core Extractor, and Hydroponic Dome.',
+            'Defense, Bosses & Overcharge: Omega Prism Turret, Island Overcharge Beacon (+25% to +60% machine speed & +30% damage), Singularity Press, Boss Simulation Chamber, and Infinite Overcharge Altar.',
+            '13 Omega Research Technologies, Tier 16 Omega Gear, Island Ascension (Ranks I-III), and The Infinite Abyss endless dungeon.'
+          ]
+        },
+        {
+          badge: 'PROGRESSION & ART',
+          color: '#69f0ae',
+          icon: 'cristal_datos',
+          title: 'High-Level XP Scaling, Constellation Costs & Visual Overhaul',
+          items: [
+            'High-level XP requirement scaling: Lv. 50+ (x2 XP), Lv. 100+ (x4 XP), Lv. 200+ (x10 XP), and Lv. 300+ (x20 XP).',
+            'Progressive Constellation Skill costs [G]: skills now cost Constellation Points equal to their Tier (Tier 1 = 1 pt up to Tier 10 = 10 pts).',
+            'Complete pixel-art visual overhaul for all crafting stations, defensive towers, 2x2 Royal Bazaar Pavilion, Omega structures, and live animated farm animals in corrals.'
+          ]
+        }
+      ] : [
+        {
+          badge: 'INVENTARIO Y HOTBAR',
+          color: '#ffd54f',
+          icon: 'mochila_astral',
+          title: 'Sistema de Inventario, Mochilas y Hotbar Independiente',
+          items: [
+            'Inventario basado en ranuras (20 espacios iniciales) separado de la barra rapida (9 espacios de Hotbar = 29 espacios base en total).',
+            'Capacidad de stack base aumentada a 25 unidades por ranura (ampliable hasta 100 con habilidades y mochilas).',
+            'Transferencia rapida de objetos entre el Inventario [Q] y la Hotbar [1-9] usando Shift + Clic.',
+            '3 Mochilas crafteables en el Telar: Mochila de Cuero (Tier 2), Mochila Reforzada (Tier 5) y Mochila Astral (Tier 9), mas 3 habilidades tempranas de inventario en la Constelacion de Recoleccion.',
+            'Proteccion para partidas antiguas: al cargar una partida previa a la actualizacion con exceso de objetos, apareces en la Isla Principal y los objetos sobrantes caen ordenadamente a tu alrededor para guardarlos en cofres.'
+          ]
+        },
+        {
+          badge: 'ALMACENAMIENTO [R]',
+          color: '#4fc3f7',
+          icon: 'tablon',
+          title: 'Cofres de Almacenamiento en el Menu de Construccion [R]',
+          items: [
+            '3 Tiers de Cofres fisicos construibles desde el menu [R]: Cofre de Madera (30 ranuras), Cofre de Hierro (50 ranuras) y Cofre Dorado Runico (70 ranuras).',
+            'Capacidad de stack ampliada a 100 unidades por ranura dentro de todos los cofres.',
+            'Controles rapidos para depositar y retirar (x1, x5, x10, Mitad, Stack Completo, Depositar Todo) y soporte para Shift + Clic.'
+          ]
+        },
+        {
+          badge: 'EQUIPO Y MINERALES',
+          color: '#81c784',
+          icon: 'pantalones_omega',
+          title: 'Nueva Ranura de Equipamiento: Pantalones y Grebas (16 Tiers)',
+          items: [
+            '5ta ranura de armadura en el panel del heroe con 16 tiers completos: desde Pantalones de Cuero (Tier 1) hasta Grebas Gravitatorias Omega (Tier 16), otorgando Defensa, Vida maxima y Velocidad de movimiento.',
+            'Balanceo integral de spawneo de minerales por anillo de bioma y recetas de herramientas, picos y armaduras de Tier 1 a Tier 16.'
+          ]
+        },
+        {
+          badge: 'MAZMORRAS Y JEFES',
+          color: '#ff8a65',
+          icon: 'espada_omega',
+          title: 'Expansion de Mazmorras (Biomas 3, 4 y 5) y Modo Corrupto',
+          items: [
+            'Mazmorras de Desierto, Volcan y Criptas Sombrias expandidas con dificultad x3, 3 salas nuevas y muros reforzados en la camara del jefe.',
+            'Nuevos requisitos para abrir la puerta del jefe: derrotar a 2 Guardianes (Norte y Sur), purificar 2 Altares Elementales y resolver el puzle de secuencia de 4 Runas.',
+            'Jefes de Biomas 3, 4 y 5 con x5 de vida y 3 nuevos ataques: Rafaga en Espiral, Anillo de Choque Expansivo y Lluvia de Meteoros.',
+            'Reingreso libre a las mazmorras tras morir y Nuevo Modo Corrupto (dificultad 25x) al completar las 24 mazmorras.'
+          ]
+        },
+        {
+          badge: 'ENDGAME OMEGA',
+          color: '#ea80fc',
+          icon: 'singularidad',
+          title: 'Red de Energia Omega, Automatizacion y Tier 16',
+          items: [
+            'Red Electrica y Almacen Virtual: Nexo Central Omega, Pilones de Enlace, Acumulador Cuantico (+5.000 a +40.000 W·s) y 4 Generadores (Combustion, Geotermico, Solar Arcano y Reactor de Singularidad).',
+            '6 Maquinas Procesadoras y Extractores: Trituradora, Lavadora Arcana, Fundidora Omega, Sintetizador de Gemas, Inscriptor Runico Omega, Condensador de Materia Pura, Extractor de Nucleo Profundo y Domo Hidroponico.',
+            'Defensa, Jefes y Sobrecarga: Torreta de Prisma Omega, Baliza de Sobrecarga de Isla (+25% a +60% velocidad de maquinas y +30% dano), Prensa de Singularidades, Camara de Simulacion de Jefes y Altar de Sobrecarga Infinita.',
+            'Arbol de 13 Tecnologias Omega, Equipamiento Tier 16, Ascension de Islas (Rango I a III) y la mazmorra infinita El Abismo Infinito.'
+          ]
+        },
+        {
+          badge: 'PROGRESION Y ARTE',
+          color: '#69f0ae',
+          icon: 'cristal_datos',
+          title: 'Escalado de Nivel, Costo de Constelaciones y Renovacion Visual',
+          items: [
+            'Escalado de XP en niveles altos: Nv. 50+ (x2 XP), Nv. 100+ (x4 XP), Nv. 200+ (x10 XP) y Nv. 300+ (x20 XP).',
+            'Costo progresivo en el Arbol de Constelaciones [G]: cada habilidad cuesta tantos puntos como su Tier (Tier 1 = 1 punto ... Tier 10 = 10 puntos).',
+            'Renovacion visual completa con texturas pixel-art a medida para estaciones, torres defensivas, Pabellon de Feria Urbana (2x2), maquinas Omega y corrales con animales animados en vivo.'
+          ]
+        }
+      ];
+
+      const wrap = this.el('div', { class: 'patch-notes-wrap' });
+
+      wrap.appendChild(this.el('div', { class: 'parchment-box patch-notes-hero' }, [
+        this.el('div', { class: 'patch-notes-hero-top' }, [
+          this.el('span', { class: 'patch-version-pill' }, 'BETA v1.2.0'),
+          this.el('span', { class: 'patch-notes-date' }, isEn ? 'Major Content & Systems Update' : 'Actualizacion Mayor de Contenido y Sistemas')
+        ]),
+        this.el('div', { class: 'patch-notes-hero-title' }, isEn
+          ? 'BALACLAVA — Beta 1.2.0 Release Notes'
+          : 'BALACLAVA — Notas de la Version Beta 1.2.0'),
+        this.el('div', { class: 'patch-notes-hero-sub' }, isEn
+          ? 'Complete summary of all new gameplay systems, structures, dungeons, and progression changes introduced in this update.'
+          : 'Resumen completo de todos los sistemas, estructuras, mazmorras, energia Omega y mejoras de progresion implementados en esta version.')
+      ]));
+
+      const list = this.el('div', { class: 'patch-notes-list' });
+      sections.forEach(sec => {
+        const ul = this.el('ul', { class: 'patch-notes-bullets' });
+        sec.items.forEach(line => {
+          ul.appendChild(this.el('li', {}, line));
+        });
+        const card = this.el('div', {
+          class: 'card patch-notes-card',
+          style: `--patch-accent:${sec.color};`
+        }, [
+          this.el('div', { class: 'patch-notes-card-head' }, [
+            this.itemIcon(sec.icon, 32),
+            this.el('div', { class: 'patch-notes-card-titles' }, [
+              this.el('span', { class: 'patch-notes-cat-badge', style: `color:${sec.color};border-color:${sec.color};` }, sec.badge),
+              this.el('strong', { class: 'patch-notes-card-title' }, sec.title)
+            ])
+          ]),
+          ul
+        ]);
+        list.appendChild(card);
+      });
+      wrap.appendChild(list);
+
+      wrap.appendChild(this.el('div', { class: 'patch-notes-footer' }, [
+        this.el('button', {
+          id: 'btn-patch-notes-close',
+          type: 'button',
+          class: 'btn btn-gold pause-big-btn',
+          onclick: () => this.closeModal()
+        }, tr('common.back'))
+      ]));
+
+      body.appendChild(wrap);
     }
 
     renderExitDungeonConfirmModal(body) {

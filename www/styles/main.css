@@ -7326,6 +7326,180 @@ body.photo-mode-active #toast-container {
   pointer-events: none !important;
 }
 
+/* === MAIN MENU SMALL PATCH NOTES BUTTON & BETA 1.2.0 MODAL === */
+.title-patch-notes-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 5px 12px 5px 10px;
+  min-height: 30px;
+  background: rgba(10, 18, 38, 0.72);
+  border: 1.5px solid rgba(255, 213, 79, 0.48);
+  box-shadow: 0 0 0 1px rgba(4, 7, 16, 0.78), 0 4px 10px rgba(0, 0, 0, 0.45);
+  color: #f4efe6;
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  image-rendering: pixelated;
+  transition: transform 0.12s ease, background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+.title-patch-notes-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(18, 32, 68, 0.88);
+  border-color: #ffd54f;
+  box-shadow: 0 0 0 1px rgba(4, 7, 16, 0.9), 0 5px 14px rgba(0, 0, 0, 0.65), 0 0 10px rgba(255, 213, 79, 0.28);
+  color: #fff8dc;
+}
+
+.title-patch-notes-btn:active {
+  transform: translateY(1px);
+}
+
+.title-patch-notes-label {
+  text-shadow: 1px 1px 0 #050814;
+}
+
+.title-patch-notes-badge {
+  padding: 1px 6px;
+  background: rgba(255, 213, 79, 0.18);
+  border: 1px solid rgba(255, 213, 79, 0.55);
+  color: #ffe082;
+  font-size: 12px;
+  line-height: 1.1;
+  text-shadow: 1px 1px 0 #050814;
+}
+
+#title-screen.title-entering .title-patch-notes-btn {
+  animation: titleCornerIn 0.54s ease-out 0.64s both;
+}
+
+#modal-box.patch-notes-modal {
+  width: min(820px, 94%);
+  max-height: 88vh;
+}
+
+.patch-notes-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.patch-notes-hero {
+  padding: 12px 16px;
+  border-left: 3px solid #ffd54f;
+  background: linear-gradient(135deg, rgba(16, 24, 46, 0.94) 0%, rgba(12, 18, 34, 0.94) 100%);
+}
+
+.patch-notes-hero-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.patch-version-pill {
+  padding: 2px 8px;
+  background: #ffd54f;
+  color: #0b0f19;
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.patch-notes-date {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 15px;
+  color: #93c5fd;
+}
+
+.patch-notes-hero-title {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 20px;
+  color: #ffe8a3;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+  text-shadow: 1px 1px 0 #050814;
+}
+
+.patch-notes-hero-sub {
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 16px;
+  line-height: 1.4;
+  color: #dbe7f5;
+}
+
+.patch-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.patch-notes-card {
+  padding: 12px 14px;
+  border-left: 3px solid var(--patch-accent, #ffd54f);
+  background: rgba(12, 17, 30, 0.92);
+}
+
+.patch-notes-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.patch-notes-card-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.patch-notes-cat-badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 1px 6px;
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  border: 1px solid currentColor;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.patch-notes-card-title {
+  font-family: 'BalaclavaPixel', monospace;
+  font-size: 17px;
+  color: #fff6dc;
+  letter-spacing: 0.4px;
+}
+
+.patch-notes-bullets {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: 'BalaclavaBodyPixel', 'BalaclavaPixel', monospace;
+  font-size: 16px;
+  line-height: 1.42;
+  color: #e6eef8;
+}
+
+.patch-notes-bullets li::marker {
+  color: var(--patch-accent, #ffd54f);
+}
+
+.patch-notes-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+
 
 
 
