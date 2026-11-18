@@ -249,7 +249,7 @@
       id: 'cofre_logistico', name: 'Cofre Logístico', category: 'automatizacion', size: 1, placeOn: 'land',
       cost: { tablon: 10, lingote_hierro: 6, engrane: 3 },
       desc: 'Cofre inteligente de recepción para la red logística. Recibe automáticamente excedentes de máquinas y permite filtrado y extracción gradual (-1, -10, -50, Todo).',
-      sprite: 'prop_chest', visualScale: 1.15, badge: 'chest',
+      sprite: 'prop_chest', visualScale: 1.24, badge: 'chest',
       capacity: 300, isLogisticChest: true,
       opensPanel: 'cofre_logistico'
     },

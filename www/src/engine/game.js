@@ -9804,9 +9804,9 @@
           : (n.variant % 2 === 0 ? 'gold_closed' : 'sapphire_closed');
         const cImg = assets.chestImages && (assets.chestImages[cKey] || assets.chestImages.gold_closed);
         ctx.fillStyle = 'rgba(0,0,0,0.34)';
-        ctx.beginPath(); ctx.ellipse(0, 16, 36, 11, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 17, 40, 12, 0, 0, Math.PI * 2); ctx.fill();
         if (cImg) {
-          ctx.drawImage(cImg, -48, -56, 96, 96);
+          ctx.drawImage(cImg, -40, -66, 80, 88);
         } else {
           ctx.fillStyle = '#8d5524'; ctx.fillRect(-38, -40, 76, 56);
           ctx.fillStyle = '#ffd54f'; ctx.fillRect(-38, -14, 76, 9);
@@ -9876,11 +9876,11 @@
         ctx.beginPath(); ctx.ellipse(0, 14, 44, 15, 0, 0, Math.PI * 2); ctx.fill();
         if (cImg) {
           ctx.fillStyle = n.puzzleLocked ? 'rgba(179, 136, 255, 0.22)' : 'rgba(255, 213, 79, 0.25)';
-          ctx.beginPath(); ctx.ellipse(0, -10, 42, 22, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(0, -10, 44, 24, 0, 0, Math.PI * 2); ctx.fill();
           const cSrc = n.puzzleLocked
             ? this.getTintedSprite('sc_locked', cImg, 0, 0, cImg.width, cImg.height, { sat: 0.55, bright: 0.84, fallbackTint: 'rgba(130, 100, 195, 0.28)' })
             : cImg;
-          ctx.drawImage(cSrc || cImg, -48, -56, 96, 96);
+          ctx.drawImage(cSrc || cImg, -40, -66, 80, 88);
         } else {
           ctx.fillStyle = '#311b92'; ctx.fillRect(-38, -42, 76, 58);
           ctx.fillStyle = '#ffd54f'; ctx.fillRect(-38, -16, 76, 10);
@@ -10133,15 +10133,15 @@
         const spriteId = isOpen ? `${cKey}_open` : `${cKey}_closed`;
         const cImg = assets.chestImages && (assets.chestImages[spriteId] || assets.chestImages[`${cKey}_closed`]);
         if (cImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(cImg))) {
-          ctx.fillStyle = 'rgba(0,0,0,0.32)';
+          ctx.fillStyle = 'rgba(0,0,0,0.34)';
           ctx.beginPath();
-          ctx.ellipse(cx, py + h - 2, Math.round(w * 0.48), Math.round(h * 0.16), 0, 0, Math.PI * 2);
+          ctx.ellipse(cx, py + h - 2, Math.round(w * 0.62), Math.round(h * 0.19), 0, 0, Math.PI * 2);
           ctx.fill();
 
           const bounce = isOpen ? -3 : 0;
-          const dw = Math.round(w * 1.08);
+          const dw = Math.round(w * 1.44);
           const dh = Math.round(dw * (cImg.height / Math.max(1, cImg.width)));
-          ctx.drawImage(cImg, cx - dw / 2, py + h - dh + 2 + bounce, dw, dh);
+          ctx.drawImage(cImg, cx - dw / 2, py + h - dh + 3 + bounce, dw, dh);
           return;
         }
       }
@@ -11878,9 +11878,11 @@
         const ck = chestTier + (c.opened ? '_open' : '_closed');
         const cImg = cImgs[ck] || cImgs.gold_closed;
         ctx.fillStyle = 'rgba(0,0,0,0.38)';
-        ctx.beginPath(); ctx.ellipse(cx, cy + 15, 34, 10, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx, cy + 16, 38, 11, 0, 0, Math.PI * 2); ctx.fill();
         if (cImg) {
-          ctx.drawImage(cImg, Math.round(cx - 46), Math.round(cy - 54), 92, 92);
+          const dw = 76;
+          const dh = Math.round(dw * (cImg.height / Math.max(1, cImg.width)));
+          ctx.drawImage(cImg, Math.round(cx - dw / 2), Math.round(cy + 18 - dh), dw, dh);
         } else {
           ctx.fillStyle = c.opened ? '#5d4037' : '#ffb300';
           ctx.fillRect(Math.round(cx - 34), Math.round(cy - 34), 68, 50);
@@ -11894,12 +11896,12 @@
             ctx.textAlign = 'center';
             const pw = Math.round(ctx.measureText(prompt).width + 14);
             ctx.fillStyle = 'rgba(16, 12, 22, 0.92)';
-            ctx.fillRect(Math.round(cx - pw / 2), Math.round(cy - 44), pw, 18);
+            ctx.fillRect(Math.round(cx - pw / 2), Math.round(cy - 68), pw, 18);
             ctx.strokeStyle = '#ffd54f';
             ctx.lineWidth = 1;
-            ctx.strokeRect(Math.round(cx - pw / 2), Math.round(cy - 44), pw, 18);
+            ctx.strokeRect(Math.round(cx - pw / 2), Math.round(cy - 68), pw, 18);
             ctx.fillStyle = '#fff59d';
-            ctx.fillText(prompt, cx, Math.round(cy - 31));
+            ctx.fillText(prompt, cx, Math.round(cy - 55));
             ctx.restore();
           }
         }
