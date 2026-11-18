@@ -265,6 +265,11 @@
     }
 
     collectFromBuilding(game, b) {
+      if (!b) return false;
+      const bDef = Balaclava.BUILDINGS[b.type];
+      if (b.isChest || (bDef && bDef.isChest) || b.type === 'cofre_logistico') {
+        return false;
+      }
       let collectedAny = false;
       b.isPausedFull = false;
       if (b.coinsStored > 0) {
@@ -292,19 +297,23 @@
       const cy = (collector.ty + 0.5) * TILE_SIZE;
       const maxDist = radius * TILE_SIZE;
 
-      // Pull dropped world loot directly to inventory
+      // Pull dropped world loot directly to inventory (only if inventory has room)
       for (let i = game.drops.length - 1; i >= 0; i--) {
         const d = game.drops[i];
         if (Balaclava.Utils.dist(cx, cy, d.x, d.y) <= maxDist) {
+          const canPick = d.itemId === '_coin' || (typeof game.canAddItem === 'function' && game.canAddItem(d.itemId, 1));
+          if (!canPick) continue;
           if (d.itemId === '_coin') game.addCoins(d.qty);
           else game.addItem(d.itemId, d.qty);
           game.drops.splice(i, 1);
         }
       }
 
-      // Empty nearby machines automatically
+      // Empty nearby machines automatically (never drain player storage chests)
       for (const b of game.buildings) {
         if (b === collector) continue;
+        const bDef = Balaclava.BUILDINGS[b.type];
+        if (b.isChest || (bDef && bDef.isChest) || b.type === 'cofre_logistico') continue;
         const bx = (b.tx + 0.5) * TILE_SIZE;
         const by = (b.ty + 0.5) * TILE_SIZE;
         if (Balaclava.Utils.dist(cx, cy, bx, by) <= maxDist) {

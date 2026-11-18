@@ -4424,8 +4424,9 @@
             x: bx,
             y: by,
             act: () => {
-              const collected = this.automation.collectFromBuilding(this, b);
-              if (def.opensPanel || !collected || def.station) {
+              const isChestOrLogistic = Boolean(b.isChest || def.isChest || b.type === 'cofre_logistico' || def.opensPanel === 'cofre_logistico');
+              const collected = isChestOrLogistic ? false : this.automation.collectFromBuilding(this, b);
+              if (isChestOrLogistic || def.opensPanel || !collected || def.station) {
                 Balaclava.UI.openBuildingModal(b);
               }
             }

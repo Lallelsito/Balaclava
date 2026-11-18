@@ -106,9 +106,11 @@
   }
 
   function formatNum(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 10000) return (n / 1000).toFixed(1) + 'k';
-    return Math.floor(n).toString();
+    const val = Number(n) || 0;
+    if (val >= 1000000000) return (val / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
+    if (val >= 1000000) return (val / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (val >= 1000) return (val / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return Math.floor(val).toString();
   }
 
   function deepClone(obj) {

@@ -1044,19 +1044,19 @@
         type: 'button',
         class: 'title-patch-notes-btn',
         'data-tip-text': isEnTitle
-          ? 'View recent changes and new content in Beta 1.2.0'
-          : 'Ver todos los cambios recientes y contenido nuevo de la Beta 1.2.0',
+          ? 'View recent changes and new content in Beta 1.2.1'
+          : 'Ver todos los cambios recientes y contenido nuevo de la Beta 1.2.1',
         onclick: () => this.openModal('patch_notes')
       }, [
         this.el('img', { class: 'pixel-img', src: 'assets/icons/scroll_map.png', width: 18, height: 18, alt: '' }),
         this.el('span', { class: 'title-patch-notes-label' }, isEnTitle ? 'Patch Notes' : 'Cambios recientes'),
-        this.el('span', { class: 'title-patch-notes-badge' }, 'Beta 1.2.0')
+        this.el('span', { class: 'title-patch-notes-badge' }, 'Beta 1.2.1')
       ]);
       box.appendChild(patchBtn);
 
       const verEl = document.querySelector('#title-screen .title-version');
       if (verEl) {
-        verEl.textContent = 'Balaclava Beta v1.2.0';
+        verEl.textContent = 'Balaclava Beta v1.2.1';
         verEl.style.pointerEvents = 'auto';
         verEl.style.cursor = 'pointer';
         verEl.onclick = () => this.openModal('patch_notes');
@@ -2707,8 +2707,10 @@
             actSlot.id === 'fertilizante' || actSlot.id === 'abono_dorado' || actSlot.id === 'compost_magico'
           ));
           if (b && !holdingActionItem && Balaclava.Utils.dist(g.player.x, g.player.y, g.mouse.wx, g.mouse.wy) <= 95) {
-            const collected = g.automation.collectFromBuilding(g, b);
-            if (!collected || Balaclava.BUILDINGS[b.type].station || Balaclava.BUILDINGS[b.type].opensPanel) {
+            const bDef = Balaclava.BUILDINGS[b.type] || {};
+            const isChestOrLogistic = Boolean(b.isChest || bDef.isChest || b.type === 'cofre_logistico' || bDef.opensPanel === 'cofre_logistico');
+            const collected = isChestOrLogistic ? false : g.automation.collectFromBuilding(g, b);
+            if (isChestOrLogistic || !collected || bDef.station || bDef.opensPanel) {
               this.openBuildingModal(b);
             }
             return;
@@ -2977,8 +2979,20 @@
       if (xpFillEl) xpFillEl.style.width = `${xpPct}%`;
       const xpTxtEl = document.getElementById('xp-text');
       if (xpTxtEl) {
-        xpTxtEl.textContent = `${Math.floor(p.xp)}/${p.nextXp}`;
-        xpTxtEl.title = `Progreso: ${Math.floor(p.xp)} / ${p.nextXp} XP (${Math.floor(xpPct)}%) - Siguiente nivel en ${Math.max(0, p.nextXp - Math.floor(p.xp))} XP`;
+        const curXp = Math.floor(p.xp);
+        const nextXp = Math.floor(p.nextXp);
+        const remXp = Math.max(0, nextXp - curXp);
+        xpTxtEl.textContent = `${formatNum(curXp)}/${formatNum(nextXp)}`;
+        const isEnXp = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+        const fullCur = curXp.toLocaleString();
+        const fullNext = nextXp.toLocaleString();
+        const fullRem = remXp.toLocaleString();
+        const tip = isEnXp
+          ? `Progress: ${fullCur} / ${fullNext} XP (${Math.floor(xpPct)}%) - Next level in ${fullRem} XP`
+          : `Progreso: ${fullCur} / ${fullNext} XP (${Math.floor(xpPct)}%) - Siguiente nivel en ${fullRem} XP`;
+        xpTxtEl.title = tip;
+        const xpRowEl = document.getElementById('hud-xp-row');
+        if (xpRowEl) xpRowEl.title = tip;
       }
       document.getElementById('lvl-text').textContent = `${tr('common.levelShort')}${p.level}`;
       document.getElementById('coin-text').textContent = formatNum(g.coins);
@@ -3812,7 +3826,7 @@
         title_settings: tr('settings.title'),
         controls: tr('settings.title'),
         credits: tr('credits.title'),
-        patch_notes: (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') ? 'Patch Notes — Beta 1.2.0' : 'Cambios Recientes — Beta 1.2.0',
+        patch_notes: (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') ? 'Patch Notes — Beta 1.2.1' : 'Cambios Recientes — Beta 1.2.1',
         quit_confirm: tr('quit.title'),
         quit_web_fallback: tr('quit.webFallbackTitle'),
         discord_fallback: tr('title.discord'),
@@ -4448,7 +4462,7 @@
       b.storage = b.storage || {};
       const def = Balaclava.BUILDINGS[b.type || b.defId] || { name: 'Cofre', capacity: 30 };
       const chestCapacity = def.capacity || 30;
-      const CHEST_MAX_STACK = 100;
+      const CHEST_MAX_STACK = 1000;
       const maxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
       const maxPlayerSlots = g.getMaxInventorySlots ? g.getMaxInventorySlots() : 24;
       const usedPlayerSlots = g.getUsedInventorySlots ? g.getUsedInventorySlots() : Object.keys(g.inventory).length;
@@ -4486,7 +4500,7 @@
       const chestUsedSlots = getChestUsedSlots();
 
       if (titleEl) {
-        titleEl.textContent = `${def.name} (${chestUsedSlots} / ${chestCapacity} Ranuras · Stacks de 100)`;
+        titleEl.textContent = `${def.name} (${chestUsedSlots} / ${chestCapacity} Ranuras · Stacks de 1000)`;
       }
 
       const container = this.el('div', { class: 'chest-layout' });
@@ -4497,7 +4511,7 @@
         this.el('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
           this.el('span', { class: 'chest-title-lbl' }, def.name),
           this.el('span', { class: 'inv-cap-pill' }, `${chestUsedSlots} / ${chestCapacity} Slots`),
-          this.el('span', { style: 'font-size:12px;color:#94a3b8;' }, `(Stacks de 100 · Click: Mover · Clic Der: 1 · Shift+Clic: Todo)`)
+          this.el('span', { style: 'font-size:12px;color:#94a3b8;' }, `(Stacks de 1000 · Click: Mover · Clic Der: 1 · Shift+Clic: Todo)`)
         ]),
         this.el('div', { class: 'chest-actions-row' }, [
           this.el('button', {
@@ -9729,6 +9743,18 @@
       const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
       const sections = isEn ? [
         {
+          badge: 'BETA 1.2.1',
+          color: '#ffd54f',
+          icon: 'cofre_madera',
+          title: 'Beta 1.2.1 — Chests (1,000 Stacks), Storage Fix & Compact XP',
+          items: [
+            'Chest stack limit increased from 100 to 1,000 items per slot across Wooden, Iron, and Golden Runic Chests.',
+            'Fixed storage chests losing or emptying items when reopening or interacting, plus fixed Collector Towers draining chests.',
+            'Improved ground drop & Backpack Tier persistence across saves, loads, and dungeon transitions.',
+            'Simplified level XP bar numbers (e.g. 1M, 250K) with full exact numbers displayed on mouse hover.'
+          ]
+        },
+        {
           badge: 'INVENTORY & HOTBAR',
           color: '#ffd54f',
           icon: 'mochila_astral',
@@ -9748,7 +9774,7 @@
           title: 'Storage Chests in the Build Menu [R]',
           items: [
             '3 placeable Storage Chest tiers in the Build Menu [R]: Wooden Chest (30 slots), Iron Chest (50 slots), and Runic Golden Chest (70 slots).',
-            'Chest stack capacity increased to 100 items per slot across all storage chests.',
+            'Chest stack capacity increased to 1,000 items per slot across all storage chests.',
             'Quick deposit and withdraw controls (x1, x5, x10, Half, Full Stack, Deposit All) and Shift + Click support.'
           ]
         },
@@ -9799,6 +9825,18 @@
         }
       ] : [
         {
+          badge: 'BETA 1.2.1',
+          color: '#ffd54f',
+          icon: 'cofre_madera',
+          title: 'Beta 1.2.1 — Cofres (Stacks de 1000), Guardado y XP Simplificada',
+          items: [
+            'Capacidad de stack en cofres aumentada de 100 a 1000 unidades por ranura en todos los cofres.',
+            'Corregido el fallo que vaciaba o tiraba los objetos de los cofres al cerrarlos y volverlos a abrir, y evitado que las Torres Recolectoras vacien cofres.',
+            'Corregida la persistencia de objetos tirados en el suelo y del rango de Mochila al guardar/cargar o entrar a mazmorras.',
+            'Numeros de XP de nivel simplificados (ej. 1M, 250K) mostrando el numero exacto completo al pasar el cursor.'
+          ]
+        },
+        {
           badge: 'INVENTARIO Y HOTBAR',
           color: '#ffd54f',
           icon: 'mochila_astral',
@@ -9818,7 +9856,7 @@
           title: 'Cofres de Almacenamiento en el Menu de Construccion [R]',
           items: [
             '3 Tiers de Cofres fisicos construibles desde el menu [R]: Cofre de Madera (30 ranuras), Cofre de Hierro (50 ranuras) y Cofre Dorado Runico (70 ranuras).',
-            'Capacidad de stack ampliada a 100 unidades por ranura dentro de todos los cofres.',
+            'Capacidad de stack ampliada a 1000 unidades por ranura dentro de todos los cofres.',
             'Controles rapidos para depositar y retirar (x1, x5, x10, Mitad, Stack Completo, Depositar Todo) y soporte para Shift + Clic.'
           ]
         },
@@ -9873,12 +9911,12 @@
 
       wrap.appendChild(this.el('div', { class: 'parchment-box patch-notes-hero' }, [
         this.el('div', { class: 'patch-notes-hero-top' }, [
-          this.el('span', { class: 'patch-version-pill' }, 'BETA v1.2.0'),
+          this.el('span', { class: 'patch-version-pill' }, 'BETA v1.2.1'),
           this.el('span', { class: 'patch-notes-date' }, isEn ? 'Major Content & Systems Update' : 'Actualizacion Mayor de Contenido y Sistemas')
         ]),
         this.el('div', { class: 'patch-notes-hero-title' }, isEn
-          ? 'BALACLAVA — Beta 1.2.0 Release Notes'
-          : 'BALACLAVA — Notas de la Version Beta 1.2.0'),
+          ? 'BALACLAVA — Beta 1.2.1 Release Notes'
+          : 'BALACLAVA — Notas de la Version Beta 1.2.1'),
         this.el('div', { class: 'patch-notes-hero-sub' }, isEn
           ? 'Complete summary of all new gameplay systems, structures, dungeons, and progression changes introduced in this update.'
           : 'Resumen completo de todos los sistemas, estructuras, mazmorras, energia Omega y mejoras de progresion implementados en esta version.')

@@ -256,19 +256,19 @@
     cofre_madera: {
       id: 'cofre_madera', name: 'Cofre de Madera', category: 'economia', altCategory: 'produccion', size: 1, placeOn: 'land',
       cost: { tablon: 4 },
-      desc: 'Cofre artesanal de 30 ranuras (hasta 100 objetos por stack). Fabricable en Menú de Construcción [R].',
+      desc: 'Cofre artesanal de 30 ranuras (hasta 1000 objetos por stack). Fabricable en Menú de Construcción [R].',
       sprite: 'chest_wood', chestSpriteKey: 'wood', isChest: true, capacity: 30, tier: 1
     },
     cofre_hierro: {
       id: 'cofre_hierro', name: 'Cofre de Hierro', category: 'economia', altCategory: 'produccion', size: 1, placeOn: 'land',
       cost: { lingote_hierro: 10, tablon: 10 },
-      desc: 'Cofre acorazado con 50 ranuras (hasta 100 objetos por stack). Fabricable en Menú de Construcción [R].',
+      desc: 'Cofre acorazado con 50 ranuras (hasta 1000 objetos por stack). Fabricable en Menú de Construcción [R].',
       sprite: 'chest_sapphire', chestSpriteKey: 'sapphire', isChest: true, capacity: 50, tier: 2
     },
     cofre_dorado: {
       id: 'cofre_dorado', name: 'Cofre Dorado', category: 'economia', altCategory: 'produccion', size: 1, placeOn: 'land',
       cost: { lingote_oro: 12, lingote_acero: 6, diamantes: 2 },
-      desc: 'Arca regia con 70 ranuras (hasta 100 objetos por stack). Fabricable en Menú de Construcción [R].',
+      desc: 'Arca regia con 70 ranuras (hasta 1000 objetos por stack). Fabricable en Menú de Construcción [R].',
       sprite: 'chest_gold', chestSpriteKey: 'gold', isChest: true, capacity: 70, tier: 3
     }
   };

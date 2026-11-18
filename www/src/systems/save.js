@@ -78,6 +78,7 @@
         dayCount: game.dayCount,
         dayDuration: game.dayDuration || 660,
         inventory: { ...game.inventory },
+        backpackTier: game.backpackTier || 0,
         hotbar: [...game.hotbar],
         activeSlot: game.activeSlot,
         toolTiers: { ...game.toolTiers },
@@ -117,6 +118,7 @@
           id: b.id, type: b.type, tx: b.tx, ty: b.ty, level: b.level,
           timer: b.timer, fuel: b.fuel, coinsStored: b.coinsStored,
           storage: { ...b.storage }, autoRefuel: b.autoRefuel, autoPull: b.autoPull,
+          isChest: b.isChest ? true : undefined,
           queue: b.queue ? [...b.queue] : [],
           filters: Array.isArray(b.filters) ? [...b.filters] : undefined,
           omega: b.omega ? JSON.parse(JSON.stringify(b.omega)) : undefined
@@ -140,12 +142,14 @@
         dailyChallenges: game.events.dailyChallenges.map(c => ({ ...c })),
         craftQueue: Array.isArray(game.craftQueue) ? game.craftQueue.map(q => ({ ...q })) : [],
         craftReady: Array.isArray(game.craftReady) ? game.craftReady.map(r => ({ ...r })) : [],
-        drops: Array.isArray(game.drops) ? game.drops.slice(0, 600).map(d => ({
-          x: Math.round(d.x),
-          y: Math.round(d.y),
-          itemId: d.itemId,
-          qty: d.qty
-        })) : [],
+        drops: Array.isArray((game.activeDungeon && Array.isArray(game._savedOverworldDrops)) ? game._savedOverworldDrops : game.drops)
+          ? ((game.activeDungeon && Array.isArray(game._savedOverworldDrops)) ? game._savedOverworldDrops : game.drops).slice(0, 3000).map(d => ({
+              x: Math.round(d.x),
+              y: Math.round(d.y),
+              itemId: d.itemId,
+              qty: d.qty
+            }))
+          : [],
         inventoryOverflowMigrated: !!game.inventoryOverflowMigrated,
         market: game.economy ? {
           stock: (game.economy.marketStock || []).slice(0, 5),
@@ -271,6 +275,7 @@
       game.dayCount = data.dayCount || 1;
       game.dayDuration = 660;
       game.inventory = data.inventory || {};
+      game.backpackTier = Math.max(0, Number(data.backpackTier) || 0);
       game.toolTiers = { ...game.toolTiers, ...(data.toolTiers || {}) };
       if (game.player) {
         game.player.bowLoaded = ((game.inventory && game.inventory.flecha) || 0) > 0;
@@ -330,13 +335,17 @@
       }
       if (typeof game.syncEncyclopedia === 'function') game.syncEncyclopedia();
       if (data.stats) game.stats = { ...game.makeInitialStats(), ...data.stats };
-      game.buildings = (data.buildings || []).map(b => ({
-        ...b,
-        storage: b.storage || {},
-        queue: b.queue || [],
-        filters: Array.isArray(b.filters) ? [...b.filters] : [],
-        omega: b.omega ? JSON.parse(JSON.stringify(b.omega)) : undefined
-      }));
+      game.buildings = (data.buildings || []).map(b => {
+        const bDef = Balaclava.BUILDINGS && Balaclava.BUILDINGS[b.type];
+        return {
+          ...b,
+          storage: b.storage || {},
+          queue: b.queue || [],
+          filters: Array.isArray(b.filters) ? [...b.filters] : [],
+          isChest: Boolean(b.isChest || (bDef && bDef.isChest)),
+          omega: b.omega ? JSON.parse(JSON.stringify(b.omega)) : undefined
+        };
+      });
       if (game.omega && typeof game.omega.load === 'function') {
         game.omega.load(data.omega || null, game, true);
         if (game.omega.report && Object.keys(game.omega.report.gained || {}).length > 0 && typeof game.toast === 'function') {
