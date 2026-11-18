@@ -1712,6 +1712,31 @@
   }
 
   class DungeonInstance {
+    /** Compute final boss HP (x30) and DMG (x10) consistently for spawning and transition previews. */
+    static computeBossStats(def, tier, playerLevel = 1, opts = {}) {
+      const d = def || DUNGEON_DEFS.pradera;
+      const b = d.boss || { hp: 500, dmg: 20 };
+      const t = Math.max(0, tier || 0);
+      const pLv = Math.max(1, playerLevel || 1);
+      const levelScale = 1 + Math.max(0, pLv - (1 + t * 2)) * 0.10;
+      const tierProgress = Math.min(1, t / Math.max(1, DUNGEON_TIER_LIST.length - 1));
+      const isCorrupted = Boolean(opts && opts.isCorrupted);
+      const isLate = LATE_BIOME_DUNGEONS.has(d.id);
+      const ab = opts && opts.abyssScale;
+      const abHp = ab ? (ab.hp || 1) : 1;
+      const abDmg = ab ? (ab.dmg || 1) : 1;
+
+      let bossHpMult = (1.65 + tierProgress * 0.45) * 30 * (isCorrupted ? 24 : 1) * abHp;
+      let bossDmgMult = (1.25 + tierProgress * 0.25) * 10 * (isCorrupted ? 6.8 : 1) * abDmg;
+      if (isLate) {
+        bossHpMult *= 5.0;
+        bossDmgMult *= 2.6;
+      }
+      const hp = Math.min(9e14, Math.round(b.hp * bossHpMult * levelScale));
+      const dmg = Math.min(9e12, Math.round(b.dmg * bossDmgMult * (1 + (levelScale - 1) * 0.65)));
+      return { hp, maxHp: hp, dmg };
+    }
+
     constructor(dungeonId, returnPos, playerLevel = 1, opts = {}) {
       this.def = DUNGEON_DEFS[dungeonId] || DUNGEON_DEFS.pradera;
       this.id = this.def.id;
@@ -1880,7 +1905,7 @@
         carveRect(32, 6, 34, 8);
         addRoom('Cámara de Secuencia Astral', 35, 2, 45, 9);
         addDoors(this.vaultDoorTiles, 46, 4, 46, 6, 6);
-        addRoom('Cripta Áurea', 47, 2, 50, 7);
+        addRoom('Cripta Áurea', 47, 2, 49, 7);
         addDoors(this.wingDoorTiles, 25, 27, 28, 27, 5);
         addRoom('Pasaje Inferior', 22, 28, 31, 33);
         carveRect(32, 30, 34, 32);
@@ -1937,11 +1962,11 @@
         carveRect(31, 4, 33, 6);
         addRoom('Sala de Enigmas I-II-III', 34, 2, 44, 8);
         addDoors(this.vaultDoorTiles, 45, 3, 45, 5, 6);
-        addRoom('Tesoro Oculto Norte', 46, 2, 50, 7);
+        addRoom('Tesoro Oculto Norte', 46, 2, 49, 7);
         addDoors(this.wingDoorTiles, 26, 19, 28, 19, 5);
         addRoom('Salón de Hierro Sur', 26, 20, 35, 28);
         carveRect(36, 24, 37, 26);
-        addRoom('Salón del Guardián', 38, 22, 47, 34);
+        addRoom('Salón del Guardián', 38, 24, 46, 35);
         carveRect(31, 13, 35, 15);
         addRoom('Galería de las Antorchas', 36, 10, 44, 18);
         carveRect(45, 14, 46, 16);
@@ -1972,7 +1997,7 @@
         carpetBoxes = [[4, 7, 5, 27], [6, 27, 21, 27], [21, 14, 44, 14], [47, 17, 52, 19], [54, 18, 70, 20]];
         trapCandidates = [[5,12],[6,17],[8,27],[12,26],[21,24],[23,14],[27,13],[23,5],[28,6],[37,5],[41,4],[29,24],[33,23],[39,12],[49,15],[49,20]];
         pillarCandidates = [[5,26],[10,26],[20,23],[22,12],[28,12],[22,17],[28,17],[38,12],[42,16],[58,11],[68,11],[58,27],[68,27]];
-        torchCandidates = [[3,4],[7,4],[3,14],[4,24],[11,24],[19,21],[21,10],[22,2],[36,2],[48,2],[28,20],[40,22],[38,10],[48,13],[57,8],[65,8]];
+        torchCandidates = [[3,4],[7,4],[3,14],[4,24],[11,24],[19,21],[21,10],[22,2],[36,2],[48,2],[28,20],[40,24],[38,10],[48,13],[57,8],[65,8]];
         propCandidates = [[6,9,'urn'],[3,30,'urnGold'],[47,6,'urnGold'],[52,3,'urnGold'],[27,27,'sarcophagus'],[39,33,'sarcophagus'],[55,9,'sarcophagus'],[55,29,'sarcophagus'],[71,19,'altarRitual']];
         mobSpots = [[6,17,1.0],[8,27,1.1],[21,25,1.15],[24,14,1.2],[28,13,1.25],[24,5,1.3],[38,5,1.35],[42,5,1.35],[30,24,1.35],[40,26,1.4],[38,14,1.45],[42,16,1.45],[49,17,1.5],[49,20,1.5]];
       } else if (arch === 3) {
@@ -1993,7 +2018,7 @@
         addDoors(this.wingDoorTiles, 25, 8, 28, 8, 5);
         addRoom('Sala de Trampas Norte', 22, 2, 28, 7);
         carveRect(29, 4, 30, 5);
-        addRoom('Santuario I-II-III', 31, 2, 42, 8);
+        addRoom('Santuario I-II-III', 31, 2, 42, 7);
         addDoors(this.vaultDoorTiles, 43, 3, 43, 5, 6);
         addRoom('Archivo Sellado', 44, 2, 49, 6);
         addDoors(this.wingDoorTiles, 25, 30, 28, 30, 5);
@@ -2043,7 +2068,7 @@
         carveRect(4, 13, 5, 15);
         addRoom('Bóveda Occidental Alta', 2, 5, 10, 12);
         carveRect(11, 8, 13, 10);
-        addRoom('Galería Superior Oeste', 14, 6, 20, 13);
+        addRoom('Galería Superior Oeste', 14, 6, 19, 13);
         carveRect(16, 14, 18, 15);
         addRoom('Salón Serpiente Central', 13, 16, 25, 24);
         addDoors(this.wingDoorTiles, 21, 15, 23, 15, 5);
@@ -2102,13 +2127,13 @@
         addDoors(this.wingDoorTiles, 28, 12, 30, 12, 5);
         addRoom('Claustro Superior', 22, 6, 33, 11);
         carveRect(34, 7, 36, 9);
-        addRoom('Sala de Secuencia Celeste', 37, 2, 46, 10);
+        addRoom('Sala de Secuencia Celeste', 37, 2, 45, 10);
         addDoors(this.vaultDoorTiles, 46, 4, 46, 6, 6);
-        addRoom('Sagrario de Tesoros', 47, 2, 50, 7);
+        addRoom('Sagrario de Tesoros', 47, 2, 49, 7);
         addDoors(this.wingDoorTiles, 28, 26, 30, 26, 5);
         addRoom('Claustro Inferior', 22, 27, 33, 32);
         carveRect(34, 29, 36, 31);
-        addRoom('Salón del Guardián Real', 37, 26, 47, 36);
+        addRoom('Salón del Guardián Real', 37, 27, 47, 36);
         carveRect(34, 15, 37, 17);
         carveRect(34, 21, 37, 23);
         addRoom('Puente Gemelo Este', 38, 13, 45, 25);
@@ -2140,7 +2165,7 @@
         carpetBoxes = [[4, 19, 32, 19], [39, 19, 52, 19], [54, 18, 70, 20]];
         trapCandidates = [[13,16],[19,22],[27,16],[31,22],[27,8],[40,6],[43,6],[27,29],[40,16],[43,22],[49,17],[49,21]];
         pillarCandidates = [[13,15],[19,15],[13,23],[19,23],[27,14],[31,14],[27,24],[31,24],[40,14],[43,14],[40,24],[43,24],[58,11],[68,11],[58,27],[68,27]];
-        torchCandidates = [[3,16],[12,14],[26,13],[23,6],[38,2],[49,2],[23,27],[38,26],[39,13],[49,15],[57,8],[66,8]];
+        torchCandidates = [[3,16],[12,14],[26,13],[23,6],[38,2],[49,2],[23,27],[38,27],[39,13],[49,15],[57,8],[66,8]];
         propCandidates = [[2,17,'urn'],[12,23,'urnGold'],[49,7,'urnGold'],[53,3,'urnGold'],[24,31,'sarcophagus'],[38,35,'sarcophagus'],[55,9,'sarcophagus'],[55,29,'sarcophagus'],[71,19,'altarRitual']];
         mobSpots = [[14,19,1.0],[19,19,1.08],[28,16,1.18],[28,22,1.22],[27,8,1.28],[40,5,1.34],[43,7,1.38],[28,29,1.35],[41,30,1.42],[41,16,1.45],[42,22,1.45],[50,17,1.52],[50,21,1.52]];
       } else {
@@ -2163,11 +2188,11 @@
         addDoors(this.vaultDoorTiles, 42, 4, 42, 6, 6);
         addRoom('Tesoro Sellado de las Cumbres', 43, 2, 47, 7);
         carveRect(36, 17, 40, 20);
-        addRoom('Vestíbulo de la Tormenta', 41, 14, 50, 23);
-        addDoors(this.bossGateTiles, 51, 17, 51, 21, 3);
-        addRoom('Cámara del Emperador', 52, 10, 73, 27);
+        addRoom('Vestíbulo de la Tormenta', 41, 14, 51, 23);
+        addDoors(this.bossGateTiles, 52, 17, 52, 21, 3);
+        addRoom('Cámara del Emperador', 53, 10, 73, 27);
 
-        this.bossRoomMinX = 51;
+        this.bossRoomMinX = 52;
         this.bossArenaCenter = { tx: 63, ty: 19 };
         bossSpawn = { tx: 67, ty: 19 };
         this.miniBossChestPos = { tx: 42, ty: 34 };
@@ -2187,7 +2212,7 @@
           { tx: 44, ty: 4, opened: false, bonus: true },
           { tx: 46, ty: 6, opened: false, bonus: true }
         ];
-        carpetBoxes = [[4, 8, 18, 8], [18, 8, 18, 20], [18, 20, 50, 20], [52, 18, 70, 20]];
+        carpetBoxes = [[4, 8, 18, 8], [18, 8, 18, 20], [18, 20, 51, 20], [53, 18, 70, 20]];
         trapCandidates = [[10,8],[16,7],[21,9],[16,19],[24,18],[21,31],[25,33],[33,5],[38,6],[30,17],[34,21],[43,16],[47,21]];
         pillarCandidates = [[15,6],[21,6],[16,18],[24,18],[16,23],[24,23],[18,30],[26,30],[30,15],[34,22],[43,15],[48,22],[57,11],[68,11],[57,27],[68,27]];
         torchCandidates = [[3,5],[14,4],[15,16],[16,28],[33,27],[30,2],[44,2],[42,14],[55,8],[64,8],[70,8]];
@@ -2197,22 +2222,25 @@
 
       // === EXPANSION: Late-Biome Additional Rooms, Puzzles & Second Guardian ===
       if (this.isLateBiome) {
-        // Carve Room A: Santuario del Segundo Guardián (x: 54..64, y: 1..6) — strictly separated from Boss Room (y: 10..27) by solid walls y=7..9
+        // Carve Room A: Santuario del Segundo Guardián (x: 54..64, y: 1..6)
+        // Connect cleanly down column x=51 (between Vault <=49 and Boss Arena >=53) into Antesala (y=15)
         carveRect(54, 1, 64, 6, 1);
         addRoom('Santuario del Segundo Guardián', 54, 1, 64, 6);
-        carveRect(46, 3, 54, 5, 1);
+        carveRect(51, 3, 54, 5, 1);
+        carveRect(51, 5, 51, 15, 1);
 
-        // Carve Room B: Santuario de los Sellos Abisales (x: 54..63, y: 31..36) — strictly separated from Boss Room (y: 10..27) by solid walls y=28..30
+        // Carve Room B: Santuario de los Sellos Abisales (x: 54..63, y: 31..36)
+        // Connect from x=40 so it links inside EVERY archetype's South Guardian room cleanly
         carveRect(54, 31, 63, 36, 1);
         addRoom('Santuario de los Sellos Abisales', 54, 31, 63, 36);
-        carveRect(46, 32, 54, 34, 1);
+        carveRect(40, 32, 54, 34, 1);
 
         // Carve Room C: Bóveda de los Arcanos Mayores (x: 65..72, y: 31..36)
         carveRect(65, 31, 72, 36, 1);
         addRoom('Bóveda de los Arcanos Mayores', 65, 31, 72, 36);
         carveRect(63, 32, 65, 34, 1);
 
-        // Enforce 3-tile solid stone barrier between North/South wings and Boss Arena
+        // Enforce 3-tile solid stone barrier between North/South wings and Boss Arena (preserving x=51 North corridor)
         carveRect(52, 7, 74, 9, 0);
         carveRect(52, 28, 74, 30, 0);
 
@@ -2222,7 +2250,7 @@
         // Add 2 Elemental Shrines to this.runes
         this.runes.push({
           id: 'shrine_1',
-          tx: 55,
+          tx: 62,
           ty: 4,
           active: false,
           kind: 'elemental_shrine',
@@ -2239,13 +2267,15 @@
           shrineIdx: 2
         });
 
-        // Add 4th rune to sequence puzzle in late biomes
+        // Add 4th rune inside the pre-Vault Enigma Chamber (NEVER inside the locked Vault)
         const seqRunes = this.runes.filter(r => r.kind === 'seq');
+        const seq4Spots = [[36, 3], [40, 8], [39, 3], [37, 7], [40, 8], [41, 8], [35, 3]];
+        const s4 = seq4Spots[arch] || [36, 4];
         if (seqRunes.length >= 3 && !this.runes.some(r => r.id === 'seq_4')) {
           this.runes.push({
             id: 'seq_4',
-            tx: 47,
-            ty: 5,
+            tx: s4[0],
+            ty: s4[1],
             active: false,
             kind: 'seq',
             order: 4,
@@ -2426,19 +2456,13 @@
         this.enemies.push(this.makeMiniBoss2(types[2 % types.length], miniBoss2Spot.tx, miniBoss2Spot.ty));
       }
 
-      // Grand 3-Phase Boss in Arena
+      // Grand 3-Phase Boss in Arena (ALL bosses scaled x30 HP and x10 DMG)
       const b = this.def.boss;
-      const bLvScale = this.levelScale || 1;
-      const tierProgress = Math.min(1, this.tier / Math.max(1, DUNGEON_TIER_LIST.length - 1));
-      const abHp = this.abyssScale ? this.abyssScale.hp : 1;
-      const abDmg = this.abyssScale ? this.abyssScale.dmg : 1;
+      const bossStats = DungeonInstance.computeBossStats(this.def, this.tier, this.playerLevel, {
+        isCorrupted: this.isCorrupted,
+        abyssScale: this.abyssScale
+      });
       const abSpd = this.abyssScale ? this.abyssScale.speed : 1;
-      let bossHpMult = (1.65 + tierProgress * 0.45) * (this.isCorrupted ? 24 : 1) * abHp;
-      let bossDmgMult = (1.25 + tierProgress * 0.25) * (this.isCorrupted ? 5.5 : 1) * abDmg;
-      if (this.isLateBiome) {
-        bossHpMult *= 5.0; // at least x5 HP in late biomes 3, 4, 5
-        bossDmgMult *= 2.6; // x2.6 damage
-      }
       const bossName = this.abyssFloor
         ? `[Abismo P${this.abyssFloor}] ${b.name}`
         : (this.isCorrupted ? `[CORRUPTO] ${b.name}` : b.name);
@@ -2459,9 +2483,9 @@
         type: 'boss_' + this.id,
         x: bossSpawn.tx * TILE_SIZE,
         y: bossSpawn.ty * TILE_SIZE,
-        hp: Math.min(9e14, Math.round(b.hp * bossHpMult * bLvScale)),
-        maxHp: Math.min(9e14, Math.round(b.hp * bossHpMult * bLvScale)),
-        dmg: Math.min(9e12, Math.round(b.dmg * bossDmgMult * (1 + (bLvScale - 1) * 0.65))),
+        hp: bossStats.hp,
+        maxHp: bossStats.maxHp,
+        dmg: bossStats.dmg,
         speed: Math.min(260, Math.round(b.speed * (this.isLateBiome ? 1.25 : 1.0) * (this.isCorrupted ? 1.25 : 1.0) * abSpd)),
         color: this.abyssFloor ? '#e040fb' : (this.isCorrupted ? '#ab47bc' : b.color),
         facing: -1,
@@ -2562,31 +2586,51 @@
         minY = Math.min(...seqRunes.map(r => r.ty));
       }
 
-      // Place an inspectable Ancient Runic Tablet near the sequence puzzle entrance
+      // Place an inspectable Ancient Runic Tablet strictly inside the sequence puzzle chamber (never inside the locked vault)
+      const seqRef = seqRunes[0];
+      const enigmaRoom = seqRef && this.rooms.find(rm => seqRef.tx >= rm.x0 && seqRef.tx <= rm.x1 && seqRef.ty >= rm.y0 && seqRef.ty <= rm.y1);
+      const isTabletTileValid = (cx, cy) => {
+        if (!this.grid[cy] || this.grid[cy][cx] !== 1) return false;
+        if (enigmaRoom && (cx < enigmaRoom.x0 || cx > enigmaRoom.x1 || cy < enigmaRoom.y0 || cy > enigmaRoom.y1)) return false;
+        if (this.runes.some(r => r.tx === cx && r.ty === cy)) return false;
+        if (this.chests.some(c => c.tx === cx && c.ty === cy)) return false;
+        return true;
+      };
       let tabX = Math.max(2, Math.min(W - 3, avgX - 2));
       let tabY = Math.max(2, Math.min(H - 3, avgY + 1));
+      let foundTab = false;
       const candidateOffsets = [
-        [0, 1], [-2, 1], [2, 1], [0, -1], [-1, 1], [1, 1], [-3, 0], [3, 0]
+        [0, 1], [-2, 1], [2, 1], [0, -1], [-1, 1], [1, 1], [-3, 0], [3, 0], [-1, 0], [1, 0], [0, 0]
       ];
       for (const [ox, oy] of candidateOffsets) {
         const cx = avgX + ox;
         const cy = avgY + oy;
-        if (
-          this.grid[cy] && this.grid[cy][cx] === 1 &&
-          !this.runes.some(r => r.tx === cx && r.ty === cy) &&
-          !this.chests.some(c => c.tx === cx && c.ty === cy)
-        ) {
+        if (isTabletTileValid(cx, cy)) {
           tabX = cx;
           tabY = cy;
+          foundTab = true;
           break;
         }
       }
+      if (!foundTab && enigmaRoom) {
+        for (let cy = enigmaRoom.y0; cy <= enigmaRoom.y1 && !foundTab; cy++) {
+          for (let cx = enigmaRoom.x0; cx <= enigmaRoom.x1 && !foundTab; cx++) {
+            if (isTabletTileValid(cx, cy)) {
+              tabX = cx;
+              tabY = cy;
+              foundTab = true;
+            }
+          }
+        }
+      }
 
+      const romanSeqList = orderedSeq.map((_, i) => (i === 0 ? 'I' : i === 1 ? 'II' : i === 2 ? 'III' : 'IV')).join(' -> ');
+      const numSeqList = orderedSeq.map((_, i) => String(i + 1)).join(' -> ');
       const modeDescriptions = {
         flames_count: {
           title: 'ESTELA DE LAS LLAMAS RITUALES',
-          shortHint: 'Cuenta las llamas junto a cada sello (1 -> 2 -> 3)',
-          hintText: `Rito de las Llamas: Activa los sellos segun el numero de flamas encendidas junto a cada pedestal (I -> II -> III: ${orderSummary}).`
+          shortHint: `Cuenta las llamas junto a cada sello (${numSeqList})`,
+          hintText: `Rito de las Llamas: Activa los sellos segun el numero de flamas encendidas junto a cada pedestal (${romanSeqList}: ${orderSummary}).`
         },
         mural_codex: {
           title: 'CODICE DEL MURAL ANTIGUO',
@@ -2600,7 +2644,7 @@
         },
         obelisk_notches: {
           title: 'ESTELA DE LOS OBELISCOS',
-          shortHint: 'Cuenta las muescas luminosas de cada obelisco (I -> II -> III)',
+          shortHint: `Cuenta las muescas luminosas de cada obelisco (${romanSeqList})`,
           hintText: `Rito de los Obeliscos: Las muescas luminosas talladas junto a cada sello indican su orden de activacion (${orderSummary}).`
         }
       };
@@ -2658,11 +2702,97 @@
       });
     }
 
+    _bfsReachable(sx, sy, blockedTileValues) {
+      const W = this.width;
+      const H = this.height;
+      const blocked = blockedTileValues instanceof Set ? blockedTileValues : new Set(blockedTileValues || []);
+      const visited = new Set();
+      const t0 = this.grid[sy] && this.grid[sy][sx];
+      if (!t0 || blocked.has(t0)) return visited;
+      const queue = [[sx, sy]];
+      visited.add(`${sx},${sy}`);
+      const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+      while (queue.length > 0) {
+        const [cx, cy] = queue.shift();
+        for (const [dx, dy] of dirs) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx <= 0 || nx >= W - 1 || ny <= 0 || ny >= H - 1) continue;
+          const key = `${nx},${ny}`;
+          if (visited.has(key)) continue;
+          const cell = this.grid[ny] && this.grid[ny][nx];
+          if (!cell || blocked.has(cell)) continue;
+          visited.add(key);
+          queue.push([nx, ny]);
+        }
+      }
+      return visited;
+    }
+
+    _enforceDoorEnclosures() {
+      const W = this.width;
+      const H = this.height;
+      const applyDoorGroup = (tiles, val) => {
+        if (!Array.isArray(tiles) || tiles.length === 0) return;
+        const coordSet = new Set(tiles.map(([x, y]) => `${x},${y}`));
+        for (const [gx, gy] of tiles) {
+          if (this.grid[gy] && gx > 0 && gx < W - 1 && gy > 0 && gy < H - 1) {
+            this.grid[gy][gx] = val;
+          }
+          const leftSame = coordSet.has(`${gx - 1},${gy}`);
+          const rightSame = coordSet.has(`${gx + 1},${gy}`);
+          const upSame = coordSet.has(`${gx},${gy - 1}`);
+          const downSame = coordSet.has(`${gx},${gy + 1}`);
+          if ((leftSame || rightSame) && !upSame && !downSame) {
+            if (!leftSame && this.grid[gy] && gx - 1 >= 0) this.grid[gy][gx - 1] = 0;
+            if (!rightSame && this.grid[gy] && gx + 1 < W) this.grid[gy][gx + 1] = 0;
+          } else if ((upSame || downSame) && !leftSame && !rightSame) {
+            if (!upSame && this.grid[gy - 1]) this.grid[gy - 1][gx] = 0;
+            if (!downSame && this.grid[gy + 1]) this.grid[gy + 1][gx] = 0;
+          }
+        }
+      };
+      applyDoorGroup(this.wingDoorTiles, 5);
+      applyDoorGroup(this.vaultDoorTiles, 6);
+      applyDoorGroup(this.bossGateTiles, 3);
+    }
+
+    _checkAllProgressionInvariants(spawnTile = null) {
+      const st = spawnTile || (this.spawnPos ? { tx: Math.floor(this.spawnPos.x / TILE_SIZE), ty: Math.floor(this.spawnPos.y / TILE_SIZE) } : { tx: 4, ty: 19 });
+      const v0 = this._bfsReachable(st.tx, st.ty, [3, 5, 6]);
+      const v1 = this._bfsReachable(st.tx, st.ty, [3, 6]);
+      const v2 = this._bfsReachable(st.tx, st.ty, [3]);
+
+      for (const r of this.runes) {
+        if (r.kind === 'wing' && !v0.has(`${r.tx},${r.ty}`)) return false;
+        if ((r.kind === 'seq' || r.kind === 'elemental_shrine') && !v1.has(`${r.tx},${r.ty}`)) return false;
+      }
+      if (this.puzzleTablet && !v1.has(`${this.puzzleTablet.tx},${this.puzzleTablet.ty}`)) return false;
+      for (const c of this.chests) {
+        if (!v2.has(`${c.tx},${c.ty}`)) return false;
+      }
+      // Every door tile must actually block entry to at least one unvisited floor tile in its locking phase
+      const checkNotBypassable = (tiles, vis) => {
+        if (!Array.isArray(tiles) || tiles.length === 0) return true;
+        for (const [gx, gy] of tiles) {
+          let blockedSide = 0;
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const t = this.grid[gy + dy] && this.grid[gy + dy][gx + dx];
+            if ((t === 1 || t === 2 || t === 4) && !vis.has(`${gx + dx},${gy + dy}`)) blockedSide++;
+          }
+          if (blockedSide === 0) return false;
+        }
+        return true;
+      };
+      if (!checkNotBypassable(this.wingDoorTiles, v0)) return false;
+      if (!checkNotBypassable(this.vaultDoorTiles, v1)) return false;
+      if (!checkNotBypassable(this.bossGateTiles, v2)) return false;
+      return true;
+    }
+
     /**
-     * Point 8: Validate via BFS flood-fill that all puzzle runes are reachable in the required phase:
-     * - Phase 1 (Initial): Wing runes ('alfa', 'beta') must be reachable from spawnTile before wing doors open.
-     * - Phase 2 (Wings Open): All 3 sequence runes ('seq_1', 'seq_2', 'seq_3') and puzzleTablet must be reachable once wing doors open.
-     * If any rune is unreachable due to a wall or barrier, automatically carve a clean floor path to guarantee 100% solvability.
+     * Validate via multi-phase BFS flood-fill that all puzzle elements are reachable BEFORE the gates they unlock,
+     * and that every gate is enclosed by walls with zero bypass paths.
      */
     validatePuzzles(spawnTile) {
       const W = this.width;
@@ -2676,6 +2806,29 @@
       if (this.puzzleTablet) clearTileOnly(this.puzzleTablet.tx, this.puzzleTablet.ty);
       if (this.bossArenaCenter) clearTileOnly(this.bossArenaCenter.tx, this.bossArenaCenter.ty);
       for (const c of this.chests) clearTileOnly(c.tx, c.ty);
+
+      this._enforceDoorEnclosures();
+
+      // Re-verify Phase 1 reachability for puzzleTablet & seq runes (never trapped in isolated tiles)
+      const st = spawnTile || (this.spawnPos ? { tx: Math.floor(this.spawnPos.x / TILE_SIZE), ty: Math.floor(this.spawnPos.y / TILE_SIZE) } : { tx: 4, ty: 19 });
+      const v1 = this._bfsReachable(st.tx, st.ty, [3, 6]);
+      if (this.puzzleTablet && !v1.has(`${this.puzzleTablet.tx},${this.puzzleTablet.ty}`)) {
+        const seq0 = this.runes.find(r => r.kind === 'seq' && v1.has(`${r.tx},${r.ty}`));
+        if (seq0) {
+          outer: for (let r = 1; r <= 3; r++) {
+            for (let dy = -r; dy <= r; dy++) {
+              for (let dx = -r; dx <= r; dx++) {
+                const cx = seq0.tx + dx, cy = seq0.ty + dy;
+                if (v1.has(`${cx},${cy}`) && this.grid[cy][cx] === 1 && !this.runes.some(rn => rn.tx === cx && rn.ty === cy)) {
+                  this.puzzleTablet.tx = cx;
+                  this.puzzleTablet.ty = cy;
+                  break outer;
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     validateLayoutStrictly(spawnTile = null) {
@@ -2683,6 +2836,8 @@
       const H = this.height;
       const bossMinX = this.bossRoomMinX || 51;
       const st = spawnTile || (this.spawnPos ? { tx: Math.floor(this.spawnPos.x / TILE_SIZE), ty: Math.floor(this.spawnPos.y / TILE_SIZE) } : { tx: 4, ty: 19 });
+
+      this._enforceDoorEnclosures();
 
       // Strict BFS from spawn with boss gates CLOSED. Boss room MUST be 100% UNREACHABLE before gates unlock.
       const isBossDoor = (x, y) => this.bossGateTiles && this.bossGateTiles.some(([gx, gy]) => gx === x && gy === y);
@@ -2715,42 +2870,54 @@
           }
         }
       }
-      return leaks === 0;
+      return leaks === 0 && this._checkAllProgressionInvariants(st);
     }
 
     /**
      * Point 12: Procedurally vary room silhouettes, carve bonus side crypts/alcoves,
-     * and randomize pillar/hazard formations per run so dungeons feel distinct.
+     * and randomize pillar/hazard formations per run while strictly preserving door walls and puzzles.
      */
     applyProceduralLayoutVariations(rng, ctx) {
       const W = this.width;
       const H = this.height;
       const { arch, mirroredY, spawnTile, portal, trapCandidates, pillarCandidates, torchCandidates, propCandidates, mobSpots } = ctx;
+      const gridBackup = this.grid.map(row => new Uint8Array(row));
+      const allDoorCoords = [...this.wingDoorTiles, ...this.vaultDoorTiles, ...this.bossGateTiles];
+      const nearAnyDoor = (tx, ty, pad = 2) => allDoorCoords.some(([dx, dy]) => Math.abs(tx - dx) <= pad && Math.abs(ty - dy) <= pad);
       const protectedTiles = new Set([
         `${spawnTile.tx},${spawnTile.ty}`,
         `${portal.tx},${portal.ty}`,
         ...this.runes.map(r => `${r.tx},${r.ty}`),
         ...this.chests.map(c => `${c.tx},${c.ty}`),
-        ...this.wingDoorTiles.map(([x, y]) => `${x},${y}`),
-        ...this.vaultDoorTiles.map(([x, y]) => `${x},${y}`),
-        ...this.bossGateTiles.map(([x, y]) => `${x},${y}`)
+        ...allDoorCoords.map(([x, y]) => `${x},${y}`)
       ]);
-      const isProtected = (tx, ty) => protectedTiles.has(`${tx},${ty}`);
+      const isProtected = (tx, ty) => protectedTiles.has(`${tx},${ty}`) || nearAnyDoor(tx, ty, 2);
 
       const cornerStyle = ['beveled', 'alcoved', 'colonnade'][Math.floor(rng() * 3)];
       const hazardStyle = ['spiked', 'staggered', 'lean'][Math.floor(rng() * 3)];
       let sideChambers = 0;
 
-      // 1. Bevel or carve side alcoves on medium/large non-boss rooms
+      // 1. Bevel or carve side alcoves on medium/large non-boss, non-vault rooms
       for (const rm of this.rooms) {
         if (rm.x1 >= this.bossRoomMinX - 4) continue;
+        if (/Bóveda|Tesoro|Cripta Áurea|Archivo|Sagrario/i.test(rm.name || '')) continue;
         const rw = rm.x1 - rm.x0 + 1;
         const rh = rm.y1 - rm.y0 + 1;
         if (rw >= 7 && rh >= 6) {
-          if (cornerStyle === 'beveled' && rng() < 0.7) {
-            const corners = [[rm.x0, rm.y0], [rm.x1, rm.y0], [rm.x0, rm.y1], [rm.x1, rm.y1]];
-            for (const [cx, cy] of corners) {
-              if (!isProtected(cx, cy) && Math.hypot(cx - spawnTile.tx, cy - spawnTile.ty) > 2.5) {
+          if (cornerStyle === 'beveled' && rw >= 8 && rh >= 7 && rng() < 0.7) {
+            const corners = [
+              [rm.x0, rm.y0, -1, -1],
+              [rm.x1, rm.y0, 1, -1],
+              [rm.x0, rm.y1, -1, 1],
+              [rm.x1, rm.y1, 1, 1]
+            ];
+            for (const [cx, cy, ox, oy] of corners) {
+              if (
+                !isProtected(cx, cy) &&
+                Math.hypot(cx - spawnTile.tx, cy - spawnTile.ty) > 2.5 &&
+                (!this.grid[cy] || this.grid[cy][cx + ox] === 0) &&
+                (!this.grid[cy + oy] || this.grid[cy + oy][cx] === 0)
+              ) {
                 this.grid[cy][cx] = 0;
               }
             }
@@ -2758,11 +2925,26 @@
             const ax = rm.cx;
             const ayTop = rm.y0 - 1;
             const ayBot = rm.y1 + 1;
-            if (ax < this.bossRoomMinX - 4 && ayTop > 2 && this.grid[ayTop][ax] === 0 && this.grid[ayTop - 1] && this.grid[ayTop - 1][ax] === 0) {
+            const canCarveAlcove = (tx, ty, dirY) => {
+              if (tx >= this.bossRoomMinX - 4 || ty <= 1 || ty >= H - 2) return false;
+              if (!this.grid[ty] || this.grid[ty][tx] !== 0) return false;
+              if (nearAnyDoor(tx, ty, 3)) return false;
+              if (tx >= this.bossRoomMinX - 3 && ty >= 7 && ty <= 30) return false;
+              // Require ALL neighbors outside the originating room to be solid wall (never bridge across a 1-tile wall)
+              for (let ny = ty - 1; ny <= ty + 1; ny++) {
+                for (let nx = tx - 1; nx <= tx + 1; nx++) {
+                  const inOriginRoom = nx >= rm.x0 && nx <= rm.x1 && ny >= rm.y0 && ny <= rm.y1;
+                  if (inOriginRoom) continue;
+                  if (!this.grid[ny] || this.grid[ny][nx] !== 0) return false;
+                }
+              }
+              return true;
+            };
+            if (canCarveAlcove(ax, ayTop, -1)) {
               this.grid[ayTop][ax] = 1;
               if (rng() < 0.6) propCandidates.push([ax, ayTop, rng() < 0.5 ? 'barrel' : 'urn']);
             }
-            if (ax < this.bossRoomMinX - 4 && ayBot < H - 3 && this.grid[ayBot][ax] === 0 && this.grid[ayBot + 1] && this.grid[ayBot + 1][ax] === 0) {
+            if (canCarveAlcove(ax, ayBot, 1)) {
               this.grid[ayBot][ax] = 1;
               if (rng() < 0.6) torchCandidates.push([ax, ayBot]);
             }
@@ -2771,7 +2953,7 @@
       }
 
       // 2. Carve 1-2 bonus procedural side crypts connected to existing rooms (never bypassing locked gates or approaching boss)
-      const candidates = this.rooms.filter(rm => rm.x0 > 6 && rm.x1 < this.bossRoomMinX - 8);
+      const candidates = this.rooms.filter(rm => rm.x0 > 6 && rm.x1 < this.bossRoomMinX - 8 && !/Bóveda|Tesoro|Cripta Áurea|Archivo|Sagrario/i.test(rm.name || ''));
       for (let attempt = 0; attempt < 6 && sideChambers < 2 && candidates.length > 0; attempt++) {
         const rm = candidates[Math.floor(rng() * candidates.length)];
         const dirY = rng() < 0.5 ? -1 : 1;
@@ -2780,7 +2962,9 @@
         const syBase = dirY < 0 ? rm.y0 - 4 : rm.y1 + 2;
         const sy0 = Math.max(2, syBase);
         const sy1 = Math.min(H - 3, syBase + 2);
+        const doorY = dirY < 0 ? rm.y0 - 1 : rm.y1 + 1;
         if (sy1 - sy0 < 2 || sx1 - sx0 < 3 || sx1 >= this.bossRoomMinX - 5) continue;
+        if (nearAnyDoor(rm.cx, doorY, 3)) continue;
 
         let allWall = true;
         for (let y = sy0 - 1; y <= sy1 + 1 && allWall; y++) {
@@ -2797,12 +2981,17 @@
         for (let y = sy0; y <= sy1; y++) {
           for (let x = sx0; x <= sx1; x++) this.grid[y][x] = 1;
         }
-        const doorY = dirY < 0 ? rm.y0 - 1 : rm.y1 + 1;
         this.grid[doorY][rm.cx] = 1;
         torchCandidates.push([sx0, sy0]);
         propCandidates.push([sx1, sy1, rng() < 0.5 ? 'urn' : 'barrel']);
         if (rng() < 0.7) mobSpots.push([rm.cx, Math.floor((sy0 + sy1) / 2), 1.15]);
         sideChambers++;
+      }
+
+      // Guard: if any procedural mutation broke door enclosures or puzzle reachability, roll back grid edits cleanly
+      if (!this._checkAllProgressionInvariants(spawnTile)) {
+        this.grid = gridBackup;
+        sideChambers = 0;
       }
 
       // 3. Vary hazard & pillar density by hazardStyle
@@ -2997,9 +3186,10 @@
       m.dmg = Math.round(Math.max(m.dmg, this.def.boss.dmg * (0.82 + tierProgress * 0.14)));
       m.speed = Math.max(m.speed, 84 + Math.round(tierProgress * 20));
       if (this.isLateBiome) {
-        m.hp = Math.round(m.hp * 3.5);
-        m.dmg = Math.round(m.dmg * 3.0);
-        m.speed = Math.min(250, Math.round(m.speed * 1.2));
+        // makeMob() already applies x3.0 HP/DMG for late biomes; apply only a modest elite bonus here
+        m.hp = Math.round(m.hp * 1.45);
+        m.dmg = Math.round(m.dmg * 1.25);
+        m.speed = Math.min(250, Math.round(m.speed * 1.15));
       }
       m.maxHp = m.hp;
       m.radius = 25;

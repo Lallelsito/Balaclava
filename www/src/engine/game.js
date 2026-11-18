@@ -4985,12 +4985,17 @@
             miniLevel,
             floorsDesc: '4 Sectores: Atrio · Alas Rúnicas · Guardián · Santuario del Jefe',
             enemies,
-            boss: def && def.boss ? {
-              name: def.boss.name,
-              hp: def.boss.hp,
-              dmg: def.boss.dmg,
-              relicName: relicItem ? relicItem.name : null
-            } : null
+            boss: def && def.boss ? (() => {
+              const bs = (Balaclava.DungeonInstance && Balaclava.DungeonInstance.computeBossStats)
+                ? Balaclava.DungeonInstance.computeBossStats(def, tierIdx, this.player.level, { isCorrupted })
+                : { hp: def.boss.hp, dmg: def.boss.dmg };
+              return {
+                name: def.boss.name,
+                hp: bs.hp,
+                dmg: bs.dmg,
+                relicName: relicItem ? relicItem.name : null
+              };
+            })() : null
           }
         });
       } else {
@@ -6521,7 +6526,13 @@
     movePlayerWithCollision(dx, dy) {
       const canStand = (x, y) => {
         if (this.activeDungeon) {
-          return this.activeDungeon.isTileWalkable(Math.floor(x / TILE_SIZE), Math.floor(y / TILE_SIZE));
+          const pts = [
+            [x - 7, y - 5],
+            [x + 7, y - 5],
+            [x - 7, y + 5],
+            [x + 7, y + 5]
+          ];
+          return pts.every(([cx, cy]) => this.activeDungeon.isTileWalkable(Math.floor(cx / TILE_SIZE), Math.floor(cy / TILE_SIZE)));
         }
         // Strict land-only traversal (player NEVER steps onto water tile === 0 or locked islands)
         const pts = [
@@ -11658,7 +11669,7 @@
           ctx.lineWidth = 2;
           ctx.strokeRect(mpx + 4, mpy + 6, TILE_SIZE - 8, TILE_SIZE - 12);
 
-          const roman = mp.order === 1 ? 'I' : mp.order === 2 ? 'II' : 'III';
+          const roman = mp.order === 1 ? 'I' : mp.order === 2 ? 'II' : mp.order === 3 ? 'III' : 'IV';
           ctx.font = '12px BalaclavaPixel, monospace';
           ctx.textAlign = 'center';
           ctx.fillStyle = isLit ? '#69f0ae' : '#ffe082';
@@ -11739,12 +11750,14 @@
         if (r.kind === 'seq') {
           const clueN = r.clueCount || r.order || 1;
           if (pMode === 'flames_count') {
-            // Draw 1, 2, or 3 ritual flame sconces around the top/sides of the pad
+            // Draw 1..4 ritual flame sconces around the top/sides of the pad
             const flameOffsets = clueN === 1
               ? [[0, -14]]
               : clueN === 2
                 ? [[-12, -14], [12, -14]]
-                : [[-14, -13], [0, -16], [14, -13]];
+                : clueN === 3
+                  ? [[-14, -13], [0, -16], [14, -13]]
+                  : [[-15, -13], [-5, -16], [5, -16], [15, -13]];
             for (const [fox, foy] of flameOffsets) {
               const fx = cx + fox;
               const fy = cy + foy;
@@ -11761,7 +11774,7 @@
               ctx.fill();
             }
           } else if (pMode === 'obelisk_notches') {
-            // Draw a small carved stone obelisk on the right edge of the pad with 1, 2, or 3 glowing horizontal notches
+            // Draw a small carved stone obelisk on the right edge of the pad with 1..4 glowing horizontal notches
             const ox = px + TILE_SIZE - 9;
             const oy = py + 8;
             ctx.fillStyle = '#26222f';
@@ -11769,8 +11782,10 @@
             ctx.strokeStyle = '#6d5e48';
             ctx.lineWidth = 1;
             ctx.strokeRect(ox - 4, oy, 8, 28);
+            const spacing = clueN >= 4 ? 5 : 7;
+            const startY = clueN >= 4 ? oy + 4 : oy + 6;
             for (let nIdx = 0; nIdx < clueN; nIdx++) {
-              const ny = oy + 6 + nIdx * 7;
+              const ny = startY + nIdx * spacing;
               ctx.fillStyle = r.active ? '#69f0ae' : '#4dd0e1';
               ctx.fillRect(ox - 2, ny, 4, 3);
             }

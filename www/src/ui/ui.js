@@ -1371,7 +1371,8 @@
       bName.textContent = (meta.boss && meta.boss.name) || (isEn ? 'Ancient Guardian' : 'Guardián Ancestral');
       const bStats = document.createElement('div');
       bStats.className = 'st-db-boss-stats';
-      bStats.textContent = meta.boss ? `HP ${meta.boss.hp} · ${isEn ? 'ATK' : 'ATQ'} ${meta.boss.dmg}` : (isEn ? 'Boss Encounter' : 'Desafío de Jefe');
+      const fmtStat = (v) => (Balaclava.Utils && Balaclava.Utils.formatNum) ? Balaclava.Utils.formatNum(Math.round(v)) : Math.round(v);
+      bStats.textContent = meta.boss ? `HP ${fmtStat(meta.boss.hp)} · ${isEn ? 'ATK' : 'ATQ'} ${fmtStat(meta.boss.dmg)}` : (isEn ? 'Boss Encounter' : 'Desafío de Jefe');
       bInfo.appendChild(bName);
       bInfo.appendChild(bStats);
       if (meta.boss && meta.boss.relicName) {
@@ -3168,10 +3169,11 @@
           const gateTxt = dung.gateOpen ? tr('hud.dungGateOpen') : tr('hud.dungGateClosed');
           let phaseLine = '';
           if (dung.boss && dung.boss.hp > 0) {
+            const fmtB = (v) => (Balaclava.Utils && Balaclava.Utils.formatNum) ? Balaclava.Utils.formatNum(Math.round(v)) : Math.round(v);
             phaseLine = tr('hud.dungPhaseLive', {
               phase: dung.boss.phase || 1,
-              hp: Math.ceil(dung.boss.hp),
-              maxHp: dung.boss.maxHp
+              hp: fmtB(Math.ceil(dung.boss.hp)),
+              maxHp: fmtB(dung.boss.maxHp)
             });
           } else if (dung.gateOpen) {
             phaseLine = tr('hud.dungConquered');
