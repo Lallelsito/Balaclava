@@ -295,5 +295,26 @@ console.log('17. Performance: 300 machines');
   ok('Tick < 8 ms with 300 structures (1 tick/s budget)', ms < 8);
 }
 
+console.log('18. Expanded Energy structures (battery, gem synthesizer, rune inscriptor, turret, beacon, condenser)');
+{
+  const g = mkGame(); allResearch(g); base(g);
+  place(g, 'reactor_singularidad', 27, 31);
+  place(g, 'bateria_cuantica', 25, 25, 2);
+  const syn = place(g, 'sintetizador_gemas', 25, 27);
+  const ins = place(g, 'forja_runica_omega', 25, 30);
+  const tur = place(g, 'torreta_prisma_omega', 29, 25);
+  const bea = place(g, 'faro_sobrecarga_isla', 29, 27);
+  const con = place(g, 'condensador_materia', 31, 29);
+  g.omega.nexusAdd(PLOT, { singularidad: 5, cristales: 10, carbon: 10, piedra: 20 });
+  run(g, 40);
+  const nx = g.omega.nexusData(PLOT);
+  const it = nx.items;
+  ok('Quantum battery increases Nexus energy buffer capacity (+15000 at Lv2)', nx.bufCap >= 2000 + 15000);
+  ok('Gem synthesizer crystallizes magic crystals from energy + crystals', (g.omega.state.produced.cristales_magicos || 0) >= 3);
+  ok('Rune inscriptor etches runic tablets and elemental runes', (g.omega.state.produced.tablilla_runica || 0) >= 3 && (it.runa_fuego || 0) >= 1);
+  ok('Prism turret and Overload beacon are powered and active', tur.omegaActive === true && bea.omegaActive === true);
+  ok('Matter condenser produces stardust from pure energy without item inputs', (g.omega.state.produced.polvo_estelar || 0) >= 2);
+}
+
 console.log('\nSUMMARY: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

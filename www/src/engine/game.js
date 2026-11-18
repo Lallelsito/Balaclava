@@ -772,7 +772,7 @@
       const excess = qty - toAdd;
 
       if (toAdd > 0) {
-        this.inventory[itemId] = curQty + toAdd;
+        this.inventory[itemId] = totalQty + toAdd;
         this.stats.byItem[itemId] = (this.stats.byItem[itemId] || 0) + toAdd;
         this.stats.gatheredTotal += toAdd;
         this.events.recordAction('gather', toAdd);
@@ -1391,7 +1391,7 @@
     }
 
     syncArmorTiersFromGear() {
-      if (!this.armorTiers) this.armorTiers = { helm: null, armor: null, shield: null, boots: null };
+      if (!this.armorTiers) this.armorTiers = { helm: null, armor: null, legs: null, shield: null, boots: null };
       if (!Balaclava.ARMORS) return;
       Object.keys(Balaclava.ARMORS).forEach(slot => {
         const owned = this.getOwnedArmorItem(slot);
@@ -1570,8 +1570,8 @@
       const normSlot = slotKey === 'helmet' ? 'helm' : slotKey;
       const itemDef = Balaclava.ITEMS && Balaclava.ITEMS[targetId];
       if (!itemDef) return false;
-      if (!this.equipped) this.equipped = { armor: null, helm: null, shield: null, boots: null, ring: null, amulet: null, relic: null };
-      if (!this.armorTiers) this.armorTiers = { helm: null, armor: null, shield: null, boots: null };
+      if (!this.equipped) this.equipped = { armor: null, helm: null, legs: null, shield: null, boots: null, ring: null, amulet: null, relic: null };
+      if (!this.armorTiers) this.armorTiers = { helm: null, armor: null, legs: null, shield: null, boots: null };
 
       const isProgTarget = Boolean(Balaclava.isProgressiveArmorItem && Balaclava.isProgressiveArmorItem(targetId));
       if (isProgTarget) {
@@ -4629,7 +4629,7 @@
       this.uiDirty = true;
     }
 
-    enterDungeon(dungeonId, isCorrupted = false) {
+    enterDungeon(dungeonId, isCorrupted = false, opts = null) {
       if (Balaclava.UI && Balaclava.UI.activeModal) Balaclava.UI.closeModal();
 
       if (dungeonId === 'abismo_infinito') {
@@ -4679,24 +4679,13 @@
         return;
       }
 
-      if (!isCorrupted && Array.isArray(this.clearedDungeons) && this.clearedDungeons.includes(dungeonId)) {
+      if (!isCorrupted && Array.isArray(this.clearedDungeons) && this.clearedDungeons.includes(dungeonId) && !(opts && opts.forceNormal)) {
         const totalDungeons = (Balaclava.DUNGEON_TIER_LIST && Balaclava.DUNGEON_TIER_LIST.length) || Object.keys(Balaclava.DUNGEON_DEFS || {}).length || 24;
         const allCleared = this.clearedDungeons.length >= totalDungeons;
-        if (allCleared) {
-          if (Balaclava.UI && typeof Balaclava.UI.openModal === 'function') {
-            Balaclava.UI.openModal('corrupted_dungeon_choice', { dungeonId });
-            return;
-          }
+        if (allCleared && Balaclava.UI && typeof Balaclava.UI.openModal === 'function') {
+          Balaclava.UI.openModal('corrupted_dungeon_choice', { dungeonId });
+          return;
         }
-        this.toast('Dungeon completada', 'warn');
-        if (Balaclava.Audio) Balaclava.Audio.play('error');
-        return;
-      }
-
-      if (isCorrupted && Array.isArray(this.corruptedClearedDungeons) && this.corruptedClearedDungeons.includes(dungeonId)) {
-        this.toast('Dungeon corrupta completada', 'warn');
-        if (Balaclava.Audio) Balaclava.Audio.play('error');
-        return;
       }
 
       const def = (Balaclava.DUNGEON_DEFS && Balaclava.DUNGEON_DEFS[dungeonId])
@@ -4980,6 +4969,17 @@
         this.player.deadTimer = this.player.deadMax || 10.0;
         this.player.invuln = (this.player.deadMax || 10.0) + 1.2;
         this.player.deathSeed = Math.floor((this.time || 0) * 60) % 997;
+        // If player died inside a dungeon before claiming the boss chest, do not leave this run marked as completed
+        if (this.activeDungeon && !this.activeDungeon.bossChestOpened) {
+          const dId = this.activeDungeon.id;
+          if (this.activeDungeon._clearedInThisInstance && Array.isArray(this.clearedDungeons)) {
+            this.clearedDungeons = this.clearedDungeons.filter(x => x !== dId);
+          }
+          if (this.activeDungeon._corruptedClearedInThisInstance && Array.isArray(this.corruptedClearedDungeons)) {
+            this.corruptedClearedDungeons = this.corruptedClearedDungeons.filter(x => x !== dId);
+          }
+          this.activeDungeon.completed = false;
+        }
         this.clearTransientInputs();
         this.resetAltarNotifications();
         this.paused = false;
@@ -5011,7 +5011,19 @@
       if (this.combat) this.combat.worldHazards = [];
       this.clearTransientInputs();
       this.resetAltarNotifications();
-      if (this.activeDungeon) this.exitDungeon(true);
+      if (this.activeDungeon) {
+        if (!this.activeDungeon.bossChestOpened) {
+          const dId = this.activeDungeon.id;
+          if (this.activeDungeon._clearedInThisInstance && Array.isArray(this.clearedDungeons)) {
+            this.clearedDungeons = this.clearedDungeons.filter(x => x !== dId);
+          }
+          if (this.activeDungeon._corruptedClearedInThisInstance && Array.isArray(this.corruptedClearedDungeons)) {
+            this.corruptedClearedDungeons = this.corruptedClearedDungeons.filter(x => x !== dId);
+          }
+          this.activeDungeon.completed = false;
+        }
+        this.exitDungeon(true);
+      }
       const C = Balaclava.CONST.CENTER_PLOT || 4;
       const campX = (C * PLOT_TILES + 6.5) * TILE_SIZE;
       const campY = (C * PLOT_TILES + 6.5) * TILE_SIZE;
@@ -9949,18 +9961,28 @@
           const dw = Math.round(w * 1.24);
           ctx.drawImage(exImg, fr * fw, 0, fw, fh, cx - dw / 2, py + h - dw + 4, dw, dw);
         } else {
-          const dw = Math.round(w * vScale);
+          let dw = Math.round(w * vScale);
+          const maxH = Math.round(h * (def.size === 1 ? 1.72 : 1.54));
           const rawH = Math.round(dw * (exImg.height / Math.max(1, exImg.width)));
-          const dh = Math.min(rawH, Math.round(h * (def.size === 1 ? 1.72 : 1.54)));
+          let dh = rawH;
+          if (rawH > maxH) {
+            dh = maxH;
+            dw = Math.round(dh * (exImg.width / Math.max(1, exImg.height)));
+          }
           const dy = isFlushTile ? (cy - dh / 2) : (py + h - dh + (def.size === 1 ? 6 : 8));
           ctx.drawImage(exImg, cx - dw / 2, dy, dw, dh);
         }
       } else if (bImg) {
         ctx.fillStyle = 'rgba(0,0,0,0.26)';
         ctx.beginPath(); ctx.ellipse(cx, py + h - 2, Math.round(w * 0.52), Math.round(h * 0.14), 0, 0, Math.PI * 2); ctx.fill();
-        const dw = Math.round(w * (def.size === 1 ? 1.38 : 1.26));
+        let dw = Math.round(w * (def.size === 1 ? 1.38 : 1.26));
         const maxH = def.size === 1 ? Math.round(h * 1.66) : Math.round(h * 1.50);
-        const dh = Math.min(maxH, Math.round(dw * (bImg.height / Math.max(1, bImg.width))));
+        const rawH = Math.round(dw * (bImg.height / Math.max(1, bImg.width)));
+        let dh = rawH;
+        if (rawH > maxH) {
+          dh = maxH;
+          dw = Math.round(dh * (bImg.width / Math.max(1, bImg.height)));
+        }
         ctx.drawImage(bImg, cx - dw / 2, py + h - dh + 6, dw, dh);
       } else if (def.sprite === 'Portal_Stone') {
         const props = assets.get('props');
@@ -10019,6 +10041,100 @@
         } else {
           ctx.fillStyle = '#5d4037'; ctx.fillRect(px + 4, py + 4, w - 8, h - 8);
         }
+      }
+
+      // Render live animated animals inside Corral and Granja
+      if (b.type === 'corral' || b.type === 'granja') {
+        const shImg = assets.get('sheep_idle');
+        const cowImg = assets.extraImages && assets.extraImages.animal_cow;
+        const pigImg = assets.extraImages && assets.extraImages.animal_pig;
+        const duckImg = assets.extraImages && assets.extraImages.animal_duck;
+        const t = this.time || 0;
+        const bSeed = Number(b.id) || (b.tx * 31 + b.ty * 17);
+        const animals = b.type === 'corral'
+          ? [
+              { kind: 'sheep', ox: -0.22, oy: 0.04, ph: 0.0, spd: 1.4 },
+              { kind: 'cow',   ox: 0.20,  oy: -0.02, ph: 2.1, spd: 1.1 },
+              { kind: 'pig',   ox: 0.02,  oy: 0.24,  ph: 4.2, spd: 1.7 }
+            ]
+          : [
+              { kind: 'cow',   ox: -0.24, oy: 0.18, ph: 0.7, spd: 1.2 },
+              { kind: 'sheep', ox: 0.22,  oy: 0.20, ph: 2.8, spd: 1.5 },
+              { kind: 'duck',  ox: -0.04, oy: 0.28, ph: 1.5, spd: 2.2 },
+              { kind: 'duck',  ox: 0.12,  oy: 0.30, ph: 3.9, spd: 2.0 }
+            ];
+        for (let ai = 0; ai < animals.length; ai++) {
+          const an = animals[ai];
+          const walkX = Math.sin(t * an.spd + bSeed + an.ph) * (w * 0.08);
+          const walkY = Math.cos(t * (an.spd * 0.8) + bSeed + an.ph) * (h * 0.04);
+          const hop = Math.abs(Math.sin(t * (an.spd * 2.4) + an.ph)) * 2.5;
+          const ax = cx + an.ox * w + walkX;
+          const ay = cy + an.oy * h + walkY - hop;
+          const flip = Math.cos(t * an.spd + bSeed + an.ph) < 0 ? -1 : 1;
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,0,0,0.25)';
+          ctx.beginPath();
+          ctx.ellipse(ax, ay + 10 + hop, an.kind === 'duck' ? 6 : 10, an.kind === 'duck' ? 3 : 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.translate(ax, ay);
+          ctx.scale(flip, 1);
+          if (an.kind === 'sheep' && shImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(shImg))) {
+            const frames = Math.max(1, Math.floor(shImg.width / 128));
+            const fr = Math.floor((t * 6 + ai * 2) % frames);
+            ctx.drawImage(shImg, fr * 128, 0, 128, 128, -22, -22, 44, 44);
+          } else if (an.kind === 'cow' && cowImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(cowImg))) {
+            ctx.drawImage(cowImg, -16, -15, 32, 30);
+          } else if (an.kind === 'pig' && pigImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(pigImg))) {
+            ctx.drawImage(pigImg, -13, -12, 26, 24);
+          } else if (an.kind === 'duck' && duckImg && (!Balaclava.Utils.isImgReady || Balaclava.Utils.isImgReady(duckImg))) {
+            ctx.drawImage(duckImg, -10, -10, 20, 20);
+          }
+          ctx.restore();
+        }
+      }
+
+      // Render animated tesla / arcane / omega turret & beacon effects on top of tower sprites
+      if (b.type === 'torre_rayos' || b.type === 'torreta_prisma_omega') {
+        const t = this.time || 0;
+        const orbY = py - (b.type === 'torreta_prisma_omega' ? 10 : 8) + Math.sin(t * 5 + (b.id || 0)) * 2;
+        const pulse = 0.65 + 0.35 * Math.sin(t * 9 + (b.id || 0));
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = b.type === 'torreta_prisma_omega' ? `rgba(224,64,251,${(0.38 * pulse).toFixed(2)})` : `rgba(64,196,255,${(0.38 * pulse).toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(cx, orbY, 11 + pulse * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = b.type === 'torreta_prisma_omega' ? '#ea80fc' : '#80d8ff';
+        ctx.lineWidth = 1.6;
+        for (let a = 0; a < 3; a++) {
+          const ang = t * 4.5 + a * (Math.PI * 2 / 3) + (b.id || 0);
+          ctx.beginPath();
+          ctx.moveTo(cx, orbY);
+          ctx.lineTo(cx + Math.cos(ang) * 7, orbY + Math.sin(ang) * 5);
+          ctx.lineTo(cx + Math.cos(ang + 0.35) * 13, orbY + Math.sin(ang + 0.35) * 9);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else if (b.type === 'torre_magica') {
+        const t = this.time || 0;
+        const orbY = py - 8 + Math.sin(t * 4 + (b.id || 0)) * 2.5;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = 'rgba(179,136,255,0.42)';
+        ctx.beginPath();
+        ctx.arc(cx, orbY, 10 + Math.sin(t * 6) * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else if ((b.type === 'faro_sobrecarga_isla' || b.type === 'condensador_materia') && b.omegaActive) {
+        const t = this.time || 0;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.strokeStyle = b.type === 'condensador_materia' ? 'rgba(224,64,251,0.45)' : 'rgba(0,229,255,0.45)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, (w * 0.44) + Math.sin(t * 5 + (b.id || 0)) * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
 
       // Level pips only (removed cluttered yellow ! badge)

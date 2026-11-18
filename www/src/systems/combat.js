@@ -1890,17 +1890,18 @@
 
     damageEnemy(game, enemy, rawDmg, knockAng = 0, isCrit = false, allowProc = true) {
       if (!enemy || enemy._dead || enemy.hp <= 0) return false;
-      if (allowProc && game && game.activeDungeon) {
+      if (game && typeof game.isPlayerDead === 'function' && game.isPlayerDead()) return false;
+      if (game && game.activeDungeon) {
         const dung = game.activeDungeon;
         if (enemy.isBoss && !dung.bossLocked) {
-          if ((game.time - (game._lastBossLockWarn || -99)) >= 1.5) {
+          if (allowProc && (game.time - (game._lastBossLockWarn || -99)) >= 1.5) {
             game._lastBossLockWarn = game.time;
             game.addFloatingText(enemy.x, enemy.y - 36, '¡Entra a la sala del Jefe!', '#ffd54f');
           }
-          game.spawnParticles(enemy.x, enemy.y, '#90a4ae', 4);
+          if (allowProc) game.spawnParticles(enemy.x, enemy.y, '#90a4ae', 4);
           return false;
         }
-        if (typeof dung.hasLineOfSight === 'function' && !dung.hasLineOfSight(game.player.x, game.player.y, enemy.x, enemy.y)) {
+        if (allowProc && typeof dung.hasLineOfSight === 'function' && !dung.hasLineOfSight(game.player.x, game.player.y, enemy.x, enemy.y)) {
           return false;
         }
       }
@@ -2035,6 +2036,16 @@
         const dung = game.activeDungeon;
         dung.boss = null;
         dung.completed = true;
+        // Clear all lingering hazards, projectiles, bombs, lasers, and minions immediately on boss death
+        dung.enemies = [];
+        dung.hazardZones = [];
+        game.enemyProjectiles = [];
+        game.thrownBombs = [];
+        game.laserBeams = [];
+        if (game.player) {
+          game.player.statusEffects = {};
+          game.player.invuln = Math.max(game.player.invuln || 0, 3.0);
+        }
         if (typeof dung.unlockBossGateAfterVictory === 'function') {
           dung.unlockBossGateAfterVictory();
         }
@@ -2045,11 +2056,13 @@
         } else if (dung.isCorrupted) {
           if (!Array.isArray(game.corruptedClearedDungeons)) game.corruptedClearedDungeons = [];
           if (!game.corruptedClearedDungeons.includes(dung.id)) {
+            dung._corruptedClearedInThisInstance = true;
             game.corruptedClearedDungeons.push(dung.id);
           }
           if (game.omega && typeof game.omega.recordBossKill === 'function') game.omega.recordBossKill(dung.id);
         } else {
           if (!game.clearedDungeons.includes(dung.id)) {
+            dung._clearedInThisInstance = true;
             game.clearedDungeons.push(dung.id);
           }
           if (game.omega && typeof game.omega.recordBossKill === 'function') game.omega.recordBossKill(dung.id);

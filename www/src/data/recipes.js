@@ -78,11 +78,11 @@
     // === FUNDICIÓN ===
     { id: 'r_acero', out: 'lingote_acero', qty: 1, station: 'fundicion', in: { lingote_hierro: 2, carbon: 3 }, xp: 22 },
     { id: 'r_aleacion_ignea', out: 'aleacion_ignea', qty: 1, station: 'fundicion', in: { material_volcanico: 4, lingote_oro: 2, esencia_magma: 1 }, xp: 55 },
-    { id: 'r_mitrilo', out: 'lingotes_especiales', qty: 1, station: 'fundicion', in: { lingote_oro: 2, cristales: 3, material_volcanico: 1 }, xp: 45 },
+    { id: 'r_mitrilo', out: 'lingotes_especiales', qty: 1, station: 'fundicion', in: { lingote_oro: 2, cristales: 3, cristales_magicos: 1 }, xp: 45 },
     { id: 'r_mitrilo_puro', out: 'lingotes_especiales', qty: 2, station: 'fundicion', in: { mitrilo_bruto: 2, carbon: 2 }, xp: 52 },
     { id: 'r_adamantita', out: 'lingote_adamantita', qty: 1, station: 'fundicion', in: { adamantita: 2, lingotes_especiales: 1, carbon: 3 }, xp: 72 },
     { id: 'r_aleacion_celestial', out: 'aleacion_celestial', qty: 1, station: 'fundicion', in: { lingote_celestial: 1, polvo_estelar: 2, gema_vacio: 1 }, xp: 125 },
-    { id: 'r_celestial', out: 'lingote_celestial', qty: 1, station: 'fundicion', in: { lingote_adamantita: 2, polvo_estelar: 2, nucleo_solar: 1 }, xp: 110 },
+    { id: 'r_celestial', out: 'lingote_celestial', qty: 1, station: 'fundicion', in: { lingote_adamantita: 2, polvo_estelar: 2, esencia_magma: 1, cristales_magicos: 2 }, xp: 110 },
     { id: 'r_escama_obsidiana', out: 'escama_obsidiana', qty: 2, station: 'fundicion', in: { material_volcanico: 3, lingote_hierro: 2 }, xp: 34 },
 
     // === FORJA (ARMAMENTO Y ARMADURAS METÁLICAS, LLAVES Y MEJORAS DE FORJA) ===
@@ -132,13 +132,13 @@
     { id: 'r_casco_balaclava', out: 'casco_balaclava', qty: 1, station: 'forja', in: { casco_oricalco: 1, escamas_dragon: 10, polvo_estelar: 10, lingote_adamantita: 12 }, xp: 190 },
     { id: 'r_escudo_madera', out: 'escudo_madera', qty: 1, station: 'mesa_artesania', in: { tablon: 4, hierro: 2 }, xp: 16 },
     { id: 'r_escudo_hierro', out: 'escudo_hierro', qty: 1, station: 'forja', in: { escudo_cobre: 1, lingote_hierro: 5, tablon: 2 }, xp: 36 },
-    { id: 'r_escudo_oro', out: 'escudo_oro', qty: 1, station: 'forja', in: { escudo_plata: 1, lingote_oro: 5, lingote_acero: 2 }, xp: 64 },
-    { id: 'r_escudo_platino', out: 'escudo_platino', qty: 1, station: 'forja', in: { escudo_oro: 1, lingote_platino: 5, lingote_acero: 2 }, xp: 84 },
-    { id: 'r_escudo_cristal', out: 'escudo_cristal', qty: 1, station: 'forja', in: { escudo_acero: 1, zafiro: 2, diamantes: 2 }, xp: 136 },
-    { id: 'r_escudo_mitrilo', out: 'escudo_mitrilo', qty: 1, station: 'forja', in: { escudo_cristal: 1, lingotes_especiales: 5, escama_obsidiana: 2 }, xp: 168 },
+    { id: 'r_escudo_oro', out: 'escudo_oro', qty: 1, station: 'forja', in: { escudo_plata: 1, lingote_oro: 5, tablon: 2 }, xp: 64 },
+    { id: 'r_escudo_platino', out: 'escudo_platino', qty: 1, station: 'forja', in: { escudo_oro: 1, lingote_platino: 5, jade: 2 }, xp: 84 },
+    { id: 'r_escudo_cristal', out: 'escudo_cristal', qty: 1, station: 'forja', in: { escudo_acero: 1, cristales: 6, cristales_magicos: 3, zafiro: 2 }, xp: 136 },
+    { id: 'r_escudo_mitrilo', out: 'escudo_mitrilo', qty: 1, station: 'forja', in: { escudo_cristal: 1, lingotes_especiales: 5, sanguinaria: 2 }, xp: 168 },
     { id: 'r_botas_hierro', out: 'botas_hierro', qty: 1, station: 'forja', in: { botas_cobre: 1, lingote_hierro: 4, cuero: 2 }, xp: 40 },
     { id: 'r_botas_platino', out: 'botas_platino', qty: 1, station: 'forja', in: { botas_oro: 1, lingote_platino: 4, cuero: 2 }, xp: 70 },
-    { id: 'r_botas_mitrilo', out: 'botas_mitrilo', qty: 1, station: 'forja', in: { botas_cristal: 1, lingotes_especiales: 4, polvo_estelar: 2 }, xp: 120 },
+    { id: 'r_botas_mitrilo', out: 'botas_mitrilo', qty: 1, station: 'forja', in: { botas_cristal: 1, lingotes_especiales: 4, sanguinaria: 2 }, xp: 120 },
     { id: 'r_botas_viento', out: 'botas_viento', qty: 1, station: 'forja', in: { botas_oricalco: 1, seda_arana: 4, polvo_estelar: 3 }, xp: 165 },
     { id: 'r_anillo', out: 'anillo_mercader', qty: 1, station: 'forja', in: { lingote_oro: 4, esmeraldas: 1 }, xp: 45 },
     { id: 'r_anillo_platino', out: 'anillo_platino', qty: 1, station: 'forja', in: { lingote_platino: 3, jade: 2 }, xp: 68 },
@@ -239,8 +239,8 @@
     { id: 'r_casco_adam', out: 'casco_adamantita', qty: 1, station: 'forja', in: { casco_titanio: 1, lingote_adamantita: 16, diamantes: 8 }, xp: 120 },
     { id: 'r_escudo_adam', out: 'escudo_adamantita', qty: 1, station: 'forja', in: { escudo_titanio: 1, lingote_adamantita: 16, obsidiana_refinada: 6 }, xp: 125 },
     { id: 'r_botas_adam', out: 'botas_adamantita', qty: 1, station: 'forja', in: { botas_titanio: 1, lingote_adamantita: 16, cuero: 12 }, xp: 110 },
-    { id: 'r_casco_solar', out: 'casco_solar', qty: 1, station: 'investigacion', in: { casco_balaclava: 1, lingote_celestial: 16, runa_luz: 6, topacio: 8 }, xp: 220 },
-    { id: 'r_escudo_solar', out: 'escudo_solar', qty: 1, station: 'investigacion', in: { escudo_oricalco: 1, lingote_celestial: 18, runa_luz: 6, obsidiana_refinada: 12 }, xp: 235 },
+    { id: 'r_casco_solar', out: 'casco_solar', qty: 1, station: 'forja', in: { casco_balaclava: 1, lingote_celestial: 16, runa_luz: 6, topacio: 8 }, xp: 220 },
+    { id: 'r_escudo_solar', out: 'escudo_solar', qty: 1, station: 'forja', in: { escudo_oricalco: 1, lingote_celestial: 18, runa_luz: 6, obsidiana_refinada: 12 }, xp: 235 },
     { id: 'r_botas_solar', out: 'botas_solar', qty: 1, station: 'investigacion', in: { botas_oricalco: 1, lingote_celestial: 16, runa_aire: 6, seda_arana: 12 }, xp: 210 },
     { id: 'r_sombrero_mago', out: 'sombrero_mago', qty: 1, station: 'investigacion', in: { tela: 6, amatista: 2, tinta_arcana: 2, runa_aire: 1 }, xp: 88 },
     { id: 'r_capa_sombras', out: 'capa_sombras', qty: 1, station: 'taller', in: { tela: 6, seda_arana: 4, esencia_oscura: 3, garra_sombras: 2 }, xp: 96 },
@@ -299,7 +299,7 @@
 
     // === BIOME MINERALS, TITANIO & ORICALCO ===
     { id: 'r_ingote_titanio', out: 'lingote_titanio', qty: 1, station: 'horno', in: { titanio: 2, carbon: 2, azurita_glacial: 1 }, xp: 58 },
-    { id: 'r_ingote_oricalco', out: 'lingote_oricalco', qty: 1, station: 'forja', in: { oricalco: 2, esencia_magma: 1, carbon_eterno: 1 }, xp: 84 },
+    { id: 'r_ingote_oricalco', out: 'lingote_oricalco', qty: 1, station: 'fundicion', in: { oricalco: 2, esencia_magma: 1, carbon_eterno: 1 }, xp: 84 },
     { id: 'r_vidrio_estelar', out: 'vidrio', qty: 2, station: 'horno', in: { arena_estelar: 2, carbon: 1 }, xp: 14 },
 
     // === TERRAFORMING & VILLAGE DECORATION BLOCKS ===

@@ -471,7 +471,7 @@
       const eldrinSpots = [[3, 3], [8, 3], [3, 8], [8, 8], [4, 3], [8, 4]];
       this.npcOffsets.eldrin = eldrinSpots[Math.floor(rng() * eldrinSpots.length)];
       if (Array.isArray(Balaclava.NPCS)) {
-        for (const npc of Balaclava.NPCS) {
+        for (const npc of (Balaclava.NPCS || [])) {
           if (npc.id === 'eldrin') {
             this.npcPlots[npc.id] = [C, C];
             continue;
@@ -730,7 +730,7 @@
 
     ensureNpcLandPads(onlyPlot = null) {
       if (!Array.isArray(Balaclava.NPCS)) return;
-      for (const npc of Balaclava.NPCS) {
+      for (const npc of (Balaclava.NPCS || [])) {
         const [ngx, ngy] = this.getNpcPlot(npc);
         if (onlyPlot && (ngx !== onlyPlot[0] || ngy !== onlyPlot[1])) continue;
         if (!onlyPlot && !this.isPlotUnlocked(ngx, ngy)) continue;
@@ -1529,7 +1529,7 @@
       if (this.getNodeAtTile(tx, ty)) return null;
 
       // Avoid NPC spawn tiles (using dynamic procedural NPC plots & seed offsets)
-      for (const npc of Balaclava.NPCS) {
+      for (const npc of (Balaclava.NPCS || [])) {
         const nPlot = this.getNpcPlot(npc);
         const [offX, offY] = this.getNpcTileOffset(npc);
         const nx = nPlot[0] * PLOT_TILES + offX;
@@ -1538,12 +1538,12 @@
       }
 
       const defs = {
-        tree:           { hp: 22, tool: 'hacha', drops: [{ id: 'madera', min: 2, max: 4 }, { id: 'bayas', min: 0, max: 1, chance: 0.35 }, { id: 'manzana_roja', min: 1, max: 1, chance: 0.24 }], xp: 6 },
-        giant_tree:     { hp: 46, tool: 'hacha', drops: [{ id: 'madera', min: 4, max: 7 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.25 }, { id: 'manzana_roja', min: 1, max: 2, chance: 0.32 }], xp: 14 },
-        cactus:         { hp: 18, tool: 'hacha', drops: [{ id: 'cactus', min: 1, max: 2 }, { id: 'fibra_vegetal', min: 1, max: 3 }], xp: 7 },
-        bush:           { hp: 7,  tool: 'guadana', drops: [{ id: 'bayas', min: 1, max: 3 }, { id: 'fibra_vegetal', min: 1, max: 2 }], xp: 4 },
+        tree:           { hp: 22, tool: 'hacha', drops: [{ id: 'madera', min: 2, max: 4 }, { id: 'bayas', min: 0, max: 1, chance: 0.35 }, { id: 'manzana_roja', min: 1, max: 1, chance: 0.24 }, { id: 'naranja', min: 1, max: 1, chance: 0.22 }, { id: 'bellota', min: 1, max: 1, chance: 0.30 }], xp: 6 },
+        giant_tree:     { hp: 46, tool: 'hacha', drops: [{ id: 'madera', min: 4, max: 7 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.25 }, { id: 'manzana_roja', min: 1, max: 2, chance: 0.32 }, { id: 'granada', min: 1, max: 1, chance: 0.30 }, { id: 'bellota', min: 1, max: 2, chance: 0.35 }], xp: 14 },
+        cactus:         { hp: 18, tool: 'hacha', drops: [{ id: 'cactus', min: 1, max: 2 }, { id: 'fibra_vegetal', min: 1, max: 3 }, { id: 'pitaya', min: 1, max: 1, chance: 0.35 }, { id: 'pina', min: 1, max: 1, chance: 0.25 }], xp: 7 },
+        bush:           { hp: 7,  tool: 'guadana', drops: [{ id: 'bayas', min: 1, max: 3 }, { id: 'fibra_vegetal', min: 1, max: 2 }, { id: 'arandano', min: 1, max: 2, chance: 0.35 }, { id: 'cera_abeja', min: 1, max: 1, chance: 0.25 }], xp: 4 },
         herb_patch:     { hp: 5,  tool: 'guadana', drops: [{ id: 'hierba', min: 2, max: 3 }, { id: 'semillas', min: 1, max: 2, chance: 0.7 }], xp: 3 },
-        wild_crop_patch:{ hp: 6,  tool: 'guadana', drops: [{ id: 'semillas_tomate', min: 1, max: 2, chance: 0.6 }, { id: 'semillas_maiz', min: 1, max: 2, chance: 0.5 }, { id: 'semillas_fresa', min: 1, max: 1, chance: 0.3 }], xp: 8 },
+        wild_crop_patch:{ hp: 6,  tool: 'guadana', drops: [{ id: 'semillas_tomate', min: 1, max: 2, chance: 0.6 }, { id: 'semillas_maiz', min: 1, max: 2, chance: 0.5 }, { id: 'semillas_fresa', min: 1, max: 1, chance: 0.3 }, { id: 'pina', min: 1, max: 1, chance: 0.25 }, { id: 'arandano', min: 1, max: 1, chance: 0.3 }], xp: 8 },
         mushroom_node:  { hp: 9,  tool: 'guadana', drops: [{ id: 'hongo_luminoso', min: 1, max: 2 }, { id: 'esporas_toxicas', min: 1, max: 2, chance: 0.55 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.2 }], xp: 8 },
         rock:           { hp: 20, tool: 'pico', drops: [{ id: 'piedra', min: 2, max: 4 }, { id: 'carbon', min: 1, max: 1, chance: 0.3 }], xp: 6 },
         coal_vein:      { hp: 18, tool: 'pico', drops: [{ id: 'carbon', min: 2, max: 3 }, { id: 'piedra', min: 1, max: 2 }], xp: 8 },
@@ -1553,9 +1553,9 @@
         silver_vein:    { hp: 30, tool: 'pico', drops: [{ id: 'plata', min: 2, max: 3 }, { id: 'piedra', min: 1, max: 1 }], xp: 15 },
         platinum_vein:  { hp: 38, tool: 'pico', drops: [{ id: 'platino', min: 1, max: 2 }, { id: 'piedra', min: 1, max: 1 }], xp: 22 },
         sulfur_vein:    { hp: 24, tool: 'pico', drops: [{ id: 'azufre', min: 2, max: 3 }, { id: 'salitre', min: 1, max: 2, chance: 0.6 }], xp: 14 },
-        gold_vein:      { hp: 34, tool: 'pico', drops: [{ id: 'oro', min: 2, max: 3 }, { id: 'piedra', min: 1, max: 2 }], xp: 18 },
+        gold_vein:      { hp: 34, tool: 'pico', drops: [{ id: 'oro', min: 2, max: 3 }, { id: 'piedra', min: 1, max: 2 }, { id: 'topacio', min: 1, max: 1, chance: 0.32 }], xp: 18 },
         jade_vein:      { hp: 36, tool: 'pico', drops: [{ id: 'jade', min: 1, max: 2 }, { id: 'cristales', min: 1, max: 2, chance: 0.4 }], xp: 24 },
-        amethyst_vein:  { hp: 44, tool: 'pico', drops: [{ id: 'amatista', min: 1, max: 2 }, { id: 'cristales_magicos', min: 1, max: 1, chance: 0.45 }], xp: 30 },
+        amethyst_vein:  { hp: 44, tool: 'pico', drops: [{ id: 'amatista', min: 1, max: 2 }, { id: 'cristales_magicos', min: 1, max: 1, chance: 0.45 }, { id: 'geoda_amatista', min: 1, max: 1, chance: 0.45 }], xp: 30 },
         bloodstone_vein:{ hp: 54, tool: 'pico', drops: [{ id: 'sanguinaria', min: 1, max: 2 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.5 }], xp: 36 },
         crystal_node:   { hp: 40, tool: 'pico', drops: [{ id: 'cristales', min: 2, max: 3 }, { id: 'cristales_magicos', min: 1, max: 1, chance: 0.35 }], xp: 24 },
         ruby_node:      { hp: 52, tool: 'pico', drops: [{ id: 'rubi', min: 1, max: 2 }, { id: 'azufre', min: 1, max: 2 }], xp: 34 },
@@ -1567,13 +1567,13 @@
         ice_crystal:          { hp: 32, tool: 'pico', drops: [{ id: 'cristales', min: 1, max: 3 }, { id: 'esquirla_hielo', min: 1, max: 2, chance: 0.6 }, { id: 'plata', min: 1, max: 2 }, { id: 'gel_azul', min: 1, max: 1, chance: 0.3 }], xp: 20 },
         malachite_vein:       { hp: 26, tool: 'pico', drops: [{ id: 'malaquita_pradera', min: 1, max: 3 }, { id: 'piedra', min: 1, max: 2 }], xp: 14 },
         star_sand_vein:       { hp: 22, tool: 'pico', drops: [{ id: 'arena_estelar', min: 2, max: 4 }, { id: 'arena', min: 1, max: 2 }], xp: 13 },
-        amber_vein:           { hp: 38, tool: 'pico', drops: [{ id: 'ambar_desierto', min: 1, max: 2 }, { id: 'oro', min: 1, max: 2, chance: 0.45 }], xp: 26 },
+        amber_vein:           { hp: 38, tool: 'pico', drops: [{ id: 'ambar_desierto', min: 1, max: 2 }, { id: 'oro', min: 1, max: 2, chance: 0.45 }, { id: 'topacio', min: 1, max: 1, chance: 0.55 }, { id: 'miel_ambar', min: 1, max: 1, chance: 0.35 }], xp: 26 },
         azurite_vein:         { hp: 46, tool: 'pico', drops: [{ id: 'azurita_glacial', min: 1, max: 2 }, { id: 'esquirla_hielo', min: 1, max: 2, chance: 0.5 }], xp: 30 },
-        abyssal_crystal_vein: { hp: 56, tool: 'pico', drops: [{ id: 'cristal_abismal', min: 1, max: 2 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.55 }], xp: 38 },
+        abyssal_crystal_vein: { hp: 56, tool: 'pico', drops: [{ id: 'cristal_abismal', min: 1, max: 2 }, { id: 'esencia_oscura', min: 1, max: 1, chance: 0.55 }, { id: 'gema_vacio', min: 1, max: 1, chance: 0.25 }], xp: 38 },
         titanium_vein:        { hp: 64, tool: 'pico', drops: [{ id: 'titanio', min: 1, max: 2 }, { id: 'platino', min: 1, max: 2, chance: 0.4 }], xp: 44 },
-        orichalcum_vein:      { hp: 74, tool: 'pico', drops: [{ id: 'oricalco', min: 1, max: 2 }, { id: 'material_volcanico', min: 1, max: 2 }], xp: 56 },
+        orichalcum_vein:      { hp: 74, tool: 'pico', drops: [{ id: 'oricalco', min: 1, max: 2 }, { id: 'material_volcanico', min: 1, max: 2 }, { id: 'escamas_dragon', min: 1, max: 1, chance: 0.35 }], xp: 56 },
         obsidian_vein:        { hp: 70, tool: 'pico', drops: [{ id: 'obsidiana_bruta', min: 2, max: 3 }, { id: 'carbon_eterno', min: 1, max: 1, chance: 0.35 }], xp: 48 },
-        magma_core_vein:      { hp: 68, tool: 'pico', drops: [{ id: 'esencia_magma', min: 1, max: 2 }, { id: 'azufre', min: 2, max: 3 }], xp: 48 },
+        magma_core_vein:      { hp: 68, tool: 'pico', drops: [{ id: 'esencia_magma', min: 1, max: 2 }, { id: 'azufre', min: 2, max: 3 }, { id: 'nucleo_solar', min: 1, max: 1, chance: 0.35 }, { id: 'escamas_dragon', min: 1, max: 1, chance: 0.30 }], xp: 48 },
         adamantite_vein:      { hp: 72, tool: 'pico', drops: [{ id: 'adamantita', min: 1, max: 2 }, { id: 'diamantes', min: 1, max: 1, chance: 0.35 }], xp: 52 },
         dig_spot:       { hp: 8,  tool: 'pala', drops: [{ id: 'arena', min: 2, max: 3 }, { id: 'arcilla', min: 1, max: 3 }, { id: 'salitre', min: 1, max: 2, chance: 0.5 }, { id: 'huesos', min: 1, max: 1, chance: 0.45 }, { id: 'concha_marina', min: 1, max: 1, chance: 0.22 }, { id: 'botella_mensaje', min: 1, max: 1, chance: 0.18 }, { id: 'craneo_maldito', min: 1, max: 1, chance: 0.12 }, { id: 'fragmentos_antiguos', min: 1, max: 1, chance: 0.12 }], xp: 12 },
         meteor:         { hp: 55, tool: 'pico', drops: [{ id: 'diamantes', min: 2, max: 3 }, { id: 'polvo_estelar', min: 1, max: 2 }, { id: 'cristales_magicos', min: 2, max: 4 }, { id: 'obsidiana_bruta', min: 1, max: 2, chance: 0.65 }, { id: 'gema_alma', min: 1, max: 1, chance: 0.35 }, { id: 'onice', min: 1, max: 1, chance: 0.28 }, { id: 'fragmentos_antiguos', min: 1, max: 1, chance: 0.5 }], xp: 65 }
@@ -1673,29 +1673,25 @@
       const pool = [];
       if (biome === 'pradera') {
         pool.push('tree', 'tree', 'tree', 'tree', 'rock', 'rock', 'bush', 'bush', 'herb_patch', 'wild_crop_patch', 'coal_vein', 'copper_vein', 'tin_vein');
-        if (plotDist >= 1.1 && Math.random() < 0.28) pool.push('malachite_vein');
-        if (plotDist >= 0.9) pool.push('iron_vein', 'iron_vein');
-        if (plotDist >= 1.5) pool.push('silver_vein', 'gold_vein');
-        if (plotDist >= 2.2) pool.push('gold_vein', 'jade_vein');
+        if (plotDist >= 0.9) pool.push('iron_vein', 'iron_vein', 'malachite_vein', 'silver_vein');
+        if (plotDist >= 1.3) pool.push('silver_vein', 'gold_vein', 'jade_vein');
       } else if (biome === 'desierto') {
-        pool.push('cactus', 'cactus', 'cactus', 'rock', 'rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'star_sand_vein');
-        if (Math.random() < 0.45) pool.push('malachite_vein'); // Spawn equilibrado de malaquita en desierto
-        if (plotDist >= 1.4) pool.push('silver_vein', 'gold_vein', 'sulfur_vein', 'amber_vein', 'malachite_vein');
-        if (Math.random() < 0.55) pool.push('platinum_vein'); // Low-density platinum veins in desert biome
-        if (plotDist >= 2.3) pool.push('gold_vein', 'crystal_node', 'amber_vein', 'titanium_vein');
-      } else if (biome === 'bosque_oscuro') {
-        pool.push('giant_tree', 'giant_tree', 'giant_tree', 'giant_tree', 'mushroom_node', 'mushroom_node', 'herb_patch', 'wild_crop_patch', 'iron_vein');
-        if (plotDist >= 1.4) pool.push('silver_vein', 'jade_vein', 'abyssal_crystal_vein');
-        if (plotDist >= 2.3) pool.push('amethyst_vein', 'crystal_node', 'abyssal_crystal_vein', 'bloodstone_vein', 'orichalcum_vein');
+        pool.push('cactus', 'cactus', 'cactus', 'rock', 'rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'star_sand_vein', 'malachite_vein');
+        if (plotDist >= 1.3) pool.push('silver_vein', 'gold_vein', 'sulfur_vein', 'amber_vein', 'platinum_vein', 'jade_vein');
+        if (plotDist >= 1.9) pool.push('gold_vein', 'platinum_vein', 'crystal_node', 'amber_vein');
       } else if (biome === 'montanas_heladas') {
-        pool.push('tree', 'tree', 'tree', 'rock', 'iron_vein', 'silver_vein', 'ice_crystal');
-        if (plotDist >= 1.8) pool.push('gold_vein', 'platinum_vein', 'ice_crystal', 'azurite_vein', 'azurite_vein');
-        if (plotDist >= 2.8) pool.push('sapphire_node', 'mithril_vein', 'titanium_vein', 'titanium_vein', 'emerald_vein');
+        pool.push('tree', 'tree', 'tree', 'rock', 'iron_vein', 'silver_vein', 'ice_crystal', 'gold_vein', 'platinum_vein', 'azurite_vein');
+        if (plotDist >= 2.2) pool.push('azurite_vein', 'crystal_node', 'sapphire_node', 'emerald_vein');
+        if (plotDist >= 2.6) pool.push('sapphire_node', 'emerald_vein', 'mithril_vein', 'titanium_vein');
+      } else if (biome === 'bosque_oscuro') {
+        pool.push('giant_tree', 'giant_tree', 'giant_tree', 'giant_tree', 'mushroom_node', 'mushroom_node', 'herb_patch', 'wild_crop_patch', 'iron_vein', 'silver_vein', 'jade_vein');
+        if (plotDist >= 3.4) pool.push('amethyst_vein', 'crystal_node', 'abyssal_crystal_vein', 'bloodstone_vein', 'mithril_vein');
+        if (plotDist >= 3.8) pool.push('amethyst_vein', 'bloodstone_vein', 'mithril_vein', 'titanium_vein', 'abyssal_crystal_vein');
       } else {
         // tierras_volcanicas (outermost extreme biome)
-        pool.push('volcanic_rock', 'volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein');
-        if (plotDist >= 2.5) pool.push('ruby_node', 'bloodstone_vein', 'magma_core_vein', 'mithril_vein', 'adamantite_vein');
-        if (plotDist >= 3.2) pool.push('ruby_node', 'orichalcum_vein', 'orichalcum_vein', 'diamond_vein', 'adamantite_vein', 'magma_core_vein');
+        pool.push('volcanic_rock', 'volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein', 'mithril_vein', 'titanium_vein');
+        if (plotDist >= 4.4) pool.push('ruby_node', 'bloodstone_vein', 'magma_core_vein', 'adamantite_vein', 'diamond_vein');
+        if (plotDist >= 5.0) pool.push('ruby_node', 'orichalcum_vein', 'orichalcum_vein', 'diamond_vein', 'adamantite_vein', 'magma_core_vein', 'meteor');
       }
       const kind = pick(pool);
       return !!this.spawnNodeAtTile(tx, ty, kind, biome);
@@ -1712,27 +1708,24 @@
       const pool = [];
       if (biome === 'pradera') {
         pool.push('rock', 'coal_vein', 'copper_vein', 'tin_vein', 'iron_vein');
-        if (plotDist >= 1.1) pool.push('malachite_vein', 'iron_vein');
-        if (plotDist >= 1.5) pool.push('silver_vein', 'gold_vein');
-        if (plotDist >= 2.2) pool.push('jade_vein', 'gold_vein');
+        if (plotDist >= 0.9) pool.push('malachite_vein', 'iron_vein', 'silver_vein');
+        if (plotDist >= 1.3) pool.push('silver_vein', 'gold_vein', 'jade_vein');
       } else if (biome === 'desierto') {
-        pool.push('rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'sulfur_vein', 'gold_vein');
-        if (Math.random() < 0.40) pool.push('malachite_vein'); // Spawn de malaquita en desierto
-        if (plotDist >= 1.4) pool.push('silver_vein', 'amber_vein', 'platinum_vein', 'malachite_vein');
-        else if (Math.random() < 0.25) pool.push('platinum_vein');
-        if (plotDist >= 2.3) pool.push('crystal_node', 'titanium_vein');
-      } else if (biome === 'bosque_oscuro') {
-        pool.push('iron_vein', 'silver_vein', 'jade_vein');
-        if (plotDist >= 1.4) pool.push('abyssal_crystal_vein', 'amethyst_vein');
-        if (plotDist >= 2.3) pool.push('crystal_node', 'bloodstone_vein', 'orichalcum_vein');
+        pool.push('rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'sulfur_vein', 'gold_vein', 'malachite_vein');
+        if (plotDist >= 1.3) pool.push('silver_vein', 'amber_vein', 'platinum_vein', 'jade_vein');
+        if (plotDist >= 1.9) pool.push('crystal_node', 'platinum_vein', 'amber_vein');
       } else if (biome === 'montanas_heladas') {
-        pool.push('rock', 'iron_vein', 'silver_vein', 'ice_crystal');
-        if (plotDist >= 1.8) pool.push('gold_vein', 'platinum_vein', 'azurite_vein');
-        if (plotDist >= 2.8) pool.push('sapphire_node', 'mithril_vein', 'titanium_vein', 'emerald_vein');
+        pool.push('rock', 'iron_vein', 'silver_vein', 'ice_crystal', 'gold_vein', 'platinum_vein', 'azurite_vein');
+        if (plotDist >= 2.2) pool.push('azurite_vein', 'crystal_node', 'sapphire_node', 'emerald_vein');
+        if (plotDist >= 2.6) pool.push('sapphire_node', 'mithril_vein', 'titanium_vein', 'emerald_vein');
+      } else if (biome === 'bosque_oscuro') {
+        pool.push('iron_vein', 'silver_vein', 'jade_vein', 'abyssal_crystal_vein', 'amethyst_vein');
+        if (plotDist >= 3.4) pool.push('crystal_node', 'bloodstone_vein', 'mithril_vein', 'amethyst_vein');
+        if (plotDist >= 3.8) pool.push('bloodstone_vein', 'mithril_vein', 'titanium_vein', 'abyssal_crystal_vein');
       } else {
-        pool.push('volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein');
-        if (plotDist >= 2.5) pool.push('ruby_node', 'bloodstone_vein', 'magma_core_vein', 'mithril_vein', 'adamantite_vein');
-        if (plotDist >= 3.2) pool.push('orichalcum_vein', 'diamond_vein');
+        pool.push('volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein', 'mithril_vein', 'titanium_vein');
+        if (plotDist >= 4.4) pool.push('ruby_node', 'bloodstone_vein', 'magma_core_vein', 'adamantite_vein', 'diamond_vein');
+        if (plotDist >= 5.0) pool.push('orichalcum_vein', 'orichalcum_vein', 'diamond_vein', 'adamantite_vein');
       }
       return this.spawnNodeAtTile(tx, ty, pick(pool), biome);
     }

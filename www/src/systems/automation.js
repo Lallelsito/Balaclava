@@ -12,6 +12,7 @@
       for (const b of game.buildings) {
         const def = Balaclava.BUILDINGS[b.type];
         if (def && def.machineSpeedBonus) {
+          if (def.omegaStructure && !b.omegaActive) continue;
           mult += def.machineSpeedBonus * (1 + (b.level - 1) * 0.35);
         }
       }
@@ -55,8 +56,9 @@
           }
         }
 
-        // Turret defense (Torre Mágica / Torre Voltaica)
+        // Turret defense (Torre Mágica / Torre Voltaica / Torreta de Prisma Omega)
         if (def.turretRange) {
+          if (def.omegaStructure && !b.omegaActive) continue;
           b.turretCd = Math.max(0, (b.turretCd || 0) - dt);
           if (b.turretCd <= 0 && !game.activeDungeon) {
             const bx = (b.tx + def.size * 0.5) * TILE_SIZE;

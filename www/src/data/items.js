@@ -2467,33 +2467,33 @@
       id: 'singularidad', name: 'Singularidad', category: 'especiales', rarity: 'legendario',
       sellValue: 2500, buyValue: 0, source: 'Prensa de Singularidades (10.000 recursos)',
       uses: 'Forja de Lingote Omega, Reactores de Singularidad, Sobrecarga Infinita y Ascensión de Islas',
-      desc: 'Materia colapsada en un punto gravitatorio estable.', icon: 'polvo_estelar'
+      desc: 'Materia colapsada en un punto gravitatorio estable.', icon: 'singularidad'
     },
     lingote_omega: {
       id: 'lingote_omega', name: 'Lingote Omega', category: 'materiales', rarity: 'legendario',
       sellValue: 900, buyValue: 0, source: 'Fundidora Omega',
       uses: 'Forja de Equipamiento Tier 16 Omega y Sobrecarga Infinita',
-      desc: 'Aleación definitiva templada con singularidad y la esencia de los cinco biomas.', icon: 'lingote_celestial'
+      desc: 'Aleación definitiva templada con singularidad y la esencia de los cinco biomas.', icon: 'lingote_omega'
     },
     materia_comprimida: {
       id: 'materia_comprimida', name: 'Materia Comprimida', category: 'especiales', rarity: 'legendario',
-      sellValue: 600, buyValue: 0, source: 'Abismo Infinito / Islas Ascendidas',
+      sellValue: 600, buyValue: 0, source: 'Abismo Infinito / Islas Ascendidas / Condensador de Materia',
       uses: 'Sobrecarga Infinita, Ascensión de Islas y mejoras definitivas',
-      desc: 'Residuo hiperdenso que vibra con energía cósmica.', icon: 'gema_vacio'
+      desc: 'Residuo hiperdenso que vibra con energía cósmica.', icon: 'materia_comprimida'
     },
     casco_omega: {
       id: 'casco_omega', name: 'Yelmo de la Singularidad (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
       sellValue: 1450, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Casco Solar + Lingote Omega)',
       uses: 'Equipa en Casco (Tier 16): +62 Defensa, +280 Vida, +24% Daño, +25% Poder Mágico y -12% CD',
       desc: 'Corona gravitatoria que amplifica la mente y blinda al portador.',
-      equipSlot: 'helm', stats: { def: 62, maxHp: 280, maxEnergy: 80, dmgPct: 0.24, spellPower: 0.25, spellCdRed: 0.12 }, icon: 'helm_solar'
+      equipSlot: 'helm', stats: { def: 62, maxHp: 280, maxEnergy: 80, dmgPct: 0.24, spellPower: 0.25, spellCdRed: 0.12 }, icon: 'casco_omega'
     },
     armadura_omega: {
       id: 'armadura_omega', name: 'Coraza Omega del Vacío (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
       sellValue: 1850, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Armadura Celestial + Lingote Omega)',
       uses: 'Equipa en Armadura (Tier 16): +110 Defensa, +500 Vida Máx, +38% Daño, +18% Vel. y +2.5 HP/s',
       desc: 'Placas de horizonte de sucesos forjadas para resistir el Abismo Infinito.',
-      equipSlot: 'armor', stats: { def: 110, maxHp: 500, dmgPct: 0.38, speedPct: 0.18, regen: 2.5 }, icon: 'armor_solar'
+      equipSlot: 'armor', stats: { def: 110, maxHp: 500, dmgPct: 0.38, speedPct: 0.18, regen: 2.5 }, icon: 'armadura_omega'
     },
     pantalones_omega: {
       id: 'pantalones_omega', name: 'Grebas Gravitatorias Omega (T16)', category: 'armaduras', rarity: 'legendario', tier: 16,
@@ -2507,49 +2507,49 @@
       sellValue: 20, buyValue: 45, source: 'Taller',
       uses: 'Componente de automatización y transporte de fluidos',
       desc: 'Tuberías reforzadas con aleación de cobre y hierro diseñadas para sistemas industriales.',
-      icon: 'engrane'
+      icon: 'tuberias_conduit'
     },
     cofre_logistico: {
       id: 'cofre_logistico', name: 'Cofre Logístico Reforzado', category: 'almacenamiento', rarity: 'raro',
       sellValue: 90, buyValue: 200, source: 'Taller',
       uses: 'Almacenamiento de alta capacidad para rutas automatizadas',
       desc: 'Cofre acorazado con engranajes de precisión compatible con automatizaciones.',
-      icon: 'chest'
+      icon: 'cofre_logistico'
     },
     escudo_omega: {
       id: 'escudo_omega', name: 'Égida del Horizonte Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
       sellValue: 1400, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Baluarte Celestial + Lingote Omega)',
       uses: 'Equipa en Escudo (Tier 16): +84 Defensa, +340 Vida, +24% Daño y +35% resist. mágica',
       desc: 'Escudo de contención capaz de absorber descargas del Abismo.',
-      equipSlot: 'shield', stats: { def: 84, maxHp: 340, dmgPct: 0.24, spellResist: 0.35 }, icon: 'shield_celestial'
+      equipSlot: 'shield', stats: { def: 84, maxHp: 340, dmgPct: 0.24, spellResist: 0.35 }, icon: 'escudo_omega'
     },
     botas_omega: {
       id: 'botas_omega', name: 'Botas de Salto Cuántico Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
       sellValue: 1300, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Botas Celestiales + Lingote Omega)',
       uses: 'Equipa en Botas (Tier 16): +58 Defensa, +46% Velocidad, +260 Vida, +160 imán y -30% gasto energía',
       desc: 'Impulsan al portador mediante micro-distorsiones espaciales.',
-      equipSlot: 'boots', stats: { def: 58, speedPct: 0.46, maxHp: 260, magnetRadius: 160, energySave: 0.30 }, icon: 'boots_legendary'
+      equipSlot: 'boots', stats: { def: 58, speedPct: 0.46, maxHp: 260, magnetRadius: 160, energySave: 0.30 }, icon: 'botas_omega'
     },
     hoja_singularidad: {
       id: 'hoja_singularidad', name: 'Hoja de la Singularidad (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
       sellValue: 1950, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad)',
       uses: 'Espada especial Tier 16: 135 daño, amplio corte cósmico con onda de choque',
       desc: 'Filo monocristalino que desgarra la materia en cada tajo.',
-      weaponMelee: true, meleeStats: { dmg: 135, range: 112, cooldown: 0.24, color: '#e040fb', critChance: 0.22 }, icon: 'sword_celestial'
+      weaponMelee: true, meleeStats: { dmg: 135, range: 112, cooldown: 0.24, color: '#e040fb', critChance: 0.22 }, icon: 'hoja_singularidad'
     },
     arco_omega: {
       id: 'arco_omega', name: 'Arco Gravitatorio Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
       sellValue: 1900, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad)',
       uses: 'Arma a distancia Tier 16: dispara proyectiles perforantes (98 daño, perfora 4)',
       desc: 'Acelera virotes de energía comprimida a través de múltiples objetivos.',
-      isRangedWeapon: true, rangedStats: { dmg: 98, speed: 860, range: 560, cooldown: 0.24, color: '#e040fb', pierce: 4 }, icon: 'crossbow_legendary'
+      isRangedWeapon: true, rangedStats: { dmg: 98, speed: 860, range: 560, cooldown: 0.24, color: '#e040fb', pierce: 4 }, icon: 'arco_omega'
     },
     cetro_omega: {
       id: 'cetro_omega', name: 'Cetro del Colapso Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
       sellValue: 1950, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad)',
       uses: 'Báculo Tier 16: orbes de singularidad explosivos (95 daño en área, quema y ralentiza)',
       desc: 'Canaliza singularidades contenidas que detonan en racimos cósmicos.',
-      isStaffWeapon: true, staffStats: { dmg: 95, speed: 640, range: 520, cooldown: 0.25, energyCost: 7.5, color: '#e040fb', aoeRadius: 84, burnDmg: 18, slowDur: 2.0, staffMode: 'archmage_cluster', vfxKey: 'pvfx_arcane_orb_projectile' }, icon: 'staff_ruby'
+      isStaffWeapon: true, staffStats: { dmg: 95, speed: 640, range: 520, cooldown: 0.25, energyCost: 7.5, color: '#e040fb', aoeRadius: 84, burnDmg: 18, slowDur: 2.0, staffMode: 'archmage_cluster', vfxKey: 'pvfx_arcane_orb_projectile' }, icon: 'cetro_omega'
     }
   };
 

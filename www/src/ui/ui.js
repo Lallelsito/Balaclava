@@ -4475,13 +4475,16 @@
         this.el('div', { class: 'chest-actions-row' }, [
           this.el('button', {
             class: 'btn btn-stone btn-sm',
-            title: 'Mover todos los objetos de tu inventario al cofre',
+            title: 'Mover todos los objetos de tu inventario al cofre (los objetos de tu Hotbar se conservan)',
             onclick: () => {
               let anyMoved = false;
               for (const [id, count] of Object.entries(g.inventory)) {
                 if (count <= 0) continue;
+                const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+                const invOnlyCount = Math.max(0, count - hbSlots * maxStack);
+                if (invOnlyCount <= 0) continue;
                 const fit = getChestFit(id);
-                const toMove = Math.min(count, fit);
+                const toMove = Math.min(invOnlyCount, fit);
                 if (toMove > 0) {
                   b.storage[id] = (b.storage[id] || 0) + toMove;
                   g.removeItem(id, toMove);
@@ -4630,7 +4633,9 @@
             title: `${it.name} (x${stackQty}/${maxStack})`,
             'aria-label': `${it.name} ${stackQty}`,
             onclick: (ev) => {
-              const wantMove = (ev && ev.shiftKey) ? (g.inventory[id] || 0) : stackQty;
+              const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+              const invOnlyCount = Math.max(0, (g.inventory[id] || 0) - hbSlots * maxStack);
+              const wantMove = (ev && ev.shiftKey) ? invOnlyCount : stackQty;
               const fit = getChestFit(id);
               const actualMove = Math.min(wantMove, fit);
               if (actualMove > 0) {
@@ -9750,11 +9755,18 @@
         ]));
       }
 
-      const btnRow = this.el('div', { style: 'display:flex;gap:10px;justify-content:flex-end;margin-top:14px;' }, [
+      const btnRow = this.el('div', { style: 'display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;' }, [
         this.el('button', {
           class: 'btn btn-stone',
           onclick: () => this.closeModal()
         }, 'Cancelar'),
+        this.el('button', {
+          class: 'btn btn-primary',
+          onclick: () => {
+            this.closeModal();
+            g.enterDungeon(dId, false, { forceNormal: true });
+          }
+        }, 'Entrar en Modo Normal'),
         this.el('button', {
           class: 'btn btn-danger',
           style: 'background:linear-gradient(135deg, #7b1fa2, #d500f9);border-color:#ea80fc;',
@@ -10353,6 +10365,18 @@
       } else if (this.omegaNexusTab === 'energy') {
         const nets = g.omega.networks(g);
         const net = nets.get(plotKey) || { gens: [], consumers: [], pylons: [] };
+        const nData = g.omega.nexusData(plotKey);
+        const baseBuf = (Balaclava.OMEGA_CONFIG && Balaclava.OMEGA_CONFIG.nexusEnergyBuffer && Balaclava.OMEGA_CONFIG.nexusEnergyBuffer[Math.min(2, Math.max(0, (b.level || 1) - 1))]) || 2000;
+        let batBonus = 0;
+        for (const cEntry of net.consumers) {
+          if (cEntry.def.omega.kind === 'battery') {
+            const arr = cEntry.def.omega.capBonus || [5000, 15000, 40000];
+            batBonus += arr[Math.min(2, Math.max(0, (cEntry.b.level || 1) - 1))] || 5000;
+          }
+        }
+        const bufCap = nData.bufCap || (baseBuf + batBonus);
+        const curEn = Math.round(nData.energy || 0);
+        const enPct = Math.min(100, Math.round((curEn / Math.max(1, bufCap)) * 100));
         let totalGen = 0;
         let totalDem = 0;
         for (const gEntry of net.gens) {
@@ -10362,6 +10386,16 @@
           totalDem += g.omega.consumerDemand(cEntry);
         }
         const bal = totalGen - totalDem;
+
+        body.appendChild(this.el('div', { class: 'card', style: 'margin-bottom:10px;padding:10px;' }, [
+          this.el('div', { style: 'display:flex;justify-content:space-between;font-size:13px;font-weight:bold;margin-bottom:6px;' }, [
+            this.el('span', { style: 'color:#80d8ff;' }, `Reserva Energética del Nexo: ${curEn} / ${bufCap} W·s${batBonus > 0 ? ` (+${batBonus} por Acumuladores)` : ''}`),
+            this.el('span', { style: 'color:#69f0ae;' }, `${enPct}%`)
+          ]),
+          this.el('div', { style: 'width:100%;height:10px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden;border:1px solid rgba(0,229,255,0.35);' }, [
+            this.el('div', { style: `width:${enPct}%;height:100%;background:linear-gradient(90deg, #00e5ff, #e040fb);transition:width 0.2s;` })
+          ])
+        ]));
 
         const statGrid = this.el('div', { style: 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;' }, [
           this.el('div', { class: 'card', style: 'padding:8px;text-align:center;' }, [
@@ -10751,19 +10785,34 @@
       const o = g.omega.ensureOmegaState(b);
       const kind = def.omega.kind;
       const isGen = kind === 'generator';
-      const powerVal = isGen ? (def.omega.power || 40) : (def.omega.power || 25);
+      const isBat = kind === 'battery';
+      const isPylon = kind === 'pylon';
+      const genDef = isGen && Balaclava.OmegaSystem.GENERATORS ? Balaclava.OmegaSystem.GENERATORS[b.type] : null;
+      const lvlIdx = Math.min(2, Math.max(0, (b.level || 1) - 1));
+      const genMult = [1, 1.6, 2.4][lvlIdx] || 1;
+      const powerVal = isGen
+        ? Math.round((genDef ? genDef.out : 40) * genMult * (1 + g.omega.getMod('genOutput')))
+        : (o.job && o.job.power ? o.job.power : (def.omega.power || 0));
+
+      const energyDesc = isGen
+        ? `+${powerVal} W/s (Producción Energética)`
+        : isBat
+        ? `+${(def.omega.capBonus && def.omega.capBonus[lvlIdx]) || 5000} W·s (Reserva de Batería)`
+        : isPylon
+        ? `Capacidad de transmisión: ${((Balaclava.OMEGA_CONFIG && Balaclava.OMEGA_CONFIG.pylonCapacity) || [60, 180, 540])[lvlIdx]} W/s`
+        : `-${powerVal} W/s (Consumo de Red)`;
 
       const card = this.el('div', { class: 'card', style: 'padding:12px;margin-bottom:12px;' }, [
         this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;' }, [
           this.el('strong', { style: 'color:#fff;font-size:15px;' }, def.name),
           this.el('span', {
             style: `font-size:11px;font-weight:900;padding:2px 6px;border-radius:3px;background:${o.state === 'activa' ? '#2e7d32' : '#c62828'};color:#fff;`
-          }, o.state ? o.state.toUpperCase() : 'DESCONOCIDO')
+          }, o.state ? o.state.toUpperCase() : 'CONECTADA')
         ]),
-        this.el('div', { style: 'font-size:13px;color:#dce8f5;margin-bottom:8px;' },
-          `Energía: ${isGen ? `+${powerVal} W (Producción)` : `-${powerVal} W (Consumo)`} · Radio / Conexión: Activa en red`),
+        this.el('div', { style: 'font-size:13px;color:#80d8ff;font-weight:600;margin-bottom:6px;' }, energyDesc),
+        this.el('div', { style: 'font-size:12px;color:#dce8f5;margin-bottom:8px;line-height:1.4;' }, def.desc || ''),
         o.reason ? this.el('div', { style: 'font-size:12px;color:#ffd54f;margin-bottom:8px;' }, o.reason) : null,
-        !isGen ? this.el('div', { style: 'display:flex;align-items:center;gap:8px;margin-top:6px;' }, [
+        (!isGen && !isBat && !isPylon) ? this.el('div', { style: 'display:flex;align-items:center;gap:8px;margin-top:6px;' }, [
           this.el('span', { style: 'font-size:12px;color:#b8d4ec;' }, 'Prioridad de energía:'),
           this.el('button', {
             class: 'btn btn-stone btn-sm ' + ((o.prio || 2) === 1 ? 'btn-gold' : ''),
@@ -10781,15 +10830,72 @@
       ]);
       body.appendChild(card);
 
+      if (isGen && genDef && Array.isArray(genDef.fuels)) {
+        body.appendChild(this.el('div', { class: 'parchment-box', style: 'padding:10px;font-size:13px;margin-bottom:10px;' }, [
+          this.el('strong', { style: 'color:#69f0ae;display:block;margin-bottom:4px;' }, 'Combustibles Compatibles (desde el Nexo):'),
+          this.el('div', { style: 'color:#dce8f5;line-height:1.45;' },
+            genDef.fuels.map(f => `${(Balaclava.ITEMS[f.id] && Balaclava.ITEMS[f.id].name) || f.id} (${f.t}s por unidad · En Nexo: ${g.omega.nexusCount(plotKey, f.id)})`).join(' · '))
+        ]));
+      }
+
+      if (kind === 'machine') {
+        const mtype = def.omega.mtype;
+        const recipes = (Balaclava.OmegaSystem.MACHINE_RECIPES && Balaclava.OmegaSystem.MACHINE_RECIPES[mtype]) || [];
+        const curRec = o.recipe || 'auto';
+        const recBox = this.el('div', { class: 'card', style: 'padding:10px;margin-bottom:10px;' }, [
+          this.el('strong', { style: 'color:#ffe082;display:block;margin-bottom:8px;font-size:14px;' }, 'Receta de Procesamiento (Automático o Fijo):')
+        ]);
+        const btnWrap = this.el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;' });
+        btnWrap.appendChild(this.el('button', {
+          class: 'btn btn-sm ' + (curRec === 'auto' ? 'btn-gold' : 'btn-stone'),
+          onclick: () => { o.recipe = 'auto'; this.renderModal(); }
+        }, 'Automático (Cualquier Receta Disponible)'));
+        for (const r of recipes) {
+          const unlocked = !r.reqResearch || g.omega.hasResearch(r.reqResearch);
+          btnWrap.appendChild(this.el('button', {
+            class: 'btn btn-sm ' + (curRec === r.id ? 'btn-gold' : 'btn-stone'),
+            disabled: unlocked ? null : 'disabled',
+            title: `${g.omega.fmtMap(r.in)} -> ${g.omega.fmtMap(r.out)} (${r.power} W/s, ${r.time}s)`,
+            onclick: () => { o.recipe = r.id; this.renderModal(); }
+          }, `${r.name} (${r.power}W)`));
+        }
+        recBox.appendChild(btnWrap);
+        const listEl = this.el('div', { style: 'max-height:150px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:12px;color:#dce8f5;' });
+        for (const r of recipes) {
+          listEl.appendChild(this.el('div', { style: 'padding:4px 6px;background:rgba(0,0,0,0.28);border-radius:4px;display:flex;justify-content:space-between;gap:8px;' }, [
+            this.el('span', {}, `${r.name}: ${g.omega.fmtMap(r.in)} -> ${g.omega.fmtMap(r.out)}`),
+            this.el('span', { style: 'color:#80d8ff;white-space:nowrap;' }, `${r.time}s · ${r.power} W/s`)
+          ]));
+        }
+        recBox.appendChild(listEl);
+        body.appendChild(recBox);
+      }
+
       if (kind === 'extractor') {
         const biomeId = g.world.getBiomeAtPixel(b.tx * Balaclava.CONST.TILE_SIZE, b.ty * Balaclava.CONST.TILE_SIZE);
         const tbl = Balaclava.OmegaSystem.EXTRACT_TABLES[biomeId] || [];
         const resCard = this.el('div', { class: 'parchment-box', style: 'padding:10px;font-size:13px;' }, [
           this.el('strong', { style: 'color:#ffe082;display:block;margin-bottom:4px;' }, 'Vetas del Bioma Detectadas:'),
           this.el('div', { style: 'color:#dce8f5;line-height:1.4;' },
-            tbl.length ? tbl.map(k => (Balaclava.ITEMS[k] && Balaclava.ITEMS[k].name) || k).join(', ') : 'Minerales estándar')
+            tbl.length ? tbl.map(k => {
+              const itemId = typeof k === 'object' ? k.id : k;
+              return (Balaclava.ITEMS[itemId] && Balaclava.ITEMS[itemId].name) || itemId;
+            }).join(', ') : 'Minerales estándar')
         ]);
         body.appendChild(resCard);
+      }
+
+      if (kind === 'condenser') {
+        const cyc = (def.omega && def.omega.cycleSec) || 20;
+        const pct = Math.min(100, Math.round(((o.progress || 0) / cyc) * 100));
+        body.appendChild(this.el('div', { class: 'parchment-box', style: 'padding:10px;font-size:13px;' }, [
+          this.el('strong', { style: 'color:#ea80fc;display:block;margin-bottom:6px;' }, `Progreso de Condensación Pura: ${pct}%`),
+          this.el('div', { style: 'width:100%;height:10px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden;border:1px solid #ea80fc;margin-bottom:6px;' }, [
+            this.el('div', { style: `width:${pct}%;height:100%;background:linear-gradient(90deg, #7b1fa2, #e040fb);` })
+          ]),
+          this.el('div', { style: 'color:#dce8f5;line-height:1.4;' },
+            'Cada ciclo de 20s a 500 W/s genera Polvo Estelar x2, Cristales Mágicos x2 y un 25% de probabilidad de Materia Comprimida directamente en el Nexo.')
+        ]));
       }
     }
 

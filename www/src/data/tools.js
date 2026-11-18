@@ -80,10 +80,10 @@
         hierro:     { coins: 155,  items: { lingote_hierro: 8, cuero: 4 } },
         plata:      { coins: 235,  items: { lingote_plata: 6, cuero: 4, malaquita_pradera: 2 } },
         oro:        { coins: 345,  items: { lingote_oro: 7, lingote_hierro: 6 } },
-        platino:    { coins: 530,  items: { lingote_platino: 7, amatista: 2, cuero: 5 } },
+        platino:    { coins: 530,  items: { lingote_platino: 7, jade: 2, cuero: 5 } },
         acero:      { coins: 710,  items: { lingote_acero: 8, azurita_glacial: 3, esquirla_hielo: 2 } },
         cristal:    { coins: 920,  items: { lingote_acero: 8, cristales_magicos: 6, huesos: 8 } },
-        mitrilo:    { coins: 1280, items: { lingotes_especiales: 6, sanguinaria: 4, escamas_dragon: 2 } },
+        mitrilo:    { coins: 1280, items: { lingotes_especiales: 6, sanguinaria: 4, amatista: 3 } },
         titanio:    { coins: 1640, items: { lingote_titanio: 6, ambar_desierto: 3, arena_estelar: 4 } },
         adamantita: { coins: 2050, items: { lingote_adamantita: 22, diamantes: 14, fragmentos_antiguos: 12 } },
         oricalco:   { coins: 2480, items: { lingote_oricalco: 26, esencia_magma: 10, cristal_abismal: 12 } },
@@ -164,7 +164,7 @@
         hierro:     { coins: 165,  items: { tablon: 10, lingote_hierro: 4, tela: 4 } },
         plata:      { coins: 245,  items: { tablon: 10, lingote_plata: 4, tela: 5 } },
         oro:        { coins: 350,  items: { tablon: 12, lingote_oro: 5, cuero: 5 } },
-        platino:    { coins: 540,  items: { lingote_platino: 5, tela: 6, amatista: 2 } },
+        platino:    { coins: 540,  items: { lingote_platino: 5, tela: 6, jade: 2 } },
         acero:      { coins: 730,  items: { lingote_acero: 6, azurita_glacial: 2, tela: 6 } },
         cristal:    { coins: 950,  items: { cristales: 8, cristales_magicos: 4, tela: 6 } },
         mitrilo:    { coins: 1320, items: { lingotes_especiales: 6, sanguinaria: 3, seda_arana: 5 } },
@@ -242,15 +242,16 @@
     });
   });
 
-  // Required minimum pickaxe tier index across 15 tiers (0=basica .. 14=celestial)
+  // Required minimum pickaxe tier index across 16 tiers (0=basica .. 15=omega)
   function getRequiredPickTier(nodeKind) {
     const reqs = {
       rock: 0, ruin_pillar: 0, coal_vein: 0, copper_vein: 0, tin_vein: 0, sulfur_vein: 0, malachite_vein: 0,
       iron_vein: 2, silver_vein: 3, gold_vein: 4, ice_crystal: 4, jade_vein: 4, amber_vein: 4, star_sand_vein: 3,
-      platinum_vein: 5, crystal_node: 6, emerald_vein: 6, ruby_node: 7, sapphire_node: 7, amethyst_vein: 7, azurite_vein: 7,
-      volcanic_rock: 8, diamond_vein: 8, bloodstone_vein: 8, abyssal_crystal_vein: 8, meteor: 8,
-      mithril_vein: 9, titanium_vein: 10, magma_core_vein: 10, adamantite_vein: 11,
-      orichalcum_vein: 12, oricalco_vein: 12, obsidian_vein: 12
+      platinum_vein: 5, crystal_node: 6, emerald_vein: 6, azurite_vein: 6,
+      ruby_node: 7, sapphire_node: 7, amethyst_vein: 7,
+      volcanic_rock: 8, diamond_vein: 8, bloodstone_vein: 8, abyssal_crystal_vein: 8, mithril_vein: 8, meteor: 8,
+      titanium_vein: 9, magma_core_vein: 9, adamantite_vein: 10,
+      orichalcum_vein: 11, oricalco_vein: 11, obsidian_vein: 11
     };
     return reqs[nodeKind] ?? 0;
   }
@@ -456,6 +457,7 @@
   }
 
   Balaclava.TOOL_TIERS = TIER_ORDER;
+  Balaclava.TIER_ORDER = TIER_ORDER;
   Balaclava.TIER_META = TIER_META;
   Balaclava.TOOLS = TOOLS;
   Balaclava.ARMORS = ARMOR_CHAINS;

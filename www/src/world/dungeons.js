@@ -1834,7 +1834,7 @@
         carveRect(42, 18, 44, 20);
         addRoom('Antecámara del Jefe', 45, 15, 51, 23);
         addDoors(this.bossGateTiles, 52, 17, 52, 21, 3);
-        addRoom('Arena del Señor', 53, 9, 73, 29);
+        addRoom('Arena del Señor', 53, 10, 73, 27);
 
         this.bossRoomMinX = 52;
         this.bossArenaCenter = { tx: 63, ty: 19 };
@@ -1891,7 +1891,7 @@
         carveRect(45, 18, 46, 20);
         addRoom('Antesala Real', 47, 15, 52, 23);
         addDoors(this.bossGateTiles, 53, 17, 53, 21, 3);
-        addRoom('Santuario del Jefe', 54, 10, 73, 29);
+        addRoom('Santuario del Jefe', 54, 10, 73, 27);
 
         this.bossRoomMinX = 53;
         this.bossArenaCenter = { tx: 63, ty: 19 };
@@ -1947,7 +1947,7 @@
         carveRect(45, 14, 46, 16);
         addRoom('Vestíbulo Final', 47, 13, 52, 22);
         addDoors(this.bossGateTiles, 53, 16, 53, 20, 3);
-        addRoom('Trono del Señor', 54, 10, 73, 29);
+        addRoom('Trono del Señor', 54, 10, 73, 27);
 
         this.bossRoomMinX = 53;
         this.bossArenaCenter = { tx: 63, ty: 19 };
@@ -2005,7 +2005,7 @@
         carveRect(45, 18, 46, 20);
         addRoom('Vestíbulo de Sangre', 47, 15, 52, 23);
         addDoors(this.bossGateTiles, 53, 17, 53, 21, 3);
-        addRoom('Gran Arena Abisal', 54, 9, 73, 29);
+        addRoom('Gran Arena Abisal', 54, 10, 73, 27);
 
         this.bossRoomMinX = 53;
         this.bossArenaCenter = { tx: 63, ty: 19 };
@@ -2062,7 +2062,7 @@
         carveRect(40, 18, 42, 20);
         addRoom('Antesala del Trono', 43, 15, 51, 23);
         addDoors(this.bossGateTiles, 52, 17, 52, 21, 3);
-        addRoom('Salón del Trono', 53, 10, 73, 28);
+        addRoom('Salón del Trono', 53, 10, 73, 27);
 
         this.bossRoomMinX = 52;
         this.bossArenaCenter = { tx: 63, ty: 19 };
@@ -2115,7 +2115,7 @@
         carveRect(46, 18, 47, 20);
         addRoom('Antesala Sagrada', 48, 15, 52, 23);
         addDoors(this.bossGateTiles, 53, 17, 53, 21, 3);
-        addRoom('Basílica del Soberano', 54, 10, 73, 28);
+        addRoom('Basílica del Soberano', 54, 10, 73, 27);
 
         this.bossRoomMinX = 53;
         this.bossArenaCenter = { tx: 63, ty: 19 };
@@ -2165,7 +2165,7 @@
         carveRect(36, 17, 40, 20);
         addRoom('Vestíbulo de la Tormenta', 41, 14, 50, 23);
         addDoors(this.bossGateTiles, 51, 17, 51, 21, 3);
-        addRoom('Cámara del Emperador', 52, 10, 73, 28);
+        addRoom('Cámara del Emperador', 52, 10, 73, 27);
 
         this.bossRoomMinX = 51;
         this.bossArenaCenter = { tx: 63, ty: 19 };
@@ -2197,29 +2197,33 @@
 
       // === EXPANSION: Late-Biome Additional Rooms, Puzzles & Second Guardian ===
       if (this.isLateBiome) {
-        // Carve Room A: Santuario del Segundo Guardián (x: 54..64, y: 2..8)
-        carveRect(54, 2, 64, 8, 1);
-        addRoom('Santuario del Segundo Guardián', 54, 2, 64, 8);
-        carveRect(46, 4, 54, 6, 1);
+        // Carve Room A: Santuario del Segundo Guardián (x: 54..64, y: 1..6) — strictly separated from Boss Room (y: 10..27) by solid walls y=7..9
+        carveRect(54, 1, 64, 6, 1);
+        addRoom('Santuario del Segundo Guardián', 54, 1, 64, 6);
+        carveRect(46, 3, 54, 5, 1);
 
-        // Carve Room B: Santuario de los Sellos Abisales (x: 54..63, y: 30..36)
-        carveRect(54, 30, 63, 36, 1);
-        addRoom('Santuario de los Sellos Abisales', 54, 30, 63, 36);
+        // Carve Room B: Santuario de los Sellos Abisales (x: 54..63, y: 31..36) — strictly separated from Boss Room (y: 10..27) by solid walls y=28..30
+        carveRect(54, 31, 63, 36, 1);
+        addRoom('Santuario de los Sellos Abisales', 54, 31, 63, 36);
         carveRect(46, 32, 54, 34, 1);
 
-        // Carve Room C: Bóveda de los Arcanos Mayores (x: 65..72, y: 30..36)
-        carveRect(65, 30, 72, 36, 1);
-        addRoom('Bóveda de los Arcanos Mayores', 65, 30, 72, 36);
+        // Carve Room C: Bóveda de los Arcanos Mayores (x: 65..72, y: 31..36)
+        carveRect(65, 31, 72, 36, 1);
+        addRoom('Bóveda de los Arcanos Mayores', 65, 31, 72, 36);
         carveRect(63, 32, 65, 34, 1);
 
-        this.miniBoss2ChestPos = { tx: 63, ty: 3 };
-        miniBoss2Spot = { tx: 59, ty: 5 };
+        // Enforce 3-tile solid stone barrier between North/South wings and Boss Arena
+        carveRect(52, 7, 74, 9, 0);
+        carveRect(52, 28, 74, 30, 0);
+
+        this.miniBoss2ChestPos = { tx: 63, ty: 2 };
+        miniBoss2Spot = { tx: 59, ty: 4 };
 
         // Add 2 Elemental Shrines to this.runes
         this.runes.push({
           id: 'shrine_1',
           tx: 55,
-          ty: 5,
+          ty: 4,
           active: false,
           kind: 'elemental_shrine',
           label: 'ALTAR I',
@@ -2254,11 +2258,11 @@
         this.chests.push({ tx: 70, ty: 34, opened: false, bonus: true, chestTheme: this.def.chestTheme || 'gold' });
 
         // Add mob spots for extra rooms
-        mobSpots.push([58, 4, 1.8], [61, 6, 1.8], [57, 32, 1.85], [60, 34, 1.85], [67, 33, 1.9], [69, 32, 1.95]);
+        mobSpots.push([58, 3, 1.8], [61, 5, 1.8], [57, 32, 1.85], [60, 34, 1.85], [67, 33, 1.9], [69, 32, 1.95]);
 
         // Add torches and props for extra rooms
-        torchCandidates.push([55, 2], [63, 2], [55, 30], [62, 30], [66, 30], [71, 30]);
-        propCandidates.push([56, 7, 'urnGold'], [62, 7, 'urnGold'], [68, 35, 'sarcophagus'], [70, 31, 'urnGold']);
+        torchCandidates.push([55, 1], [63, 1], [55, 31], [62, 31], [66, 31], [71, 31]);
+        propCandidates.push([56, 6, 'urnGold'], [62, 6, 'urnGold'], [68, 35, 'sarcophagus'], [70, 32, 'urnGold']);
       }
 
       // Point 12: Vertical symmetry flip (50% chance) so North & South wings swap unpredictably across runs
@@ -2836,6 +2840,7 @@
       else if (c.bonus && Math.random() < 0.55) game.addItem('llave_dorada', 1);
       if (c.bonus && Math.random() < 0.65) game.addItem('tablilla_runica', 1);
       if (c.isBossChest) {
+        this.bossChestOpened = true;
         game.addItem('fragmentos_antiguos', 2);
         game.addItem('llave_jefe', 1);
       }

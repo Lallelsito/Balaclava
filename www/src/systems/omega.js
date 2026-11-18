@@ -88,19 +88,19 @@
     regItem('fragmento_' + fam, { name: `Fragmentos de ${rawName}`, rarity: 'poco_comun', sellValue: 3, icon: iconOf(f.raw), desc: 'Mineral triturado en la Trituradora.', source: 'Trituradora', uses: 'Se purifica en la Lavadora Arcana' });
     regItem('polvo_' + fam, { name: `Polvo Puro de ${rawName}`, rarity: 'raro', sellValue: 6, icon: iconOf(f.raw), desc: 'Polvo purificado listo para fundir.', source: 'Lavadora Arcana', uses: 'Se funde en la Fundidora Omega' });
   });
-  regItem('singularidad', { name: 'Singularidad', rarity: 'legendario', sellValue: 2500, icon: iconOf('polvo_estelar'), category: 'especiales', desc: 'Materia colapsada: 10.000 recursos comprimidos en un punto.', source: 'Prensa de Singularidades', uses: 'Equipamiento Omega, reactores, sobrecarga, ascensión' });
-  regItem('lingote_omega', { name: 'Lingote Omega', rarity: 'legendario', sellValue: 900, icon: iconOf('lingote_celestial'), desc: 'Aleación definitiva forjada con singularidad y los cinco biomas.', source: 'Fundidora Omega', uses: 'Equipamiento Tier 16, sobrecarga infinita' });
-  regItem('materia_comprimida', { name: 'Materia Comprimida', rarity: 'legendario', sellValue: 600, icon: iconOf('esencia_corrupta', 'polvo_estelar'), category: 'especiales', desc: 'Residuo exótico de islas ascendidas y del Abismo Infinito.', source: 'Abismo Infinito / Islas ascendidas', uses: 'Sobrecarga, ascensión, mejoras definitivas' });
+  regItem('singularidad', { name: 'Singularidad', rarity: 'legendario', sellValue: 2500, icon: 'singularidad', category: 'especiales', desc: 'Materia colapsada: 10.000 recursos comprimidos en un punto.', source: 'Prensa de Singularidades', uses: 'Equipamiento Omega, reactores, sobrecarga, ascensión' });
+  regItem('lingote_omega', { name: 'Lingote Omega', rarity: 'legendario', sellValue: 900, icon: 'lingote_omega', desc: 'Aleación definitiva forjada con singularidad y los cinco biomas.', source: 'Fundidora Omega', uses: 'Equipamiento Tier 16, sobrecarga infinita' });
+  regItem('materia_comprimida', { name: 'Materia Comprimida', rarity: 'legendario', sellValue: 600, icon: 'materia_comprimida', category: 'especiales', desc: 'Residuo exótico de islas ascendidas, Condensadores de Materia y del Abismo Infinito.', source: 'Abismo Infinito / Islas ascendidas / Condensador de Materia', uses: 'Sobrecarga, ascensión, mejoras definitivas' });
 
   const DUNGEON_DEFS = Balaclava.DUNGEON_DEFS || {};
   Object.values(DUNGEON_DEFS).forEach(d => {
     if (!d || !d.boss) return;
-    regItem('cristal_datos_' + d.id, { name: `Cristal de Datos: ${d.boss.name}`, rarity: 'epico', category: 'especiales', sellValue: 400, icon: iconOf('cristales_magicos', 'polvo_estelar'), desc: `Registro de combate de ${d.boss.name}. Se inserta en la Cámara de Simulación.`, source: 'Cámara de Simulación (tras derrotar al jefe)', uses: 'Cámara de Simulación de Jefes' });
+    regItem('cristal_datos_' + d.id, { name: `Cristal de Datos: ${d.boss.name}`, rarity: 'epico', category: 'especiales', sellValue: 400, icon: 'cristal_datos', desc: `Registro de combate de ${d.boss.name}. Se inserta en la Cámara de Simulación.`, source: 'Cámara de Simulación (tras derrotar al jefe)', uses: 'Cámara de Simulación de Jefes' });
   });
 
   // ───────────────────────── machine recipes ─────────────────────────
   // Every roll (bonus chance) is data here; the code only reads this table.
-  const MACHINE_RECIPES = { trituradora: [], lavadora: [], fundidora: [] };
+  const MACHINE_RECIPES = { trituradora: [], lavadora: [], fundidora: [], sintetizador: [], inscriptor: [] };
   Object.entries(ORE_FAMILIES).forEach(([fam, f]) => {
     MACHINE_RECIPES.trituradora.push({ id: 'crush_' + fam, name: `Triturar ${fam}`, in: { [f.raw]: 1 }, out: { ['fragmento_' + fam]: 2 }, bonus: [{ id: 'polvo_estelar', qty: 1, chance: 0.05 }], time: 2, power: 8 });
     MACHINE_RECIPES.lavadora.push({ id: 'wash_' + fam, name: `Purificar ${fam}`, in: { ['fragmento_' + fam]: 1 }, out: { ['polvo_' + fam]: 2 }, bonus: [], time: 2, power: 12 });
@@ -111,6 +111,29 @@
     in: { singularidad: 1, lingote_celestial: 5, esencia_magma: 10, esquirla_hielo: 10, esencia_oscura: 10, arena_estelar: 10, malaquita_pradera: 10 },
     out: { lingote_omega: 1 }, bonus: [], time: 60, power: 120, reqResearch: 'omega_equipo'
   });
+
+  // Sintetizador de Gemas & Cristales (consume alta energía para cristalizar gemas y polvos arcanos)
+  MACHINE_RECIPES.sintetizador.push(
+    { id: 'syn_cristal_mag', name: 'Sintetizar Cristales Mágicos', in: { cristales: 2, carbon: 1 }, out: { cristales_magicos: 3 }, bonus: [{ id: 'polvo_estelar', qty: 1, chance: 0.20 }], time: 4, power: 55 },
+    { id: 'syn_polvo_estelar', name: 'Condensar Polvo Estelar', in: { cristales_magicos: 2, arena_estelar: 2 }, out: { polvo_estelar: 2 }, bonus: [{ id: 'diamantes', qty: 1, chance: 0.12 }], time: 5, power: 65 },
+    { id: 'syn_esmeralda', name: 'Cristalizar Esmeraldas', in: { malaquita_pradera: 2, cristales: 2 }, out: { esmeraldas: 2 }, bonus: [], time: 5, power: 60 },
+    { id: 'syn_topacio', name: 'Cristalizar Topacios y Jade', in: { ambar_desierto: 2, cristales: 2 }, out: { topacio: 2, jade: 1 }, bonus: [], time: 5, power: 60 },
+    { id: 'syn_zafiro', name: 'Cristalizar Zafiros Glaciales', in: { azurita_glacial: 2, esquirla_hielo: 2 }, out: { zafiro: 2 }, bonus: [], time: 5, power: 65 },
+    { id: 'syn_amatista', name: 'Cristalizar Amatistas y Ónice', in: { esencia_oscura: 2, cristales_magicos: 2 }, out: { amatista: 2, onice: 1 }, bonus: [], time: 6, power: 70 },
+    { id: 'syn_rubi', name: 'Cristalizar Rubíes Ígneos', in: { esencia_magma: 2, material_volcanico: 2 }, out: { rubi: 2 }, bonus: [], time: 6, power: 75 },
+    { id: 'syn_diamante', name: 'Comprimir Carbón en Diamantes', in: { carbon: 12, cristales_magicos: 2 }, out: { diamantes: 2 }, bonus: [{ id: 'cristal_abismal', qty: 1, chance: 0.25 }], time: 7, power: 90 },
+    { id: 'syn_prisma', name: 'Sintetizar Prisma Imperial', in: { diamantes: 1, rubi: 1, esmeraldas: 1, zafiro: 1, amatista: 1 }, out: { prisma_imperial: 2 }, bonus: [{ id: 'gema_alma', qty: 1, chance: 0.35 }], time: 8, power: 120 }
+  );
+
+  // Inscriptor Rúnico & Celestial Omega (automatiza runas, gemas del alma y lingotes celestiales con energía)
+  MACHINE_RECIPES.inscriptor.push(
+    { id: 'ins_tablilla', name: 'Grabar Tablillas Rúnicas', in: { piedra: 4, cristales: 1 }, out: { tablilla_runica: 3, tinta_arcana: 2 }, bonus: [], time: 3, power: 65 },
+    { id: 'ins_runas_elem', name: 'Inscribir Runas Elementales', in: { tablilla_runica: 2, cristales_magicos: 2 }, out: { runa_fuego: 1, runa_agua: 1, runa_tierra: 1, runa_aire: 1 }, bonus: [], time: 6, power: 80 },
+    { id: 'ins_runas_sup', name: 'Inscribir Runas de Luz y Vida', in: { tablilla_runica: 2, polvo_estelar: 2, diamantes: 1 }, out: { runa_luz: 2, runa_vida: 2, runa_oscura: 1 }, bonus: [], time: 7, power: 95 },
+    { id: 'ins_gema_alma', name: 'Forjar Gema del Alma', in: { diamantes: 1, amatista: 1, polvo_estelar: 1 }, out: { gema_alma: 2 }, bonus: [{ id: 'runa_muerte', qty: 1, chance: 0.30 }], time: 7, power: 100 },
+    { id: 'ins_obsidiana', name: 'Refinar Obsidiana y Cristal Abismal', in: { material_volcanico: 3, esencia_oscura: 2 }, out: { obsidiana_refinada: 2, cristal_abismal: 1 }, bonus: [], time: 6, power: 85 },
+    { id: 'ins_celestial', name: 'Electro-Fundir Lingote Celestial', in: { lingote_adamantita: 1, polvo_estelar: 1, cristales_magicos: 2 }, out: { lingote_celestial: 2 }, bonus: [{ id: 'nucleo_solar', qty: 1, chance: 0.20 }], time: 8, power: 130 }
+  );
 
   // ───────────────────────── extractor tables (real ids per biome) ─────────────────────────
   const EXTRACT_TABLES = {
@@ -147,20 +170,32 @@
       opensPanel: 'omega_' + omega.kind, sortOrder: _omegaSort++
     };
   }
-  defBuilding('nexo_central', 'Nexo Central', 2, 'bld_centro_investigacion', { lingote_celestial: 10, cristales_magicos: 20, lingote_titanio: 20, engrane: 10 }, 'Corazón industrial de la isla: almacén virtual unificado, red de energía y centro de investigación Omega.', { kind: 'nexus' });
-  defBuilding('pilon_enlace', 'Pilón de Enlace', 1, 'prop_rune_pillar', { lingote_hierro: 6, cristales: 4, engrane: 2 }, 'Extiende la red del Nexo: conecta máquinas y otros pilones dentro de su radio.', { kind: 'pylon' }, 'ind_fundamentos');
-  defBuilding('gen_vapor', 'Generador de Vapor', 1, 'station_furnace', { lingote_hierro: 12, engrane: 4, piedra: 20 }, 'Quema carbón o madera para producir energía constante.', { kind: 'generator' }, 'ind_fundamentos');
-  defBuilding('gen_geotermico', 'Reactor Geotérmico de Lava', 2, 'station_blast_furnace', { lingote_acero: 14, obsidiana_refinada: 8, engrane: 8 }, 'Convierte esencia de magma en gran potencia. +25% en Tierras Volcánicas.', { kind: 'generator' }, 'gen_geo');
-  defBuilding('nucleo_arcano', 'Núcleo Arcano', 2, 'Tower_Purple', { lingote_titanio: 12, cristales_magicos: 20, polvo_estelar: 10, engrane: 10 }, 'Consume cristales y esencia para producir enormes cantidades de energía.', { kind: 'generator' }, 'gen_arcano');
-  defBuilding('reactor_singularidad', 'Reactor de Singularidad', 2, 'altar_sun', { lingote_omega: 4, singularidad: 2, lingote_adamantita: 20 }, 'Generador definitivo alimentado por Singularidades.', { kind: 'generator' }, 'gen_singularidad');
-  defBuilding('trituradora', 'Trituradora', 1, 'bld_taller_mecanico', { lingote_hierro: 10, engrane: 6, piedra: 20 }, 'Tritura mineral crudo en fragmentos (1 → 2).', { kind: 'machine', mtype: 'trituradora', power: 8 }, 'proc_trituracion');
-  defBuilding('lavadora_arcana', 'Lavadora Arcana', 1, 'station_alchemy', { lingote_acero: 8, cristales: 10, engrane: 6 }, 'Purifica fragmentos en polvos puros (1 → 2).', { kind: 'machine', mtype: 'lavadora', power: 12 }, 'proc_lavado');
-  defBuilding('fundidora_omega', 'Fundidora Omega', 2, 'station_blast_furnace', { lingote_titanio: 10, lingote_acero: 12, cristales_magicos: 6, engrane: 8 }, 'Funde polvos puros en lingotes avanzados y forja el Lingote Omega.', { kind: 'machine', mtype: 'fundidora', power: 30 }, 'proc_fundicion');
-  defBuilding('extractor_nucleo', 'Extractor de Núcleo', 2, 'bld_taladro', { lingote_acero: 14, engrane: 10, diamantes: 4 }, 'Taladro industrial pasivo: extrae minerales del bioma directamente al Nexo.', { kind: 'extractor', power: 40 }, 'rec_extractor');
-  defBuilding('domo_hidroponico', 'Domo Hidropónico', 2, 'bld_invernadero', { lingote_hierro: 10, cristales: 20, engrane: 6, madera: 30 }, 'Cosecha cultivos maduros de su radio, los envía al Nexo y replanta con semillas del Nexo.', { kind: 'domo', power: 30 }, 'rec_domo');
-  defBuilding('camara_simulacion', 'Cámara de Simulación de Jefes', 2, 'bld_laboratorio', { lingote_titanio: 12, cristales_magicos: 15, lingote_acero: 10, engrane: 12 }, 'Reproduce combates ya superados para obtener materiales pasivamente.', { kind: 'chamber', power: 150 }, 'sim_camara');
-  defBuilding('prensa_singularidades', 'Prensa de Singularidades', 2, 'bld_santuario', { lingote_adamantita: 10, lingote_titanio: 12, engrane: 16, cristales_magicos: 10 }, 'Comprime 10.000 recursos válidos en 1 Singularidad.', { kind: 'press', power: 200 }, 'comp_prensa');
-  defBuilding('altar_sobrecarga', 'Altar de Sobrecarga Infinita', 2, 'altar_blood', { lingote_omega: 2, singularidad: 1, lingote_celestial: 10 }, 'Mejora sin límite armas, herramientas, armaduras y reliquias con coste exponencial.', { kind: 'altar' }, 'sobre_altar');
+  defBuilding('nexo_central', 'Nexo Central', 2, 'bld_omega_nexo', { lingote_celestial: 10, cristales_magicos: 20, lingote_titanio: 20, engrane: 10 }, 'Corazón industrial de la isla: almacén virtual unificado, red de energía y centro de investigación Omega.', { kind: 'nexus' });
+  defBuilding('pilon_enlace', 'Pilón de Enlace', 1, 'bld_omega_pilon', { lingote_hierro: 6, cristales: 4, engrane: 2 }, 'Extiende la red del Nexo: conecta máquinas y otros pilones dentro de su radio.', { kind: 'pylon' }, 'ind_fundamentos');
+  defBuilding('bateria_cuantica', 'Acumulador Cuántico', 1, 'bld_omega_bateria', { lingote_acero: 8, cristales_magicos: 6, engrane: 4 }, 'Almacena +5.000 / +15.000 / +40.000 de energía adicional en el Nexo de la isla para absorber picos de consumo.', { kind: 'battery', capBonus: [5000, 15000, 40000] }, 'ind_fundamentos');
+  defBuilding('gen_vapor', 'Generador de Vapor', 1, 'bld_omega_gen_vapor', { lingote_hierro: 12, engrane: 4, piedra: 20 }, 'Quema carbón o madera para producir energía constante.', { kind: 'generator' }, 'ind_fundamentos');
+  defBuilding('gen_geotermico', 'Reactor Geotérmico de Lava', 2, 'bld_omega_gen_geo', { lingote_acero: 14, obsidiana_refinada: 8, engrane: 8 }, 'Convierte esencia de magma en gran potencia. +25% en Tierras Volcánicas.', { kind: 'generator' }, 'gen_geo');
+  defBuilding('nucleo_arcano', 'Núcleo Arcano', 2, 'bld_omega_nucleo', { lingote_titanio: 12, cristales_magicos: 20, polvo_estelar: 10, engrane: 10 }, 'Consume cristales y esencia para producir enormes cantidades de energía.', { kind: 'generator' }, 'gen_arcano');
+  defBuilding('reactor_singularidad', 'Reactor de Singularidad', 2, 'bld_omega_reactor', { lingote_omega: 4, singularidad: 2, lingote_adamantita: 20 }, 'Generador definitivo alimentado por Singularidades.', { kind: 'generator' }, 'gen_singularidad');
+  defBuilding('trituradora', 'Trituradora', 1, 'bld_omega_trituradora', { lingote_hierro: 10, engrane: 6, piedra: 20 }, 'Tritura mineral crudo en fragmentos (1 → 2).', { kind: 'machine', mtype: 'trituradora', power: 8 }, 'proc_trituracion');
+  defBuilding('lavadora_arcana', 'Lavadora Arcana', 1, 'bld_omega_lavadora', { lingote_acero: 8, cristales: 10, engrane: 6 }, 'Purifica fragmentos en polvos puros (1 → 2).', { kind: 'machine', mtype: 'lavadora', power: 12 }, 'proc_lavado');
+  defBuilding('fundidora_omega', 'Fundidora Omega', 2, 'bld_omega_fundidora', { lingote_titanio: 10, lingote_acero: 12, cristales_magicos: 6, engrane: 8 }, 'Funde polvos puros en lingotes avanzados y forja el Lingote Omega.', { kind: 'machine', mtype: 'fundidora', power: 30 }, 'proc_fundicion');
+  defBuilding('sintetizador_gemas', 'Sintetizador de Gemas', 2, 'bld_omega_sintetizador', { lingote_titanio: 10, cristales_magicos: 12, vidrio: 12, engrane: 8 }, 'Cristaliza gemas preciosas, diamantes, polvo estelar y prismas imperiales usando alta energía.', { kind: 'machine', mtype: 'sintetizador', power: 65 }, 'proc_sintesis');
+  defBuilding('forja_runica_omega', 'Inscriptor Rúnico Omega', 1, 'bld_omega_inscriptor', { lingote_adamantita: 8, cristales_magicos: 10, polvo_estelar: 6, engrane: 8 }, 'Graba runas elementales, gemas del alma y electro-funde Lingotes Celestiales usando energía de la red.', { kind: 'machine', mtype: 'inscriptor', power: 80 }, 'proc_inscripcion');
+  defBuilding('extractor_nucleo', 'Extractor de Núcleo', 2, 'bld_omega_extractor', { lingote_acero: 14, engrane: 10, diamantes: 4 }, 'Taladro industrial pasivo: extrae minerales del bioma directamente al Nexo.', { kind: 'extractor', power: 40 }, 'rec_extractor');
+  defBuilding('domo_hidroponico', 'Domo Hidropónico', 2, 'bld_omega_domo', { lingote_hierro: 10, cristales: 20, engrane: 6, madera: 30 }, 'Cosecha cultivos maduros de su radio, los envía al Nexo y replanta con semillas del Nexo.', { kind: 'domo', power: 30 }, 'rec_domo');
+  defBuilding('torreta_prisma_omega', 'Torreta de Prisma Omega', 1, 'bld_omega_torreta', { lingote_titanio: 8, cristales_magicos: 8, zafiro: 4, engrane: 6 }, 'Torreta defensiva de alta potencia que consume 25 energía/s de la red para aniquilar enemigos con rayos prismáticos.', { kind: 'turret', power: 25 }, 'def_prisma');
+  if (BUILDINGS.torreta_prisma_omega) {
+    Object.assign(BUILDINGS.torreta_prisma_omega, { turretRange: 380, turretDmg: 145, turretRate: 0.9, isLightningTurret: true, lightRadius: 210 });
+  }
+  defBuilding('faro_sobrecarga_isla', 'Baliza de Sobrecarga', 2, 'bld_omega_baliza', { lingote_adamantita: 10, lingote_titanio: 10, cristales_magicos: 14, engrane: 10 }, 'Consume 120 energía/s para acelerar +40% todas las máquinas y otorgarte +20% Daño, +15% Velocidad y +25% Poder de Recolección.', { kind: 'beacon', power: 120 }, 'red_baliza');
+  if (BUILDINGS.faro_sobrecarga_isla) {
+    Object.assign(BUILDINGS.faro_sobrecarga_isla, { machineSpeedBonus: 0.40, lightRadius: 260 });
+  }
+  defBuilding('camara_simulacion', 'Cámara de Simulación de Jefes', 2, 'bld_omega_camara', { lingote_titanio: 12, cristales_magicos: 15, lingote_acero: 10, engrane: 12 }, 'Reproduce combates ya superados para obtener materiales pasivamente.', { kind: 'chamber', power: 150 }, 'sim_camara');
+  defBuilding('prensa_singularidades', 'Prensa de Singularidades', 2, 'bld_omega_prensa', { lingote_adamantita: 10, lingote_titanio: 12, engrane: 16, cristales_magicos: 10 }, 'Comprime 10.000 recursos válidos en 1 Singularidad.', { kind: 'press', power: 200 }, 'comp_prensa');
+  defBuilding('condensador_materia', 'Condensador de Materia Pura', 2, 'bld_omega_condensador', { lingote_adamantita: 14, lingote_celestial: 6, cristales_magicos: 16, engrane: 14 }, 'Convierte energía pura (500 energía/s, sin consumir materiales) directamente en Polvo Estelar, Cristales Mágicos y Materia Comprimida.', { kind: 'condenser', power: 500, cycleSec: 20 }, 'comp_condensador');
+  defBuilding('altar_sobrecarga', 'Altar de Sobrecarga Infinita', 2, 'bld_omega_altar', { lingote_omega: 2, singularidad: 1, lingote_celestial: 10 }, 'Mejora sin límite armas, herramientas, armaduras y reliquias con coste exponencial.', { kind: 'altar' }, 'sobre_altar');
 
   // ───────────────────────── research (Ingeniería Omega) ─────────────────────────
   const CATS = {
@@ -185,6 +220,11 @@
     R('proc_velocidad', 'procesamiento', 'Mecanismos Aceitados', '+15% velocidad de máquinas.', { lingote_acero: 15, engrane: 15 }, ['proc_trituracion'], { effect: { machineSpeed: 0.15 } }),
     R('proc_velocidad_2', 'procesamiento', 'Mecanismos de Precisión', '+20% velocidad de máquinas.', { lingote_titanio: 15, engrane: 20 }, ['proc_velocidad', 'proc_fundicion'], { effect: { machineSpeed: 0.2 } }),
     R('proc_rendimiento', 'procesamiento', 'Rendimiento Metalúrgico', '+20% lingotes por fundición.', { lingote_titanio: 12, polvo_estelar: 10 }, ['proc_fundicion'], { effect: { recipeYield: 0.2 } }),
+    R('proc_sintesis', 'procesamiento', 'Síntesis Cristalina', 'Desbloquea el Sintetizador de Gemas para crear gemas y prismas con energía.', { lingote_titanio: 10, cristales_magicos: 12 }, ['proc_lavado']),
+    R('proc_inscripcion', 'procesamiento', 'Inscripción Rúnica Omega', 'Desbloquea el Inscriptor Rúnico Omega para automatizar runas y lingotes celestiales.', { lingote_adamantita: 10, polvo_estelar: 10 }, ['proc_fundicion', 'proc_sintesis']),
+    R('def_prisma', 'fundamentos', 'Defensa Prismática', 'Desbloquea la Torreta de Prisma Omega alimentada por energía de la red.', { lingote_titanio: 8, cristales_magicos: 10 }, ['ind_fundamentos']),
+    R('red_baliza', 'logistica', 'Baliza de Sobrecarga', 'Desbloquea la Baliza de Sobrecarga (+40% velocidad de máquinas y +20% estadísticas al jugador).', { lingote_adamantita: 10, cristales_magicos: 12 }, ['log_pilones', 'gen_arcano']),
+    R('comp_condensador', 'compresion', 'Condensación Energética', 'Desbloquea el Condensador de Materia Pura (convierte 500 energía/s en recursos mágicos y Materia Comprimida).', { lingote_adamantita: 12, polvo_estelar: 15 }, ['comp_prensa']),
     R('rec_extractor', 'recoleccion', 'Perforación Profunda', 'Desbloquea el Extractor de Núcleo.', { lingote_acero: 15, diamantes: 4 }, ['ind_fundamentos']),
     R('rec_profundo', 'recoleccion', 'Vetas Profundas', 'Extractores obtienen platino y titanio.', { lingote_titanio: 12, diamantes: 8 }, ['rec_extractor']),
     R('rec_nucleo', 'recoleccion', 'Corazón del Mundo', 'Extractores obtienen adamantita y oricalco.', { lingote_adamantita: 12, diamantes: 12 }, ['rec_profundo']),
@@ -413,10 +453,14 @@
           const kind = e.def.omega.kind;
           if (kind === 'nexus' || kind === 'pylon') { if (kind === 'pylon') net.pylons.push(e); continue; }
           let best = null, bd = Infinity;
-          for (const hid of seen) {
-            const h = hubById.get(hid);
-            const d = dist(e, h);
-            if (d <= radius(h) && d < bd) { bd = d; best = h; }
+          if (dist(e, nexuses[0]) <= radius(nexuses[0])) {
+            best = nexuses[0];
+          } else {
+            for (const hid of seen) {
+              const h = hubById.get(hid);
+              const d = dist(e, h);
+              if (d <= radius(h) && d < bd) { bd = d; best = h; }
+            }
           }
           if (!best) { this.setState(e.b, 'sin_conexion', 'Fuera del alcance de la red (coloca un Pilón de Enlace).'); continue; }
           net.parent.set(e.b.id, best.b.id);
@@ -436,6 +480,25 @@
     }
     pathOf(net, id) { const out = []; let cur = net.parent.get(id); while (cur != null) { out.push(cur); cur = net.parent.get(cur); } return out; }
 
+    genOutput(entry, plotKey) {
+      if (!entry || !entry.b) return 0;
+      const g = GENERATORS[entry.b.type];
+      if (!g) return 0;
+      const rate = g.out * GEN_LEVEL_MULT[lvlIdx(entry.b)] * (1 + this.getMod('genOutput'));
+      const o = entry.b.omega;
+      if (o && o.state === 'activa') return o.rate || rate;
+      if (plotKey && g.fuels && g.fuels.some(f => this.nexusCount(plotKey, f.id) >= 1)) return rate;
+      return rate;
+    }
+
+    consumerDemand(entry) {
+      if (!entry || !entry.def || !entry.def.omega) return 0;
+      if (entry.def.omega.kind === 'battery') return 0;
+      const eff = 1 - this.getMod('energyEff');
+      const p = (entry.b && entry.b.omega && entry.b.omega.job && entry.b.omega.job.power) || entry.def.omega.power || 0;
+      return Math.max(0, p * eff);
+    }
+
     // ── frame hook ──
     update(dt, game) {
       this.acc += dt;
@@ -451,9 +514,20 @@
     stepNet(game, net, dt) {
       const plot = net.plot;
       const nx = this.nexusData(plot);
-      const bufCap = CFG.nexusEnergyBuffer[lvlIdx(net.nexus)];
+      let batteryBonus = 0;
+      for (const e of net.consumers) {
+        if (e.def.omega.kind === 'battery') {
+          const bonuses = e.def.omega.capBonus || [5000, 15000, 40000];
+          const addCap = bonuses[lvlIdx(e.b)] || 5000;
+          batteryBonus += addCap;
+          this.setState(e.b, 'activa', `Reserva +${addCap} energía`);
+          e.b.omegaActive = true;
+        }
+      }
+      const bufCap = CFG.nexusEnergyBuffer[lvlIdx(net.nexus)] + batteryBonus;
       const eff = 1 - this.getMod('energyEff');
-      const speed = 1 + this.getMod('machineSpeed');
+      const hasActiveBeacon = net.consumers.some(e => e.def.omega.kind === 'beacon' && e.b.omegaActive);
+      const speed = 1 + this.getMod('machineSpeed') + (hasActiveBeacon ? 0.40 : 0);
 
       // Generators: burn fuel only if somebody needs power or the buffer isn't full.
       const wantPower = nx.stat.lastCons > 0 || nx.energy < bufCap * 0.95;
@@ -487,20 +561,23 @@
 
       for (const e of net.consumers) {
         const o = e.b.omega; const kind = e.def.omega.kind;
+        if (kind === 'battery') continue;
         const prep = this.prepare(game, net, e, speed);
-        if (!prep.wants) { this.setState(e.b, prep.state, prep.reason); continue; }
+        if (!prep.wants) { e.b.omegaActive = false; this.setState(e.b, prep.state, prep.reason); continue; }
         const need = prep.power * eff * dt;
         let f = need > 0 ? Math.min(1, available / need) : 1;
         const path = this.pathOf(net, e.b.id);
         for (const pid of path) if (pylonRem.has(pid)) f = Math.min(f, need > 0 ? pylonRem.get(pid) / need : 1);
         f = cap(f, 0, 1);
-        if (f <= 0.001) { deficit += need; this.setState(e.b, 'sin_energia', 'Energía insuficiente en la red.'); continue; }
+        if (f <= 0.001) { e.b.omegaActive = false; deficit += need; this.setState(e.b, 'sin_energia', 'Energía insuficiente en la red.'); continue; }
         available -= need * f; consumed += need * f;
         for (const pid of path) if (pylonRem.has(pid)) pylonRem.set(pid, pylonRem.get(pid) - need * f);
         if (f < 0.999) deficit += need * (1 - f);
+        e.b.omegaActive = true;
         this.advance(game, net, e, dt * f * speed, f);
       }
       nx.energy = cap(available, 0, bufCap);
+      nx.bufCap = bufCap;
       nx.stat.lastProd = produced / dt; nx.stat.lastCons = consumed / dt; nx.stat.lastDeficit = deficit / dt;
     }
 
@@ -537,6 +614,13 @@
         if (!has && sumVals(o.deposit || {}) < this.pressCost()) return { wants: false, state: 'sin_materiales', reason: 'Faltan recursos para completar la compresión.' };
         return { wants: true, power: e.def.omega.power };
       }
+      if (kind === 'turret' || kind === 'beacon') {
+        return { wants: true, power: e.def.omega.power };
+      }
+      if (kind === 'condenser') {
+        if (o.pending && !this.nexusCanAdd(plot, o.pending)) return { wants: false, state: 'almacen_lleno', reason: 'Nexo lleno: materia retenida.' };
+        return { wants: true, power: e.def.omega.power };
+      }
       return { wants: false, state: 'inactiva', reason: '' };
     }
 
@@ -547,6 +631,33 @@
       if (kind === 'domo') return this.advanceDomo(game, net, e, work, f);
       if (kind === 'chamber') return this.advanceChamber(game, net, e, work, f);
       if (kind === 'press') return this.advancePress(game, net, e, work, f);
+      if (kind === 'turret') { this.setState(e.b, 'activa', `Defensa prismática activa (${Math.round(f * 100)}%)`); return; }
+      if (kind === 'beacon') { this.setState(e.b, 'activa', `Sobrecarga de isla activa (+40% máquinas, +20% daño)`); return; }
+      if (kind === 'condenser') return this.advanceCondenser(game, net, e, work, f);
+    }
+
+    advanceCondenser(game, net, e, work) {
+      const o = e.b.omega; const cyc = (e.def.omega && e.def.omega.cycleSec) || 20;
+      o.progress = o.progress || 0;
+      let budget = work, guard = 0;
+      while (guard++ < 200) {
+        if (o.pending) {
+          if (!this.nexusAdd(net.plot, o.pending)) { this.setState(e.b, 'almacen_lleno', 'Nexo lleno: materia retenida.'); return; }
+          for (const [k, q] of Object.entries(o.pending)) { this.produced(k, q); o.condensed = (o.condensed || 0) + q; }
+          o.pending = null;
+        }
+        if (budget <= 1e-9) break;
+        const use = Math.min(budget, cyc - o.progress);
+        o.progress += use; budget -= use;
+        if (o.progress < cyc - 1e-9) break;
+        o.progress = 0;
+        const rng = mulberry32((o.seed + (o.rolls = (o.rolls || 0) + 1) * 514229) >>> 0);
+        const mult = GEN_LEVEL_MULT[lvlIdx(e.b)] >= 2.4 ? 3 : GEN_LEVEL_MULT[lvlIdx(e.b)] >= 1.6 ? 2 : 1;
+        const out = { polvo_estelar: 2 * mult, cristales_magicos: 2 * mult };
+        if (rng() < 0.25 * (1 + this.getMod('compressedBonus'))) out.materia_comprimida = 1 * mult;
+        o.pending = out;
+      }
+      this.setState(e.b, 'activa', `Condensando energía en materia (${Math.floor(100 * (o.progress || 0) / cyc)}%)`);
     }
 
     // ── recipe machines ──
@@ -861,6 +972,11 @@
       return out;
     }
     applyEquipMods(game, m) {
+      if (Array.isArray(game.buildings) && game.buildings.some(b => b.type === 'faro_sobrecarga_isla' && b.omegaActive)) {
+        m.dmgBonus = (m.dmgBonus || 0) + 0.20;
+        m.moveSpeed = (m.moveSpeed || 0) + 0.15;
+        m.gatherPower = (m.gatherPower || 0) + 0.25;
+      }
       for (const eqId of Object.values(game.equipped || {})) {
         if (!eqId) continue;
         const L = this.state.overload[eqId] || 0; if (L <= 0) continue;
@@ -888,6 +1004,9 @@
       while (picked.length < n) { const m = mods[Math.floor(rng() * mods.length)]; if (!picked.includes(m)) picked.push(m); }
       return picked;
     }
+    abyssModifiersForFloor(floor) {
+      return this.abyssModifiersFor(floor);
+    }
     abyssScaling(floor, mods) {
       const A = CFG.abyss; mods = mods || this.abyssModifiersFor(floor);
       const f = Math.max(1, floor) - 1;
@@ -897,7 +1016,10 @@
       speed = Math.min(A.speedCap * 1.15, speed);
       hp = Math.min(hp, A.multCap); dmg = Math.min(dmg, A.multCap);
       const loot = Math.min(50, Math.pow(1.05, f)) * (mods.includes('botin') ? 1.5 : 1);
-      return { floor, hp, dmg, speed, loot, horde: mods.includes('horda'), mods };
+      return { floor, hp, dmg, speed, loot, hpMult: hp, dmgMult: dmg, spdMult: speed, lootMult: loot, horde: mods.includes('horda'), mods };
+    }
+    abyssScale(floor, mods) {
+      return this.abyssScaling(floor, mods);
     }
     abyssDungeonFor(floor) {
       const list = Balaclava.DUNGEON_TIER_LIST || Object.keys(Balaclava.DUNGEON_DEFS);

@@ -91,7 +91,7 @@
       id: 'banco', name: 'Banco', category: 'economia', size: 1, placeOn: 'land',
       cost: { ladrillo: 10, lingote_oro: 4, lingote_hierro: 4 },
       desc: 'Genera monedas de oro pasivamente cada ciclo en su bóveda. Mejorable hasta Nv.3.',
-      sprite: 'Castle_Yellow', badge: 'bank',
+      sprite: 'bld_banco', badge: 'bank',
       autoCycle: 10, autoCoins: 14, capacity: 500
     },
     casa_comercio: {
@@ -184,7 +184,7 @@
       id: 'torre_magica', name: 'Torre Mágica', category: 'especiales', size: 1, placeOn: 'land',
       cost: { piedra: 18, cristales: 4, cristales_magicos: 2 },
       desc: 'Dispara rayos arcanos automáticamente contra enemigos cercanos e ilumina la oscuridad.',
-      sprite: 'Tower_Purple', badge: 'magic',
+      sprite: 'bld_torre_magica', badge: 'magic',
       turretRange: 280, turretDmg: 22, turretCooldown: 1.1
     },
     portal: {
@@ -228,7 +228,7 @@
       id: 'recolector', name: 'Torre Recolectora', category: 'automatizacion', size: 1, placeOn: 'land',
       cost: { lingote_hierro: 6, engrane: 4, cristales: 2 },
       desc: 'Recoge automáticamente objetos caídos y vacía la producción de máquinas cercanas en un radio de 6 casillas.',
-      sprite: 'Tower_Blue', badge: 'magnet',
+      sprite: 'bld_recolector', badge: 'magnet',
       autoCycle: 3, collectRadius: 6, capacity: 120
     },
     puente: {
@@ -358,8 +358,8 @@
     id: 'colmena', name: 'Colmena de Miel', category: 'agricultura', placeOn: 'land', size: 1,
     sprite: 'bld_colmena', badge: 'honey',
     cost: { tablon: 6, fibra_vegetal: 4, hierba: 6 }, xp: 22,
-    autoCycle: 14, autoProduce: { miel: 1, cera_abeja: 1 }, capacity: 36,
-    desc: 'Las abejas polinizan tus flores y producen Miel y Cera de Abeja automáticamente.'
+    autoCycle: 14, autoProduce: { miel: 1, cera_abeja: 1, miel_ambar: 1 }, capacity: 36,
+    desc: 'Las abejas polinizan tus flores y producen Miel, Cera de Abeja y Miel de Ámbar automáticamente.'
   };
   BUILDINGS.ahumador = {
     id: 'ahumador', name: 'Ahumador Gourmet', category: 'produccion', placeOn: 'land', size: 1,
@@ -457,7 +457,7 @@
   BUILDINGS.puesto_mercado = {
     id: 'puesto_mercado', name: 'Puesto de Feria Urbana', category: 'fortificacion', placeOn: 'land', size: 2,
     sprite: 'village_stall', sellAura: 0.06, cost: { tablon: 6, tela: 4, madera: 4 }, xp: 16,
-    desc: 'Puesto pintoresco con toldo azul que decora la aldea y concede +6% al comercio.'
+    desc: 'Pabellón real de feria urbana que decora la aldea y concede +6% al comercio y descuento de mercado.'
   };
   BUILDINGS.cabana_aldeano = {
     id: 'cabana_aldeano', name: 'Cabaña de Aldeano', category: 'fortificacion', placeOn: 'land', size: 2,
