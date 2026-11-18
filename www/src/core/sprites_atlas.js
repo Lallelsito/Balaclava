@@ -1734,7 +1734,8 @@
     bld_omega_camara: 'assets/sprites_extra/bld_omega_camara.png',
     bld_omega_prensa: 'assets/sprites_extra/bld_omega_prensa.png',
     bld_omega_condensador: 'assets/sprites_extra/bld_omega_condensador.png',
-    bld_omega_altar: 'assets/sprites_extra/bld_omega_altar.png'
+    bld_omega_altar: 'assets/sprites_extra/bld_omega_altar.png',
+    bld_basurero: 'assets/sprites_extra/bld_basurero.png'
   };
 
   if (ROOT) {

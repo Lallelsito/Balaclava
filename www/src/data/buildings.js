@@ -270,6 +270,12 @@
       cost: { lingote_oro: 12, lingote_acero: 6, diamantes: 2 },
       desc: 'Arca regia con 70 ranuras (hasta 1000 objetos por stack). Fabricable en Menú de Construcción [R].',
       sprite: 'chest_gold', chestSpriteKey: 'gold', isChest: true, capacity: 70, tier: 3
+    },
+    basurero: {
+      id: 'basurero', name: 'Basurero', category: 'produccion', altCategory: 'economia', size: 1, placeOn: 'land',
+      cost: { madera: 4, piedra: 4 },
+      desc: 'Incinerador de objetos: deposita dentro cualquier objeto sobrante para eliminarlo de forma permanente.',
+      sprite: 'bld_basurero', opensPanel: 'basurero'
     }
   };
 
@@ -599,7 +605,7 @@
     'mesa_artesania', 'fogata', 'horno', 'puente', 'suelo_hierba', 'mercado', 'tablon_logros',
     'aserradero', 'telar', 'molino', 'cocina', 'ahumador', 'forja', 'yunque_runico', 'mesa_encantamientos', 'mesa_hechiceria',
     'plantacion', 'aspersor', 'colmena', 'jardin_mariposas', 'estanque', 'muelle_pesca', 'corral', 'granja', 'invernadero',
-    'barriles_bodega', 'cofre_madera', 'cofre_hierro', 'cofre_dorado', 'casa_comercio', 'banco', 'tesoreria', 'biblioteca', 'estanteria_arcana',
+    'barriles_bodega', 'cofre_madera', 'cofre_hierro', 'cofre_dorado', 'basurero', 'casa_comercio', 'banco', 'tesoreria', 'biblioteca', 'estanteria_arcana',
     'cantera_piedra', 'taller_mecanico', 'alquimia', 'laboratorio', 'fundicion', 'taladro', 'tuberias_conduit', 'cofre_logistico', 'recolector', 'observatorio_astral', 'centro_investigacion',
     'torre_magica', 'torre_rayos', 'balista', 'faro_costero', 'portal', 'monumento', 'altar', 'mazmorra_santuario',
     'banco_madera', 'camino_piedra', 'camino_hierba', 'valla_madera', 'muro_madera', 'muro_piedra',

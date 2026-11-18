@@ -3849,6 +3849,7 @@
         modalBox.classList.toggle('pause-settings-compact', this.pauseView === 'settings' || this.activeModal === 'title_settings');
         modalBox.classList.toggle('steam-dialog-box', isCompactMenu);
         modalBox.classList.toggle('patch-notes-modal', this.activeModal === 'patch_notes');
+        modalBox.classList.toggle('chest-wide-modal', this.activeModal === 'chest');
       }
       if (titles[this.activeModal]) titleEl.textContent = titles[this.activeModal];
 
@@ -3900,6 +3901,66 @@
       }, tr('modal.clear'));
       inp.addEventListener('input', () => onFilter(inp.value || ''));
       return this.el('div', { class: 'modal-search-bar' }, [inp, clr]);
+    }
+
+    _storageItemMatches(itemId, catId, needle) {
+      const it = Balaclava.ITEMS && Balaclava.ITEMS[itemId];
+      const catGroups = {
+        todos: null,
+        recursos: ['recursos', 'minerales', 'gemas', 'monstruo'],
+        materiales: ['materiales'],
+        cultivos: ['semillas', 'alimentos', 'comida', 'pociones', 'cultivos'],
+        equipamiento: ['equipamiento', 'herramientas'],
+        construccion: ['construccion'],
+        especiales: ['especiales', 'magia']
+      };
+      const allowed = catGroups[catId || 'todos'];
+      if (allowed && (!it || !allowed.includes(it.category))) return false;
+      if (needle) {
+        const q = needle.trim().toLowerCase();
+        if (q) {
+          const name = (it && it.name ? it.name : itemId).toLowerCase();
+          const idLow = String(itemId || '').toLowerCase();
+          if (!name.includes(q) && !idLow.includes(q)) return false;
+        }
+      }
+      return true;
+    }
+
+    _renderStorageFilterBar(container, stateKey, onFilterChange) {
+      this._storageFilters = this._storageFilters || {};
+      const st = this._storageFilters[stateKey] || (this._storageFilters[stateKey] = { cat: 'todos', search: '' });
+      const tabs = this.el('div', { class: 'tab-row', style: 'margin-bottom:6px;' });
+      const tabDefs = [
+        ['todos', tr('inv.tabAll')],
+        ['recursos', tr('inv.tabRes')],
+        ['materiales', tr('inv.tabMat')],
+        ['cultivos', tr('inv.tabFood')],
+        ['equipamiento', tr('inv.tabGear')],
+        ['construccion', tr('inv.tabBlocks')],
+        ['especiales', tr('inv.tabSpecial')]
+      ];
+      const btns = [];
+      tabDefs.forEach(([id, lbl]) => {
+        const b = this.el('button', {
+          type: 'button',
+          class: 'tab-btn' + (st.cat === id ? ' active' : ''),
+          onclick: () => {
+            st.cat = id;
+            btns.forEach(x => x.el.classList.toggle('active', x.id === id));
+            onFilterChange(st.cat, st.search);
+          }
+        }, lbl);
+        btns.push({ id, el: b });
+        tabs.appendChild(b);
+      });
+      container.appendChild(tabs);
+      const sBar = this._buildSearchBar(st.search, tr('inv.searchPlaceholder'), (q) => {
+        st.search = q || '';
+        onFilterChange(st.cat, st.search);
+      });
+      container.appendChild(sBar);
+      return st;
     }
 
     renderGrimorio(body) {
@@ -4318,6 +4379,39 @@
           }, String(slotNum + 1)));
         }
         det.appendChild(hbRow);
+        const curQty = g.inventory[sel.id] || 0;
+        if (curQty > 0) {
+          const trashRow = this.el('div', { style: 'display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.1);flex-wrap:wrap;' }, [
+            this.el('button', {
+              class: 'btn btn-danger btn-sm',
+              title: 'Eliminar 1 unidad de este objeto permanentemente',
+              onclick: () => {
+                g.removeItem(sel.id, 1);
+                if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('destroy');
+                g.toast(`Eliminado: 1x ${sel.name}`, 'info');
+                if (!g.inventory[sel.id]) this.selectedItemId = null;
+                this.updateHUD(true);
+                this.renderModal();
+              }
+            }, 'Basurero (-1)'),
+            this.el('button', {
+              class: 'btn btn-danger btn-sm',
+              title: 'Eliminar todas las unidades de este objeto permanentemente',
+              onclick: () => {
+                const qty = g.inventory[sel.id] || 0;
+                if (qty > 0) {
+                  g.removeItem(sel.id, qty);
+                  if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('destroy');
+                  g.toast(`Eliminado: ${qty}x ${sel.name}`, 'warn');
+                  this.selectedItemId = null;
+                  this.updateHUD(true);
+                  this.renderModal();
+                }
+              }
+            }, `Eliminar Todo (${curQty})`)
+          ]);
+          det.appendChild(trashRow);
+        }
         det.appendChild(this.el('button', {
           class: 'btn btn-stone btn-sm',
           style: 'margin-top:8px;font-size:13px;width:100%;',
@@ -4503,6 +4597,28 @@
         titleEl.textContent = `${def.name} (${chestUsedSlots} / ${chestCapacity} Ranuras · Stacks de 1000)`;
       }
 
+      const chestSlotNodes = [];
+      const playerSlotNodes = [];
+      const applyChestFilter = (catId, searchQ) => {
+        const isFiltered = Boolean((catId && catId !== 'todos') || (searchQ && searchQ.trim()));
+        chestSlotNodes.forEach(({ id, el }) => {
+          if (!id) {
+            el.style.display = isFiltered ? 'none' : '';
+            return;
+          }
+          el.style.display = this._storageItemMatches(id, catId, searchQ) ? '' : 'none';
+        });
+        playerSlotNodes.forEach(({ id, el }) => {
+          if (!id) {
+            el.style.display = isFiltered ? 'none' : '';
+            return;
+          }
+          el.style.display = this._storageItemMatches(id, catId, searchQ) ? '' : 'none';
+        });
+      };
+
+      const filterState = this._renderStorageFilterBar(body, 'chest', applyChestFilter);
+
       const container = this.el('div', { class: 'chest-layout' });
 
       // 1. CHEST SECTION
@@ -4626,13 +4742,16 @@
             this.itemIcon(it.icon, 44),
             this.el('span', { class: 'slot-qty' }, String(stackQty))
           ]);
+          chestSlotNodes.push({ id, el: slot });
           chestGrid.appendChild(slot);
         }
       });
 
       const emptyChestSlots = Math.max(0, chestCapacity - chestUsedSlots);
       for (let i = 0; i < emptyChestSlots; i++) {
-        chestGrid.appendChild(this.el('div', { class: 'inv-slot empty-slot' }));
+        const emp = this.el('div', { class: 'inv-slot empty-slot' });
+        chestSlotNodes.push({ id: null, el: emp });
+        chestGrid.appendChild(emp);
       }
       chestBox.appendChild(chestGrid);
       container.appendChild(chestBox);
@@ -4707,18 +4826,22 @@
             this.itemIcon(it.icon, 44),
             this.el('span', { class: 'slot-qty' }, String(stackQty))
           ]);
+          playerSlotNodes.push({ id, el: slot });
           playerGrid.appendChild(slot);
         }
       });
 
       const emptyPlayerSlots = Math.max(0, maxPlayerSlots - usedPlayerSlots);
       for (let i = 0; i < emptyPlayerSlots; i++) {
-        playerGrid.appendChild(this.el('div', { class: 'inv-slot empty-slot' }));
+        const emp = this.el('div', { class: 'inv-slot empty-slot' });
+        playerSlotNodes.push({ id: null, el: emp });
+        playerGrid.appendChild(emp);
       }
       playerBox.appendChild(playerGrid);
       container.appendChild(playerBox);
 
       body.appendChild(container);
+      applyChestFilter(filterState.cat, filterState.search);
     }
 
     renderStats(body) {
@@ -9751,6 +9874,9 @@
             'Chest stack limit increased from 100 to 1,000 items per slot across Wooden, Iron, and Golden Runic Chests.',
             'Fixed storage chests losing or emptying items when reopening or interacting, plus fixed Collector Towers draining chests.',
             'Improved ground drop & Backpack Tier persistence across saves, loads, and dungeon transitions.',
+            'Fixed Logistic Chest withdrawals when inventory is full so items never vanish.',
+            'Added live search bar and category filters to Chests, Logistic Chests, and the Omega Virtual Warehouse.',
+            'Added a new Basurero (Item Incinerator) building in [R] and quick Trash buttons in Inventory [Q] to permanently delete unwanted items.',
             'Simplified level XP bar numbers (e.g. 1M, 250K) with full exact numbers displayed on mouse hover.'
           ]
         },
@@ -9833,6 +9959,9 @@
             'Capacidad de stack en cofres aumentada de 100 a 1000 unidades por ranura en todos los cofres.',
             'Corregido el fallo que vaciaba o tiraba los objetos de los cofres al cerrarlos y volverlos a abrir, y evitado que las Torres Recolectoras vacien cofres.',
             'Corregida la persistencia de objetos tirados en el suelo y del rango de Mochila al guardar/cargar o entrar a mazmorras.',
+            'Corregido el retiro de objetos del Cofre Logistico cuando el inventario estaba lleno para evitar que desaparezcan.',
+            'Anadido buscador y filtros por categoria en Cofres, Cofre Logistico y Almacen Virtual Omega.',
+            'Anadido el edificio Basurero (Incinerador) en [R] y botones de eliminacion rapida en el Inventario [Q] para borrar objetos permanentemente.',
             'Numeros de XP de nivel simplificados (ej. 1M, 250K) mostrando el numero exacto completo al pasar el cursor.'
           ]
         },
@@ -10494,6 +10623,12 @@
         return;
       }
 
+      if (def.opensPanel === 'basurero' || b.type === 'basurero') {
+        this.renderTrashBin(body, b);
+        appendFooter();
+        return;
+      }
+
       if (def.station) {
         if (def.station === 'forja' || def.station === 'yunque_runico') {
           this.renderForjaCategories(body, def.station, false);
@@ -10589,6 +10724,14 @@
         ]);
         body.appendChild(actionsRow);
 
+        const omegaSlotNodes = [];
+        const applyOmegaFilter = (catId, searchQ) => {
+          omegaSlotNodes.forEach(({ id, el }) => {
+            el.style.display = this._storageItemMatches(id, catId, searchQ) ? '' : 'none';
+          });
+        };
+        const omegaFilterState = this._renderStorageFilterBar(body, 'omega_storage', applyOmegaFilter);
+
         const itemsGrid = this.el('div', {
           style: 'display:grid;grid-template-columns:repeat(auto-fill, minmax(70px, 1fr));gap:6px;max-height:240px;overflow-y:auto;background:rgba(0,0,0,0.35);padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);'
         });
@@ -10617,10 +10760,12 @@
               this.itemIcon(it.icon || id, 28),
               this.el('span', { style: 'font-size:11px;font-weight:bold;color:#ffd54f;margin-top:2px;' }, `x${q}`)
             ]);
+            omegaSlotNodes.push({ id, el: itemBox });
             itemsGrid.appendChild(itemBox);
           }
         }
         body.appendChild(itemsGrid);
+        applyOmegaFilter(omegaFilterState.cat, omegaFilterState.search);
       } else if (this.omegaNexusTab === 'energy') {
         const nets = g.omega.networks(g);
         const net = nets.get(plotKey) || { gens: [], consumers: [], pylons: [] };
@@ -11309,17 +11454,47 @@
       filterWrap.appendChild(filterBtnRow);
       body.appendChild(filterWrap);
 
+      const logStorageNodes = [];
+      const logDepositNodes = [];
+      const applyLogisticFilter = (catId, searchQ) => {
+        logStorageNodes.forEach(({ id, el }) => {
+          el.style.display = this._storageItemMatches(id, catId, searchQ) ? '' : 'none';
+        });
+        logDepositNodes.forEach(({ id, el }) => {
+          el.style.display = this._storageItemMatches(id, catId, searchQ) ? '' : 'none';
+        });
+      };
+      const logFilterState = this._renderStorageFilterBar(body, 'logistic_chest', applyLogisticFilter);
+
       const stKeys = Object.keys(b.storage).filter(k => b.storage[k] > 0);
       body.appendChild(this.el('h4', { style: 'margin:8px 0;color:#80cbc4;' }, 'Contenido del Cofre (Retiro Gradual):'));
       if (stKeys.length === 0) {
         body.appendChild(this.el('div', { class: 'card', style: 'color:#90a4ae;margin-bottom:12px;' }, 'El cofre logístico está vacío actualmente.'));
       } else {
-        const grid = this.el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-bottom:12px;' });
+        const grid = this.el('div', { style: 'display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:240px;overflow-y:auto;' });
         stKeys.forEach(k => {
           const qty = b.storage[k];
           const it = Balaclava.ITEMS[k] || { name: k, icon: 'items/gem_ruby' };
           const withdraw = (amount) => {
-            const take = Math.min(qty, amount);
+            const want = Math.min(qty, amount);
+            if (want <= 0) return;
+            const maxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
+            const maxSlots = g.getMaxInventorySlots ? g.getMaxInventorySlots() : 20;
+            const usedSlots = g.getUsedInventorySlots ? g.getUsedInventorySlots() : Object.keys(g.inventory).length;
+            const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === k).length;
+            const hbCap = hbSlots * maxStack;
+            const totalQty = g.inventory[k] || 0;
+            const freeInHb = Math.max(0, hbCap - Math.min(totalQty, hbCap));
+            const curInvQty = Math.max(0, totalQty - hbCap);
+            const mod = curInvQty % maxStack;
+            const spaceInPartial = mod === 0 ? 0 : (maxStack - mod);
+            const freeSlots = Math.max(0, maxSlots - usedSlots);
+            const fit = freeInHb + spaceInPartial + (freeSlots * maxStack);
+            const take = Math.min(want, fit);
+            if (take <= 0) {
+              g.toast('Inventario lleno. Libera espacio antes de retirar.', 'warn');
+              return;
+            }
             b.storage[k] -= take;
             if (b.storage[k] <= 0) delete b.storage[k];
             g.addItem(k, take);
@@ -11346,6 +11521,7 @@
               this.el('button', { class: 'btn btn-sm btn-gold', onclick: () => withdraw(qty) }, 'Todo')
             ])
           ]);
+          logStorageNodes.push({ id: k, el: itemRow });
           grid.appendChild(itemRow);
         });
         body.appendChild(grid);
@@ -11353,15 +11529,15 @@
 
       const invDeposit = this.el('div', { class: 'card', style: 'margin-bottom:12px;' });
       invDeposit.appendChild(this.el('strong', { style: 'color:#a5d6a7;display:block;margin-bottom:6px;' }, 'Depositar desde tu inventario:'));
-      const invKeys = Object.keys(g.inventory).filter(k => g.inventory[k] > 0);
+      const invKeys = Object.keys(g.inventory).filter(k => g.inventory[k] > 0 && Balaclava.ITEMS[k]);
       if (invKeys.length === 0) {
         invDeposit.appendChild(this.el('div', { style: 'color:#90a4ae;' }, 'Tu inventario está vacío.'));
       } else {
-        const depGrid = this.el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;' });
-        invKeys.slice(0, 16).forEach(k => {
+        const depGrid = this.el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap;max-height:170px;overflow-y:auto;' });
+        invKeys.forEach(k => {
           const count = g.inventory[k];
           const it = Balaclava.ITEMS[k] || { name: k };
-          depGrid.appendChild(this.el('button', {
+          const depBtn = this.el('button', {
             class: 'btn btn-sm btn-stone',
             onclick: () => {
               const curTot = Object.values(b.storage).reduce((s, q) => s + (Number(q) || 0), 0);
@@ -11377,11 +11553,149 @@
               this.updateHUD(true);
               this.renderModal();
             }
-          }, `+10 ${it.name} (${count})`));
+          }, `+10 ${it.name} (${count})`);
+          logDepositNodes.push({ id: k, el: depBtn });
+          depGrid.appendChild(depBtn);
         });
         invDeposit.appendChild(depGrid);
       }
       body.appendChild(invDeposit);
+      applyLogisticFilter(logFilterState.cat, logFilterState.search);
+    }
+
+    renderTrashBin(body, b) {
+      const g = this.game;
+      b.storage = b.storage || {};
+      const maxStack = g.getMaxStackSize ? g.getMaxStackSize() : 25;
+
+      body.appendChild(this.el('div', { class: 'parchment-box', style: 'margin-bottom:10px;border-left:3px solid #ef5350;' }, [
+        this.el('strong', { style: 'color:#ff8a80;font-size:15px;display:block;margin-bottom:4px;' }, 'Basurero / Incinerador de Objetos'),
+        this.el('div', { style: 'font-size:13px;color:#dbe7f5;line-height:1.4;' },
+          'Deposita aqui objetos de tu inventario para eliminarlos. Puedes recuperarlos antes de incinerarlos, o pulsar "Incinerar Todo" para borrarlos permanentemente.')
+      ]));
+
+      const trashNodes = [];
+      const invNodes = [];
+      const applyTrashFilter = (catId, searchQ) => {
+        trashNodes.forEach(({ id, el }) => {
+          el.style.display = this._storageItemMatches(id, catId, searchQ) ? '' : 'none';
+        });
+        invNodes.forEach(({ id, el }) => {
+          el.style.display = this._storageItemMatches(id, catId, searchQ) ? '' : 'none';
+        });
+      };
+      const filterState = this._renderStorageFilterBar(body, 'trash_bin', applyTrashFilter);
+
+      const stagedEntries = Object.entries(b.storage).filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
+      const stagedCount = stagedEntries.reduce((sum, [, q]) => sum + q, 0);
+
+      const binCard = this.el('div', { class: 'card', style: 'margin-bottom:10px;padding:10px;border:1px solid rgba(239,83,80,0.45);' });
+      binCard.appendChild(this.el('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;' }, [
+        this.el('strong', { style: 'color:#ff8a80;font-size:14px;' }, `Dentro del Basurero (${stagedCount} unidades)`),
+        this.el('div', { style: 'display:flex;gap:6px;' }, [
+          stagedEntries.length > 0 ? this.el('button', {
+            class: 'btn btn-danger btn-sm',
+            onclick: () => {
+              b.storage = {};
+              if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('destroy');
+              g.toast(`Incinerados ${stagedCount} objetos permanentemente.`, 'warn');
+              this.renderModal();
+            }
+          }, 'Incinerar Todo (Eliminar)') : null
+        ])
+      ]));
+
+      const binGrid = this.el('div', { class: 'chest-grid', style: 'max-height:150px;overflow-y:auto;' });
+      if (stagedEntries.length === 0) {
+        binGrid.appendChild(this.el('div', { style: 'grid-column:1/-1;color:#90a4ae;font-size:13px;padding:10px;' },
+          'El basurero está vacío. Haz clic en objetos de tu inventario abajo para enviarlos aquí.'));
+      } else {
+        stagedEntries.forEach(([id, q]) => {
+          const it = Balaclava.ITEMS[id];
+          const slot = this.el('div', {
+            class: `inv-slot rarity-${it.rarity || 'comun'}`,
+            title: `${it.name} (x${q}) — Clic: Recuperar al inventario`,
+            onclick: () => {
+              const take = Math.min(q, maxStack);
+              if (!g.canAddItem(id, 1)) {
+                g.toast('Inventario lleno para recuperar.', 'warn');
+                return;
+              }
+              b.storage[id] -= take;
+              if (b.storage[id] <= 0) delete b.storage[id];
+              g.addItem(id, take);
+              if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+              this.updateHUD(true);
+              this.renderModal();
+            }
+          }, [
+            this.itemIcon(it.icon, 42),
+            this.el('span', { class: 'slot-qty' }, String(q))
+          ]);
+          trashNodes.push({ id, el: slot });
+          binGrid.appendChild(slot);
+        });
+      }
+      binCard.appendChild(binGrid);
+      body.appendChild(binCard);
+
+      const invCard = this.el('div', { class: 'card', style: 'padding:10px;' });
+      invCard.appendChild(this.el('strong', { style: 'color:#e2e8f0;font-size:14px;display:block;margin-bottom:8px;' },
+        'Tu Inventario (Clic: mover stack · Clic Der: mover 1 · Shift+Clic: mover todo)'));
+      const invGrid = this.el('div', { class: 'chest-grid', style: 'max-height:200px;overflow-y:auto;' });
+      const playerItems = Object.entries(g.inventory)
+        .map(([id, q]) => {
+          const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+          return [id, Math.max(0, q - hbSlots * maxStack)];
+        })
+        .filter(([id, q]) => q > 0 && Balaclava.ITEMS[id]);
+
+      if (playerItems.length === 0) {
+        invGrid.appendChild(this.el('div', { style: 'grid-column:1/-1;color:#90a4ae;font-size:13px;padding:10px;' }, 'No hay objetos en tu inventario.'));
+      } else {
+        playerItems.forEach(([id, qty]) => {
+          const it = Balaclava.ITEMS[id];
+          let rem = qty;
+          while (rem > 0) {
+            const stackQty = Math.min(rem, maxStack);
+            rem -= stackQty;
+            const slot = this.el('div', {
+              class: `inv-slot rarity-${it.rarity || 'comun'}`,
+              title: `${it.name} (x${stackQty}) — Enviar al basurero`,
+              onclick: (ev) => {
+                const hbSlots = (g.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+                const invOnly = Math.max(0, (g.inventory[id] || 0) - hbSlots * maxStack);
+                const move = (ev && ev.shiftKey) ? invOnly : Math.min(invOnly, stackQty);
+                if (move > 0) {
+                  g.removeItem(id, move);
+                  b.storage[id] = (b.storage[id] || 0) + move;
+                  if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                  this.updateHUD(true);
+                  this.renderModal();
+                }
+              },
+              oncontextmenu: (ev) => {
+                ev.preventDefault();
+                if ((g.inventory[id] || 0) > 0) {
+                  g.removeItem(id, 1);
+                  b.storage[id] = (b.storage[id] || 0) + 1;
+                  if (Balaclava.Audio && typeof Balaclava.Audio.play === 'function') Balaclava.Audio.play('pickup');
+                  this.updateHUD(true);
+                  this.renderModal();
+                }
+              }
+            }, [
+              this.itemIcon(it.icon, 42),
+              this.el('span', { class: 'slot-qty' }, String(stackQty))
+            ]);
+            invNodes.push({ id, el: slot });
+            invGrid.appendChild(slot);
+          }
+        });
+      }
+      invCard.appendChild(invGrid);
+      body.appendChild(invCard);
+      applyTrashFilter(filterState.cat, filterState.search);
     }
 
     togglePhotoMode() {
