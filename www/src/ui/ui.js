@@ -1479,14 +1479,11 @@
 
     _resolveTransitionHeroSkin() {
       const skins = Balaclava.SKINS || [];
-      let skinId = Balaclava.game && Balaclava.game.player && Balaclava.game.player.skinId;
-      if (!skinId && typeof window !== 'undefined' && window.localStorage) {
-        try { skinId = window.localStorage.getItem('balaclava_player_skin'); } catch (_) {}
-      }
-      return skins.find(s => s.id === skinId) || skins[0] || {
-        id: 'monk_yellow',
-        idle: 'monk_yellow_idle',
-        run: 'monk_yellow_run'
+      return skins[0] || {
+        id: 'hana',
+        idle: 'hana_idle',
+        run: 'hana_run',
+        type: 'hana'
       };
     }
 
@@ -1814,11 +1811,10 @@
         ctx.fillRect(ex, ey, 2, 2);
       }
 
-      // 10. Active Player Skin Hero + Sheep at full game resolution (96x96 & 64x64)
-      const skin = this._resolveTransitionHeroSkin();
+      // 10. Active Player Skin Hero + Sheep at crisp pixel resolution
       const useIdle = Boolean(isSave);
-      const heroKey = useIdle ? (skin.idle || 'monk_yellow_idle') : (skin.run || 'monk_yellow_run');
-      const heroImg = this._getStSprite(heroKey, 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Run.png');
+      const heroKey = useIdle ? 'hana_idle' : 'hana_run';
+      const heroImg = this._getStSprite(heroKey, 'assets/sprites_extra/hana_caraka/' + (useIdle ? 'idle.png' : 'run.png'));
       const sheepKey = useIdle ? 'sheep_idle' : 'sheep_move';
       const sheepImg = this._getStSprite(sheepKey, 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Resources/Meat/Sheep/Sheep_Move.png');
 
@@ -1831,9 +1827,9 @@
         this._drawPixelSprite(ctx, sheepImg, sf * 128, 0, 128, 128, sheepX, 224, 64, 64);
       }
       if (this._isStImgReady(heroImg)) {
-        const hFrames = Math.max(1, Math.floor(heroImg.width / 192));
-        const hf = Math.floor(t * (useIdle ? 6 : 10)) % hFrames;
-        this._drawPixelSprite(ctx, heroImg, hf * 192, 0, 192, 192, heroX, 196, 96, 96);
+        const hFrames = Math.max(1, Math.floor(heroImg.width / 79));
+        const hf = Math.floor(t * (useIdle ? 5 : 10)) % hFrames;
+        this._drawPixelSprite(ctx, heroImg, hf * 79, 0, 79, 79, heroX - 51, 170, 198, 198);
       }
     }
 
@@ -1974,13 +1970,12 @@
         this._drawPixelSprite(ctx, skelImg, sf * 48, 0, 48, 48, 536, 224, 68, 68, true);
       }
 
-      const skin = this._resolveTransitionHeroSkin();
-      const heroImg = this._getStSprite(skin.run || 'monk_yellow_run', 'assets/packs/Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Units/Blue Units/Pawn/Pawn_Run.png');
+      const heroImg = this._getStSprite('hana_run', 'assets/sprites_extra/hana_caraka/run.png');
       if (this._isStImgReady(heroImg)) {
-        const hFrames = Math.max(1, Math.floor(heroImg.width / 192));
+        const hFrames = Math.max(1, Math.floor(heroImg.width / 79));
         const hf = Math.floor(t * 10) % hFrames;
         const heroX = Math.round(108 + normP * 164);
-        this._drawPixelSprite(ctx, heroImg, hf * 192, 0, 192, 192, heroX, 200, 96, 96);
+        this._drawPixelSprite(ctx, heroImg, hf * 79, 0, 79, 79, heroX - 45, 174, 198, 198);
       }
     }
 
@@ -2225,12 +2220,11 @@
       // 5. Player Skin Resting by Fire + Descending Soul Wisp Returning Before Respawn
       ctx.fillStyle = 'rgba(10, 6, 16, 0.48)';
       ctx.fillRect(368, 253, 28, 5);
-      const skin = this._resolveTransitionHeroSkin();
-      const heroImg = this._getStSprite(skin.idle || 'monk_yellow_idle', TS + 'Units/Blue Units/Pawn/Pawn_Idle.png');
+      const heroImg = this._getStSprite('hana_idle', 'assets/sprites_extra/hana_caraka/idle.png');
       if (this._isStImgReady(heroImg)) {
-        const hFrames = Math.max(1, Math.floor(heroImg.width / 192));
+        const hFrames = Math.max(1, Math.floor(heroImg.width / 79));
         const hf = Math.floor(t * 5) % hFrames;
-        this._drawPixelSprite(ctx, heroImg, hf * 192, 0, 192, 192, 334, 195, 96, 96, true);
+        this._drawPixelSprite(ctx, heroImg, hf * 79, 0, 79, 79, 283, 155, 198, 198, true);
       }
 
       // Soul Wisp arcs back from Shrine toward Hero as recovery progresses 0 -> 1
@@ -9875,8 +9869,9 @@
             'Fixed storage chests losing or emptying items when reopening or interacting, plus fixed Collector Towers draining chests.',
             'Improved ground drop & Backpack Tier persistence across saves, loads, and dungeon transitions.',
             'Fixed Logistic Chest withdrawals when inventory is full so items never vanish.',
-            'Added live search bar and category filters to Chests, Logistic Chests, and the Omega Virtual Warehouse.',
+            'Added side-by-side Chest + Inventory layout, live search bar, and category filters in Chests, Logistic Chests, and the Omega Virtual Warehouse.',
             'Added a new Basurero (Item Incinerator) building in [R] and quick Trash buttons in Inventory [Q] to permanently delete unwanted items.',
+            'Introduced Hana Caraka as the unique playable character with all 33 directional animations (combat, weapons, tools, farming, swimming, fishing, hurt, pickup, block, jump, and death) aligned with all in-game items.',
             'Simplified level XP bar numbers (e.g. 1M, 250K) with full exact numbers displayed on mouse hover.'
           ]
         },
@@ -9960,8 +9955,9 @@
             'Corregido el fallo que vaciaba o tiraba los objetos de los cofres al cerrarlos y volverlos a abrir, y evitado que las Torres Recolectoras vacien cofres.',
             'Corregida la persistencia de objetos tirados en el suelo y del rango de Mochila al guardar/cargar o entrar a mazmorras.',
             'Corregido el retiro de objetos del Cofre Logistico cuando el inventario estaba lleno para evitar que desaparezcan.',
-            'Anadido buscador y filtros por categoria en Cofres, Cofre Logistico y Almacen Virtual Omega.',
+            'Vista lado a lado de Cofre + Tu Inventario, buscador en vivo y filtros por categoria en Cofres, Cofre Logistico y Almacen Virtual Omega.',
             'Anadido el edificio Basurero (Incinerador) en [R] y botones de eliminacion rapida en el Inventario [Q] para borrar objetos permanentemente.',
+            'Nuevo personaje jugable unico Hana Caraka con sus 33 animaciones direccionales completas (combate, armas, herramientas, granja, nado, pesca, dano, recoleccion, bloqueo, salto y muerte) ajustadas con los objetos del juego.',
             'Numeros de XP de nivel simplificados (ej. 1M, 250K) mostrando el numero exacto completo al pasar el cursor.'
           ]
         },
@@ -10262,48 +10258,50 @@
       ]));
 
       const skins = Balaclava.SKINS || [];
-      const curSkinId = g.player.skinId || (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || 'monk_yellow';
-      const curSkin = skins.find(s => s.id === curSkinId) || skins[0] || { name: 'Monje de Túnica Café', role: 'Sabio Espiritual', desc: '' };
-      const curIndex = skins.findIndex(s => s.id === curSkin.id);
-      const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage() === 'en';
-      const skinName = (isEn && curSkin.name_en) ? curSkin.name_en : curSkin.name;
-      const skinRole = (isEn && curSkin.role_en) ? curSkin.role_en : (curSkin.role || '');
-      const skinDesc = (isEn && curSkin.desc_en) ? curSkin.desc_en : (curSkin.desc || '');
+      if (skins.length > 1) {
+        const curSkinId = g.player.skinId || 'hana';
+        const curSkin = skins.find(s => s.id === curSkinId) || skins[0];
+        const curIndex = skins.findIndex(s => s.id === curSkin.id);
+        const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage() === 'en';
+        const skinName = (isEn && curSkin.name_en) ? curSkin.name_en : curSkin.name;
+        const skinRole = (isEn && curSkin.role_en) ? curSkin.role_en : (curSkin.role || '');
+        const skinDesc = (isEn && curSkin.desc_en) ? curSkin.desc_en : (curSkin.desc || '');
 
-      const skinBox = this.el('div', { class: 'parchment-box', style: 'padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(30,22,14,0.92); border:2px solid #b8860b; border-radius:6px;' }, [
-        this.el('div', { style: 'text-align:left; flex:1;' }, [
-          this.el('div', { style: 'font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#d4af37; margin-bottom:2px;' }, tr('settings.heroSkinTitle')),
-          this.el('div', { style: 'font-size:14px; font-weight:bold; color:#fff; display:flex; align-items:center; gap:6px;' }, [
-            this.el('span', { style: 'color:#ffe082;' }, `${curIndex + 1}/${skins.length}`),
-            skinName,
-            skinRole ? this.el('span', { style: 'font-size:11px; font-weight:normal; color:#81c784; background:rgba(76,175,80,0.18); padding:2px 6px; border-radius:3px;' }, skinRole) : null
+        const skinBox = this.el('div', { class: 'parchment-box', style: 'padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; background:rgba(30,22,14,0.92); border:2px solid #b8860b; border-radius:6px;' }, [
+          this.el('div', { style: 'text-align:left; flex:1;' }, [
+            this.el('div', { style: 'font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#d4af37; margin-bottom:2px;' }, tr('settings.heroSkinTitle')),
+            this.el('div', { style: 'font-size:14px; font-weight:bold; color:#fff; display:flex; align-items:center; gap:6px;' }, [
+              this.el('span', { style: 'color:#ffe082;' }, `${curIndex + 1}/${skins.length}`),
+              skinName,
+              skinRole ? this.el('span', { style: 'font-size:11px; font-weight:normal; color:#81c784; background:rgba(76,175,80,0.18); padding:2px 6px; border-radius:3px;' }, skinRole) : null
+            ]),
+            this.el('div', { style: 'font-size:11px; color:#c0b090; margin-top:2px;' }, skinDesc)
           ]),
-          this.el('div', { style: 'font-size:11px; color:#c0b090; margin-top:2px;' }, skinDesc)
-        ]),
-        this.el('div', { style: 'display:flex; gap:6px;' }, [
-          this.el('button', {
-            type: 'button',
-            class: 'btn btn-gold',
-            style: 'padding:6px 12px; font-size:14px;',
-            title: tr('settings.prevSkin'),
-            onclick: () => {
-              if (g.cyclePlayerSkin) g.cyclePlayerSkin(-1);
-              this.renderModal();
-            }
-          }, '◄'),
-          this.el('button', {
-            type: 'button',
-            class: 'btn btn-gold',
-            style: 'padding:6px 12px; font-size:14px;',
-            title: tr('settings.nextSkin'),
-            onclick: () => {
-              if (g.cyclePlayerSkin) g.cyclePlayerSkin(1);
-              this.renderModal();
-            }
-          }, '►')
-        ])
-      ]);
-      stack.appendChild(skinBox);
+          this.el('div', { style: 'display:flex; gap:6px;' }, [
+            this.el('button', {
+              type: 'button',
+              class: 'btn btn-gold',
+              style: 'padding:6px 12px; font-size:14px;',
+              title: tr('settings.prevSkin'),
+              onclick: () => {
+                if (g.cyclePlayerSkin) g.cyclePlayerSkin(-1);
+                this.renderModal();
+              }
+            }, '◄'),
+            this.el('button', {
+              type: 'button',
+              class: 'btn btn-gold',
+              style: 'padding:6px 12px; font-size:14px;',
+              title: tr('settings.nextSkin'),
+              onclick: () => {
+                if (g.cyclePlayerSkin) g.cyclePlayerSkin(1);
+                this.renderModal();
+              }
+            }, '►')
+          ])
+        ]);
+        stack.appendChild(skinBox);
+      }
 
       stack.appendChild(this.el('button', {
         id: 'btn-pause-resume',

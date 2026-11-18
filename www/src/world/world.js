@@ -1773,6 +1773,8 @@
       // Passive animals gentle wandering & flee response
       for (const s of this.sheep) {
         if (s.shearCooldown > 0) s.shearCooldown = Math.max(0, s.shearCooldown - dt);
+        if (s.milkCooldown > 0) s.milkCooldown = Math.max(0, s.milkCooldown - dt);
+        if (s.petCooldown > 0) s.petCooldown = Math.max(0, s.petCooldown - dt);
         if (s.hitFlash > 0) s.hitFlash = Math.max(0, s.hitFlash - dt);
         if (s.fleeTimer > 0) {
           s.fleeTimer = Math.max(0, s.fleeTimer - dt);

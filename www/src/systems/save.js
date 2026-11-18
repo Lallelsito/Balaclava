@@ -264,7 +264,7 @@
       if (Array.isArray(data.crops)) game.world.crops = data.crops;
       if (Array.isArray(data.sheep)) game.world.sheep = data.sheep;
 
-      game.player = { ...game.makeInitialPlayer(), ...data.player };
+      game.player = { ...game.makeInitialPlayer(), ...data.player, skinId: 'hana' };
       if ((game.player.deadTimer || 0) > 0 || (game.player.hp || 0) <= 0) {
         game.player.deadTimer = 0;
         game.player.hp = Math.max(1, game.player.maxHp || 100);

@@ -145,6 +145,7 @@
         qualityBonus: preFert ? (preFert.qualityBonus || 0) : 0
       });
       Balaclava.Audio.play('pickup');
+      if (game.triggerPlayerAction) game.triggerPlayerAction('hana_planting', 0.28, (tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE);
       game.spawnParticles((tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE, '#a5d6a7', 5);
       game.addFloatingText((tx + 0.5) * TILE_SIZE, ty * TILE_SIZE, Balaclava.I18n ? Balaclava.I18n.t('farm.planted') : 'Plantado', '#a5d6a7');
       return true;
@@ -178,6 +179,7 @@
         crop.qualityBonus = Math.max(crop.qualityBonus || 0, eff.qualityBonus);
         crop.stage = crop.progress >= 1 ? 3 : crop.progress >= 0.65 ? 2 : crop.progress >= 0.3 ? 1 : 0;
         Balaclava.Audio.play('cast');
+        if (game.triggerPlayerAction) game.triggerPlayerAction('hana_planting', 0.28, (tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE);
         game.spawnParticles((tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE, eff.color, 12);
         game.addFloatingText((tx + 0.5) * TILE_SIZE, ty * TILE_SIZE, eff.label, eff.color);
         return true;
@@ -190,6 +192,7 @@
       game.removeItem(fertId, 1);
       game.world.fertilizedTiles[key] = { id: fertId, boost: eff.boost, yieldBonus: eff.yieldBonus, qualityBonus: eff.qualityBonus };
       Balaclava.Audio.play('cast');
+      if (game.triggerPlayerAction) game.triggerPlayerAction('hana_planting', 0.28, (tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE);
       game.spawnParticles((tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE, eff.color, 10);
       game.addFloatingText((tx + 0.5) * TILE_SIZE, ty * TILE_SIZE, eff.label, eff.color);
       return true;
@@ -200,6 +203,7 @@
       if (!crop || crop.watered) return false;
       crop.watered = true;
       Balaclava.Audio.play('cast');
+      if (game.triggerPlayerAction) game.triggerPlayerAction('hana_watering', 0.36, (tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE);
       game.spawnParticles((tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE, '#4fc3f7', 8);
       return true;
     }
@@ -229,6 +233,7 @@
       game.gainXp(def.xp);
       game.stats.cropsHarvested++;
       Balaclava.Audio.play('pickup');
+      if (game.triggerPlayerAction) game.triggerPlayerAction('hana_pick_up', 0.26, (tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE);
       game.spawnParticles((tx + 0.5) * TILE_SIZE, (ty + 0.5) * TILE_SIZE, def.color, 10);
       return true;
     }
@@ -464,6 +469,9 @@
         rippleT: 0,
         shadows
       };
+      if (game.updatePlayerDirectionFromVector) {
+        game.updatePlayerDirectionFromVector(wx - game.player.x, wy - game.player.y);
+      }
       Balaclava.Audio.play('cast');
     }
 
@@ -659,6 +667,7 @@
       game.stats.fishCaught++;
       game.gainXp(fishObj.xp || 16);
       Balaclava.Audio.play('catch');
+      if (game.triggerPlayerAction) game.triggerPlayerAction('hana_fish_catch', 0.55, f.wx, f.wy);
       if (game.spawnFishCatchLeap) {
         game.spawnFishCatchLeap(f.wx, f.wy, game.player.x, game.player.y - 14, fishId);
       }

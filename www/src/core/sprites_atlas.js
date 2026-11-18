@@ -16,7 +16,7 @@
 
   // Real standalone PNG UI & Icon URLs (safe on file:// without tainted-canvas toDataURL!)
   Balaclava.UI_URLS = {
-    avatarHero: TS_UI_BASE + 'Human Avatars/Avatars_01.png',
+    avatarHero: 'assets/sprites_extra/hana_caraka/avatar.png',
     iconHammer: TS_UI_BASE + 'Icons/Icon_01.png',
     iconWood: TS_UI_BASE + 'Icons/Icon_02.png',
     iconCoin: 'assets/ui/coin_gold.png',

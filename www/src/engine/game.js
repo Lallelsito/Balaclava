@@ -148,11 +148,20 @@
         y: startPlot * TILE_SIZE,
         vx: 0, vy: 0,
         facing: 1,
+        dir: 'down',
         hp: 85, maxHp: 85,
         energy: 100, maxEnergy: 100,
         level: 1, xp: 0, nextXp: 48,
         skillPoints: 0,
         swingTimer: 0, swingDur: 0.25, swingTool: 'pico', swingItemId: null, swingAngle: 0,
+        hurtTimer: 0,
+        pickupTimer: 0,
+        blockTimer: 0,
+        actionAnim: null,
+        actionTimer: 0,
+        actionDur: 0.3,
+        walkSlow: false,
+        onWater: false,
         bowLoaded: true, bowReloadTimer: 0, bowReloadDur: 0.55, bowNeedsAutoReload: false,
         attackCount: 0,
         dashTimer: 0, dashCd: 0, dashVx: 0, dashVy: 0,
@@ -165,8 +174,33 @@
         moving: false,
         godMode: false,
         bonusStats: {},
-        skinId: (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin') && window.localStorage.getItem('balaclava_player_skin') !== 'pawn_hero') ? window.localStorage.getItem('balaclava_player_skin') : 'monk_yellow'
+        skinId: 'hana'
       };
+    }
+
+    updatePlayerDirectionFromVector(dx, dy) {
+      const p = this.player;
+      if (!p) return;
+      const ax = Math.abs(dx || 0);
+      const ay = Math.abs(dy || 0);
+      if (ax < 0.001 && ay < 0.001) return;
+      if (ax > 0.05) p.facing = dx >= 0 ? 1 : -1;
+      if (ay > ax * 1.12) {
+        p.dir = dy < 0 ? 'up' : 'down';
+      } else {
+        p.dir = dx >= 0 ? 'right' : 'left';
+      }
+    }
+
+    triggerPlayerAction(animKey, dur = 0.30, targetX = null, targetY = null) {
+      const p = this.player;
+      if (!p || p.deadTimer > 0) return;
+      if (targetX != null && targetY != null) {
+        this.updatePlayerDirectionFromVector(targetX - p.x, targetY - p.y);
+      }
+      p.actionAnim = animKey;
+      p.actionDur = Math.max(0.1, dur);
+      p.actionTimer = p.actionDur;
     }
 
     makeInitialStats() {
@@ -2508,6 +2542,7 @@
 
       this.recordEncyclopedia('buildings', buildingId);
       this.recomputeModifiers();
+      this.triggerPlayerAction('hana_hammer', 0.30, (tx + def.size * 0.5) * TILE_SIZE, (ty + def.size * 0.5) * TILE_SIZE);
       this.gainXp(Math.round(15 * (1 + (this.mods.craftXp || 0))));
       Balaclava.Audio.play('build');
       this.spawnParticles((tx + def.size * 0.5) * TILE_SIZE, (ty + def.size * 0.5) * TILE_SIZE, '#ffd54f', 14);
@@ -3078,9 +3113,16 @@
       const aimX = hovered && hovered.inReach ? hovered.x : wx;
       const aimY = hovered && hovered.inReach ? hovered.y : wy;
       const ang = Math.atan2(aimY - this.player.y, aimX - this.player.x);
-      this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      this.updatePlayerDirectionFromVector(aimX - this.player.x, aimY - this.player.y);
       this.player.swingAngle = ang;
-      this.player.swingTool = 'espada';
+      const idLow = String(itemDef.id || '').toLowerCase();
+      this.player.swingTool = (idLow.includes('lanza') || idLow.includes('alabarda'))
+        ? 'lanza'
+        : (idLow.includes('martillo') || idLow.includes('maza'))
+          ? 'martillo'
+          : idLow.includes('hacha_batalla')
+            ? 'hacha'
+            : 'espada';
       this.player.swingItemId = itemDef.id;
       this.player.attackCount = (this.player.attackCount || 0) + 1;
       const baseDur = typeof bStats.speed === 'number'
@@ -3300,9 +3342,12 @@
       }
       if (eCost > 0) this.player.energy = Math.max(0, this.player.energy - eCost);
       const ang = Math.atan2(wy - this.player.y, wx - this.player.x);
-      this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      this.updatePlayerDirectionFromVector(wx - this.player.x, wy - this.player.y);
       this.player.swingAngle = ang;
-      this.player.swingTool = itemDef.isStaffWeapon ? 'baculo' : 'arco';
+      const rIdLow = String(itemDef.id || '').toLowerCase();
+      this.player.swingTool = itemDef.isStaffWeapon
+        ? (rIdLow.includes('varita') ? 'varita' : 'baculo')
+        : (rIdLow.includes('ballesta') ? 'ballesta' : 'arco');
       this.player.swingItemId = itemDef.id;
       const cd = Math.max(0.14, (st.cooldown || 0.28) / (1 + (this.mods.attackSpeed || 0)));
       this.player.swingDur = cd;
@@ -3430,6 +3475,14 @@
       const wx = targetWx != null ? targetWx : (this.mouse && this.mouse.wx ? this.mouse.wx : px + this.player.facing * 90);
       const wy = targetWy != null ? targetWy : (this.mouse && this.mouse.wy ? this.mouse.wy : py);
       const ang = Math.atan2(wy - py, wx - px);
+      this.updatePlayerDirectionFromVector(wx - px, wy - py);
+      if (spellId === 'escudo_divino') {
+        this.player.blockTimer = 0.45;
+      } else if (spellId === 'misil_arcano' || spellId === 'cadena_rayos' || spellId === 'daga_veneno') {
+        this.triggerPlayerAction('hana_wand', 0.36, wx, wy);
+      } else {
+        this.triggerPlayerAction('hana_staff', 0.42, wx, wy);
+      }
       const spMult = 1 + (this.mods.spellPower || 0) + (this.mods.dmgBonus || 0) * 0.25;
       const baseDmg = Math.round((sp.baseDamage || 24) * spMult);
       const foes = this.activeDungeon
@@ -3832,7 +3885,7 @@
       const aimX = (hovered && hovered.inReach) ? hovered.x : wx;
       const aimY = (hovered && hovered.inReach) ? hovered.y : wy;
       const ang = Math.atan2(aimY - this.player.y, aimX - this.player.x);
-      this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      this.updatePlayerDirectionFromVector(aimX - this.player.x, aimY - this.player.y);
       this.player.swingAngle = ang;
       this.player.swingTool = toolId;
       this.player.swingItemId = null;
@@ -4111,6 +4164,7 @@
       for (const s of this.world.sheep) {
         if (dist(hitX, hitY, s.x, s.y) <= 46 && s.shearCooldown <= 0) {
           s.shearCooldown = 18;
+          this.triggerPlayerAction('hana_shear', 0.36, s.x, s.y);
           this.spawnDrop(s.x, s.y, 'lana', 2);
           Balaclava.Audio.play('pickup');
           this.addFloatingText(s.x, s.y - 18, Balaclava.I18n ? Balaclava.I18n.t('toast.woolFloat') : '+Lana', '#ffffff');
@@ -4426,6 +4480,9 @@
             act: () => {
               const isChestOrLogistic = Boolean(b.isChest || def.isChest || b.type === 'cofre_logistico' || def.opensPanel === 'cofre_logistico');
               const collected = isChestOrLogistic ? false : this.automation.collectFromBuilding(this, b);
+              if (collected && (b.type === 'corral' || b.type === 'granja')) {
+                this.triggerPlayerAction('hana_milking', 0.38, bx, by);
+              }
               if (isChestOrLogistic || def.opensPanel || !collected || def.station) {
                 Balaclava.UI.openBuildingModal(b);
               }
@@ -4440,6 +4497,51 @@
         const cy = (c.ty + 0.5) * TILE_SIZE;
         if (c.stage >= 3 && dist(px, py, cx, cy) <= 68) {
           candidates.push({ x: cx, y: cy, act: () => this.farming.harvestCrop(this, c.tx, c.ty) });
+        }
+      }
+
+      // 5. Friendly Farm Animals (Milk Cows, Shear Sheep, Brush/Pet Pigs/Ducks/Rabbits)
+      if (!this.activeDungeon && Array.isArray(this.world.sheep)) {
+        for (const a of this.world.sheep) {
+          if (!a || dist(px, py, a.x, a.y) > 64) continue;
+          const kind = a.kind || a.species || 'sheep';
+          if (kind === 'vaca' && (a.milkCooldown || 0) <= 0) {
+            candidates.push({
+              x: a.x,
+              y: a.y,
+              act: () => {
+                a.milkCooldown = 25;
+                this.triggerPlayerAction('hana_milking', 0.40, a.x, a.y);
+                this.spawnDrop(a.x, a.y, 'leche', 1);
+                Balaclava.Audio.play('pickup');
+                this.addFloatingText(a.x, a.y - 18, '+1 Leche', '#e3f2fd');
+              }
+            });
+          } else if (kind === 'sheep' && (a.shearCooldown || 0) <= 0) {
+            candidates.push({
+              x: a.x,
+              y: a.y,
+              act: () => {
+                a.shearCooldown = 18;
+                this.triggerPlayerAction('hana_shear', 0.36, a.x, a.y);
+                this.spawnDrop(a.x, a.y, 'lana', 2);
+                Balaclava.Audio.play('pickup');
+                this.addFloatingText(a.x, a.y - 18, '+2 Lana', '#ffffff');
+              }
+            });
+          } else if ((a.petCooldown || 0) <= 0) {
+            candidates.push({
+              x: a.x,
+              y: a.y,
+              act: () => {
+                a.petCooldown = 18;
+                this.triggerPlayerAction('hana_brush', 0.34, a.x, a.y);
+                this.gainXp(4);
+                Balaclava.Audio.play('pickup');
+                this.addFloatingText(a.x, a.y - 18, '+4 XP', '#ff8a80');
+              }
+            });
+          }
         }
       }
 
@@ -5049,6 +5151,7 @@
       if ((this.player.shieldHp || 0) > 0 && (this.player.shieldTimer || 0) > 0) {
         const absorbed = Math.min(this.player.shieldHp, dmg);
         this.player.shieldHp -= absorbed;
+        this.player.blockTimer = 0.28;
         dmg -= absorbed;
         this.spawnParticles(this.player.x, this.player.y, '#ffe082', 6);
         this.addFloatingText(this.player.x, this.player.y - 32, Balaclava.I18n ? Balaclava.I18n.t('toast.shieldAbsorb', { n: absorbed }) : `Escudo -${absorbed}`, '#ffe082');
@@ -5058,6 +5161,7 @@
         }
       }
       this.player.hp -= dmg;
+      this.player.hurtTimer = 0.28;
       this.player.invuln = 0.65;
       this.shake(0.22, 5);
       Balaclava.Audio.play('hurt');
@@ -5579,7 +5683,7 @@
       this.laserCooldown = st.cooldown;
 
       const ang = Math.atan2(wy - (this.player.y - 4), wx - this.player.x);
-      this.player.facing = Math.cos(ang) >= 0 ? 1 : -1;
+      this.updatePlayerDirectionFromVector(wx - this.player.x, wy - (this.player.y - 4));
       this.player.swingAngle = ang;
       this.player.swingTool = itemDef.id;
       this.player.swingItemId = itemDef.id;
@@ -6204,6 +6308,13 @@
       const p = this.player;
       p.animTimer += dt;
       if (p.swingTimer > 0) p.swingTimer = Math.max(0, p.swingTimer - dt);
+      if (p.hurtTimer > 0) p.hurtTimer = Math.max(0, p.hurtTimer - dt);
+      if (p.pickupTimer > 0) p.pickupTimer = Math.max(0, p.pickupTimer - dt);
+      if (p.blockTimer > 0) p.blockTimer = Math.max(0, p.blockTimer - dt);
+      if (p.actionTimer > 0) {
+        p.actionTimer = Math.max(0, p.actionTimer - dt);
+        if (p.actionTimer <= 0) p.actionAnim = null;
+      }
       if (p.invuln > 0) p.invuln = Math.max(0, p.invuln - dt);
       if (p.dashCd > 0) p.dashCd = Math.max(0, p.dashCd - dt);
 
@@ -6315,17 +6426,24 @@
         if (this.keys[kb.moveLeft || 'KeyA'] || this.keys.ArrowLeft) mx -= 1;
         if (this.keys[kb.moveRight || 'KeyD'] || this.keys.ArrowRight) mx += 1;
 
+        const ptxCur = Math.floor(p.x / TILE_SIZE);
+        const ptyCur = Math.floor(p.y / TILE_SIZE);
+        p.onWater = !this.activeDungeon && this.world.tiles[ptyCur] && this.world.tiles[ptyCur][ptxCur] === 0;
         p.moving = mx !== 0 || my !== 0;
+        p.walkSlow = Boolean(p.moving && (p.swingTimer > 0 || statusSpeedMult < 0.85));
         if (p.moving) {
           const len = Math.hypot(mx, my);
           mx /= len; my /= len;
-          if (Math.abs(mx) > 0.1 && p.swingTimer <= 0) p.facing = mx > 0 ? 1 : -1;
+          if (p.swingTimer <= 0 && (p.actionTimer || 0) <= 0) {
+            this.updatePlayerDirectionFromVector(mx, my);
+          }
 
           let baseSpeed = 190 * (1 + (this.mods.moveSpeed || 0)) * statusSpeedMult;
           if (p.swingTimer > 0) baseSpeed *= 0.65;
           const ptx = Math.floor(p.x / TILE_SIZE);
           const pty = Math.floor(p.y / TILE_SIZE);
           const onWater = !this.activeDungeon && this.world.tiles[pty] && this.world.tiles[pty][ptx] === 0;
+          p.onWater = onWater;
           const floorB = !this.activeDungeon && this.getBuildingAtTile(ptx, pty);
           const roadMult = (floorB && Balaclava.BUILDINGS[floorB.type] && Balaclava.BUILDINGS[floorB.type].speedFloor)
             ? (1 + Balaclava.BUILDINGS[floorB.type].speedFloor)
@@ -6468,6 +6586,7 @@
             Balaclava.Audio.play('pickup');
             this.spawnFx('pvfx_star_burst_pickup', d.x, d.y - 6, 0, 0.36, 0.85, 0.85, { blend: 'lighter' });
           }
+          if (this.player) this.player.pickupTimer = 0.24;
           this.drops.splice(i, 1);
         } else if (!canPick && distP < 24 && d.life > 0.6) {
           if (!this._lastFullInvToast || this.time - this._lastFullInvToast > 3.0) {
@@ -8370,8 +8489,13 @@
             ? Math.round(Math.sin(this.time * 3.5) * 1.5)
             : 0;
 
-      const px = Math.round(this.player.x + this.player.facing * 12);
-      const py = Math.round(this.player.y - 12);
+      const fDir = (this.player && this.player.dir) || ((this.player && this.player.facing < 0) ? 'left' : 'right');
+      let rodOffX = (this.player && this.player.facing >= 0 ? 1 : -1) * 28;
+      let rodOffY = -12;
+      if (fDir === 'down') { rodOffX = 4; rodOffY = 18; }
+      else if (fDir === 'up') { rodOffX = 6; rodOffY = -28; }
+      const px = Math.round(this.player.x + rodOffX);
+      const py = Math.round(this.player.y + rodOffY);
       const bobX = Math.round(bx);
       const bobY = Math.round(by + bob);
 
@@ -9010,32 +9134,16 @@
 
     setPlayerSkin(skinId) {
       const skins = Balaclava.SKINS || [];
-      const found = skins.find(s => s.id === skinId);
-      if (found) {
-        this.player.skinId = found.id;
-        if (typeof window !== 'undefined' && window.localStorage) {
-          try { window.localStorage.setItem('balaclava_player_skin', found.id); } catch (_) {}
-        }
-        if (this.addFloatingText) {
-          const sName = (Balaclava.I18n && Balaclava.I18n.getLanguage() === 'en' && found.name_en) ? found.name_en : found.name;
-          const tr = (k, v) => (Balaclava.I18n ? Balaclava.I18n.t(k, v) : (k === 'settings.skinFloating' ? `Aspecto: ${v.name}` : k));
-          this.addFloatingText(tr('settings.skinFloating', { name: sName }), this.player.x, this.player.y - 28, '#ffeb3b');
-        }
-        Balaclava.Audio.play('ui');
-        return found;
+      const found = skins.find(s => s.id === 'hana') || skins[0] || { id: 'hana', name: 'Hana Caraka', name_en: 'Hana Caraka' };
+      if (this.player) this.player.skinId = found.id;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try { window.localStorage.setItem('balaclava_player_skin', found.id); } catch (_) {}
       }
-      return null;
+      return found;
     }
 
     cyclePlayerSkin(dir = 1) {
-      const skins = Balaclava.SKINS || [];
-      if (!skins.length) return;
-      const rawSavedSkin = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || null;
-      const curId = (this.player.skinId && this.player.skinId !== 'pawn_hero') ? this.player.skinId : ((rawSavedSkin && rawSavedSkin !== 'pawn_hero') ? rawSavedSkin : 'monk_yellow');
-      let idx = skins.findIndex(s => s.id === curId);
-      if (idx === -1) idx = 0;
-      let nextIdx = (idx + dir + skins.length) % skins.length;
-      return this.setPlayerSkin(skins[nextIdx].id);
+      return this.setPlayerSkin('hana');
     }
 
     drawPlayer(ctx) {
@@ -9043,134 +9151,135 @@
       if (p.invuln > 0 && !p.deadTimer && Math.floor(this.time * 20) % 2 === 0) return;
 
       const assets = Balaclava.Assets;
-      const skins = Balaclava.SKINS || [];
-      const rawSavedSkin = (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('balaclava_player_skin')) || null;
-      const currentSkinId = (p.skinId && p.skinId !== 'pawn_hero') ? p.skinId : ((rawSavedSkin && rawSavedSkin !== 'pawn_hero') ? rawSavedSkin : 'monk_yellow');
-      p.skinId = currentSkinId;
-      const skinDef = skins.find(s => s.id === currentSkinId) || skins[0] || {
-        id: 'monk_yellow',
-        idle: 'monk_yellow_idle',
-        run: 'monk_yellow_run',
-        heal: 'monk_yellow_heal',
-        type: 'monk'
-      };
+      p.skinId = 'hana';
+      const CELL = 79;
+      const SCALE = 2.5;
+      const DW = Math.round(CELL * SCALE); // 198
+      const DH = Math.round(CELL * SCALE); // 198
+      const DX = -Math.round(DW * 0.5);    // -99 (centers x=39.5px of cell on p.x)
+      const DY = -88;                      // places feet row (y=40*2.5=100) right at y=+12
 
-      const idleSheet = assets.get(skinDef.idle) || assets.get('monk_yellow_idle') || assets.get('pawn_idle');
-      const runSheet = assets.get(skinDef.run) || idleSheet;
-      const isMoving = p.moving && !p.deadTimer;
+      const dir = p.dir || (p.facing < 0 ? 'left' : 'right');
+      let rowIdx = 1; // down
+      let flipX = 1;
+      if (dir === 'right') { rowIdx = 0; flipX = 1; }
+      else if (dir === 'left') { rowIdx = 0; flipX = -1; }
+      else if (dir === 'up') { rowIdx = 2; flipX = 1; }
+      else { rowIdx = 1; flipX = 1; }
 
-      let sheet = isMoving ? (runSheet || idleSheet) : (idleSheet || runSheet);
-      let frameCount = sheet && sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : (isMoving ? 6 : 8);
-      let frame = Math.floor(p.animTimer * (isMoving ? 10 : 7)) % frameCount;
-      let sourceY = 0;
-
+      const fishingPhase = (this.farming && this.farming.fishing) ? this.farming.fishing.phase : null;
       const swingTierId = (this.toolTiers && this.toolTiers[p.swingTool]) || 'basica';
       const isSpecialItemSwing = !!(p.swingItemId && Balaclava.ITEMS && Balaclava.ITEMS[p.swingItemId]);
-      let pawnUsesNativeSheet = false;
 
-      // Animaciones de acción con la herramienta / arma correspondiente en la mano (¡SIN CAMBIAR DE PERSONAJE!)
-      if (p.swingTimer > 0 && !p.deadTimer) {
-        const prog = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
+      let sheetKey = 'hana_idle';
+      let prog = 0;
+      let useProgressFrame = false;
+      let fps = 6;
+      let jumpLiftY = 0;
 
-        if (skinDef.type === 'monk') {
-          const healSheet = assets.get(skinDef.heal) || idleSheet;
-          if (healSheet) {
-            sheet = healSheet;
-            frameCount = healSheet.width ? Math.max(1, Math.floor(healSheet.width / 192)) : 11;
-            frame = Math.min(frameCount - 1, Math.floor(prog * 8));
-          }
-        } else if (skinDef.type === 'archer') {
-          if (p.swingTool === 'arco' && assets.get(skinDef.shoot || 'archer_black_shoot')) {
-            sheet = assets.get(skinDef.shoot || 'archer_black_shoot');
-            frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 8;
-            frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
-          } else {
-            sheet = isMoving ? runSheet : idleSheet;
-            frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
-            frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
-          }
-        } else if (skinDef.type === 'warrior') {
-          if (!isSpecialItemSwing && swingTierId === 'basica' && (p.swingTool === 'espada' || p.swingTool === 'guadana') && (assets.get(skinDef.atk1) || assets.get(skinDef.atk2))) {
-            sheet = (p.attackCount % 2 === 0 && assets.get(skinDef.atk2)) ? assets.get(skinDef.atk2) : assets.get(skinDef.atk1);
-            frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
-            frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
-            pawnUsesNativeSheet = true;
-          } else {
-            sheet = isMoving ? runSheet : idleSheet;
-            if (sheet) {
-              frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
-              frame = Math.min(frameCount - 1, Math.floor(prog * frameCount));
-            }
-          }
-        } else if (skinDef.type === 'pawn') {
-          // Solo usar sprites con herramienta incrustada cuando la herramienta coincide exactamente (Básica).
-          // Para espadas, armas especiales, báculos o picos/hachas mejorados, conservar cuerpo limpio del Pawn + herramienta real equipada en mano.
-          if (!isSpecialItemSwing && swingTierId === 'basica' && p.swingTool === 'hacha' && assets.get(skinDef.axe)) {
-            sheet = assets.get(skinDef.axe);
-            pawnUsesNativeSheet = true;
-          } else if (!isSpecialItemSwing && swingTierId === 'basica' && p.swingTool === 'pico' && assets.get(skinDef.pick)) {
-            sheet = assets.get(skinDef.pick);
-            pawnUsesNativeSheet = true;
-          } else if (!isSpecialItemSwing && swingTierId === 'basica' && p.swingTool === 'pala' && assets.get(skinDef.hammer)) {
-            sheet = assets.get(skinDef.hammer);
-            pawnUsesNativeSheet = true;
-          } else {
-            sheet = isMoving ? runSheet : idleSheet;
-          }
-          if (sheet) {
-            frameCount = sheet.width ? Math.max(1, Math.floor(sheet.width / 192)) : 6;
-            frame = p.swingTool === 'arco'
-              ? Math.floor(p.animTimer * (isMoving ? 10 : 6)) % frameCount
-              : Math.min(frameCount - 1, Math.floor(prog * frameCount));
-          }
+      if (p.deadTimer > 0) {
+        sheetKey = 'hana_death';
+      } else if (p.dashTimer > 0) {
+        sheetKey = 'hana_jump';
+        useProgressFrame = true;
+        prog = clamp(1 - p.dashTimer / 0.16, 0, 0.99);
+        jumpLiftY = Math.round(Math.sin(prog * Math.PI) * 8);
+      } else if ((p.hurtTimer || 0) > 0) {
+        sheetKey = 'hana_hurt';
+        useProgressFrame = true;
+        prog = clamp(1 - p.hurtTimer / 0.28, 0, 0.99);
+      } else if ((p.blockTimer || 0) > 0) {
+        sheetKey = 'hana_block';
+        useProgressFrame = true;
+        prog = clamp(1 - p.blockTimer / 0.35, 0, 0.99);
+      } else if (fishingPhase) {
+        if (fishingPhase === 'cast') {
+          sheetKey = 'hana_fish_cast';
+          const f = this.farming.fishing;
+          useProgressFrame = true;
+          prog = clamp(1 - (f.timer || 0) / Math.max(0.05, f.maxTimer || 0.38), 0, 0.99);
+        } else if (fishingPhase === 'reel') {
+          sheetKey = 'hana_fish_reel';
+          fps = 10;
+        } else {
+          sheetKey = 'hana_fish_idle';
+          fps = fishingPhase === 'bite' ? 9 : 4;
         }
+      } else if ((p.actionTimer || 0) > 0 && p.actionAnim) {
+        sheetKey = p.actionAnim;
+        useProgressFrame = true;
+        prog = clamp(1 - p.actionTimer / Math.max(0.05, p.actionDur || 0.3), 0, 0.99);
+      } else if (p.swingTimer > 0) {
+        useProgressFrame = true;
+        prog = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
+        const tool = p.swingTool || 'espada';
+        const swLow = String(p.swingItemId || tool).toLowerCase();
+        if (tool === 'pico') sheetKey = 'hana_pickaxe';
+        else if (tool === 'hacha') sheetKey = 'hana_axe';
+        else if (tool === 'pala') sheetKey = 'hana_shovel';
+        else if (tool === 'azada') sheetKey = 'hana_hoe';
+        else if (tool === 'guadana') sheetKey = 'hana_sickle';
+        else if (tool === 'martillo') sheetKey = 'hana_hammer';
+        else if (tool === 'lanza') sheetKey = (p.attackCount % 2 === 0) ? 'hana_spear_2' : 'hana_spear';
+        else if (tool === 'ballesta') sheetKey = 'hana_crossbow';
+        else if (tool === 'arco') sheetKey = 'hana_bow';
+        else if (tool === 'varita' || swLow.includes('varita')) sheetKey = 'hana_wand';
+        else if (tool === 'baculo' || swLow.includes('baculo') || swLow.includes('cetro')) sheetKey = 'hana_staff';
+        else sheetKey = (p.attackCount % 2 === 0) ? 'hana_sword_2' : 'hana_sword';
+      } else if ((p.pickupTimer || 0) > 0) {
+        sheetKey = 'hana_pick_up';
+        useProgressFrame = true;
+        prog = clamp(1 - p.pickupTimer / 0.24, 0, 0.99);
+      } else if (p.onWater) {
+        sheetKey = p.moving ? 'hana_swim_move' : 'hana_swim_idle';
+        fps = p.moving ? 8 : 5;
+      } else if (p.moving) {
+        sheetKey = p.walkSlow ? 'hana_walk' : 'hana_run';
+        fps = p.walkSlow ? 8 : 11;
+      } else {
+        sheetKey = 'hana_idle';
+        fps = 5;
       }
+
+      const sheet = assets.get(sheetKey) || assets.get('hana_idle');
+      const rowsAvail = (sheet && sheet.height) ? Math.max(1, Math.floor(sheet.height / CELL)) : 3;
+      if (rowsAvail === 1) {
+        rowIdx = 0;
+        flipX = p.facing < 0 ? -1 : 1;
+      } else if (rowIdx >= rowsAvail) {
+        rowIdx = rowsAvail - 1;
+      }
+      const sourceY = rowIdx * CELL;
+      const frameCount = (sheet && sheet.width) ? Math.max(1, Math.floor(sheet.width / CELL)) : 4;
+      let frame = useProgressFrame
+        ? Math.min(frameCount - 1, Math.floor(prog * frameCount))
+        : Math.floor(p.animTimer * fps) % frameCount;
 
       ctx.save();
       ctx.translate(Math.round(p.x), Math.round(p.y));
+      ctx.imageSmoothingEnabled = false;
+
       if (p.deadTimer > 0) {
-        ctx.imageSmoothingEnabled = false;
         const elapsed = Math.max(0, (p.deadMax || 10.0) - p.deadTimer);
-        // Quantized pixel shadow + fallen ash mound
-        ctx.fillStyle = 'rgba(10, 4, 8, 0.48)';
+        ctx.fillStyle = 'rgba(10, 4, 8, 0.44)';
         ctx.fillRect(-14, 9, 28, 6);
         ctx.fillRect(-10, 7, 20, 2);
 
-        if (elapsed >= 0.34) {
-          ctx.fillStyle = '#3d282c';
-          ctx.fillRect(-14, 5, 28, 4);
-          ctx.fillStyle = '#5c3f45';
-          ctx.fillRect(-10, 3, 20, 2);
-          ctx.fillStyle = '#26181c';
-          ctx.fillRect(-6, 1, 12, 2);
-        }
-
-        const staggerX = elapsed < 0.28 ? Math.round(((Math.floor(elapsed * 26) & 1) ? 3 : -3)) : 0;
-        const stepIdx = elapsed < 0.20 ? 0 : Math.min(3, Math.floor((elapsed - 0.16) / 0.12));
-        const stepAngles = [0, 0.34, 0.72, 1.0];
-        const tilt = stepAngles[stepIdx] * (Math.PI / 2);
-        const dropY = Math.round(stepAngles[stepIdx] * 6);
-
+        const deathFrame = Math.min(frameCount - 1, Math.floor((elapsed / 0.72) * frameCount));
         ctx.save();
-        ctx.translate(staggerX, dropY);
-        ctx.rotate(-tilt * p.facing);
-        if (elapsed < 0.22 && (Math.floor(elapsed * 20) & 1) === 0) {
-          ctx.fillStyle = 'rgba(255, 232, 224, 0.72)';
-          ctx.fillRect(-14, -28, 28, 32);
-        }
-        ctx.globalAlpha = elapsed >= 0.85 ? 0.85 : 1.0;
-        ctx.scale(p.facing, 1);
+        ctx.globalAlpha = elapsed >= 0.9 ? 0.88 : 1.0;
+        ctx.scale(flipX, 1);
         if (sheet) {
-          ctx.drawImage(sheet, frame * 192, sourceY, 192, 192, -48, -56, 96, 96);
+          ctx.drawImage(sheet, deathFrame * CELL, sourceY, CELL, CELL, DX, DY, DW, DH);
         } else {
-          ctx.fillStyle = '#42a5f5';
-          ctx.fillRect(-12, -24, 24, 28);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(-10, -22, 20, 26);
         }
         ctx.restore();
 
         // Stepped 16-bit Soul Wisp ascending from fallen hero
-        if (elapsed >= 0.26) {
-          const wispAge = elapsed - 0.26;
+        if (elapsed >= 0.30) {
+          const wispAge = elapsed - 0.30;
           const rise = Math.min(58, Math.floor(wispAge * 28));
           const bobX = Math.round(Math.sin(Math.floor(elapsed * 8) * 0.9) * 3);
           const bobY = (Math.floor(elapsed * 6) & 1) ? -1 : 0;
@@ -9193,165 +9302,168 @@
         return;
       }
 
-      ctx.fillStyle = 'rgba(0,0,0,0.28)';
-      ctx.beginPath();
-      ctx.ellipse(0, 12, 14, 6, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.scale(p.facing, 1);
-      if (sheet) {
-        ctx.drawImage(sheet, frame * 192, sourceY, 192, 192, -48, -56, 96, 96);
+      if (p.onWater) {
+        // Subtle water surface ripple under swimming player
+        const rip = Math.sin(this.time * 6) * 2;
+        ctx.strokeStyle = 'rgba(224, 247, 250, 0.55)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(0, 6, 15 + rip, 5.5, 0, 0, Math.PI * 2);
+        ctx.stroke();
       } else {
-        ctx.fillStyle = '#42a5f5';
-        ctx.fillRect(-12, -24, 24, 28);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.beginPath();
+        ctx.ellipse(0, 12, p.dashTimer > 0 ? 11 : 14, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw active held item behind player first when facing UP
+      const heldSlot = this.hotbar && this.hotbar[this.activeSlot];
+      const heldItem = heldSlot && heldSlot.kind === 'item' ? Balaclava.ITEMS[heldSlot.id] : null;
+      const heldToolId = heldSlot && heldSlot.kind === 'tool' ? heldSlot.id : null;
+      const heldToolTier = (heldToolId && this.toolTiers && this.toolTiers[heldToolId]) || 'basica';
+
+      const drawHeldIdleGear = (inFront) => {
+        if (p.swingTimer > 0 || (p.actionTimer || 0) > 0 || p.onWater || fishingPhase || p.dashTimer > 0 || (p.hurtTimer || 0) > 0) return;
+        const shouldShowUpDir = (dir === 'up');
+        if (inFront === shouldShowUpDir) return;
+
+        let hImg = null;
+        let showGlowColor = null;
+        if (heldItem && (heldItem.isLaserWeapon || heldItem.isBomb || heldItem.isSpecialBlade || heldItem.weaponMelee || heldItem.isRangedWeapon || heldItem.isStaffWeapon) && (this.inventory[heldItem.id] || 0) > 0) {
+          hImg = assets.getItemIconCanvas ? assets.getItemIconCanvas(heldItem.icon) : null;
+          if (heldItem.laserStats && heldItem.laserStats.color) showGlowColor = heldItem.laserStats.color;
+          else if (heldItem.staffStats && heldItem.staffStats.color) showGlowColor = heldItem.staffStats.color;
+          else if (heldItem.bladeStats && heldItem.bladeStats.color) showGlowColor = heldItem.bladeStats.color;
+        } else if (heldToolId && heldToolTier !== 'basica') {
+          hImg = assets.getToolImg ? assets.getToolImg(heldToolId, heldToolTier) : null;
+          const tm = Balaclava.TIER_META && Balaclava.TIER_META[heldToolTier];
+          if (tm && tm.color) showGlowColor = tm.color;
+        }
+        if (!hImg) return;
+
+        const bob = p.moving ? Math.sin(p.animTimer * 18) * 1.5 : Math.sin(p.animTimer * 4) * 0.8;
+        let hx = p.facing * 12;
+        let hy = 1 + bob;
+        let hRot = p.facing > 0 ? 0.15 : -0.15;
+        if (dir === 'down') { hx = 10; hy = 2 + bob; hRot = 0.25; }
+        else if (dir === 'up') { hx = -10; hy = -1 + bob; hRot = -0.3; }
+
+        ctx.save();
+        ctx.translate(hx, hy);
+        if (showGlowColor) {
+          const gr = ctx.createRadialGradient(0, 0, 1, 0, 0, 11);
+          gr.addColorStop(0, showGlowColor + '55');
+          gr.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = gr;
+          ctx.beginPath(); ctx.arc(0, 0, 11, 0, Math.PI * 2); ctx.fill();
+        }
+        if (flipX < 0 || dir === 'left') ctx.scale(-1, 1);
+        ctx.rotate(hRot);
+        ctx.drawImage(hImg, -9, -9, 18, 18);
+        ctx.restore();
+      };
+
+      drawHeldIdleGear(false);
+
+      ctx.save();
+      ctx.scale(flipX, 1);
+      if (sheet) {
+        ctx.drawImage(sheet, frame * CELL, sourceY, CELL, CELL, DX, DY - jumpLiftY, DW, DH);
+      } else {
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(-10, -22 - jumpLiftY, 20, 26);
       }
       ctx.restore();
 
-      // --- ANIMACIÓN DE HERRAMIENTAS Y ARMAS PERSONALIZADA POR ARQUETIPO ---
+      drawHeldIdleGear(true);
+
+      // Active Shield Barrier halo when shieldHp > 0
+      if ((p.shieldTimer || 0) > 0 && (p.shieldHp || 0) > 0) {
+        const pulseA = 0.28 + Math.sin(this.time * 6) * 0.08;
+        ctx.strokeStyle = `rgba(255, 224, 130, ${pulseA.toFixed(2)})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(0, -6, 18, 22, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      // --- ITEM/TIER ALIGNED OVERLAY DURING SWING / ATTACK ---
       if (p.swingTimer > 0 && !p.deadTimer) {
-        const prog = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
+        const sProg = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
         const tierId = (this.toolTiers && this.toolTiers[p.swingTool]) || 'basica';
+        const showCustomWeapon = isSpecialItemSwing || tierId !== 'basica';
         let toolImg = null;
         if (isSpecialItemSwing && assets.getItemIconCanvas) {
           toolImg = assets.getItemIconCanvas(p.swingItemId);
-        }
-        if (!toolImg) {
+        } else if (showCustomWeapon) {
           toolImg = assets.getToolImg ? assets.getToolImg(p.swingTool, tierId) : assets.getItemIconCanvas(p.swingTool);
         }
 
-        // 1. ARQUETIPO MONJE (Túnica café): Herramienta telekinética flotante que sale por el lado y ejecuta el golpe
-        if (skinDef.type === 'monk' && toolImg) {
-          const reach = 22 + Math.sin(prog * Math.PI) * 26;
-          const tx = p.x + Math.cos(p.swingAngle) * reach + p.facing * 6;
-          const ty = p.y - 10 + Math.sin(p.swingAngle) * reach;
-          const swingRot = p.swingAngle + (prog - 0.42) * 2.8 * p.facing + Math.PI / 4;
+        if (toolImg && showCustomWeapon) {
+          const isBowLike = p.swingTool === 'arco' || p.swingTool === 'ballesta';
+          const isLaserOrStaff = p.swingTool === 'varita' || p.swingTool === 'baculo' || String(p.swingItemId || '').includes('varita') || String(p.swingItemId || '').includes('baculo');
+          if (isBowLike) {
+            const recoil = sProg >= 0.65 ? (sProg - 0.65) * 7 : 0;
+            const reach = 13 - recoil;
+            const tx = p.x + Math.cos(p.swingAngle) * reach;
+            const ty = p.y - 4 + Math.sin(p.swingAngle) * reach;
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.rotate(p.swingAngle + Math.PI / 4);
+            ctx.drawImage(toolImg, -10, -10, 20, 20);
+            ctx.restore();
+          } else if (isLaserOrStaff) {
+            const reach = 14 + Math.sin(sProg * Math.PI) * 5;
+            const tx = p.x + Math.cos(p.swingAngle) * reach;
+            const ty = p.y - 4 + Math.sin(p.swingAngle) * reach;
+            const stCol = (Balaclava.ITEMS[p.swingItemId] && ((Balaclava.ITEMS[p.swingItemId].laserStats && Balaclava.ITEMS[p.swingItemId].laserStats.color) || (Balaclava.ITEMS[p.swingItemId].staffStats && Balaclava.ITEMS[p.swingItemId].staffStats.color))) || '#ffd54f';
+            ctx.save();
+            ctx.translate(tx, ty);
+            const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, 14);
+            aura.addColorStop(0, stCol + '77');
+            aura.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = aura;
+            ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.rotate(p.swingAngle + Math.PI / 4);
+            ctx.drawImage(toolImg, -11, -11, 22, 22);
+            ctx.restore();
+          } else {
+            const sweepDir = (p.attackCount % 2 === 0) ? -1 : 1;
+            const arcOffset = (sProg - 0.45) * 2.1 * sweepDir * p.facing;
+            const effAngle = p.swingAngle + arcOffset;
+            const reach = 15 + Math.sin(sProg * Math.PI) * 8;
+            const tx = p.x + Math.cos(effAngle) * reach;
+            const ty = p.y - 3 + Math.sin(effAngle) * reach;
+            const sz = isSpecialItemSwing ? 23 : 21;
+            const tm = Balaclava.TIER_META && Balaclava.TIER_META[tierId];
+            const tierColor = (Balaclava.ITEMS[p.swingItemId] && Balaclava.ITEMS[p.swingItemId].bladeStats && Balaclava.ITEMS[p.swingItemId].bladeStats.color) || (tm && tm.color);
 
-          ctx.save();
-          // Hilo de energía mística espiritual entre las manos del monje y la herramienta flotante
-          ctx.strokeStyle = `rgba(255, 224, 130, ${0.4 + Math.sin(prog * Math.PI) * 0.55})`;
-          ctx.lineWidth = 2;
-          ctx.setLineDash([4, 4]);
-          ctx.beginPath();
-          ctx.moveTo(p.x + p.facing * 8, p.y - 14);
-          ctx.quadraticCurveTo(p.x + p.facing * 18, p.y - 24, tx, ty);
-          ctx.stroke();
-
-          // Destello de impacto espiritual
-          if (prog >= 0.45 && prog <= 0.75) {
-            const sparkR = (prog - 0.45) * 45;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([]);
-            ctx.beginPath();
-            ctx.arc(tx, ty, sparkR, 0, Math.PI * 2);
-            ctx.stroke();
+            ctx.save();
+            ctx.translate(tx, ty);
+            if (tierColor) {
+              const glow = ctx.createRadialGradient(0, 0, 1, 0, 0, 13);
+              glow.addColorStop(0, tierColor + '55');
+              glow.addColorStop(1, 'rgba(0,0,0,0)');
+              ctx.fillStyle = glow;
+              ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.rotate(effAngle + Math.PI / 4);
+            ctx.drawImage(toolImg, -sz / 2, -sz / 2, sz, sz);
+            ctx.restore();
           }
-          ctx.restore();
-
-          // Renderizar la herramienta flotante con su aura dorada
-          ctx.save();
-          ctx.translate(tx, ty);
-          ctx.rotate(swingRot);
-
-          const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, 20);
-          aura.addColorStop(0, 'rgba(255, 238, 88, 0.75)');
-          aura.addColorStop(0.5, 'rgba(255, 179, 0, 0.35)');
-          aura.addColorStop(1, 'rgba(255, 143, 0, 0)');
-          ctx.fillStyle = aura;
-          ctx.beginPath();
-          ctx.arc(0, 0, 20, 0, Math.PI * 2);
-          ctx.fill();
-
-          const sz = isSpecialItemSwing ? 30 : 28;
-          ctx.drawImage(toolImg, -sz / 2, -sz / 2, sz, sz);
-          ctx.restore();
-        }
-        // 2. ARQUETIPOS PAWN / RANGER / GUERRERO: Renderizar exactamente la herramienta/espada/báculo equipado en mano
-        else if (
-          p.swingTool !== 'arco'
-          && toolImg
-          && (
-            skinDef.type === 'archer'
-            || (skinDef.type === 'pawn' && !pawnUsesNativeSheet)
-            || (skinDef.type === 'warrior' && (isSpecialItemSwing || tierId !== 'basica' || (p.swingTool !== 'espada' && p.swingTool !== 'guadana')))
-          )
-        ) {
-          const reach = 17 + Math.sin(prog * Math.PI) * 19;
-          const tx = p.x + p.facing * 9 + Math.cos(p.swingAngle) * reach;
-          const ty = p.y - 7 + Math.sin(p.swingAngle) * reach;
-          const swingRot = p.swingAngle + (prog - 0.4) * 2.8 * p.facing + Math.PI / 4;
-
-          ctx.save();
-          ctx.translate(tx, ty);
-          ctx.rotate(swingRot);
-          const sz = isSpecialItemSwing ? 28 : 25;
-          ctx.drawImage(toolImg, -sz / 2, -sz / 2, sz, sz);
-          ctx.restore();
-        }
-        // 3. ARCO EMPUÑADO PARA PAWN / WARRIOR (sin cambiar de personaje a archer_shoot)
-        else if (p.swingTool === 'arco' && skinDef.type !== 'archer' && toolImg) {
-          const drawPhase = prog < 0.65 ? (prog / 0.65) : 1 - ((prog - 0.65) / 0.35);
-          const recoil = prog >= 0.65 ? (prog - 0.65) * 10 : 0;
-          const reach = 15 - recoil;
-          const tx = p.x + Math.cos(p.swingAngle) * reach;
-          const ty = p.y - 8 + Math.sin(p.swingAngle) * reach;
-
-          ctx.save();
-          ctx.translate(tx, ty);
-          ctx.rotate(p.swingAngle);
-
-          // Cuerda tensada del arco
-          const pullBack = -4 - drawPhase * 7;
-          ctx.strokeStyle = 'rgba(255, 248, 225, 0.92)';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(2, -10);
-          ctx.lineTo(pullBack, 0);
-          ctx.lineTo(2, 10);
-          ctx.stroke();
-
-          // Cuerpo del arco (rotado +45 deg para alinear icono diagonal hacia el objetivo)
-          ctx.save();
-          ctx.rotate(Math.PI / 4);
-          const sz = 26;
-          ctx.drawImage(toolImg, -sz / 2, -sz / 2, sz, sz);
-          ctx.restore();
-
-          // Flecha tensada antes de salir disparada
-          if (prog < 0.68) {
-            ctx.fillStyle = '#c68642';
-            ctx.fillRect(pullBack, -1, 16, 2);
-            ctx.fillStyle = '#eceff1';
-            ctx.beginPath();
-            ctx.moveTo(pullBack + 19, 0);
-            ctx.lineTo(pullBack + 14, -3);
-            ctx.lineTo(pullBack + 14, 3);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = '#ef5350';
-            ctx.fillRect(pullBack - 2, -2, 3, 4);
-          }
-          ctx.restore();
         }
       }
 
       // Indicador visual de recarga del arco y pose de carga en mano
       if (!p.deadTimer && (p.bowReloadTimer || 0) > 0 && (p.bowReloadDur || 0) > 0) {
         const relProg = clamp(1 - p.bowReloadTimer / Math.max(0.05, p.bowReloadDur), 0, 1);
-        const bowTier = (this.toolTiers && this.toolTiers.arco) || 'basica';
-        const bowImg = assets.getToolImg ? assets.getToolImg('arco', bowTier) : null;
-        if (bowImg && p.swingTimer <= 0) {
-          ctx.save();
-          ctx.translate(p.x + p.facing * 11, p.y - 6);
-          ctx.scale(p.facing, 1);
-          ctx.rotate(Math.PI / 4 + Math.sin(relProg * Math.PI) * 0.28);
-          ctx.drawImage(bowImg, -12, -12, 24, 24);
-          ctx.restore();
-        }
-        const barW = 34;
-        const barH = 5;
+        const barW = 32;
+        const barH = 4;
         const bx = Math.round(p.x - barW / 2);
-        const by = Math.round(p.y - 46);
+        const by = Math.round(p.y - 38);
         ctx.save();
         ctx.fillStyle = 'rgba(18, 12, 24, 0.88)';
         ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
@@ -9360,10 +9472,10 @@
         ctx.restore();
       }
 
-      // Elegant, tight pixel-art blade slash for cutting weapons (espada & guadana)
-      if (p.swingTimer > 0 && (p.swingTool === 'espada' || p.swingTool === 'guadana')) {
+      // Elegant, tight pixel-art blade slash for cutting weapons (espada & guadana & lanza)
+      if (p.swingTimer > 0 && (p.swingTool === 'espada' || p.swingTool === 'guadana' || p.swingTool === 'lanza')) {
         const tierId = this.toolTiers[p.swingTool] || 'basica';
-        const prog = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
+        const sProg = clamp(1 - p.swingTimer / Math.max(0.01, p.swingDur), 0, 0.99);
         const slashMap = {
           cobre: 'slashFire',
           oro: 'slashWhite',
@@ -9382,42 +9494,14 @@
         if (sImg && (Balaclava.Utils.isImgReady ? Balaclava.Utils.isImgReady(sImg) : sImg.complete && sImg.naturalWidth > 0)) {
           const fw = sImg.height || 32;
           const totalFrames = Math.max(1, Math.floor(sImg.width / fw));
-          const fr = Math.min(totalFrames - 1, Math.floor(prog * totalFrames));
-          const reachDist = p.swingTool === 'guadana' ? 22 : 18;
-          const sz = p.swingTool === 'guadana' ? 34 : 28;
+          const fr = Math.min(totalFrames - 1, Math.floor(sProg * totalFrames));
+          const reachDist = p.swingTool === 'guadana' ? 22 : (p.swingTool === 'lanza' ? 24 : 18);
+          const sz = p.swingTool === 'guadana' ? 32 : 26;
           ctx.save();
-          ctx.translate(p.x + Math.cos(p.swingAngle) * reachDist, p.y - 4 + Math.sin(p.swingAngle) * reachDist);
+          ctx.translate(p.x + Math.cos(p.swingAngle) * reachDist, p.y - 2 + Math.sin(p.swingAngle) * reachDist);
           ctx.rotate(p.swingAngle);
-          ctx.globalAlpha = Math.max(0, 0.88 - prog * 0.4);
+          ctx.globalAlpha = Math.max(0, 0.85 - sProg * 0.4);
           ctx.drawImage(sImg, fr * fw, 0, fw, fw, -sz / 2, -sz / 2, sz, sz);
-          ctx.restore();
-        }
-      }
-
-      // Held Arcane Laser Wand or Explosive Bomb/TNT in hand
-      const heldSlot = this.hotbar && this.hotbar[this.activeSlot];
-      const heldItem = heldSlot && heldSlot.kind === 'item' ? Balaclava.ITEMS[heldSlot.id] : null;
-      if (heldItem && (heldItem.isLaserWeapon || heldItem.isBomb) && (this.inventory[heldItem.id] || 0) > 0) {
-        const ic = Balaclava.Assets.getItemIconCanvas(heldItem.icon);
-        if (ic) {
-          ctx.save();
-          const hx = p.x + p.facing * 14;
-          const hy = p.y - 4;
-          ctx.translate(hx, hy);
-          if (heldItem.isLaserWeapon) {
-            const aim = p.swingTimer > 0 ? p.swingAngle : (p.facing > 0 ? -0.35 : -Math.PI + 0.35);
-            ctx.rotate(aim + Math.PI * 0.25);
-            if (heldItem.laserStats) {
-              const g = ctx.createRadialGradient(8, -8, 1, 8, -8, 14);
-              g.addColorStop(0, heldItem.laserStats.color + '88');
-              g.addColorStop(1, 'rgba(0,0,0,0)');
-              ctx.fillStyle = g;
-              ctx.beginPath(); ctx.arc(8, -8, 14, 0, Math.PI * 2); ctx.fill();
-            }
-          } else {
-            ctx.rotate(p.facing * 0.2);
-          }
-          ctx.drawImage(ic, -11, -11, 22, 22);
           ctx.restore();
         }
       }
