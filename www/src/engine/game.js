@@ -3713,7 +3713,16 @@
             desierto: ['beetle', 'scorpion', 'sand_ghoul', 'cobra', 'rock_golem'],
             bosque_oscuro: ['mushroom_mob', 'goblin', 'goblin_shaman', 'shadow_wolf', 'bat'],
             montanas_heladas: ['wolf', 'golem', 'cave_spider', 'skeleton_mage'],
-            tierras_volcanicas: ['magma', 'fire_elem', 'beetle_fire', 'goblin_tnt', 'imp']
+            tierras_volcanicas: ['magma', 'fire_elem', 'beetle_fire', 'goblin_tnt', 'imp'],
+            archipielago_coral: ['enemy_coral_crab', 'enemy_coral_cobra', 'cobra', 'slime_blue'],
+            cavernas_cristal: ['enemy_cristal_eye', 'golem', 'floating_eye', 'mushroom_purple'],
+            selva_esmeralda: ['enemy_selva_spider', 'enemy_selva_plant', 'cobra', 'toxic_hound'],
+            caldera_ceniza: ['enemy_fire_slime', 'enemy_ember_bat', 'enemy_bomb_black', 'enemy_dragon_whelp'],
+            dinastia_arena: ['royal_scarab', 'sand_ghoul', 'rock_golem', 'skeleton_archer'],
+            glaciar_profundo: ['enemy_glaciar_whelp', 'wolf', 'shadow_wolf', 'golem'],
+            cienaga_putrida: ['enemy_pantano_slime', 'enemy_pantano_shroom', 'slime_toxic', 'toxic_hound'],
+            necropolis_osea: ['enemy_necro_skull', 'enemy_dark_bat', 'skeleton_mage', 'grave_revenant'],
+            tierras_malditas: ['enemy_biter_red', 'enemy_bat_horned', 'enemy_abismo_wisp', 'enemy_abismo_goblin']
           };
           const targetMobs = 10;
           let spawned = 0;
@@ -3741,7 +3750,16 @@
             desierto: ['conejo', 'pato', 'sheep'],
             bosque_oscuro: ['cerdo', 'conejo', 'sheep'],
             montanas_heladas: ['sheep', 'conejo', 'vaca'],
-            tierras_volcanicas: ['sheep', 'cerdo', 'conejo']
+            tierras_volcanicas: ['sheep', 'cerdo', 'conejo'],
+            archipielago_coral: ['pato', 'conejo', 'sheep'],
+            cavernas_cristal: ['conejo', 'sheep'],
+            selva_esmeralda: ['pato', 'cerdo', 'vaca', 'conejo'],
+            caldera_ceniza: ['sheep', 'cerdo'],
+            dinastia_arena: ['conejo', 'pato', 'sheep'],
+            glaciar_profundo: ['sheep', 'conejo', 'vaca'],
+            cienaga_putrida: ['pato', 'cerdo', 'sheep'],
+            necropolis_osea: ['conejo', 'sheep'],
+            tierras_malditas: ['cerdo', 'conejo']
           };
           const occ = this.getOccupiedTileSet();
           const targetAnimals = 10;
@@ -4896,7 +4914,7 @@
       }
 
       if (!isCorrupted && Array.isArray(this.clearedDungeons) && this.clearedDungeons.includes(dungeonId) && !(opts && opts.forceNormal)) {
-        const totalDungeons = (Balaclava.DUNGEON_TIER_LIST && Balaclava.DUNGEON_TIER_LIST.length) || Object.keys(Balaclava.DUNGEON_DEFS || {}).length || 24;
+        const totalDungeons = (Balaclava.DUNGEON_TIER_LIST && Balaclava.DUNGEON_TIER_LIST.length) || Object.keys(Balaclava.DUNGEON_DEFS || {}).length || 75;
         const allCleared = this.clearedDungeons.length >= totalDungeons;
         if (allCleared && Balaclava.UI && typeof Balaclava.UI.openModal === 'function') {
           Balaclava.UI.openModal('corrupted_dungeon_choice', { dungeonId });
@@ -4924,8 +4942,19 @@
         this.player.statusEffects = {};
         if (this.combat) this.combat.worldHazards = [];
         this.resetAmbientParticles();
-        this.player.x = this.activeDungeon.spawnPos.x;
-        this.player.y = this.activeDungeon.spawnPos.y;
+        if (opts && opts.directArena && this.activeDungeon.bossArenaCenter) {
+          this.activeDungeon.gateOpen = true;
+          const ac = this.activeDungeon.bossArenaCenter;
+          const minAx = (this.activeDungeon.bossRoomMinX || 34) + 3;
+          this.player.x = (Math.max(minAx, ac.tx - 5) + 0.5) * TILE_SIZE;
+          this.player.y = (ac.ty + 0.5) * TILE_SIZE;
+          if (typeof this.activeDungeon.lockBossGateForFight === 'function') {
+            this.activeDungeon.lockBossGateForFight(this);
+          }
+        } else {
+          this.player.x = this.activeDungeon.spawnPos.x;
+          this.player.y = this.activeDungeon.spawnPos.y;
+        }
         this.camera.x = this.player.x;
         this.camera.y = this.player.y;
         Balaclava.Audio.play('portal');
@@ -4944,6 +4973,11 @@
         if (Balaclava.actualizarDiscord) Balaclava.actualizarDiscord(true);
       };
 
+      if (opts && opts.directArena) {
+        doEnter();
+        return;
+      }
+
       if (Balaclava.Audio && typeof Balaclava.Audio.fadeOutMusic === 'function') {
         Balaclava.Audio.fadeOutMusic(600);
       }
@@ -4953,7 +4987,16 @@
           desierto: 'Desierto Dorado',
           montanas_heladas: 'Cumbres Heladas',
           bosque_oscuro: 'Bosque Sombrío',
-          tierras_volcanicas: 'Tierras Volcánicas'
+          tierras_volcanicas: 'Tierras Volcánicas',
+          archipielago_coral: 'Archipiélago Coral',
+          cavernas_cristal: 'Cavernas Cristalinas',
+          selva_esmeralda: 'Selva Esmeralda',
+          caldera_ceniza: 'Caldera de Ceniza',
+          dinastia_arena: 'Dinastía de la Arena',
+          glaciar_profundo: 'Glaciar Profundo',
+          cienaga_putrida: 'Ciénaga Pútrida',
+          necropolis_osea: 'Necrópolis Ósea',
+          tierras_malditas: 'Tierras Malditas'
         };
         const biomeId = (gate && gate.biome) || (def && def.themeKey) || 'pradera';
         const recLevel = (gate && gate.recLevel) || Math.max(2, tierIdx + 2);
@@ -5134,6 +5177,7 @@
     }
 
     damagePlayer(raw, opts = null) {
+      if (this.spectatorMode) return;
       if (this.player.godMode) {
         if ((this.time - (this._lastGodImmuneFx || -99)) >= 0.45) {
           this._lastGodImmuneFx = this.time;
@@ -6018,6 +6062,19 @@
         if (this.player.deadTimer <= 0) {
           this.respawnPlayer();
         }
+      } else if (this.spectatorMode) {
+        const zCam = Math.max(0.25, this.camera.zoom || 1);
+        const camSpd = (this.keys.ShiftLeft || this.keys.ShiftRight ? 920 : 480) / zCam;
+        let smx = 0, smy = 0;
+        if (this.keys.KeyW || this.keys.ArrowUp) smy -= 1;
+        if (this.keys.KeyS || this.keys.ArrowDown) smy += 1;
+        if (this.keys.KeyA || this.keys.ArrowLeft) smx -= 1;
+        if (this.keys.KeyD || this.keys.ArrowRight) smx += 1;
+        if (smx || smy) {
+          const slen = Math.hypot(smx, smy);
+          this.camera.x += (smx / slen) * camSpd * dt;
+          this.camera.y += (smy / slen) * camSpd * dt;
+        }
       } else {
         this.updatePlayer(dt);
       }
@@ -6042,12 +6099,15 @@
         Balaclava.Audio.setMood('boss');
       } else {
         const biome = this.world.getBiomeAtPixel(this.player.x, this.player.y);
-        Balaclava.Audio.setMood(BIOMES[biome].musicMood);
+        Balaclava.Audio.setMood((BIOMES[biome] && BIOMES[biome].musicMood) || 'peaceful');
       }
 
       // Smooth camera + shake
-      this.camera.x = Balaclava.Utils.lerp(this.camera.x, this.player.x, Math.min(1, dt * 10));
-      this.camera.y = Balaclava.Utils.lerp(this.camera.y, this.player.y, Math.min(1, dt * 10));
+      if (!this.spectatorMode) {
+        this.camera.x = Balaclava.Utils.lerp(this.camera.x, this.player.x, Math.min(1, dt * 10));
+        this.camera.y = Balaclava.Utils.lerp(this.camera.y, this.player.y, Math.min(1, dt * 10));
+      }
+      if (this.debugZoomOverride > 0) this.camera.zoom = this.debugZoomOverride;
       if (this.camera.shakeTime > 0) this.camera.shakeTime = Math.max(0, this.camera.shakeTime - dt);
 
       // Toasts decay
@@ -6289,22 +6349,30 @@
       if (dustCount < MAX_DUST && cd.dust <= 0) {
         cd.dust = rand(0.32, 0.58);
         const biome = this.world.getBiomeAtPixel(px, py);
-        const col = biome === 'montanas_heladas' ? '#e1f5fe'
-          : biome === 'tierras_volcanicas' ? '#ff7043'
+        const isCold = biome === 'montanas_heladas' || biome === 'glaciar_profundo';
+        const isLava = biome === 'tierras_volcanicas' || biome === 'caldera_ceniza' || biome === 'tierras_malditas';
+        const isDesert = biome === 'desierto' || biome === 'dinastia_arena';
+        const col = isCold ? '#e1f5fe'
+          : isLava ? '#ff7043'
+          : biome === 'archipielago_coral' ? '#80deea'
+          : biome === 'cavernas_cristal' ? '#e040fb'
+          : biome === 'selva_esmeralda' ? '#69f0ae'
+          : biome === 'cienaga_putrida' ? '#aeea00'
+          : biome === 'necropolis_osea' ? '#b0bec5'
           : biome === 'bosque_oscuro' ? '#ce93d8'
-          : biome === 'desierto' ? '#ffe082' : '#dcedc8';
+          : isDesert ? '#ffe082' : '#dcedc8';
         const dLife = rand(2.8, 4.6);
         const ap = this._allocAmbient();
         ap.kind = 'dust';
         ap.spriteKey = null;
         ap.x = px + rand(-460, 460);
         ap.y = py + rand(-300, 300);
-        ap.vx = biome === 'desierto' ? rand(16, 36) : rand(-12, 12);
-        ap.vy = biome === 'tierras_volcanicas' ? rand(-24, -8) : biome === 'montanas_heladas' ? rand(16, 34) : rand(-8, 8);
+        ap.vx = isDesert ? rand(16, 36) : rand(-12, 12);
+        ap.vy = isLava ? rand(-24, -8) : isCold ? rand(16, 34) : rand(-8, 8);
         ap.life = dLife;
         ap.maxLife = dLife;
         ap.color = col;
-        ap.size = biome === 'montanas_heladas' ? 4 : 3;
+        ap.size = isCold ? 4 : 3;
         this.ambientParticles.push(ap);
       }
     }
@@ -7895,7 +7963,16 @@
         desierto:           { top: '#8d6e3f', mid: '#6d4c23', shadow: 'rgba(10,30,45,0.34)' },
         bosque_oscuro:      { top: '#4a3f5c', mid: '#2f243d', shadow: 'rgba(8,12,24,0.38)' },
         montanas_heladas:   { top: '#607d8b', mid: '#37474f', shadow: 'rgba(10,25,40,0.40)' },
-        tierras_volcanicas: { top: '#5c261f', mid: '#33120e', shadow: 'rgba(8,6,12,0.45)' }
+        tierras_volcanicas: { top: '#5c261f', mid: '#33120e', shadow: 'rgba(8,6,12,0.45)' },
+        archipielago_coral: { top: '#247387', mid: '#144757', shadow: 'rgba(6,28,42,0.36)' },
+        cavernas_cristal:   { top: '#583b8c', mid: '#321c59', shadow: 'rgba(14,8,30,0.42)' },
+        selva_esmeralda:    { top: '#2b5e36', mid: '#193d21', shadow: 'rgba(6,22,12,0.36)' },
+        caldera_ceniza:     { top: '#4d2b22', mid: '#29140f', shadow: 'rgba(10,5,5,0.46)' },
+        dinastia_arena:     { top: '#947439', mid: '#634c1f', shadow: 'rgba(18,14,6,0.38)' },
+        glaciar_profundo:   { top: '#3f6e91', mid: '#20425c', shadow: 'rgba(8,22,40,0.44)' },
+        cienaga_putrida:    { top: '#3c4f2b', mid: '#223018', shadow: 'rgba(8,16,8,0.42)' },
+        necropolis_osea:    { top: '#4d4757', mid: '#2b2633', shadow: 'rgba(10,8,16,0.44)' },
+        tierras_malditas:   { top: '#5e1424', mid: '#2e0812', shadow: 'rgba(14,2,6,0.50)' }
       };
 
       const activePlotAnims = new Map();
@@ -7932,11 +8009,20 @@
       };
 
       const BIOME_LAYER_PRIO = {
-        tierras_volcanicas: 1,
-        bosque_oscuro: 2,
-        montanas_heladas: 3,
-        desierto: 4,
-        pradera: 5
+        tierras_malditas: 1,
+        necropolis_osea: 2,
+        caldera_ceniza: 3,
+        tierras_volcanicas: 4,
+        glaciar_profundo: 5,
+        cienaga_putrida: 6,
+        cavernas_cristal: 7,
+        dinastia_arena: 8,
+        selva_esmeralda: 9,
+        archipielago_coral: 10,
+        bosque_oscuro: 11,
+        montanas_heladas: 12,
+        desierto: 13,
+        pradera: 14
       };
 
       const drawLavaTile = (tx, ty, px, py) => {
@@ -9046,7 +9132,16 @@
             desierto: '#ffd54f',
             bosque_oscuro: '#ba68c8',
             montanas_heladas: '#4fc3f7',
-            tierras_volcanicas: '#ff7043'
+            tierras_volcanicas: '#ff7043',
+            archipielago_coral: '#26c6da',
+            cavernas_cristal: '#e040fb',
+            selva_esmeralda: '#00e676',
+            caldera_ceniza: '#ff5722',
+            dinastia_arena: '#ffca28',
+            glaciar_profundo: '#00b0ff',
+            cienaga_putrida: '#9ccc65',
+            necropolis_osea: '#cfd8dc',
+            tierras_malditas: '#ff1744'
           };
           const bColor = (biomeKey && biomeColors[biomeKey]) || '#ffd54f';
           ctx.font = '13px BalaclavaPixel, monospace';
@@ -9158,6 +9253,7 @@
     }
 
     drawPlayer(ctx) {
+      if (this.spectatorMode) return;
       const p = this.player;
       if (p.invuln > 0 && !p.deadTimer && Math.floor(this.time * 20) % 2 === 0) return;
 
@@ -9558,9 +9654,11 @@
         // tree3: Abedul Blanco Esbelto (192x192)
         // tree4: Árbol Sauce Verde Redondo (192x192)
         let idx = ((n.variant || 0) % 4) + 1;
-        if (n.biome === 'bosque_oscuro') {
+        const isDarkForest = n.biome === 'bosque_oscuro' || n.biome === 'necropolis_osea' || n.biome === 'tierras_malditas';
+        const isColdForest = n.biome === 'nieve' || n.biome === 'montanas_heladas' || n.biome === 'glaciar_profundo';
+        if (isDarkForest) {
           idx = ((n.variant || 0) % 2 === 0) ? 1 : 4;
-        } else if (n.biome === 'nieve') {
+        } else if (isColdForest) {
           idx = ((n.variant || 0) % 2 === 0) ? 3 : 1;
         }
 
@@ -9590,10 +9688,14 @@
 
           if (isGiant) {
             drawSource = this.getTintedSprite(`gtree_${idx}_sheet`, tImg, 0, 0, tImg.width, tImg.height, { hue: 270, sat: 1.35, bright: 0.85, fallbackTint: 'rgba(140, 80, 220, 0.4)' }) || tImg;
-          } else if (n.biome === 'bosque_oscuro') {
+          } else if (isDarkForest) {
             drawSource = this.getTintedSprite(`darktree_${idx}_sheet`, tImg, 0, 0, tImg.width, tImg.height, { hue: 250, sat: 0.85, bright: 0.72, fallbackTint: 'rgba(40, 30, 80, 0.35)' }) || tImg;
-          } else if (n.biome === 'nieve') {
+          } else if (isColdForest) {
             drawSource = this.getTintedSprite(`snowtree_${idx}_sheet`, tImg, 0, 0, tImg.width, tImg.height, { hue: 195, sat: 0.4, bright: 1.22, fallbackTint: 'rgba(180, 220, 255, 0.35)' }) || tImg;
+          } else if (n.biome === 'selva_esmeralda') {
+            drawSource = this.getTintedSprite(`jungletree_${idx}_sheet`, tImg, 0, 0, tImg.width, tImg.height, { hue: 145, sat: 1.35, bright: 0.95, fallbackTint: 'rgba(16, 120, 64, 0.25)' }) || tImg;
+          } else if (n.biome === 'cienaga_putrida') {
+            drawSource = this.getTintedSprite(`swamptree_${idx}_sheet`, tImg, 0, 0, tImg.width, tImg.height, { hue: 95, sat: 0.8, bright: 0.82, fallbackTint: 'rgba(80, 110, 40, 0.3)' }) || tImg;
           }
 
           ctx.drawImage(drawSource, sx, sy, fw, fh, dx, dy, dw, dh);
@@ -9630,7 +9732,12 @@
         n.kind === 'jade_vein' || n.kind === 'amethyst_vein' || n.kind === 'bloodstone_vein' ||
         n.kind === 'malachite_vein' || n.kind === 'star_sand_vein' || n.kind === 'amber_vein' ||
         n.kind === 'titanium_vein' || n.kind === 'obsidian_vein' || n.kind === 'magma_core_vein' ||
-        n.kind === 'adamantite_vein' || n.kind === 'orichalcum_vein'
+        n.kind === 'adamantite_vein' || n.kind === 'orichalcum_vein' ||
+        n.kind === 'coral_abisal_node' || n.kind === 'perla_turquesa_node' ||
+        n.kind === 'madera_ferrea_node' || n.kind === 'resina_toxica_node' ||
+        n.kind === 'pirita_solar_node' || n.kind === 'hueso_fosil_node' ||
+        n.kind === 'plata_maldita_node' || n.kind === 'escoria_caldera_node' ||
+        n.kind === 'marmol_oscuro_node'
       ) {
         const extraImgs = assets.extraImages || {};
         const nodeSpriteMap = {
@@ -9653,11 +9760,21 @@
           obsidian_vein: 'node_obsidian',
           magma_core_vein: 'node_magma_core',
           adamantite_vein: 'node_adamantite',
-          orichalcum_vein: 'node_orichalcum'
+          orichalcum_vein: 'node_orichalcum',
+          coral_abisal_node: 'node_coral_abisal',
+          perla_turquesa_node: 'node_perla_turquesa',
+          madera_ferrea_node: 'node_madera_ferrea',
+          resina_toxica_node: 'node_resina_toxica',
+          pirita_solar_node: 'node_pirita_solar',
+          hueso_fosil_node: 'node_hueso_fosil',
+          plata_maldita_node: 'node_plata_maldita',
+          escoria_caldera_node: 'node_escoria_caldera',
+          marmol_oscuro_node: 'node_marmol_oscuro'
         };
         const sparkleSet = new Set([
           'gold_vein', 'platinum_vein', 'jade_vein', 'amethyst_vein', 'bloodstone_vein',
-          'amber_vein', 'titanium_vein', 'orichalcum_vein', 'adamantite_vein', 'magma_core_vein'
+          'amber_vein', 'titanium_vein', 'orichalcum_vein', 'adamantite_vein', 'magma_core_vein',
+          'perla_turquesa_node', 'pirita_solar_node', 'plata_maldita_node', 'resina_toxica_node'
         ]);
         const nImg = extraImgs[nodeSpriteMap[n.kind]];
         ctx.fillStyle = 'rgba(0,0,0,0.28)';
@@ -9673,16 +9790,26 @@
           const rImg = assets.get('rock' + ((n.variant % 3) + 1));
           if (rImg) ctx.drawImage(rImg, -20, -24, 40, 40);
         }
-      } else if (n.kind === 'crystal_node' || n.kind === 'emerald_vein' || n.kind === 'diamond_vein' || n.kind === 'ice_crystal' || n.kind === 'ruby_node' || n.kind === 'sapphire_node' || n.kind === 'mithril_vein' || n.kind === 'azurite_vein' || n.kind === 'abyssal_crystal_vein') {
+      } else if (
+        n.kind === 'crystal_node' || n.kind === 'emerald_vein' || n.kind === 'diamond_vein' ||
+        n.kind === 'ice_crystal' || n.kind === 'ruby_node' || n.kind === 'sapphire_node' ||
+        n.kind === 'mithril_vein' || n.kind === 'azurite_vein' || n.kind === 'abyssal_crystal_vein' ||
+        n.kind === 'agata_roja_node' || n.kind === 'cuarzo_boreal_node' || n.kind === 'hielo_eterno_node' ||
+        n.kind === 'cristal_carmesi_node' || n.kind === 'bismuto_astral_node' || n.kind === 'celestita_node' ||
+        n.kind === 'jade_ancestral_node' || n.kind === 'flor_pantano_node'
+      ) {
         const extraImgs = assets.extraImages || {};
         const col = n.kind === 'emerald_vein' ? '#66bb6a'
           : n.kind === 'diamond_vein' ? '#4fc3f7'
-          : n.kind === 'ruby_node' ? '#ef5350'
-          : n.kind === 'sapphire_node' ? '#42a5f5'
+          : n.kind === 'ruby_node' || n.kind === 'agata_roja_node' ? '#ef5350'
+          : n.kind === 'sapphire_node' || n.kind === 'celestita_node' ? '#42a5f5'
           : n.kind === 'mithril_vein' ? '#80cbc4'
           : n.kind === 'azurite_vein' ? '#29b6f6'
-          : n.kind === 'abyssal_crystal_vein' ? '#b388ff'
-          : n.kind === 'ice_crystal' ? '#b3e5fc'
+          : n.kind === 'abyssal_crystal_vein' || n.kind === 'bismuto_astral_node' ? '#b388ff'
+          : n.kind === 'ice_crystal' || n.kind === 'hielo_eterno_node' ? '#b3e5fc'
+          : n.kind === 'cristal_carmesi_node' ? '#ff1744'
+          : n.kind === 'jade_ancestral_node' ? '#00e676'
+          : n.kind === 'flor_pantano_node' ? '#aeea00'
           : '#ce93d8';
         ctx.save();
         ctx.globalAlpha = 0.24 + Math.sin(this.time * 3.2 + n.id) * 0.07;
@@ -9698,7 +9825,15 @@
           sapphire_node: 'node_sapphire',
           mithril_vein: 'node_mithril',
           azurite_vein: 'node_azurite',
-          abyssal_crystal_vein: 'node_abyssal_crystal'
+          abyssal_crystal_vein: 'node_abyssal_crystal',
+          agata_roja_node: 'node_agata_roja',
+          cuarzo_boreal_node: 'node_cuarzo_boreal',
+          hielo_eterno_node: 'node_hielo_eterno',
+          cristal_carmesi_node: 'node_cristal_carmesi',
+          bismuto_astral_node: 'node_bismuto_astral',
+          celestita_node: 'node_celestita',
+          jade_ancestral_node: 'node_jade_ancestral',
+          flor_pantano_node: 'node_flor_pantano'
         };
         const gemSprite = extraImgs[crystalSpriteMap[n.kind]] || extraImgs.node_amethyst;
         if (gemSprite && (Balaclava.Utils.isImgReady ? Balaclava.Utils.isImgReady(gemSprite) : true)) {
@@ -9798,10 +9933,11 @@
         }
       } else if (n.kind === 'chest') {
         const biomeWood = n.biome === 'pradera' && (n.variant % 3 === 0);
-        const biomeSkull = n.biome === 'bosque_oscuro' || n.biome === 'tierras_volcanicas';
+        const biomeSkull = n.biome === 'bosque_oscuro' || n.biome === 'tierras_volcanicas' || n.biome === 'caldera_ceniza' || n.biome === 'necropolis_osea' || n.biome === 'tierras_malditas';
+        const biomeSapph = n.biome === 'archipielago_coral' || n.biome === 'cavernas_cristal' || n.biome === 'glaciar_profundo';
         const cKey = (biomeSkull && (n.variant % 2 === 1)) ? 'skull_closed'
           : biomeWood ? 'wood_closed'
-          : (n.variant % 2 === 0 ? 'gold_closed' : 'sapphire_closed');
+          : (biomeSapph || n.variant % 2 === 1 ? 'sapphire_closed' : 'gold_closed');
         const cImg = assets.chestImages && (assets.chestImages[cKey] || assets.chestImages.gold_closed);
         ctx.fillStyle = 'rgba(0,0,0,0.34)';
         ctx.beginPath(); ctx.ellipse(0, 17, 40, 12, 0, 0, Math.PI * 2); ctx.fill();
@@ -10573,8 +10709,8 @@
       // 2. Anclaje exacto al suelo según padding transparente real de cada spritesheet
       const idSeed = typeof e.id === 'number' && Number.isFinite(e.id) ? e.id : (Number.isFinite(e.seed) ? e.seed : 0);
       const isMoving = Math.abs(e.animVx || 0) > 3 || Math.abs(e.animVy || 0) > 3;
-      const isFlying = /^(bat|vampire_bat|plague_bat|wisp|wisp_green|floating_eye|ghastly_eye|flaming_skull|ghost|ghost_spectral)$/i.test(e.type || '')
-        || /^boss_(montanas_heladas|tierras_volcanicas|volcan_caldera)$/i.test(e.type || '');
+      const isFlying = /^(bat|vampire_bat|plague_bat|wisp|wisp_green|floating_eye|ghastly_eye|flaming_skull|ghost|ghost_spectral|enemy_ember_bat|enemy_dark_bat|enemy_cristal_eye|enemy_necro_skull|enemy_bat_horned|enemy_abismo_wisp|enemy_dragon_whelp|enemy_glaciar_whelp)$/i.test(e.type || '')
+        || /^boss_(montanas_heladas|tierras_volcanicas|volcan_caldera|montanas_cumbre|cristal_corazon|glaciar_ojo|necro_torre|maldita_calabaza)$/i.test(e.type || '');
       const footPads = Balaclava.ENEMY_FOOT_PADS || {};
       const groundAnchorY = isFlying ? 4 : 12;
       let squashX = 1.0;
@@ -10619,16 +10755,29 @@
         const bMeta = Balaclava.BOSS_SPRITE_PATHS && Balaclava.BOSS_SPRITE_PATHS[bossBiome];
         const bImg = assets.bossImages && assets.bossImages[bossBiome];
         if (bMeta && bImg && (Balaclava.Utils.isImgReady ? Balaclava.Utils.isImgReady(bImg) : true)) {
-          const frames = Math.max(1, bMeta.frames || 1);
-          const fr = frames > 1 ? Math.abs(Math.floor(this.time * 6 + idSeed)) % frames : 0;
-          const sx = bMeta.sx !== undefined ? bMeta.sx : (fr * bMeta.fw);
-          const sy = bMeta.sy || 0;
-          const sw = bMeta.sw || bMeta.fw;
-          const sh = bMeta.sh || bMeta.fh;
+          let sx, sy, sw, sh;
+          if (bMeta.multiRow) {
+            const row = Math.max(0, Math.min((bMeta.rows || 8) - 1, e.animRow || 0));
+            const frames = Math.max(1, e.animFrames || bMeta.frames || 7);
+            const fps = e.animFps || 8;
+            const tVal = e.animTimer !== undefined ? e.animTimer : this.time;
+            const fr = Math.abs(Math.floor(tVal * fps + (row === 0 ? idSeed : 0))) % frames;
+            sx = fr * bMeta.fw;
+            sy = row * bMeta.fh;
+            sw = bMeta.fw;
+            sh = bMeta.fh;
+          } else {
+            const frames = Math.max(1, bMeta.frames || 1);
+            const fr = frames > 1 ? Math.abs(Math.floor(this.time * 6 + idSeed)) % frames : 0;
+            sx = bMeta.sx !== undefined ? bMeta.sx : (fr * bMeta.fw);
+            sy = bMeta.sy || 0;
+            sw = bMeta.sw || bMeta.fw;
+            sh = bMeta.sh || bMeta.fh;
+          }
           const dw = Math.round(sw * bMeta.scale);
           const dh = Math.round(sh * bMeta.scale);
-          const bPad = isFlying ? 0 : (footPads['boss_' + bossBiome] || 0);
-          const drawY = -dh + Math.round(dh * bPad) + 2;
+          const bPad = (isFlying || bMeta.multiRow) ? 0 : (footPads['boss_' + bossBiome] || 0);
+          const drawY = bMeta.multiRow ? (-dh + 18) : (-dh + Math.round(dh * bPad) + 2);
           barY = groundAnchorY + drawY - 8;
           ctx.save();
           if (e.facing < 0) ctx.scale(-1, 1);
@@ -11974,6 +12123,28 @@
       const dDrawables = [];
       for (const e of dung.enemies) dDrawables.push({ y: e.y + 10, fn: () => this.drawEnemy(ctx, e) });
       if (dung.boss) dDrawables.push({ y: dung.boss.y + 10, fn: () => this.drawEnemy(ctx, dung.boss) });
+      if (dung.deadBossGhost) {
+        dDrawables.push({
+          y: dung.deadBossGhost.y + 10,
+          fn: () => {
+            const g = dung.deadBossGhost;
+            const bMeta = Balaclava.BOSS_SPRITE_PATHS && Balaclava.BOSS_SPRITE_PATHS[g.id];
+            const bImg = Balaclava.Assets && Balaclava.Assets.bossImages && Balaclava.Assets.bossImages[g.id];
+            if (!bMeta || !bImg) return;
+            const fr = Math.min((g.frames || 9) - 1, Math.floor(g.timer * (g.fps || 9)));
+            const sx = fr * bMeta.fw;
+            const sy = (g.row || 7) * bMeta.fh;
+            const dw = Math.round(bMeta.fw * bMeta.scale);
+            const dh = Math.round(bMeta.fh * bMeta.scale);
+            ctx.save();
+            ctx.translate(Math.round(g.x), Math.round(g.y));
+            ctx.globalAlpha = Math.max(0.08, 1 - g.timer / Math.max(0.2, g.dur));
+            if (g.facing < 0) ctx.scale(-1, 1);
+            ctx.drawImage(bImg, sx, sy, bMeta.fw, bMeta.fh, -dw / 2, -dh + 18, dw, dh);
+            ctx.restore();
+          }
+        });
+      }
       dDrawables.push({ y: this.player.y + 10, fn: () => this.drawPlayer(ctx) });
       for (const d of this.drops) dDrawables.push({ y: d.y + 6, fn: () => this.drawDrop(ctx, d) });
       dDrawables.sort((a, b) => a.y - b.y);
@@ -12099,7 +12270,7 @@
       }
 
       // Point 10: Brief, non-blocking Mini-Tutorial on the player's first dungeon entry
-      if (this.activeDungeonIntroTimer > 0) {
+      if (this.activeDungeonIntroTimer > 0 && !this.photoMode && !(dung.bossLocked && dung.boss)) {
         if (this.keys && (this.keys['Tab'] || this.keys['Escape'])) {
           this.activeDungeonIntroTimer = 0;
         } else {

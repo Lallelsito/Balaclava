@@ -20,9 +20,9 @@
     tickSec: 1,
     maxStepsPerFrame: 4,
     offlineCapSec: 8 * 3600,
-    nexusUnlockDungeons: 12,
-    abyssUnlockDungeons: 24,
-    ascensionUnlockDungeons: 24,
+    nexusUnlockDungeons: 20,
+    abyssUnlockDungeons: 45,
+    ascensionUnlockDungeons: 55,
     nexusBaseCap: 20000,          // total item units per level-1 Nexus
     nexusLevelMult: [1, 2.5, 6],
     nexusRadius: 7,
@@ -35,8 +35,8 @@
     simCyclesPerCrystal: 20,
     simRareChance: 0.15,
     simQtyFactor: 0.4,
-    pressCostBase: 10000,
-    pressRatePerSec: 100,
+    pressCostBase: 25000,
+    pressRatePerSec: 125,
     pressHistoryMax: 20,
     overloadGrowth: 1.35,
     overloadPctExp: 0.85,
@@ -66,14 +66,21 @@
   // ───────────────────────── ore families ─────────────────────────
   // yield = ingots per ONE raw ore after crush → wash → smelt (configurable per family).
   const ORE_FAMILIES = {
-    cobre:      { raw: 'cobre',      ingot: 'lingote_cobre',      yield: 5 },
-    hierro:     { raw: 'hierro',     ingot: 'lingote_hierro',     yield: 5 },
-    oro:        { raw: 'oro',        ingot: 'lingote_oro',        yield: 5 },
-    plata:      { raw: 'plata',      ingot: 'lingote_plata',      yield: 5 },
-    platino:    { raw: 'platino',    ingot: 'lingote_platino',    yield: 5 },
-    titanio:    { raw: 'titanio',    ingot: 'lingote_titanio',    yield: 4 },
-    adamantita: { raw: 'adamantita', ingot: 'lingote_adamantita', yield: 3 },
-    oricalco:   { raw: 'oricalco',   ingot: 'lingote_oricalco',   yield: 3 }
+    cobre:      { raw: 'cobre',           ingot: 'lingote_cobre',      yield: 5 },
+    hierro:     { raw: 'hierro',          ingot: 'lingote_hierro',     yield: 5 },
+    oro:        { raw: 'oro',             ingot: 'lingote_oro',        yield: 5 },
+    plata:      { raw: 'plata',           ingot: 'lingote_plata',      yield: 5 },
+    platino:    { raw: 'platino',         ingot: 'lingote_platino',    yield: 5 },
+    titanio:    { raw: 'titanio',         ingot: 'lingote_titanio',    yield: 4 },
+    adamantita: { raw: 'adamantita',      ingot: 'lingote_adamantita', yield: 3 },
+    oricalco:   { raw: 'oricalco',        ingot: 'lingote_oricalco',   yield: 3 },
+    coral:      { raw: 'coral_roca',      ingot: 'lingote_coral',      yield: 4 },
+    boreal:     { raw: 'cuarzo_boreal',   ingot: 'lingote_boreal',     yield: 4 },
+    selvano:    { raw: 'madera_ferrea',   ingot: 'lingote_selvano',    yield: 4 },
+    escoria:    { raw: 'escoria_caldera', ingot: 'lingote_escoria',    yield: 3 },
+    pirita:     { raw: 'pirita_solar',    ingot: 'lingote_pirita',     yield: 3 },
+    hueso:      { raw: 'hueso_fosil',     ingot: 'lingote_hueso',      yield: 3 },
+    maldito:    { raw: 'plata_maldita',   ingot: 'lingote_maldito',    yield: 3 }
   };
 
   // ───────────────────────── item registration ─────────────────────────
@@ -108,8 +115,8 @@
   });
   MACHINE_RECIPES.fundidora.push({
     id: 'forge_omega', name: 'Forjar Lingote Omega',
-    in: { singularidad: 1, lingote_celestial: 5, esencia_magma: 10, esquirla_hielo: 10, esencia_oscura: 10, arena_estelar: 10, malaquita_pradera: 10 },
-    out: { lingote_omega: 1 }, bonus: [], time: 60, power: 120, reqResearch: 'omega_equipo'
+    in: { singularidad: 2, lingote_celestial: 6, lingote_pirita: 6, lingote_maldito: 6, cristal_carmesi: 4, bismuto_astral: 4, esencia_magma: 10 },
+    out: { lingote_omega: 1 }, bonus: [], time: 90, power: 180, reqResearch: 'omega_equipo'
   });
 
   // Sintetizador de Gemas & Cristales (consume alta energía para cristalizar gemas y polvos arcanos)
@@ -135,26 +142,35 @@
     { id: 'ins_celestial', name: 'Electro-Fundir Lingote Celestial', in: { lingote_adamantita: 1, polvo_estelar: 1, cristales_magicos: 2 }, out: { lingote_celestial: 2 }, bonus: [{ id: 'nucleo_solar', qty: 1, chance: 0.20 }], time: 8, power: 130 }
   );
 
-  // ───────────────────────── extractor tables (real ids per biome) ─────────────────────────
+  // ───────────────────────── extractor tables (real ids per all 14 biomes) ─────────────────────────
   const EXTRACT_TABLES = {
     pradera:            [{ id: 'cobre', w: 40 }, { id: 'hierro', w: 30 }, { id: 'carbon', w: 20 }, { id: 'oro', w: 10 }],
     desierto:           [{ id: 'cobre', w: 30 }, { id: 'hierro', w: 30 }, { id: 'oro', w: 25 }, { id: 'platino', w: 10, res: 'rec_profundo' }],
     montanas_heladas:   [{ id: 'hierro', w: 35 }, { id: 'plata', w: 30 }, { id: 'platino', w: 15, res: 'rec_profundo' }, { id: 'titanio', w: 10, res: 'rec_profundo' }],
     bosque_oscuro:      [{ id: 'hierro', w: 30 }, { id: 'plata', w: 25 }, { id: 'oro', w: 20 }, { id: 'titanio', w: 15, res: 'rec_profundo' }, { id: 'adamantita', w: 5, res: 'rec_nucleo' }],
-    tierras_volcanicas: [{ id: 'oro', w: 25 }, { id: 'platino', w: 20, res: 'rec_profundo' }, { id: 'titanio', w: 20, res: 'rec_profundo' }, { id: 'adamantita', w: 12, res: 'rec_nucleo' }, { id: 'oricalco', w: 8, res: 'rec_nucleo' }]
+    tierras_volcanicas: [{ id: 'oro', w: 25 }, { id: 'platino', w: 20, res: 'rec_profundo' }, { id: 'titanio', w: 20, res: 'rec_profundo' }, { id: 'adamantita', w: 12, res: 'rec_nucleo' }, { id: 'oricalco', w: 8, res: 'rec_nucleo' }],
+    archipielago_coral: [{ id: 'coral_roca', w: 45 }, { id: 'oro', w: 25 }, { id: 'arena_estelar', w: 20 }, { id: 'perla_turquesa', w: 10, res: 'rec_profundo' }],
+    cavernas_cristal:   [{ id: 'cuarzo_boreal', w: 45 }, { id: 'titanio', w: 25, res: 'rec_profundo' }, { id: 'cristales', w: 20 }, { id: 'celestita_cristal', w: 10, res: 'rec_profundo' }],
+    selva_esmeralda:    [{ id: 'madera_ferrea', w: 45 }, { id: 'adamantita', w: 20, res: 'rec_nucleo' }, { id: 'jade_ancestral', w: 15, res: 'rec_profundo' }, { id: 'esmeraldas', w: 15 }],
+    caldera_ceniza:     [{ id: 'escoria_caldera', w: 45 }, { id: 'oricalco', w: 20, res: 'rec_nucleo' }, { id: 'obsidiana_bruta', w: 20 }, { id: 'esencia_magma', w: 15 }],
+    dinastia_arena:     [{ id: 'pirita_solar', w: 45 }, { id: 'oro', w: 25 }, { id: 'diamantes', w: 15, res: 'rec_nucleo' }, { id: 'agata_roja', w: 15, res: 'rec_profundo' }],
+    glaciar_profundo:   [{ id: 'hielo_eterno', w: 45 }, { id: 'titanio', w: 25, res: 'rec_profundo' }, { id: 'azurita_glacial', w: 15 }, { id: 'bismuto_astral', w: 15, res: 'rec_nucleo' }],
+    cienaga_putrida:    [{ id: 'resina_toxica', w: 45 }, { id: 'adamantita', w: 25, res: 'rec_nucleo' }, { id: 'esporas_toxicas', w: 20 }, { id: 'polvo_veneno', w: 10 }],
+    necropolis_osea:    [{ id: 'hueso_fosil', w: 40 }, { id: 'plata_maldita', w: 35, res: 'rec_nucleo' }, { id: 'huesos', w: 15 }, { id: 'craneo_maldito', w: 10 }],
+    tierras_malditas:   [{ id: 'marmol_oscuro', w: 35 }, { id: 'plata_maldita', w: 25, res: 'rec_nucleo' }, { id: 'cristal_carmesi', w: 20, res: 'rec_nucleo' }, { id: 'esencia_oscura', w: 20 }]
   };
 
   // ───────────────────────── press categories (explicit allow-lists) ─────────────────────────
   const PRESS_CATEGORIES = {
-    minerales: ['cobre', 'hierro', 'oro', 'plata', 'platino', 'titanio', 'adamantita', 'oricalco', 'carbon', 'estano'],
-    cultivos: ['trigo', 'flor_cristal', 'bellota', 'hongo_luminoso'],
-    criaturas: ['seda_arana', 'colmillo', 'cuerno_demonio', 'escamas_dragon', 'esporas_toxicas', 'garra_sombras', 'pluma_oscura', 'ectoplasma', 'gel_azul', 'saco_veneno', 'diente_goblin']
+    minerales: ['cobre', 'hierro', 'oro', 'plata', 'platino', 'titanio', 'adamantita', 'oricalco', 'carbon', 'estano', 'coral_roca', 'cuarzo_boreal', 'madera_ferrea', 'escoria_caldera', 'pirita_solar', 'hielo_eterno', 'hueso_fosil', 'plata_maldita', 'marmol_oscuro'],
+    cultivos: ['trigo', 'flor_cristal', 'bellota', 'hongo_luminoso', 'flor_pantano'],
+    criaturas: ['seda_arana', 'colmillo', 'cuerno_demonio', 'escamas_dragon', 'esporas_toxicas', 'garra_sombras', 'pluma_oscura', 'ectoplasma', 'gel_azul', 'saco_veneno', 'diente_goblin', 'resina_toxica']
   };
 
   // ───────────────────────── generators ─────────────────────────
   const GENERATORS = {
     gen_vapor:            { out: 20,   fuels: [{ id: 'carbon', t: 40 }, { id: 'madera', t: 12 }], biome: null },
-    gen_geotermico:       { out: 90,   fuels: [{ id: 'esencia_magma', t: 90 }, { id: 'material_volcanico', t: 45 }], biome: { tierras_volcanicas: 1.25 } },
+    gen_geotermico:       { out: 90,   fuels: [{ id: 'esencia_magma', t: 90 }, { id: 'material_volcanico', t: 45 }], biome: { tierras_volcanicas: 1.25, caldera_ceniza: 1.35, tierras_malditas: 1.35 } },
     nucleo_arcano:        { out: 320,  fuels: [{ id: 'cristales_magicos', t: 120 }, { id: 'polvo_estelar', t: 240 }], biome: null },
     reactor_singularidad: { out: 4000, fuels: [{ id: 'singularidad', t: 900 }], biome: null }
   };
@@ -231,15 +247,15 @@
     R('rec_velocidad', 'recoleccion', 'Brocas de Diamante', '+25% velocidad de extracción.', { lingote_titanio: 10, diamantes: 6 }, ['rec_extractor'], { effect: { extractSpeed: 0.25 } }),
     R('rec_domo', 'recoleccion', 'Hidroponía', 'Desbloquea el Domo Hidropónico.', { lingote_hierro: 12, cristales: 20 }, ['ind_fundamentos']),
     R('rec_domo_radio', 'recoleccion', 'Domo Expandido', '+2 tiles de radio del Domo.', { lingote_acero: 10, cristales: 25 }, ['rec_domo'], { effect: { domoRadius: 2 } }),
-    R('sim_camara', 'simulacion', 'Simulación de Combate', 'Desbloquea la Cámara de Simulación (24 mazmorras).', { lingote_titanio: 15, cristales_magicos: 15 }, ['gen_arcano'], { dungeons: 24 }),
+    R('sim_camara', 'simulacion', 'Simulación de Combate', 'Desbloquea la Cámara de Simulación (30 mazmorras).', { lingote_titanio: 15, cristales_magicos: 15 }, ['gen_arcano'], { dungeons: 30 }),
     R('sim_produccion', 'simulacion', 'Algoritmos de Botín', '+25% recompensas de la Cámara.', { lingote_titanio: 15, polvo_estelar: 15 }, ['sim_camara'], { effect: { simOutput: 0.25 } }),
-    R('comp_prensa', 'compresion', 'Compresión Extrema', 'Desbloquea la Prensa de Singularidades.', { lingote_adamantita: 12, cristales_magicos: 15 }, ['proc_fundicion']),
-    R('comp_eficiencia', 'compresion', 'Campos de Contención', '-15% coste de Singularidad.', { lingote_adamantita: 10, polvo_estelar: 20 }, ['comp_prensa'], { effect: { pressEff: 0.15 } }),
-    R('tec_singularidad', 'singularidad', 'Teoría de Singularidades', 'Requisito de tecnologías definitivas.', { singularidad: 1, polvo_estelar: 20 }, ['comp_prensa', 'comp_eficiencia']),
-    R('omega_equipo', 'equipo', 'Metalurgia Omega', 'Desbloquea la forja del Lingote Omega y Equipamiento Tier 16.', { singularidad: 2, lingote_celestial: 20 }, ['comp_prensa']),
-    R('sobre_altar', 'sobrecarga', 'Sobrecarga Infinita', 'Desbloquea el Altar de Sobrecarga Infinita.', { singularidad: 2, lingote_omega: 2 }, ['omega_equipo']),
-    R('asc_islas', 'ascension', 'Ascensión de Islas', 'Permite ascender islas (24 mazmorras).', { singularidad: 3, lingote_omega: 3 }, ['omega_equipo'], { dungeons: 24 }),
-    R('abismo_inv', 'abismo', 'Cartografía del Abismo', '+25% materia comprimida del Abismo y las islas ascendidas.', { singularidad: 2, polvo_estelar: 30 }, ['omega_equipo'], { dungeons: 24, effect: { compressedBonus: 0.25, abyssLoot: 0.25 } })
+    R('comp_prensa', 'compresion', 'Compresión Extrema', 'Desbloquea la Prensa de Singularidades (25.000 recursos/u).', { lingote_adamantita: 18, cristales_magicos: 20, lingote_pirita: 8 }, ['proc_fundicion']),
+    R('comp_eficiencia', 'compresion', 'Campos de Contención', '-15% coste de Singularidad.', { lingote_adamantita: 16, polvo_estelar: 25 }, ['comp_prensa'], { effect: { pressEff: 0.15 } }),
+    R('tec_singularidad', 'singularidad', 'Teoría de Singularidades', 'Requisito de tecnologías definitivas.', { singularidad: 2, polvo_estelar: 30, cristal_carmesi: 6 }, ['comp_prensa', 'comp_eficiencia']),
+    R('omega_equipo', 'equipo', 'Metalurgia Omega', 'Desbloquea Lingote Omega y Equipamiento Tier 16 (50 mazmorras).', { singularidad: 3, lingote_celestial: 24, lingote_maldito: 10 }, ['comp_prensa'], { dungeons: 50 }),
+    R('sobre_altar', 'sobrecarga', 'Sobrecarga Infinita', 'Desbloquea el Altar de Sobrecarga Infinita.', { singularidad: 4, lingote_omega: 4 }, ['omega_equipo']),
+    R('asc_islas', 'ascension', 'Ascensión de Islas', 'Permite ascender islas (55 mazmorras).', { singularidad: 5, lingote_omega: 5 }, ['omega_equipo'], { dungeons: 55 }),
+    R('abismo_inv', 'abismo', 'Cartografía del Abismo', '+25% materia comprimida del Abismo y las islas ascendidas (45 mazmorras).', { singularidad: 4, polvo_estelar: 40 }, ['omega_equipo'], { dungeons: 45, effect: { compressedBonus: 0.25, abyssLoot: 0.25 } })
   ];
   const RESEARCH_BY_ID = {};
   RESEARCH.forEach(r => { RESEARCH_BY_ID[r.id] = r; });

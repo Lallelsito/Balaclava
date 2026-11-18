@@ -185,37 +185,54 @@
       const ring = (game.world && typeof game.world.getPlotRing === 'function') ? game.world.getPlotRing(gx, gy) : null;
       const base = Balaclava.getPlotBasePrice(gx, gy, biome, ring);
       const ownedCount = Array.isArray(game.unlockedPlots) ? Math.max(1, game.unlockedPlots.length) : 1;
-      const progMult = ownedCount <= 1 ? 1 : (1 + Math.min(0.65, (ownedCount - 1) * 0.015));
+      const progMult = ownedCount <= 1 ? 1 : (1 + Math.min(0.75, (ownedCount - 1) * 0.004));
       const disc = game.mods.landDiscount || 0;
       return Math.max(10, Math.round(base * progMult * (1 - disc)));
     }
 
     getBiomeProgressionOrder(game) {
-      const canonical = ['pradera', 'desierto', 'montanas_heladas', 'bosque_oscuro', 'tierras_volcanicas'];
+      const canonical = (Balaclava.CONST && Balaclava.CONST.BIOME_ORDER)
+        ? [...Balaclava.CONST.BIOME_ORDER]
+        : ['pradera', 'desierto', 'montanas_heladas', 'bosque_oscuro', 'tierras_volcanicas'];
       if (!game || !game.world || !Array.isArray(game.world.plotBiomes)) return canonical;
-      const C = (Balaclava.CONST && Balaclava.CONST.CENTER_PLOT) || 4;
-      const gridN = game.world.plotBiomes.length || 10;
-      const stats = {};
+      const gridN = game.world.plotBiomes.length || 19;
+      const presentSet = new Set();
       for (let gy = 0; gy < gridN; gy++) {
         for (let gx = 0; gx < gridN; gx++) {
           const b = game.world.plotBiomes[gy] && game.world.plotBiomes[gy][gx];
-          if (!b) continue;
-          if (!stats[b]) stats[b] = { sumR: 0, count: 0 };
-          stats[b].sumR += Math.hypot(gx - C, gy - C);
-          stats[b].count += 1;
+          if (b) presentSet.add(b);
         }
       }
-      const present = Object.keys(stats);
-      if (!present.length) return canonical;
+      if (!presentSet.size) return canonical;
+      const present = Array.from(presentSet);
       present.sort((a, b) => {
-        if (a === 'pradera') return -1;
-        if (b === 'pradera') return 1;
-        const avgA = stats[a].sumR / Math.max(1, stats[a].count);
-        const avgB = stats[b].sumR / Math.max(1, stats[b].count);
-        if (Math.abs(avgA - avgB) > 0.05) return avgA - avgB;
-        return canonical.indexOf(a) - canonical.indexOf(b);
+        const ia = canonical.indexOf(a);
+        const ib = canonical.indexOf(b);
+        return (ia >= 0 ? ia : 999) - (ib >= 0 ? ib : 999);
       });
       return present;
+    }
+
+    getZoneProgress(game) {
+      const zones = (Balaclava.CONST && Balaclava.CONST.BIOME_ZONES) || [];
+      return zones.map(z => {
+        const biomeProgs = z.biomes.map(bId => this.getBiomeUnlockProgress(game, bId));
+        const unlocked = biomeProgs.reduce((s, p) => s + p.unlocked, 0);
+        const total = biomeProgs.reduce((s, p) => s + p.total, 0);
+        const dungeonsDone = biomeProgs.reduce((s, p) => s + p.dungeonsDone, 0);
+        const dungeonsTotal = biomeProgs.reduce((s, p) => s + p.dungeonsTotal, 0);
+        const complete = biomeProgs.every(p => p.complete);
+        return {
+          zone: z.zone,
+          name: z.name,
+          biomes: biomeProgs,
+          unlocked,
+          total,
+          dungeonsDone,
+          dungeonsTotal,
+          complete
+        };
+      });
     }
 
     getBiomeDungeons(game, biomeId) {
@@ -272,7 +289,7 @@
           complete: dungProg.complete
         };
       }
-      const gridN = game.world.plotBiomes.length || 10;
+      const gridN = game.world.plotBiomes.length || 19;
       let unlocked = 0;
       let total = 0;
       for (let gy = 0; gy < gridN; gy++) {
@@ -374,7 +391,7 @@
       const lockStatus = this.getBiomeLockStatus(game, gx, gy);
       if (lockStatus.lockedByBiome) return false;
       const targetBiome = game.world.plotBiomes[gy] && game.world.plotBiomes[gy][gx];
-      const gridN = game.world.plotBiomes.length || 10;
+      const gridN = game.world.plotBiomes.length || 19;
       for (let py = 0; py < gridN; py++) {
         for (let px = 0; px < gridN; px++) {
           if (game.world.plotBiomes[py][px] !== targetBiome) continue;

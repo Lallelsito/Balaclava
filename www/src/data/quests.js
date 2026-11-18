@@ -1021,6 +1021,60 @@
         name: 'Tierras Volcánicas',
         minerals: 'Adamantita, Obsidiana Bruta, Oricalco y Núcleo de Magma Vivo',
         desc: 'Basalto incandescente y ceniza roja junto al cráter primordial. Aquí nacen los minerales míticos necesarios para alcanzar el tier Celestial.'
+      },
+      {
+        id: 'archipielago_coral',
+        name: 'Archipiélago Coral',
+        minerals: 'Coral Abisal, Perla Turquesa y Lingotes Coralinos',
+        desc: 'Atolones luminosos al norte de la Zona III custodiados por cangrejos acorazados y sirenas.'
+      },
+      {
+        id: 'cavernas_cristal',
+        name: 'Cavernas Cristalinas',
+        minerals: 'Cuarzo Boreal y Celestita Prismática',
+        desc: 'Grutas geódicas al este de Zona III cuya resonancia concentra energía mágica pura.'
+      },
+      {
+        id: 'selva_esmeralda',
+        name: 'Selva Esmeralda',
+        minerals: 'Madera Férrea, Jade Ancestral y Resina',
+        desc: 'Jungla milenaria al sur poblada por pirámides de jade, colmenas gigantes y flora depredadora.'
+      },
+      {
+        id: 'caldera_ceniza',
+        name: 'Caldera de Ceniza',
+        minerals: 'Escoria de Caldera y Polvo Carmesí',
+        desc: 'Crisol volcánico al oeste donde la forja demoníaca templa aleaciones de calor extremo.'
+      },
+      {
+        id: 'dinastia_arena',
+        name: 'Dinastía de la Arena',
+        minerals: 'Pirita Solar y Ágata Roja Imperial',
+        desc: 'Dunas sagradas de Zona IV repletas de obeliscos solares, tumbas de escribas y faraones inmortales.'
+      },
+      {
+        id: 'glaciar_profundo',
+        name: 'Glaciar Profundo',
+        minerals: 'Hielo Eterno y Bismuto Astral',
+        desc: 'Confín oriental congelado al cero absoluto donde duermen colosos glaciales y dragones de escarcha.'
+      },
+      {
+        id: 'cienaga_putrida',
+        name: 'Ciénaga Pútrida',
+        minerals: 'Resina Tóxica y Flor de Pantano',
+        desc: 'Manglares bioluminiscentes al sur profanados por esporas alquímicas e hidras venenosas.'
+      },
+      {
+        id: 'necropolis_osea',
+        name: 'Necrópolis Ósea',
+        minerals: 'Hueso Fósil y Mármol Oscuro',
+        desc: 'Santuario fúnebre de Zona IV dominado por archiliches, criptas silenciosas y legiones espectrales.'
+      },
+      {
+        id: 'tierras_malditas',
+        name: 'Tierras Malditas',
+        minerals: 'Plata Maldita, Cristal Carmesí y Singularidades Omega',
+        desc: 'La frontera occidental definitiva del archipiélago, hogar del Eclipse del Espadachín Carmesí Abisal.'
       }
     ]
   };

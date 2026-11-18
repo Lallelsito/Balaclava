@@ -323,6 +323,97 @@
       id: 'void_jelly', name: 'Gelatina del Vacío', hp: 112, dmg: 25, speed: 68, nocturnal: true, rarity: 'epico',
       biome: 'bosque_oscuro', coins: [12, 22], xp: 76, color: '#ab47bc',
       drops: [{ id: 'esencia_oscura', chance: 0.75 }, { id: 'cristal_abismal', chance: 0.16 }]
+    },
+    // ── Beta 1.3.0: +18 Enemigos de Zona III & Zona IV ──
+    enemy_coral_crab: {
+      id: 'enemy_coral_crab', name: 'Cangrejo Acorazado de Coral', hp: 115, dmg: 25, speed: 74, rarity: 'poco_comun',
+      biome: 'archipielago_coral', coins: [12, 22], xp: 82, color: '#26c6da',
+      drops: [{ id: 'coral_roca', chance: 0.7 }, { id: 'perla_turquesa', chance: 0.15 }, { id: 'cangrejo_dorado', chance: 0.2 }]
+    },
+    enemy_coral_cobra: {
+      id: 'enemy_coral_cobra', name: 'Víbora Marina del Arrecife', hp: 96, dmg: 27, speed: 94, ranged: true, rarity: 'raro',
+      biome: 'archipielago_coral', coins: [14, 24], xp: 90, color: '#4dd0e1',
+      drops: [{ id: 'coral_roca', chance: 0.55 }, { id: 'perla_turquesa', chance: 0.22 }, { id: 'colmillo', chance: 0.45 }]
+    },
+    enemy_cristal_eye: {
+      id: 'enemy_cristal_eye', name: 'Ojo Prismático Astral', hp: 122, dmg: 29, speed: 86, ranged: true, rarity: 'raro',
+      biome: 'cavernas_cristal', coins: [15, 28], xp: 105, color: '#e040fb',
+      drops: [{ id: 'cuarzo_boreal', chance: 0.65 }, { id: 'celestita_cristal', chance: 0.18 }, { id: 'polvo_estelar', chance: 0.25 }]
+    },
+    enemy_selva_spider: {
+      id: 'enemy_selva_spider', name: 'Tarántula Esmeralda', hp: 132, dmg: 30, speed: 102, rarity: 'raro',
+      biome: 'selva_esmeralda', coins: [16, 30], xp: 115, color: '#00e676',
+      drops: [{ id: 'seda_arana', chance: 0.75 }, { id: 'madera_ferrea', chance: 0.45 }, { id: 'jade_ancestral', chance: 0.16 }]
+    },
+    enemy_selva_plant: {
+      id: 'enemy_selva_plant', name: 'Planta Carnívora Selvática', hp: 148, dmg: 32, speed: 62, ranged: true, rarity: 'epico',
+      biome: 'selva_esmeralda', coins: [18, 32], xp: 128, color: '#26a69a',
+      drops: [{ id: 'fibra_vegetal', chance: 0.8 }, { id: 'jade_ancestral', chance: 0.22 }, { id: 'esporas_toxicas', chance: 0.5 }]
+    },
+    enemy_fire_slime: {
+      id: 'enemy_fire_slime', name: 'Limo de Escoria Fundida', hp: 150, dmg: 33, speed: 70, rarity: 'raro',
+      biome: 'caldera_ceniza', coins: [18, 34], xp: 135, color: '#ff7043',
+      drops: [{ id: 'escoria_caldera', chance: 0.65 }, { id: 'polvo_carmesi', chance: 0.3 }, { id: 'esencia_magma', chance: 0.45 }]
+    },
+    enemy_ember_bat: {
+      id: 'enemy_ember_bat', name: 'Murciélago de Brasas', hp: 128, dmg: 34, speed: 112, ranged: true, rarity: 'raro',
+      biome: 'caldera_ceniza', coins: [18, 32], xp: 130, color: '#ff5722',
+      drops: [{ id: 'ala_murcielago', chance: 0.7 }, { id: 'polvo_carmesi', chance: 0.35 }, { id: 'pluma_fenix', chance: 0.18 }]
+    },
+    enemy_bomb_black: {
+      id: 'enemy_bomb_black', name: 'Bomba Viviente de Ceniza', hp: 136, dmg: 40, speed: 84, rarity: 'epico',
+      biome: 'caldera_ceniza', coins: [20, 38], xp: 150, color: '#ff3d00',
+      drops: [{ id: 'polvora', chance: 0.8 }, { id: 'escoria_caldera', chance: 0.6 }, { id: 'polvo_carmesi', chance: 0.25 }]
+    },
+    enemy_dragon_whelp: {
+      id: 'enemy_dragon_whelp', name: 'Cría de Dragón Cenizo', hp: 185, dmg: 38, speed: 92, ranged: true, rarity: 'epico',
+      biome: 'caldera_ceniza', coins: [24, 44], xp: 175, color: '#ffab00',
+      drops: [{ id: 'pluma_fenix', chance: 0.35 }, { id: 'polvo_carmesi', chance: 0.45 }, { id: 'huevo_dragon', chance: 0.08 }]
+    },
+    enemy_glaciar_whelp: {
+      id: 'enemy_glaciar_whelp', name: 'Dragón Glacial Menor', hp: 192, dmg: 39, speed: 94, ranged: true, rarity: 'epico',
+      biome: 'glaciar_profundo', coins: [25, 46], xp: 185, color: '#4fc3f7',
+      drops: [{ id: 'hielo_eterno', chance: 0.55 }, { id: 'bismuto_astral', chance: 0.22 }, { id: 'esquirla_hielo', chance: 0.65 }]
+    },
+    enemy_pantano_slime: {
+      id: 'enemy_pantano_slime', name: 'Cieno Pútrido Viviente', hp: 178, dmg: 36, speed: 68, rarity: 'raro',
+      biome: 'cienaga_putrida', coins: [22, 42], xp: 168, color: '#76ff03',
+      drops: [{ id: 'resina_toxica', chance: 0.72 }, { id: 'polvo_veneno', chance: 0.4 }, { id: 'flor_pantano', chance: 0.35 }]
+    },
+    enemy_pantano_shroom: {
+      id: 'enemy_pantano_shroom', name: 'Micónido de Espora Letal', hp: 168, dmg: 38, speed: 72, ranged: true, rarity: 'epico',
+      biome: 'cienaga_putrida', coins: [22, 42], xp: 174, color: '#aeea00',
+      drops: [{ id: 'flor_pantano', chance: 0.65 }, { id: 'polvo_veneno', chance: 0.45 }, { id: 'hongo_luminoso', chance: 0.7 }]
+    },
+    enemy_dark_bat: {
+      id: 'enemy_dark_bat', name: 'Vampiro de Penumbra', hp: 156, dmg: 37, speed: 116, nocturnal: true, rarity: 'raro',
+      biome: 'necropolis_osea', coins: [24, 44], xp: 178, color: '#b388ff',
+      drops: [{ id: 'ala_murcielago', chance: 0.75 }, { id: 'esencia_oscura', chance: 0.65 }, { id: 'plata_maldita', chance: 0.25 }]
+    },
+    enemy_necro_skull: {
+      id: 'enemy_necro_skull', name: 'Calavera Archiliche', hp: 184, dmg: 42, speed: 88, ranged: true, nocturnal: true, rarity: 'epico',
+      biome: 'necropolis_osea', coins: [26, 48], xp: 205, color: '#cfd8dc',
+      drops: [{ id: 'hueso_fosil', chance: 0.75 }, { id: 'craneo_maldito', chance: 0.5 }, { id: 'marmol_oscuro', chance: 0.4 }]
+    },
+    enemy_biter_red: {
+      id: 'enemy_biter_red', name: 'Sabueso de Sangre Abisal', hp: 205, dmg: 44, speed: 112, rarity: 'epico',
+      biome: 'tierras_malditas', coins: [28, 54], xp: 225, color: '#ff1744',
+      drops: [{ id: 'plata_maldita', chance: 0.55 }, { id: 'cristal_carmesi', chance: 0.2 }, { id: 'colmillo', chance: 0.75 }]
+    },
+    enemy_bat_horned: {
+      id: 'enemy_bat_horned', name: 'Gárgola Cornuda del Abismo', hp: 215, dmg: 45, speed: 108, ranged: true, rarity: 'epico',
+      biome: 'tierras_malditas', coins: [30, 56], xp: 240, color: '#d81b60',
+      drops: [{ id: 'plata_maldita', chance: 0.6 }, { id: 'cristal_carmesi', chance: 0.25 }, { id: 'cuerno_demonio', chance: 0.55 }]
+    },
+    enemy_abismo_wisp: {
+      id: 'enemy_abismo_wisp', name: 'Fuego Fatuo del Eclipse', hp: 196, dmg: 46, speed: 94, ranged: true, rarity: 'legendario',
+      biome: 'tierras_malditas', coins: [32, 60], xp: 255, color: '#aa00ff',
+      drops: [{ id: 'cristal_carmesi', chance: 0.35 }, { id: 'esencia_corrupta', chance: 0.45 }, { id: 'polvo_estelar', chance: 0.4 }]
+    },
+    enemy_abismo_goblin: {
+      id: 'enemy_abismo_goblin', name: 'Saqueador del Eclipse', hp: 220, dmg: 46, speed: 96, rarity: 'legendario',
+      biome: 'tierras_malditas', coins: [34, 64], xp: 265, color: '#ff5252',
+      drops: [{ id: 'plata_maldita', chance: 0.7 }, { id: 'cristal_carmesi', chance: 0.3 }, { id: 'llave_mazmorra', chance: 0.14 }]
     }
   };
 
@@ -653,6 +744,103 @@
       fissureVfx: 'pvfx_fire_pillar',
       meteorVfx: 'pvfx_meteor_strike',
       dashVfx: 'soggy_fire_slash'
+    },
+    // ── Beta 1.3.0: Themes de Bosses con Gigapack VFX ──
+    montanas_cumbre: {
+      color: '#80deea',
+      phaseVfx: 'sp_frost_explosion_cyan', slamVfx: 'sp_impact_blue', leapVfx: 'sp_frost_explosion_cyan',
+      fissureVfx: 'sp_spell_defense_blue', meteorVfx: 'sp_frost_explosion_cyan', dashVfx: 'sp_impact_blue',
+      castVfx: 'sp_spell_defense_blue', projVfx: 'pvfx_ice_shard', projAltVfx: 'aw_ice_spear',
+      projImpactVfx: 'sp_impact_blue', pillarVfx: 'sp_frost_explosion_cyan', status: { kind: 'slow', dur: 2.2 }
+    },
+    ...(['coral_arrecife', 'coral_perla', 'coral_abismo', 'coral_bastion', 'coral_trono'].reduce((acc, k) => {
+      acc[k] = {
+        color: '#26c6da', phaseVfx: 'sp_frost_explosion_cyan', slamVfx: 'sp_impact_blue', leapVfx: 'sp_impact_blue',
+        fissureVfx: 'sp_spell_defense_blue', meteorVfx: 'sp_frost_explosion_cyan', dashVfx: 'sp_impact_blue',
+        castVfx: 'sp_spell_defense_blue', projVfx: 'aw_ice_spear', projAltVfx: 'pvfx_ice_shard',
+        projImpactVfx: 'sp_impact_blue', pillarVfx: 'sp_frost_explosion_cyan', status: { kind: 'slow', dur: 2.0 }
+      };
+      return acc;
+    }, {})),
+    ...(['cristal_geoda', 'cristal_espejo', 'cristal_camara', 'cristal_nexo', 'cristal_corazon'].reduce((acc, k) => {
+      acc[k] = {
+        color: '#e040fb', phaseVfx: 'sp_stylized_explosion_violet', slamVfx: 'sp_impact_violet', leapVfx: 'sp_scifi_warp',
+        fissureVfx: 'sp_lightning_strike_violet', meteorVfx: 'sp_stylized_explosion_violet', dashVfx: 'sp_impact_violet',
+        castVfx: 'sp_scifi_charge', projVfx: 'aw_arcane_missile', projAltVfx: 'aw_lightning_orb',
+        projImpactVfx: 'sp_impact_violet', pillarVfx: 'sp_lightning_strike_violet', status: { kind: 'shock', dur: 2.0 }
+      };
+      return acc;
+    }, {})),
+    ...(['selva_raices', 'selva_piramide', 'selva_colmena', 'selva_dosel', 'selva_corazon'].reduce((acc, k) => {
+      acc[k] = {
+        color: '#00e676', phaseVfx: 'sp_spell_heal_green', slamVfx: 'sp_spell_poison_green', leapVfx: 'sp_spell_haste_green',
+        fissureVfx: 'sp_spell_poison_green', meteorVfx: 'sp_spell_poison_green', dashVfx: 'sp_spell_haste_green',
+        castVfx: 'sp_spell_heal_green', projVfx: 'pvfx_poison_dart', projAltVfx: 'pvfx_wind_blade',
+        projImpactVfx: 'sp_spell_poison_green', pillarVfx: 'sp_spell_poison_green', status: { kind: 'poison', dur: 2.8, tickDmg: 6 }
+      };
+      return acc;
+    }, {})),
+    ...(['caldera_fumarola', 'caldera_crater', 'caldera_fundicion', 'caldera_bestia', 'caldera_senor'].reduce((acc, k) => {
+      acc[k] = {
+        ...DEFAULT_BOSS_THEME, color: '#ff5722', phaseVfx: 'sp_epic_explosion_orange', slamVfx: 'sp_epic_explosion_orange',
+        leapVfx: 'sp_fire_loop_orange', fissureVfx: 'sp_fire_loop_orange', meteorVfx: 'sp_epic_explosion_orange',
+        dashVfx: 'sp_spell_attack_red', castVfx: 'sp_fire_loop_orange', projImpactVfx: 'sp_epic_explosion_orange',
+        pillarVfx: 'sp_fire_loop_orange', status: { kind: 'burn', dur: 3.0, tickDmg: 8 }
+      };
+      return acc;
+    }, {})),
+    ...(['dinastia_tumbas', 'dinastia_escarabajo', 'dinastia_obelisco', 'dinastia_camara', 'dinastia_sol', 'dinastia_faraon'].reduce((acc, k) => {
+      acc[k] = {
+        ...DEFAULT_BOSS_THEME, color: '#ffca28', phaseVfx: 'sp_scifi_charge', slamVfx: 'sp_epic_explosion_orange',
+        leapVfx: 'sp_epic_explosion_orange', fissureVfx: 'sp_epic_explosion_orange', meteorVfx: 'sp_epic_explosion_orange',
+        dashVfx: 'sp_spell_attack_red', castVfx: 'sp_scifi_charge', projVfx: 'px_energy_bolt',
+        projImpactVfx: 'sp_epic_explosion_orange', pillarVfx: 'sp_scifi_charge', status: { kind: 'burn', dur: 2.5, tickDmg: 7 }
+      };
+      return acc;
+    }, {})),
+    ...(['glaciar_grieta', 'glaciar_vestigios', 'glaciar_ojo', 'glaciar_coloso', 'glaciar_sancta', 'glaciar_abismo'].reduce((acc, k) => {
+      acc[k] = {
+        color: '#00b0ff', phaseVfx: 'sp_frost_explosion_cyan', slamVfx: 'sp_impact_blue', leapVfx: 'sp_frost_explosion_cyan',
+        fissureVfx: 'sp_frost_explosion_cyan', meteorVfx: 'sp_frost_explosion_cyan', dashVfx: 'sp_spell_defense_blue',
+        castVfx: 'sp_spell_defense_blue', projVfx: 'aw_ice_spear', projAltVfx: 'pvfx_ice_shard',
+        projImpactVfx: 'sp_impact_blue', pillarVfx: 'sp_frost_explosion_cyan', status: { kind: 'slow', dur: 2.6 }
+      };
+      return acc;
+    }, {})),
+    ...(['pantano_raices', 'pantano_esporas', 'pantano_cieno', 'pantano_calabaza', 'pantano_bastion', 'pantano_madre'].reduce((acc, k) => {
+      acc[k] = {
+        color: '#76ff03', phaseVfx: 'sp_spell_poison_green', slamVfx: 'sp_skull_smoke', leapVfx: 'sp_spell_haste_green',
+        fissureVfx: 'sp_spell_poison_green', meteorVfx: 'sp_skull_smoke', dashVfx: 'sp_spell_haste_green',
+        castVfx: 'sp_skull_smoke', projVfx: 'pvfx_poison_dart', projAltVfx: 'aw_poison_splash',
+        projImpactVfx: 'sp_spell_poison_green', pillarVfx: 'sp_spell_poison_green', status: { kind: 'poison', dur: 3.2, tickDmg: 9 }
+      };
+      return acc;
+    }, {})),
+    ...(['necro_osario', 'necro_cripta', 'necro_catacumba', 'necro_foso', 'necro_torre', 'necro_trono'].reduce((acc, k) => {
+      acc[k] = {
+        color: '#b388ff', phaseVfx: 'sp_spell_absorb_violet', slamVfx: 'sp_skull_smoke', leapVfx: 'sp_scifi_warp',
+        fissureVfx: 'sp_lightning_burst_violet', meteorVfx: 'sp_skull_smoke', dashVfx: 'sp_lightning_strike_violet',
+        castVfx: 'sp_spell_absorb_violet', projVfx: 'mp9_dark_bolt', projAltVfx: 'aw_lightning_orb',
+        projImpactVfx: 'sp_impact_violet', pillarVfx: 'sp_skull_smoke', status: { kind: 'curse', dur: 2.8 }
+      };
+      return acc;
+    }, {})),
+    ...(['maldita_sangre', 'maldita_carne', 'maldita_forja', 'maldita_calabaza', 'maldita_abismo'].reduce((acc, k) => {
+      acc[k] = {
+        ...DEFAULT_BOSS_THEME, color: '#ff1744', phaseVfx: 'sp_spell_death_red', slamVfx: 'sp_splatter_red',
+        leapVfx: 'sp_stylized_explosion_violet', fissureVfx: 'sp_spell_death_red', meteorVfx: 'sp_stylized_explosion_violet',
+        dashVfx: 'sp_spell_attack_red', castVfx: 'sp_spell_death_red', projVfx: 'aw_fire_fireball',
+        projAltVfx: 'mp9_dark_bolt', projImpactVfx: 'sp_splatter_red', pillarVfx: 'sp_spell_death_red',
+        status: { kind: 'bleed', dur: 3.2, tickDmg: 10 }
+      };
+      return acc;
+    }, {})),
+    eclipse_carmesi: {
+      ...DEFAULT_BOSS_THEME, color: '#ff1744', phaseVfx: 'sp_spell_death_red', slamVfx: 'sp_splatter_red',
+      leapVfx: 'sp_scifi_warp', fissureVfx: 'sp_spell_death_red', meteorVfx: 'sp_stylized_explosion_violet',
+      dashVfx: 'sp_spell_attack_red', castVfx: 'sp_lightning_burst_violet', projVfx: 'aw_fire_fireball',
+      projAltVfx: 'mp9_dark_bolt', projImpactVfx: 'sp_impact_violet', pillarVfx: 'sp_lightning_strike_violet',
+      status: { kind: 'bleed', dur: 3.5, tickDmg: 14 }
     }
   };
 
@@ -962,6 +1150,43 @@
           proj: { vfxKey: 'pvfx_ice_shard', impactVfx: 'pvfx_snowball_impact', color: '#b39ddb', speed: 225, count: t === 'ghost_spectral' ? 3 : 1, spread: 0.22 },
           status: { kind: 'slow', dur: 1.8 }
         };
+      // ── Beta 1.3.0: Perfiles de combate + Gigapack VFX para +18 enemigos ──
+      case 'enemy_coral_crab':
+        return { behavior: 'charger', windupVfx: 'sp_spell_defense_blue', meleeVfx: 'sp_impact_blue', specialVfx: 'sp_frost_explosion_cyan', audio: 'hit' };
+      case 'enemy_coral_cobra':
+        return { behavior: 'ranged_single', windupVfx: 'sp_spell_defense_blue', meleeVfx: 'sp_impact_blue', audio: 'magic', proj: { vfxKey: 'aw_ice_spear', impactVfx: 'sp_impact_blue', color: '#4dd0e1', speed: 245 } };
+      case 'enemy_cristal_eye':
+        return { behavior: 'ranged_fan', windupVfx: 'sp_scifi_charge', meleeVfx: 'sp_impact_violet', specialVfx: 'sp_lightning_strike_violet', audio: 'magic', proj: { vfxKey: 'aw_arcane_missile', impactVfx: 'sp_impact_violet', color: '#e040fb', speed: 255, count: 3, spread: 0.22 } };
+      case 'enemy_selva_spider':
+        return { behavior: 'charger', windupVfx: 'sp_spell_haste_green', meleeVfx: 'sp_spell_poison_green', specialVfx: 'sp_spell_poison_green', audio: 'slash', status: { kind: 'poison', dur: 2.2, tickDmg: 4 } };
+      case 'enemy_selva_plant':
+        return { behavior: 'ranged_fan', windupVfx: 'sp_spell_poison_green', meleeVfx: 'sp_spell_poison_green', audio: 'magic', proj: { vfxKey: 'pvfx_poison_dart', impactVfx: 'sp_spell_poison_green', color: '#00e676', speed: 235, count: 3, spread: 0.24 }, status: { kind: 'poison', dur: 2.4, tickDmg: 4 } };
+      case 'enemy_fire_slime':
+        return { behavior: 'leaper', windupVfx: 'sp_fire_loop_orange', meleeVfx: 'sp_epic_explosion_orange', specialVfx: 'sp_epic_explosion_orange', audio: 'bomb', status: { kind: 'burn', dur: 2.2, tickDmg: 4 } };
+      case 'enemy_ember_bat':
+        return { behavior: 'ranged_single', windupVfx: 'sp_fire_loop_orange', meleeVfx: 'sp_spell_attack_red', audio: 'fire', proj: { vfxKey: 'aw_fire_fireball', impactVfx: 'sp_epic_explosion_orange', color: '#ff5722', speed: 255 }, status: { kind: 'burn', dur: 2.0, tickDmg: 4 } };
+      case 'enemy_bomb_black':
+        return { behavior: 'bomber', windupVfx: 'sp_fire_loop_orange', meleeVfx: 'sp_epic_explosion_orange', specialVfx: 'sp_epic_explosion_orange', bombRadius: 58, audio: 'bomb', status: { kind: 'burn', dur: 2.2, tickDmg: 4 } };
+      case 'enemy_dragon_whelp':
+        return { behavior: 'ranged_fan', windupVfx: 'sp_spell_attack_red', meleeVfx: 'sp_epic_explosion_orange', specialVfx: 'sp_fire_loop_orange', audio: 'fire', proj: { vfxKey: 'aw_fire_fireball', impactVfx: 'sp_epic_explosion_orange', color: '#ffab00', speed: 265, count: 3, spread: 0.2 }, status: { kind: 'burn', dur: 2.5, tickDmg: 5 } };
+      case 'enemy_glaciar_whelp':
+        return { behavior: 'ranged_fan', windupVfx: 'sp_spell_defense_blue', meleeVfx: 'sp_frost_explosion_cyan', specialVfx: 'sp_impact_blue', audio: 'magic', proj: { vfxKey: 'aw_ice_spear', impactVfx: 'sp_frost_explosion_cyan', color: '#4fc3f7', speed: 260, count: 3, spread: 0.2 }, status: { kind: 'slow', dur: 2.2 } };
+      case 'enemy_pantano_slime':
+        return { behavior: 'leaper', windupVfx: 'sp_spell_poison_green', meleeVfx: 'sp_spell_poison_green', specialVfx: 'sp_skull_smoke', audio: 'hit', leavesPool: true, poolColor: '#76ff03', status: { kind: 'poison', dur: 2.5, tickDmg: 5 } };
+      case 'enemy_pantano_shroom':
+        return { behavior: 'spore_burst', windupVfx: 'sp_skull_smoke', meleeVfx: 'sp_spell_poison_green', specialVfx: 'sp_spell_poison_green', audio: 'magic', leavesPool: true, poolColor: '#aeea00', status: { kind: 'poison', dur: 2.6, tickDmg: 5 } };
+      case 'enemy_dark_bat':
+        return { behavior: 'charger', windupVfx: 'sp_spell_absorb_violet', meleeVfx: 'sp_impact_violet', specialVfx: 'sp_skull_smoke', audio: 'slash', status: { kind: 'bleed', dur: 2.0, tickDmg: 4 } };
+      case 'enemy_necro_skull':
+        return { behavior: 'ranged_fan', windupVfx: 'sp_skull_smoke', meleeVfx: 'sp_lightning_burst_violet', specialVfx: 'sp_spell_absorb_violet', audio: 'curse', proj: { vfxKey: 'mp9_dark_bolt', impactVfx: 'sp_impact_violet', color: '#b388ff', speed: 265, count: 3, spread: 0.22 }, status: { kind: 'curse', dur: 2.2 } };
+      case 'enemy_biter_red':
+        return { behavior: 'charger', windupVfx: 'sp_spell_attack_red', meleeVfx: 'sp_splatter_red', specialVfx: 'sp_spell_death_red', audio: 'slash', status: { kind: 'bleed', dur: 2.4, tickDmg: 6 } };
+      case 'enemy_bat_horned':
+        return { behavior: 'ranged_fan', windupVfx: 'sp_spell_death_red', meleeVfx: 'sp_splatter_red', specialVfx: 'sp_stylized_explosion_violet', audio: 'curse', proj: { vfxKey: 'aw_fire_fireball', impactVfx: 'sp_splatter_red', color: '#ff1744', speed: 275, count: 3, spread: 0.2 }, status: { kind: 'bleed', dur: 2.4, tickDmg: 6 } };
+      case 'enemy_abismo_wisp':
+        return { behavior: 'blink_caster', windupVfx: 'sp_scifi_warp', meleeVfx: 'sp_lightning_strike_violet', specialVfx: 'sp_stylized_explosion_violet', audio: 'magic', proj: { vfxKey: 'mp9_dark_bolt', impactVfx: 'sp_stylized_explosion_violet', color: '#aa00ff', speed: 270, radial: 5 }, status: { kind: 'curse', dur: 2.4 } };
+      case 'enemy_abismo_goblin':
+        return { behavior: 'melee_combo', windupVfx: 'sp_spell_attack_red', meleeVfx: 'sp_splatter_red', specialVfx: 'sp_spell_death_red', audio: 'slash', status: { kind: 'bleed', dur: 2.2, tickDmg: 5 } };
       default:
         return { behavior: 'melee_combo', meleeVfx: 'aw_claw_swipe', specialVfx: 'pvfx_hit_spark', audio: 'hit' };
     }
@@ -1681,14 +1906,32 @@
         desierto: ['beetle', 'scorpion', 'sand_ghoul', 'cobra', 'rock_golem'],
         bosque_oscuro: ['mushroom_mob', 'mushroom_purple', 'slime_toxic', 'goblin', 'goblin_shaman', 'bat'],
         montanas_heladas: ['wolf', 'golem', 'cave_spider'],
-        tierras_volcanicas: ['magma', 'fire_elem', 'beetle_fire', 'goblin_tnt']
+        tierras_volcanicas: ['magma', 'fire_elem', 'beetle_fire', 'goblin_tnt'],
+        archipielago_coral: ['enemy_coral_crab', 'enemy_coral_cobra', 'cobra', 'slime_blue'],
+        cavernas_cristal: ['enemy_cristal_eye', 'golem', 'floating_eye', 'mushroom_purple'],
+        selva_esmeralda: ['enemy_selva_spider', 'enemy_selva_plant', 'cobra', 'mushroom_mob'],
+        caldera_ceniza: ['enemy_fire_slime', 'enemy_ember_bat', 'enemy_bomb_black', 'enemy_dragon_whelp'],
+        dinastia_arena: ['royal_scarab', 'sand_ghoul', 'rock_golem', 'skeleton_archer'],
+        glaciar_profundo: ['enemy_glaciar_whelp', 'wolf', 'golem', 'slime_blue'],
+        cienaga_putrida: ['enemy_pantano_slime', 'enemy_pantano_shroom', 'slime_toxic', 'toxic_hound'],
+        necropolis_osea: ['enemy_necro_skull', 'enemy_dark_bat', 'skeleton_mage', 'grave_revenant'],
+        tierras_malditas: ['enemy_biter_red', 'enemy_bat_horned', 'enemy_abismo_wisp', 'enemy_abismo_goblin']
       };
       const nightPools = {
         pradera: ['slime', 'rat', 'spider', 'zombie', 'skeleton'],
         desierto: ['beetle', 'sand_ghoul', 'cobra', 'spider', 'scorpion'],
         bosque_oscuro: ['ghost', 'vampire_bat', 'floating_eye', 'mimic', 'shadow_wolf', 'goblin_shaman'],
         montanas_heladas: ['shadow_wolf', 'skeleton_mage', 'cave_spider', 'ghost', 'golem'],
-        tierras_volcanicas: ['cultist', 'imp', 'fire_elem', 'beetle_fire', 'magma']
+        tierras_volcanicas: ['cultist', 'imp', 'fire_elem', 'beetle_fire', 'magma'],
+        archipielago_coral: ['enemy_coral_crab', 'enemy_coral_cobra', 'ghastly_eye', 'wisp'],
+        cavernas_cristal: ['enemy_cristal_eye', 'ghost_spectral', 'wisp', 'floating_eye'],
+        selva_esmeralda: ['enemy_selva_spider', 'enemy_selva_plant', 'plague_bat', 'toxic_hound'],
+        caldera_ceniza: ['enemy_ember_bat', 'enemy_dragon_whelp', 'enemy_bomb_black', 'cultist', 'imp'],
+        dinastia_arena: ['royal_scarab', 'sand_ghoul', 'enemy_necro_skull', 'skeleton_mage'],
+        glaciar_profundo: ['enemy_glaciar_whelp', 'shadow_wolf', 'ghastly_eye', 'skeleton_mage'],
+        cienaga_putrida: ['enemy_pantano_slime', 'enemy_pantano_shroom', 'enemy_dark_bat', 'ghost_spectral'],
+        necropolis_osea: ['enemy_necro_skull', 'enemy_dark_bat', 'ghost_spectral', 'grave_revenant'],
+        tierras_malditas: ['enemy_biter_red', 'enemy_bat_horned', 'enemy_abismo_wisp', 'enemy_abismo_goblin']
       };
 
       const pool = night ? (nightPools[biome] || nightPools.pradera) : (dayPools[biome] || dayPools.pradera);
@@ -1710,31 +1953,34 @@
       if (nearSafeFire && !forceType) return null;
 
       // Scale enemy strength & danger level nonlinearly with biome tier, distance AND player level
-      const center = Balaclava.CONST.CENTER_PLOT || 4;
+      const center = Balaclava.CONST.CENTER_PLOT !== undefined ? Balaclava.CONST.CENTER_PLOT : 9;
       const plotDist = Math.hypot(plot[0] - center, plot[1] - center);
       const pLv = Math.max(1, (game.player && game.player.level) || 1);
-      const biomeTierMap = { pradera: 0, desierto: 1, montanas_heladas: 2, bosque_oscuro: 3, tierras_volcanicas: 4 };
+      const biomeTierMap = {
+        pradera: 0, desierto: 1, montanas_heladas: 2, bosque_oscuro: 3, tierras_volcanicas: 4,
+        archipielago_coral: 5, cavernas_cristal: 6, selva_esmeralda: 7, caldera_ceniza: 8,
+        dinastia_arena: 9, glaciar_profundo: 10, cienaga_putrida: 11, necropolis_osea: 12, tierras_malditas: 13
+      };
       const biomeTier = biomeTierMap[biome] || 0;
 
       const ranges = (Balaclava.CONST && Balaclava.CONST.BIOME_LEVEL_RANGES) || {
-        pradera: [1, 15],
-        desierto: [16, 45],
-        montanas_heladas: [46, 95],
-        bosque_oscuro: [96, 150],
-        tierras_volcanicas: [151, 200]
+        pradera: [1, 15], desierto: [16, 45], montanas_heladas: [46, 95], bosque_oscuro: [65, 115], tierras_volcanicas: [85, 145],
+        archipielago_coral: [110, 185], cavernas_cristal: [150, 235], selva_esmeralda: [195, 290], caldera_ceniza: [240, 350],
+        dinastia_arena: [290, 410], glaciar_profundo: [340, 465], cienaga_putrida: [380, 510], necropolis_osea: [425, 555], tierras_malditas: [470, 600]
       };
       const [minLv, maxLv] = ranges[biome] || [1, 15];
-      const pProg = clamp(((pLv - 1) / 30) + (plotDist / 5) * 0.4, 0, 1);
-      const dangerLv = clamp(Math.round(minLv + pProg * (maxLv - minLv)), minLv, Math.min(200, maxLv));
+      const maxCap = (Balaclava.CONST && Balaclava.CONST.MAX_ENEMY_LEVEL) || 600;
+      const pProg = clamp(((pLv - 1) / 45) + (plotDist / 10) * 0.4, 0, 1);
+      const dangerLv = clamp(Math.round(minLv + pProg * (maxLv - minLv)), minLv, Math.min(maxCap, maxLv));
       const effLv = Math.max(0, dangerLv - 1);
       let hpScale = 1 + effLv * 0.28 + Math.pow(effLv, 1.25) * 0.05;
       let dmgScale = 1 + effLv * 0.09 + Math.pow(effLv, 1.08) * 0.02;
-      let spdScale = 1 + Math.min(0.55, effLv * 0.015 + biomeTier * 0.04);
+      let spdScale = 1 + Math.min(0.65, effLv * 0.012 + biomeTier * 0.025);
       const xpScale = 1 + effLv * 0.28 + Math.pow(effLv, 1.2) * 0.05;
 
-      // 5-6x difficulty target for Biome 3+ (Montañas Heladas, Bosque Sombrío, Tierras Volcánicas)
+      // 5-7.5x difficulty multiplier for Biome 3+ across Zones II, III & IV
       if (biomeTier >= 2) {
-        const biomeMult = biomeTier === 2 ? 5.2 : biomeTier === 3 ? 5.6 : 6.0;
+        const biomeMult = biomeTier === 2 ? 5.2 : biomeTier === 3 ? 5.6 : biomeTier === 4 ? 6.0 : (6.15 + Math.min(1.4, (biomeTier - 4) * 0.15));
         hpScale *= biomeMult;
         dmgScale *= (biomeMult * 0.85);
         spdScale *= 1.15;
@@ -1795,7 +2041,7 @@
     }
 
     update(dt, game) {
-      if (game.activeDungeon) return;
+      if (game.activeDungeon || game.freezeAI) return;
 
       updateHazards(game, this.worldHazards, null, dt);
 
@@ -2034,6 +2280,23 @@
 
       if (enemy.isBoss && game.activeDungeon) {
         const dung = game.activeDungeon;
+        if (dung.id === 'eclipse_carmesi' || (Balaclava.BOSS_SPRITE_PATHS && Balaclava.BOSS_SPRITE_PATHS[dung.id] && Balaclava.BOSS_SPRITE_PATHS[dung.id].multiRow)) {
+          dung.deadBossGhost = {
+            id: dung.id,
+            x: enemy.x,
+            y: enemy.y,
+            facing: enemy.facing || -1,
+            timer: 0,
+            dur: 1.05,
+            row: 7,
+            frames: 9,
+            fps: 9
+          };
+          game.spawnFx('sp_spell_death_red', enemy.x, enemy.y, 0, 1.0, 2.7, 1.0, { blend: 'lighter' });
+          game.spawnFx('sp_lightning_burst_violet', enemy.x, enemy.y, 0, 0.9, 2.4, 1.0, { blend: 'lighter' });
+        } else {
+          game.spawnFx('sp_epic_explosion_orange', enemy.x, enemy.y, 0, 0.8, 2.0, 1.0, { blend: 'lighter' });
+        }
         dung.boss = null;
         dung.completed = true;
         // Clear all lingering hazards, projectiles, bombs, lasers, and minions immediately on boss death

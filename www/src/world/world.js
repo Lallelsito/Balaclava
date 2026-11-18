@@ -13,28 +13,47 @@
     };
   }
 
-  // Assign each of the 10x10 = 100 plots in progressive outward biome rings:
-  // Pradera -> Desierto -> Montañas Heladas -> Bosque Oscuro -> Tierras Volcánicas
+  // Directional + Zone Tier Biome Layout on 19x19 = 361 Islands around CENTER_PLOT (9,9):
+  // Zona I (Centro 3x3): Pradera
+  // Zona II (Cardinal Interior): Norte=Desierto, Este=Montañas Heladas, Sur=Bosque Oscuro, Oeste=Tierras Volcánicas
+  // Zona III (Cardinal Medio):  Norte=Archipiélago Coralino, Este=Cavernas de Cristal, Sur=Selva Esmeralda, Oeste=Caldera de Ceniza
+  // Zona IV (Confines):        Norte=Dinastía de Arena, Este=Glaciar Profundo, Sur=Ciénaga Pútrida (+Necrópolis SO/SE), Oeste=Tierras Malditas
+  // Guarantees Snow/Ice NEVER touches Lava/Fire/Cursed on any orthogonal or diagonal border.
   function getPlotBiome(gx, gy, seed = 42, sectorAngle = 0) {
-    const C = CENTER_PLOT || 4;
-    if (gx === C && gy === C) return 'pradera';
+    const C = CENTER_PLOT || 9;
     const dx = gx - C;
     const dy = gy - C;
+    if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1) return 'pradera';
     const r = Math.hypot(dx, dy);
-    const ang = Math.atan2(dy, dx);
-    // Gentle organic radial ripple so rings are non-square & seed-varied while preserving strict order
-    const ripple = Math.sin(ang * 3 + sectorAngle) * 0.28 + (hash2D(gx, gy, seed + 19) - 0.5) * 0.45;
+    const ripple = (hash2D(gx, gy, seed + 19) - 0.5) * 0.28;
     const rw = r + ripple;
-    if (r <= 1.05) return 'pradera';
-    if (rw <= 1.72) return 'pradera';
-    if (rw <= 2.68) return 'desierto';
-    if (rw <= 3.78) return 'montanas_heladas';
-    if (rw <= 4.78) return 'bosque_oscuro';
-    return 'tierras_volcanicas';
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+
+    if (dx < 0 && adx > ady) {
+      if (rw <= 3.75) return 'tierras_volcanicas';
+      if (rw <= 6.75) return 'caldera_ceniza';
+      return 'tierras_malditas';
+    }
+    if (dx > 0 && adx > ady) {
+      if (rw <= 3.75) return 'montanas_heladas';
+      if (rw <= 6.75) return 'cavernas_cristal';
+      return 'glaciar_profundo';
+    }
+    if (dy < 0 && ady >= adx) {
+      if (rw <= 3.75) return 'desierto';
+      if (rw <= 6.75) return 'archipielago_coral';
+      return 'dinastia_arena';
+    }
+    // South Quadrant (dy > 0)
+    if (rw <= 3.75) return 'bosque_oscuro';
+    if (rw <= 6.75) return 'selva_esmeralda';
+    if (r >= 6.85 && adx >= 4) return 'necropolis_osea';
+    return 'cienaga_putrida';
   }
 
   function getPlotBasePrice(gx, gy, biomeOverride = null, ringOverride = null) {
-    const C = CENTER_PLOT || 4;
+    const C = CENTER_PLOT || 9;
     if (gx === C && gy === C) return 0;
     const d = (typeof ringOverride === 'number' && ringOverride > 0)
       ? ringOverride
@@ -42,41 +61,116 @@
     const biome = biomeOverride || getPlotBiome(gx, gy);
     const biomeMult = {
       pradera: 1.0,
-      desierto: 1.75,
-      montanas_heladas: 2.6,
-      bosque_oscuro: 3.6,
-      tierras_volcanicas: 5.0
+      desierto: 1.45,
+      montanas_heladas: 1.85,
+      bosque_oscuro: 2.35,
+      tierras_volcanicas: 3.1,
+      archipielago_coral: 4.2,
+      cavernas_cristal: 5.0,
+      selva_esmeralda: 5.9,
+      caldera_ceniza: 6.9,
+      dinastia_arena: 8.2,
+      glaciar_profundo: 9.4,
+      cienaga_putrida: 10.6,
+      necropolis_osea: 11.8,
+      tierras_malditas: 13.5
     }[biome] || 1.0;
-    if (d === 1) return Math.round(75 * biomeMult);
-    return Math.round((55 + Math.pow(d, 2.05) * 62) * biomeMult);
+    if (d <= 1) return Math.round(65 * biomeMult);
+    if (d <= 2) return Math.round(90 * biomeMult);
+    return Math.round((75 + Math.pow(d, 1.48) * 32) * biomeMult);
   }
 
-  // 24 Dungeon gate definitions across all 5 biomes
+  // 75 Unique Dungeon Gates distributed across all 14 Biomes (5-6 per biome)
   const DUNGEON_GATES = {
-    pradera:             { id: 'pradera',             plot: [5, 4], name: 'Cripta Esmeralda',               biome: 'pradera',            recLevel: 2 },
-    pradera_profunda:    { id: 'pradera_profunda',    plot: [4, 3], name: 'Guarnición Goblin',              biome: 'pradera',            recLevel: 3 },
-    pradera_madriguera:  { id: 'pradera_madriguera',  plot: [3, 4], name: 'Madriguera de Zapadores',        biome: 'pradera',            recLevel: 4 },
-    pradera_baston:      { id: 'pradera_baston',      plot: [5, 3], name: 'Bastión del Jabalí Verde',       biome: 'pradera',            recLevel: 5 },
-    pradera_bosquecillo: { id: 'pradera_bosquecillo', plot: [3, 5], name: 'Santuario del Claro Vivo',       biome: 'pradera',            recLevel: 6 },
-    desierto:            { id: 'desierto',            plot: [6, 5], name: 'Templo de Arena',                biome: 'desierto',           recLevel: 7 },
-    desierto_piramide:   { id: 'desierto_piramide',   plot: [7, 5], name: 'Pirámide Enterrada',             biome: 'desierto',           recLevel: 8 },
-    desierto_oasis:      { id: 'desierto_oasis',      plot: [6, 3], name: 'Gruta del Oasis Esmeralda',      biome: 'desierto',           recLevel: 9 },
-    desierto_catacumbas: { id: 'desierto_catacumbas', plot: [2, 5], name: 'Catacumbas de los Escribas',     biome: 'desierto',           recLevel: 10 },
-    desierto_solario:    { id: 'desierto_solario',    plot: [5, 6], name: 'Solario del Faraón Radiante',    biome: 'desierto',           recLevel: 11 },
-    bosque_oscuro:       { id: 'bosque_oscuro',       plot: [2, 3], name: 'Caverna Sombría',                biome: 'bosque_oscuro',      recLevel: 16 },
-    bosque_necro:        { id: 'bosque_necro',        plot: [1, 1], name: 'Necrópolis Real',                biome: 'bosque_oscuro',      recLevel: 17 },
-    bosque_laboratorio:  { id: 'bosque_laboratorio',  plot: [8, 4], name: 'Laboratorio Alquímico Sellado',  biome: 'bosque_oscuro',      recLevel: 18 },
-    bosque_arana:        { id: 'bosque_arana',        plot: [1, 6], name: 'Nido de la Emperatriz Arácnea',  biome: 'bosque_oscuro',      recLevel: 19 },
-    bosque_pantano:      { id: 'bosque_pantano',      plot: [7, 7], name: 'Sumidero del Pantano Pútrido',   biome: 'bosque_oscuro',      recLevel: 20 },
-    montanas_heladas:    { id: 'montanas_heladas',    plot: [5, 1], name: 'Ciudadela Helada',               biome: 'montanas_heladas',   recLevel: 12 },
-    montanas_glaciar:    { id: 'montanas_glaciar',    plot: [8, 1], name: 'Santuario Glaciar Arcano',       biome: 'montanas_heladas',   recLevel: 13 },
-    montanas_mina:       { id: 'montanas_mina',       plot: [1, 3], name: 'Mina Profunda de Diamante',      biome: 'montanas_heladas',   recLevel: 14 },
-    montanas_fortaleza:  { id: 'montanas_fortaleza',  plot: [7, 2], name: 'Fortaleza Eterna del Norte',     biome: 'montanas_heladas',   recLevel: 15 },
-    tierras_volcanicas:  { id: 'tierras_volcanicas',  plot: [3, 8], name: 'Ciudadela Carmesí',              biome: 'tierras_volcanicas', recLevel: 21 },
-    volcan_abismo:       { id: 'volcan_abismo',       plot: [1, 8], name: 'Abismo del Señor Balak',         biome: 'tierras_volcanicas', recLevel: 22 },
-    volcan_fragua:       { id: 'volcan_fragua',       plot: [9, 8], name: 'Fragua del Titán Ígneo',         biome: 'tierras_volcanicas', recLevel: 23 },
-    volcan_caldera:      { id: 'volcan_caldera',      plot: [9, 1], name: 'Caldera del Fénix Solar',        biome: 'tierras_volcanicas', recLevel: 24 },
-    volcan_trono_ceniza: { id: 'volcan_trono_ceniza', plot: [0, 9], name: 'Trono de Ceniza Primordial',     biome: 'tierras_volcanicas', recLevel: 25 }
+    // Zona I - Pradera Esmeralda (5)
+    pradera:             { id: 'pradera',             plot: [10, 9], name: 'Cripta Esmeralda',               biome: 'pradera',            recLevel: 2 },
+    pradera_profunda:    { id: 'pradera_profunda',    plot: [9, 8],  name: 'Guarnición Goblin',              biome: 'pradera',            recLevel: 3 },
+    pradera_madriguera:  { id: 'pradera_madriguera',  plot: [8, 9],  name: 'Madriguera de Zapadores',        biome: 'pradera',            recLevel: 4 },
+    pradera_baston:      { id: 'pradera_baston',      plot: [10, 8], name: 'Bastión del Jabalí Verde',       biome: 'pradera',            recLevel: 5 },
+    pradera_bosquecillo: { id: 'pradera_bosquecillo', plot: [8, 10], name: 'Santuario del Claro Vivo',       biome: 'pradera',            recLevel: 6 },
+    // Zona II Norte - Desierto Dorado (5)
+    desierto:            { id: 'desierto',            plot: [9, 7],  name: 'Templo de Arena',                biome: 'desierto',           recLevel: 8 },
+    desierto_piramide:   { id: 'desierto_piramide',   plot: [10, 7], name: 'Pirámide Enterrada',             biome: 'desierto',           recLevel: 10 },
+    desierto_oasis:      { id: 'desierto_oasis',      plot: [8, 7],  name: 'Gruta del Oasis Esmeralda',      biome: 'desierto',           recLevel: 12 },
+    desierto_catacumbas: { id: 'desierto_catacumbas', plot: [9, 6],  name: 'Catacumbas de los Escribas',     biome: 'desierto',           recLevel: 14 },
+    desierto_solario:    { id: 'desierto_solario',    plot: [11, 6], name: 'Solario del Faraón Radiante',    biome: 'desierto',           recLevel: 16 },
+    // Zona II Este - Montañas Heladas (5)
+    montanas_heladas:    { id: 'montanas_heladas',    plot: [11, 9], name: 'Ciudadela Helada',               biome: 'montanas_heladas',   recLevel: 18 },
+    montanas_glaciar:    { id: 'montanas_glaciar',    plot: [12, 9], name: 'Santuario Glaciar Arcano',       biome: 'montanas_heladas',   recLevel: 20 },
+    montanas_mina:       { id: 'montanas_mina',       plot: [11, 8], name: 'Mina Profunda de Diamante',      biome: 'montanas_heladas',   recLevel: 22 },
+    montanas_fortaleza:  { id: 'montanas_fortaleza',  plot: [12, 10],name: 'Fortaleza Eterna del Norte',     biome: 'montanas_heladas',   recLevel: 24 },
+    montanas_cumbre:     { id: 'montanas_cumbre',     plot: [12, 8], name: 'Aguja de la Ventisca Eterna',    biome: 'montanas_heladas',   recLevel: 26 },
+    // Zona II Sur - Bosque Oscuro (5)
+    bosque_oscuro:       { id: 'bosque_oscuro',       plot: [9, 11], name: 'Caverna Sombría',                biome: 'bosque_oscuro',      recLevel: 28 },
+    bosque_necro:        { id: 'bosque_necro',        plot: [8, 11], name: 'Necrópolis Real',                biome: 'bosque_oscuro',      recLevel: 30 },
+    bosque_laboratorio:  { id: 'bosque_laboratorio',  plot: [10, 11],name: 'Laboratorio Alquímico Sellado',  biome: 'bosque_oscuro',      recLevel: 32 },
+    bosque_arana:        { id: 'bosque_arana',        plot: [9, 12], name: 'Nido de la Emperatriz Arácnea',  biome: 'bosque_oscuro',      recLevel: 34 },
+    bosque_pantano:      { id: 'bosque_pantano',      plot: [11, 12],name: 'Sumidero del Pantano Pútrido',   biome: 'bosque_oscuro',      recLevel: 36 },
+    // Zona II Oeste - Tierras Volcánicas (5)
+    tierras_volcanicas:  { id: 'tierras_volcanicas',  plot: [7, 9],  name: 'Ciudadela Carmesí',              biome: 'tierras_volcanicas', recLevel: 38 },
+    volcan_abismo:       { id: 'volcan_abismo',       plot: [6, 9],  name: 'Abismo del Señor Balak',         biome: 'tierras_volcanicas', recLevel: 40 },
+    volcan_fragua:       { id: 'volcan_fragua',       plot: [7, 8],  name: 'Fragua del Titán Ígneo',         biome: 'tierras_volcanicas', recLevel: 42 },
+    volcan_caldera:      { id: 'volcan_caldera',      plot: [6, 10], name: 'Caldera del Fénix Solar',        biome: 'tierras_volcanicas', recLevel: 44 },
+    volcan_trono_ceniza: { id: 'volcan_trono_ceniza', plot: [6, 8],  name: 'Trono de Ceniza Primordial',     biome: 'tierras_volcanicas', recLevel: 46 },
+    // Zona III Norte - Archipiélago Coralino (5)
+    coral_arrecife:      { id: 'coral_arrecife',      plot: [9, 5],  name: 'Gruta del Arrecife Coralino',    biome: 'archipielago_coral', recLevel: 50 },
+    coral_perla:         { id: 'coral_perla',         plot: [8, 5],  name: 'Sagrario de la Perla Turquesa',  biome: 'archipielago_coral', recLevel: 54 },
+    coral_abismo:        { id: 'coral_abismo',        plot: [10, 4], name: 'Fosa de las Mareas Abisales',    biome: 'archipielago_coral', recLevel: 58 },
+    coral_bastion:       { id: 'coral_bastion',       plot: [7, 4],  name: 'Fuerte del Corsario de Coral',   biome: 'archipielago_coral', recLevel: 62 },
+    coral_trono:         { id: 'coral_trono',         plot: [11, 3], name: 'Palacio del Leviatán Coralino',  biome: 'archipielago_coral', recLevel: 66 },
+    // Zona III Este - Cavernas de Cristal (5)
+    cristal_geoda:       { id: 'cristal_geoda',       plot: [13, 9], name: 'Geoda de Cuarzo Boreal',         biome: 'cavernas_cristal',   recLevel: 70 },
+    cristal_espejo:      { id: 'cristal_espejo',      plot: [14, 8], name: 'Salón de los Espejos Glaciales', biome: 'cavernas_cristal',   recLevel: 74 },
+    cristal_camara:      { id: 'cristal_camara',      plot: [14, 10],name: 'Cámara de Celestita Viva',       biome: 'cavernas_cristal',   recLevel: 78 },
+    cristal_nexo:        { id: 'cristal_nexo',        plot: [15, 7], name: 'Nexo del Coloso Prismático',     biome: 'cavernas_cristal',   recLevel: 82 },
+    cristal_corazon:     { id: 'cristal_corazon',     plot: [15, 11],name: 'Corazón del Cuarzo Eterno',      biome: 'cavernas_cristal',   recLevel: 86 },
+    // Zona III Sur - Selva Esmeralda (5)
+    selva_raices:        { id: 'selva_raices',        plot: [9, 13], name: 'Laberinto de Raíces Férreas',    biome: 'selva_esmeralda',    recLevel: 90 },
+    selva_piramide:      { id: 'selva_piramide',      plot: [8, 14], name: 'Templo Oculto de Jade',          biome: 'selva_esmeralda',    recLevel: 94 },
+    selva_colmena:       { id: 'selva_colmena',       plot: [10, 14],name: 'Colmena de la Miriápoda Verde',  biome: 'selva_esmeralda',    recLevel: 98 },
+    selva_dosel:         { id: 'selva_dosel',         plot: [7, 13], name: 'Dosel del Guardián Carnívoro',   biome: 'selva_esmeralda',    recLevel: 102 },
+    selva_corazon:       { id: 'selva_corazon',       plot: [11, 13],name: 'Santuario del Tótem Ancestral',  biome: 'selva_esmeralda',    recLevel: 106 },
+    // Zona III Oeste - Caldera de Ceniza (5)
+    caldera_fumarola:    { id: 'caldera_fumarola',    plot: [5, 9],  name: 'Fumarolas de Escoria Ardiente',  biome: 'caldera_ceniza',     recLevel: 112 },
+    caldera_crater:      { id: 'caldera_crater',      plot: [4, 8],  name: 'Cráter de los Ígnidos',          biome: 'caldera_ceniza',     recLevel: 118 },
+    caldera_fundicion:   { id: 'caldera_fundicion',   plot: [4, 10], name: 'Alta Fundición de Magma',        biome: 'caldera_ceniza',     recLevel: 124 },
+    caldera_bestia:      { id: 'caldera_bestia',      plot: [3, 7],  name: 'Guarida del Minotauro Basáltico',biome: 'caldera_ceniza',     recLevel: 130 },
+    caldera_senor:       { id: 'caldera_senor',       plot: [3, 11], name: 'Trono del Archidemonio de Ceniza',biome:'caldera_ceniza',     recLevel: 136 },
+    // Zona IV Norte - Dinastía de Arena Roja (6)
+    dinastia_tumbas:     { id: 'dinastia_tumbas',     plot: [9, 2],  name: 'Tumbas de Arena Escarlata',      biome: 'dinastia_arena',     recLevel: 142 },
+    dinastia_escarabajo: { id: 'dinastia_escarabajo', plot: [7, 1],  name: 'Hipogeo del Escarabajo Solar',   biome: 'dinastia_arena',     recLevel: 150 },
+    dinastia_obelisco:   { id: 'dinastia_obelisco',   plot: [11, 1], name: 'Obelisco de Ágata Roja',         biome: 'dinastia_arena',     recLevel: 158 },
+    dinastia_camara:     { id: 'dinastia_camara',     plot: [5, 0],  name: 'Cámara de los Faraones Eternos', biome: 'dinastia_arena',     recLevel: 166 },
+    dinastia_sol:        { id: 'dinastia_sol',        plot: [13, 0], name: 'Zigurat del Sol Implacable',     biome: 'dinastia_arena',     recLevel: 174 },
+    dinastia_faraon:     { id: 'dinastia_faraon',     plot: [9, 0],  name: 'Mausoleo del Emperador Escarlata',biome:'dinastia_arena',     recLevel: 184 },
+    // Zona IV Este - Glaciar Profundo (6)
+    glaciar_grieta:      { id: 'glaciar_grieta',      plot: [16, 9], name: 'Grieta del Hielo Milenario',     biome: 'glaciar_profundo',   recLevel: 192 },
+    glaciar_vestigios:   { id: 'glaciar_vestigios',   plot: [17, 7], name: 'Vestigios de Bismuto Astral',    biome: 'glaciar_profundo',   recLevel: 202 },
+    glaciar_ojo:         { id: 'glaciar_ojo',         plot: [17, 11],name: 'Ojo de la Aurora Congelada',     biome: 'glaciar_profundo',   recLevel: 212 },
+    glaciar_coloso:      { id: 'glaciar_coloso',      plot: [18, 4], name: 'Bóveda del Titán Cero',          biome: 'glaciar_profundo',   recLevel: 222 },
+    glaciar_sancta:      { id: 'glaciar_sancta',      plot: [18, 14],name: 'Catedral del Invierno Perpetuo', biome: 'glaciar_profundo',   recLevel: 232 },
+    glaciar_abismo:      { id: 'glaciar_abismo',      plot: [18, 9], name: 'Trono del Soberano Escarchado',  biome: 'glaciar_profundo',   recLevel: 245 },
+    // Zona IV Sur - Ciénaga Pútrida (6)
+    pantano_raices:      { id: 'pantano_raices',      plot: [9, 16], name: 'Fangal de Resina Tóxica',        biome: 'cienaga_putrida',    recLevel: 255 },
+    pantano_esporas:     { id: 'pantano_esporas',     plot: [7, 16], name: 'Invernadero de Esporas Mortales',biome: 'cienaga_putrida',    recLevel: 266 },
+    pantano_cieno:       { id: 'pantano_cieno',       plot: [11, 16],name: 'Ciénega del Gusano Pútrido',     biome: 'cienaga_putrida',    recLevel: 277 },
+    pantano_calabaza:    { id: 'pantano_calabaza',    plot: [6, 17], name: 'Páramo del Rey Calabaza Tóxico', biome: 'cienaga_putrida',    recLevel: 288 },
+    pantano_bastion:     { id: 'pantano_bastion',     plot: [12, 17],name: 'Bastión de los Hidromantes',     biome: 'cienaga_putrida',    recLevel: 299 },
+    pantano_madre:       { id: 'pantano_madre',       plot: [9, 18], name: 'Fosa de la Madre Venenosa',      biome: 'cienaga_putrida',    recLevel: 312 },
+    // Zona IV Sudoeste/Sudeste - Necrópolis Ósea (6)
+    necro_osario:        { id: 'necro_osario',        plot: [4, 15], name: 'Osario de los Gigantes Caídos',  biome: 'necropolis_osea',    recLevel: 325 },
+    necro_cripta:        { id: 'necro_cripta',        plot: [14, 15],name: 'Cripta de Plata Maldita',        biome: 'necropolis_osea',    recLevel: 338 },
+    necro_catacumba:     { id: 'necro_catacumba',     plot: [2, 17], name: 'Catacumba del Ojo Espectral',    biome: 'necropolis_osea',    recLevel: 350 },
+    necro_foso:          { id: 'necro_foso',          plot: [16, 17],name: 'Foso del Gusano Sepulcral',      biome: 'necropolis_osea',    recLevel: 365 },
+    necro_torre:         { id: 'necro_torre',         plot: [3, 18], name: 'Torre de los Liche Ancestrales', biome: 'necropolis_osea',    recLevel: 380 },
+    necro_trono:         { id: 'necro_trono',         plot: [15, 18],name: 'Salón del Monarca Óseo',         biome: 'necropolis_osea',    recLevel: 398 },
+    // Zona IV Oeste Final - Tierras Malditas Abisales (6, #75 = Espadachín Carmesí Abisal!)
+    maldita_sangre:      { id: 'maldita_sangre',      plot: [2, 9],  name: 'Altar de la Sangre Abisal',      biome: 'tierras_malditas',   recLevel: 420 },
+    maldita_carne:       { id: 'maldita_carne',       plot: [1, 7],  name: 'Jardín de la Flora Maldita',     biome: 'tierras_malditas',   recLevel: 445 },
+    maldita_forja:       { id: 'maldita_forja',       plot: [1, 11], name: 'Yunque del Horno Infernal',      biome: 'tierras_malditas',   recLevel: 470 },
+    maldita_calabaza:    { id: 'maldita_calabaza',    plot: [0, 4],  name: 'Bastión del Señor Carmesí',      biome: 'tierras_malditas',   recLevel: 495 },
+    maldita_abismo:      { id: 'maldita_abismo',      plot: [0, 14], name: 'Abismo de los Espectros Rojos',  biome: 'tierras_malditas',   recLevel: 525 },
+    eclipse_carmesi:     { id: 'eclipse_carmesi',     plot: [0, 9],  name: 'Ciudadela del Eclipse Carmesí',  biome: 'tierras_malditas',   recLevel: 580, isFinal: true }
   };
 
   const NODE_DISPLAY_NAMES = {
@@ -118,6 +212,23 @@
     obsidian_vein: 'Veta de Obsidiana',
     magma_core_vein: 'Núcleo de Magma',
     adamantite_vein: 'Veta de Adamantita',
+    coral_abisal_node: 'Arrecife de Coral Abisal',
+    perla_turquesa_node: 'Coral de Perla Turquesa',
+    madera_ferrea_node: 'Árbol de Madera Férrea',
+    resina_toxica_node: 'Cristal de Resina Tóxica',
+    pirita_solar_node: 'Veta de Pirita Solar',
+    agata_roja_node: 'Veta de Ágata Roja',
+    cuarzo_boreal_node: 'Espira de Cuarzo Boreal',
+    hielo_eterno_node: 'Monolito de Hielo Eterno',
+    hueso_fosil_node: 'Yacimiento de Hueso Fósil',
+    plata_maldita_node: 'Veta de Plata Maldita',
+    escoria_caldera_node: 'Roca de Escoria Ardiente',
+    cristal_carmesi_node: 'Cristal Carmesí Abisal',
+    bismuto_astral_node: 'Veta de Bismuto Astral',
+    celestita_node: 'Cúmulo de Celestita',
+    jade_ancestral_node: 'Laja de Jade Ancestral',
+    marmol_oscuro_node: 'Mármol Oscuro Abisal',
+    flor_pantano_node: 'Flor Carnívora de Pantano',
     dig_spot: 'Zona de Excavación',
     meteor: 'Meteorito Estelar'
   };
@@ -233,7 +344,7 @@
         : Math.floor(Math.random() * 89999999 + 10000000);
       const rng = seededRand(this.worldSeed);
       const sectorAngle = rng() * Math.PI * 2;
-      const C = CENTER_PLOT || 4;
+      const C = CENTER_PLOT || 9;
 
       this.tiles = Array.from({ length: WORLD_TILES }, () => new Uint8Array(WORLD_TILES));
       this.plotBiomes = Array.from({ length: GRID_PLOTS }, () => new Array(GRID_PLOTS));
@@ -244,38 +355,14 @@
       this.sheep = [];
       this.nextNodeId = 1;
 
-      const outerOrder = ['desierto', 'montanas_heladas', 'bosque_oscuro', 'tierras_volcanicas'];
+      const outerOrder = Balaclava.CONST.BIOME_ORDER ? [...Balaclava.CONST.BIOME_ORDER] : ['pradera', 'desierto', 'montanas_heladas', 'bosque_oscuro', 'tierras_volcanicas'];
       this.biomeOrder = outerOrder;
       this.fertilizedTiles = {};
 
-      // Assign all 100 plots into concentric rings around center (C, C) by biome tier:
-      // Pradera (1 center + 6 inner = 7), Desierto (12), Montanas Heladas (18), Bosque Oscuro (24), Tierras Volcanicas (39).
-      const nonCenter = [];
+      // Assign all 19x19 = 361 plots using directional quadrant + Zone Tier generation
       for (let gy = 0; gy < GRID_PLOTS; gy++) {
         for (let gx = 0; gx < GRID_PLOTS; gx++) {
-          if (gx === C && gy === C) {
-            this.plotBiomes[gy][gx] = 'pradera';
-            continue;
-          }
-          const r = Math.hypot(gx - C, gy - C);
-          const ang = Math.atan2(gy - C, gx - C);
-          const jitter = (hash2D(gx, gy, this.worldSeed + 19) - 0.5) * 0.22;
-          nonCenter.push({ gx, gy, score: r + jitter, ang });
-        }
-      }
-      nonCenter.sort((a, b) => (a.score !== b.score ? a.score - b.score : a.ang - b.ang));
-      const ringQuotas = [
-        ['pradera', 6],
-        ['desierto', 12],
-        ['montanas_heladas', 18],
-        ['bosque_oscuro', 24],
-        ['tierras_volcanicas', 39]
-      ];
-      let qCursor = 0;
-      for (const [bId, quota] of ringQuotas) {
-        for (let k = 0; k < quota && qCursor < nonCenter.length; k++) {
-          const p = nonCenter[qCursor++];
-          this.plotBiomes[p.gy][p.gx] = bId;
+          this.plotBiomes[gy][gx] = getPlotBiome(gx, gy, this.worldSeed, sectorAngle);
         }
       }
 
@@ -288,10 +375,15 @@
         for (let gx = 0; gx < GRID_PLOTS; gx++) {
           const b = this.plotBiomes[gy][gx];
           const r = Math.hypot(gx - C, gy - C);
-          if (b === 'tierras_volcanicas') this.plotElevation[gy][gx] = 2;
-          else if (b === 'montanas_heladas') this.plotElevation[gy][gx] = r >= 3.2 ? 2 : 1;
-          else if (b === 'bosque_oscuro' || b === 'desierto') this.plotElevation[gy][gx] = r >= 2.3 ? 1 : 0;
-          else this.plotElevation[gy][gx] = 0;
+          if (b === 'tierras_volcanicas' || b === 'caldera_ceniza' || b === 'tierras_malditas' || b === 'glaciar_profundo') {
+            this.plotElevation[gy][gx] = 2;
+          } else if (b === 'montanas_heladas' || b === 'cavernas_cristal' || b === 'dinastia_arena' || b === 'necropolis_osea') {
+            this.plotElevation[gy][gx] = r >= 3.2 ? 2 : 1;
+          } else if (b === 'bosque_oscuro' || b === 'desierto' || b === 'selva_esmeralda' || b === 'cienaga_putrida') {
+            this.plotElevation[gy][gx] = r >= 2.3 ? 1 : 0;
+          } else {
+            this.plotElevation[gy][gx] = 0;
+          }
         }
       }
 
@@ -303,12 +395,12 @@
         }
       }
 
-      // Unlock starting center island (4,4)
+      // Unlock starting center island (9,9)
       this.unlockPlot(C, C, true);
     }
 
     assignDynamicLandmarks(rng) {
-      const C = CENTER_PLOT || 4;
+      const C = CENTER_PLOT || 9;
       this.dungeonGatePlots = {};
       this.altarPlots = {};
       this.easterEggPlots = {};
@@ -318,12 +410,18 @@
 
       const distToCenter = ([gx, gy]) => Math.hypot(gx - C, gy - C);
 
-      // 1. Place all 24 Dungeon Gates across their biomes (gracefully falling back to any free plot if needed)
-      const biomeOrderIdx = {};
+      // 1. Place all 75 Dungeon Gates cleanly inside their biome (Spread evenly inner->outer per biome)
+      const byBiomeCount = {};
+      const byBiomeGates = {};
       for (const [dId, def] of Object.entries(DUNGEON_GATES)) {
         const bId = def.biome;
-        const idxInBiome = biomeOrderIdx[bId] || 0;
-        biomeOrderIdx[bId] = idxInBiome + 1;
+        byBiomeGates[bId] = (byBiomeGates[bId] || 0) + 1;
+      }
+      for (const [dId, def] of Object.entries(DUNGEON_GATES)) {
+        const bId = def.biome;
+        const idxInBiome = byBiomeCount[bId] || 0;
+        byBiomeCount[bId] = idxInBiome + 1;
+        const totalInBiome = Math.max(1, byBiomeGates[bId] || 5);
 
         let candidates = [];
         for (let gy = 0; gy < GRID_PLOTS; gy++) {
@@ -346,24 +444,33 @@
           const nearPradera = candidates.filter(([x, y]) => distToCenter([x, y]) <= 1.6);
           const pool = nearPradera.length ? nearPradera : candidates;
           pickPlot = pool[Math.floor(rng() * Math.max(1, pool.length))] || def.plot;
-        } else if (idxInBiome === 0) {
-          const slice = candidates.slice(0, Math.min(4, candidates.length));
-          pickPlot = slice[Math.floor(rng() * Math.max(1, slice.length))] || candidates[0] || def.plot;
+        } else if (def.isFinal) {
+          pickPlot = candidates[candidates.length - 1] || def.plot;
         } else {
-          const sliceIdx = Math.min(candidates.length - 1, Math.floor((idxInBiome / 5) * candidates.length));
-          const spanEnd = Math.min(candidates.length, sliceIdx + Math.max(2, Math.ceil(candidates.length * 0.35)));
-          const slice = candidates.slice(Math.max(0, sliceIdx - 1), spanEnd);
+          const sliceIdx = Math.min(candidates.length - 1, Math.floor((idxInBiome / totalInBiome) * candidates.length));
+          const spanEnd = Math.min(candidates.length, sliceIdx + Math.max(2, Math.ceil(candidates.length / totalInBiome)));
+          const slice = candidates.slice(Math.max(0, sliceIdx), spanEnd);
           pickPlot = slice[Math.floor(rng() * Math.max(1, slice.length))] || candidates[candidates.length - 1] || def.plot;
         }
         this.dungeonGatePlots[dId] = [...pickPlot];
         usedKeys.add(`${pickPlot[0]},${pickPlot[1]}`);
       }
 
-      // 2. Place Altars (9 shrines distributed across biomes, one close to starter island)
-      const altarIds = ['fuente_sagrada', 'altar_fortuna', 'altar_furia', 'altar_sabio', 'altar_sacrificio', 'altar_arcanista', 'altar_cazador', 'altar_fortuna', 'fuente_sagrada'];
-      const altarBiomes = ['pradera', 'desierto', 'bosque_oscuro', 'montanas_heladas', 'tierras_volcanicas', 'bosque_oscuro', 'pradera', 'desierto', 'montanas_heladas'];
+      // 2. Place Altars (18 shrines spread across all 14 biomes)
+      const altarIds = [
+        'fuente_sagrada', 'altar_fortuna', 'altar_furia', 'altar_sabio', 'altar_sacrificio',
+        'altar_arcanista', 'altar_cazador', 'fuente_sagrada', 'altar_fortuna', 'altar_furia',
+        'altar_sabio', 'altar_arcanista', 'altar_sacrificio', 'altar_cazador', 'fuente_sagrada',
+        'altar_fortuna', 'altar_furia', 'altar_arcanista'
+      ];
+      const altarBiomes = [
+        'pradera', 'desierto', 'montanas_heladas', 'bosque_oscuro', 'tierras_volcanicas',
+        'archipielago_coral', 'cavernas_cristal', 'selva_esmeralda', 'caldera_ceniza', 'dinastia_arena',
+        'glaciar_profundo', 'cienaga_putrida', 'necropolis_osea', 'tierras_malditas',
+        'archipielago_coral', 'selva_esmeralda', 'glaciar_profundo', 'tierras_malditas'
+      ];
       altarIds.forEach((aId, idx) => {
-        const bTarget = altarBiomes[idx];
+        const bTarget = altarBiomes[idx % altarBiomes.length];
         let cands = [];
         for (let gy = 0; gy < GRID_PLOTS; gy++) {
           for (let gx = 0; gx < GRID_PLOTS; gx++) {
@@ -384,7 +491,7 @@
         }
       });
 
-      // 3. Place all 8 Easter Eggs on distinct candidate plots
+      // 3. Place all Easter Eggs on distinct candidate plots
       for (const [eeId, eeDef] of Object.entries(EASTER_EGG_DEFS)) {
         const cands = [];
         for (let gy = 0; gy < GRID_PLOTS; gy++) {
@@ -406,7 +513,7 @@
         }
       }
 
-      // 3b. Place 10 unmarked Secret Chests on outer islands (dist >= 2.2 from center)
+      // 3b. Place 18 unmarked Secret Chests on outer islands (dist >= 2.2 from center)
       const outerUnused = [];
       const outerFallback = [];
       for (let gy = 0; gy < GRID_PLOTS; gy++) {
@@ -420,7 +527,6 @@
           }
         }
       }
-      // Deterministic shuffle with rng
       for (let i = outerUnused.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [outerUnused[i], outerUnused[j]] = [outerUnused[j], outerUnused[i]];
@@ -432,7 +538,7 @@
       const secretPool = [...outerUnused, ...outerFallback];
       let nextSecretIdx = 0;
       let secretCursor = 0;
-      while (nextSecretIdx < 12 && secretCursor < secretPool.length) {
+      while (nextSecretIdx < 18 && secretCursor < secretPool.length) {
         const [sgx, sgy] = secretPool[secretCursor++];
         const skey = `${sgx},${sgy}`;
         if (this.secretChestPlots[skey] === undefined) {
@@ -497,7 +603,7 @@
     }
 
     getNpcPlot(npcOrId) {
-      const C = CENTER_PLOT || 4;
+      const C = CENTER_PLOT || 9;
       const id = typeof npcOrId === 'string' ? npcOrId : npcOrId.id;
       if (this.npcPlots && this.npcPlots[id]) return this.npcPlots[id];
       const def = Balaclava.NPCS && Balaclava.NPCS.find(n => n.id === id);
@@ -534,7 +640,7 @@
     }
 
     generatePlotTerrain(gx, gy) {
-      const C = CENTER_PLOT || 4;
+      const C = CENTER_PLOT || 9;
       const biome = this.plotBiomes[gy][gx];
       const ox = gx * PLOT_TILES;
       const oy = gy * PLOT_TILES;
@@ -682,7 +788,7 @@
         }
       }
 
-      if (biome === 'tierras_volcanicas') {
+      if (biome === 'tierras_volcanicas' || biome === 'caldera_ceniza' || biome === 'tierras_malditas') {
         const poolCount = 1 + Math.floor(hash2D(gx + 17, gy + 71, seedBase + 401) * 2);
         const setVolTile = (lx, ly, val) => {
           if (lx >= 1 && ly >= 1 && lx < PLOT_TILES - 1 && ly < PLOT_TILES - 1) {
@@ -1073,7 +1179,7 @@
     }
 
     getPlotRing(gx, gy) {
-      const C = CENTER_PLOT || 4;
+      const C = CENTER_PLOT || 9;
       return Math.max(Math.abs(gx - C), Math.abs(gy - C));
     }
 
@@ -1113,7 +1219,7 @@
       const size = WORLD_TILES * WORLD_TILES;
       const out = new Array(size);
       const seed = (this.worldSeed || 901);
-      const C = CENTER_PLOT || 4;
+      const C = CENTER_PLOT || 9;
       for (let ty = 0; ty < WORLD_TILES; ty++) {
         for (let tx = 0; tx < WORLD_TILES; tx++) {
           const gx = Math.min(GRID_PLOTS - 1, Math.max(0, Math.floor(tx / PLOT_TILES)));
@@ -1364,8 +1470,17 @@
           desierto: ['conejo', 'pato'],
           bosque_oscuro: ['cerdo', 'conejo'],
           montanas_heladas: ['sheep', 'conejo'],
+          archipielago_coral: ['pato', 'conejo'],
+          selva_esmeralda: ['cerdo', 'pato', 'conejo'],
+          cavernas_cristal: ['sheep'],
+          dinastia_arena: ['conejo'],
+          glaciar_profundo: ['sheep'],
+          cienaga_putrida: ['pato'],
+          caldera_ceniza: [],
+          necropolis_osea: [],
+          tierras_malditas: [],
           tierras_volcanicas: []
-        }[biome] || ['sheep'];
+        }[biome] ?? ['sheep'];
         if (faunaPool.length && Math.random() < 0.72) {
           this.spawnAnimal(ox + randInt(3, 8), oy + randInt(3, 8), pick(faunaPool));
         }
@@ -1448,14 +1563,23 @@
     }
 
     getBiomeResourceScaling(gx, gy, explicitBiome = null) {
-      const C = CENTER_PLOT || 4;
+      const C = CENTER_PLOT || 9;
       const biome = explicitBiome || this.plotBiomes?.[gy]?.[gx] || 'pradera';
       const TIER = {
         pradera:            { hp: 1.00, drop: 1.00, xp: 1.00 },
-        desierto:           { hp: 1.55, drop: 1.50, xp: 1.35 },
-        montanas_heladas:   { hp: 2.25, drop: 2.00, xp: 1.75 },
-        bosque_oscuro:      { hp: 2.95, drop: 2.55, xp: 2.20 },
-        tierras_volcanicas: { hp: 3.90, drop: 3.25, xp: 2.85 }
+        desierto:           { hp: 1.50, drop: 1.45, xp: 1.35 },
+        montanas_heladas:   { hp: 2.10, drop: 1.90, xp: 1.75 },
+        bosque_oscuro:      { hp: 2.75, drop: 2.40, xp: 2.20 },
+        tierras_volcanicas: { hp: 3.55, drop: 2.95, xp: 2.85 },
+        archipielago_coral: { hp: 4.30, drop: 3.30, xp: 3.40 },
+        cavernas_cristal:   { hp: 5.00, drop: 3.65, xp: 3.90 },
+        selva_esmeralda:    { hp: 5.80, drop: 4.00, xp: 4.50 },
+        caldera_ceniza:     { hp: 6.60, drop: 4.40, xp: 5.10 },
+        dinastia_arena:     { hp: 7.50, drop: 4.90, xp: 5.80 },
+        glaciar_profundo:   { hp: 8.50, drop: 5.40, xp: 6.50 },
+        cienaga_putrida:    { hp: 9.60, drop: 5.90, xp: 7.30 },
+        necropolis_osea:    { hp: 10.8, drop: 6.50, xp: 8.20 },
+        tierras_malditas:   { hp: 12.2, drop: 7.20, xp: 9.20 }
       }[biome] || { hp: 1.00, drop: 1.00, xp: 1.00 };
 
       if (gx === C && gy === C && biome === 'pradera') {
@@ -1575,6 +1699,23 @@
         obsidian_vein:        { hp: 70, tool: 'pico', drops: [{ id: 'obsidiana_bruta', min: 2, max: 3 }, { id: 'carbon_eterno', min: 1, max: 1, chance: 0.35 }], xp: 48 },
         magma_core_vein:      { hp: 68, tool: 'pico', drops: [{ id: 'esencia_magma', min: 1, max: 2 }, { id: 'azufre', min: 2, max: 3 }, { id: 'nucleo_solar', min: 1, max: 1, chance: 0.35 }, { id: 'escamas_dragon', min: 1, max: 1, chance: 0.30 }], xp: 48 },
         adamantite_vein:      { hp: 72, tool: 'pico', drops: [{ id: 'adamantita', min: 1, max: 2 }, { id: 'diamantes', min: 1, max: 1, chance: 0.35 }], xp: 52 },
+        coral_abisal_node:    { hp: 46, tool: 'pico', drops: [{ id: 'coral_roca', min: 2, max: 3 }, { id: 'coral_brillante', min: 1, max: 2, chance: 0.45 }, { id: 'concha_marina', min: 1, max: 1, chance: 0.3 }], xp: 34 },
+        perla_turquesa_node:  { hp: 50, tool: 'pico', drops: [{ id: 'perla_turquesa', min: 1, max: 2 }, { id: 'coral_roca', min: 1, max: 2 }, { id: 'gema_marina', min: 1, max: 1, chance: 0.35 }], xp: 38 },
+        madera_ferrea_node:   { hp: 56, tool: 'hacha', drops: [{ id: 'madera_ferrea', min: 2, max: 4 }, { id: 'madera', min: 2, max: 3 }, { id: 'bellota', min: 1, max: 2, chance: 0.35 }], xp: 40 },
+        resina_toxica_node:   { hp: 58, tool: 'pico', drops: [{ id: 'resina_toxica', min: 1, max: 2 }, { id: 'polvo_veneno', min: 1, max: 2 }, { id: 'esporas_toxicas', min: 1, max: 2 }], xp: 44 },
+        pirita_solar_node:    { hp: 62, tool: 'pico', drops: [{ id: 'pirita_solar', min: 2, max: 3 }, { id: 'oro', min: 1, max: 2 }, { id: 'nucleo_solar', min: 1, max: 1, chance: 0.25 }], xp: 48 },
+        agata_roja_node:      { hp: 60, tool: 'pico', drops: [{ id: 'agata_roja', min: 1, max: 2 }, { id: 'pirita_solar', min: 1, max: 2 }, { id: 'rubi', min: 1, max: 1, chance: 0.3 }], xp: 46 },
+        cuarzo_boreal_node:   { hp: 54, tool: 'pico', drops: [{ id: 'cuarzo_boreal', min: 2, max: 3 }, { id: 'esquirla_hielo', min: 1, max: 2 }, { id: 'cristales', min: 1, max: 2 }], xp: 42 },
+        hielo_eterno_node:    { hp: 66, tool: 'pico', drops: [{ id: 'hielo_eterno', min: 1, max: 2 }, { id: 'cuarzo_boreal', min: 1, max: 2 }, { id: 'azurita_glacial', min: 1, max: 1, chance: 0.45 }], xp: 52 },
+        hueso_fosil_node:     { hp: 64, tool: 'pico', drops: [{ id: 'hueso_fosil', min: 2, max: 3 }, { id: 'huesos', min: 2, max: 3 }, { id: 'craneo_maldito', min: 1, max: 1, chance: 0.35 }], xp: 50 },
+        plata_maldita_node:   { hp: 68, tool: 'pico', drops: [{ id: 'plata_maldita', min: 2, max: 3 }, { id: 'plata', min: 1, max: 2 }, { id: 'gema_alma', min: 1, max: 1, chance: 0.25 }], xp: 54 },
+        escoria_caldera_node: { hp: 60, tool: 'pico', drops: [{ id: 'escoria_caldera', min: 2, max: 3 }, { id: 'obsidiana_bruta', min: 1, max: 2 }, { id: 'carbon', min: 2, max: 3 }], xp: 48 },
+        cristal_carmesi_node: { hp: 74, tool: 'pico', drops: [{ id: 'cristal_carmesi', min: 1, max: 2 }, { id: 'polvo_carmesi', min: 1, max: 2 }, { id: 'esencia_magma', min: 1, max: 1, chance: 0.45 }], xp: 62 },
+        bismuto_astral_node:  { hp: 66, tool: 'pico', drops: [{ id: 'bismuto_astral', min: 1, max: 2 }, { id: 'polvo_estelar', min: 1, max: 2 }, { id: 'cristales_magicos', min: 1, max: 2 }], xp: 56 },
+        celestita_node:       { hp: 56, tool: 'pico', drops: [{ id: 'celestita_cristal', min: 1, max: 2 }, { id: 'cuarzo_boreal', min: 1, max: 2 }, { id: 'zafiro', min: 1, max: 1, chance: 0.35 }], xp: 45 },
+        jade_ancestral_node:  { hp: 58, tool: 'pico', drops: [{ id: 'jade_ancestral', min: 1, max: 2 }, { id: 'jade', min: 1, max: 2 }, { id: 'esmeraldas', min: 1, max: 1, chance: 0.4 }], xp: 46 },
+        marmol_oscuro_node:   { hp: 72, tool: 'pico', drops: [{ id: 'marmol_oscuro', min: 2, max: 3 }, { id: 'piedra', min: 2, max: 3 }, { id: 'cristal_abismal', min: 1, max: 1, chance: 0.4 }], xp: 58 },
+        flor_pantano_node:    { hp: 24, tool: 'guadana', drops: [{ id: 'flor_pantano', min: 1, max: 2 }, { id: 'polvo_veneno', min: 1, max: 2 }, { id: 'esporas_toxicas', min: 1, max: 2 }], xp: 34 },
         dig_spot:       { hp: 8,  tool: 'pala', drops: [{ id: 'arena', min: 2, max: 3 }, { id: 'arcilla', min: 1, max: 3 }, { id: 'salitre', min: 1, max: 2, chance: 0.5 }, { id: 'huesos', min: 1, max: 1, chance: 0.45 }, { id: 'concha_marina', min: 1, max: 1, chance: 0.22 }, { id: 'botella_mensaje', min: 1, max: 1, chance: 0.18 }, { id: 'craneo_maldito', min: 1, max: 1, chance: 0.12 }, { id: 'fragmentos_antiguos', min: 1, max: 1, chance: 0.12 }], xp: 12 },
         meteor:         { hp: 55, tool: 'pico', drops: [{ id: 'diamantes', min: 2, max: 3 }, { id: 'polvo_estelar', min: 1, max: 2 }, { id: 'cristales_magicos', min: 2, max: 4 }, { id: 'obsidiana_bruta', min: 1, max: 2, chance: 0.65 }, { id: 'gema_alma', min: 1, max: 1, chance: 0.35 }, { id: 'onice', min: 1, max: 1, chance: 0.28 }, { id: 'fragmentos_antiguos', min: 1, max: 1, chance: 0.5 }], xp: 65 }
       };
@@ -1660,38 +1801,49 @@
       if (!spot) return false;
       const [tx, ty] = spot;
 
-      // Distance-scaled rarity pools: common trees/rocks near starter plot (4,4), rare gems far away
-      const C = Balaclava.CONST.CENTER_PLOT || 4;
+      const C = Balaclava.CONST.CENTER_PLOT || 9;
       const plotDist = Math.hypot(gx - C, gy - C);
 
-      // Ultra-rare buried dig spot (~1.5% when plot has none yet)
-      if (plotDist > 0 && Math.random() < 0.015) {
+      if (plotDist > 0 && Math.random() < 0.018) {
         const hasDig = this.nodes.some(n => n.kind === 'dig_spot' && Math.floor(n.tx / PLOT_TILES) === gx && Math.floor(n.ty / PLOT_TILES) === gy);
         if (!hasDig) return !!this.spawnSpecialNode(tx, ty, 'dig_spot', biome);
       }
 
       const pool = [];
       if (biome === 'pradera') {
-        pool.push('tree', 'tree', 'tree', 'tree', 'rock', 'rock', 'bush', 'bush', 'herb_patch', 'wild_crop_patch', 'coal_vein', 'copper_vein', 'tin_vein');
-        if (plotDist >= 0.9) pool.push('iron_vein', 'iron_vein', 'malachite_vein', 'silver_vein');
-        if (plotDist >= 1.3) pool.push('silver_vein', 'gold_vein', 'jade_vein');
+        pool.push('tree', 'tree', 'tree', 'rock', 'rock', 'bush', 'bush', 'herb_patch', 'wild_crop_patch', 'coal_vein', 'coal_vein', 'copper_vein', 'copper_vein', 'tin_vein');
+        if (plotDist >= 0.9) pool.push('iron_vein', 'iron_vein', 'malachite_vein', 'malachite_vein', 'silver_vein');
+        if (plotDist >= 1.2) pool.push('silver_vein', 'gold_vein', 'jade_vein');
       } else if (biome === 'desierto') {
-        pool.push('cactus', 'cactus', 'cactus', 'rock', 'rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'star_sand_vein', 'malachite_vein');
-        if (plotDist >= 1.3) pool.push('silver_vein', 'gold_vein', 'sulfur_vein', 'amber_vein', 'platinum_vein', 'jade_vein');
-        if (plotDist >= 1.9) pool.push('gold_vein', 'platinum_vein', 'crystal_node', 'amber_vein');
+        pool.push('cactus', 'cactus', 'rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'star_sand_vein', 'gold_vein', 'malachite_vein', 'amber_vein');
+        if (plotDist >= 2.2) pool.push('silver_vein', 'gold_vein', 'sulfur_vein', 'amber_vein', 'platinum_vein', 'jade_vein');
       } else if (biome === 'montanas_heladas') {
-        pool.push('tree', 'tree', 'tree', 'rock', 'iron_vein', 'silver_vein', 'ice_crystal', 'gold_vein', 'platinum_vein', 'azurite_vein');
-        if (plotDist >= 2.2) pool.push('azurite_vein', 'crystal_node', 'sapphire_node', 'emerald_vein');
-        if (plotDist >= 2.6) pool.push('sapphire_node', 'emerald_vein', 'mithril_vein', 'titanium_vein');
+        pool.push('tree', 'tree', 'rock', 'iron_vein', 'silver_vein', 'ice_crystal', 'ice_crystal', 'gold_vein', 'platinum_vein', 'azurite_vein', 'sapphire_node');
+        if (plotDist >= 2.4) pool.push('crystal_node', 'emerald_vein', 'mithril_vein', 'titanium_vein');
       } else if (biome === 'bosque_oscuro') {
-        pool.push('giant_tree', 'giant_tree', 'giant_tree', 'giant_tree', 'mushroom_node', 'mushroom_node', 'herb_patch', 'wild_crop_patch', 'iron_vein', 'silver_vein', 'jade_vein');
-        if (plotDist >= 3.4) pool.push('amethyst_vein', 'crystal_node', 'abyssal_crystal_vein', 'bloodstone_vein', 'mithril_vein');
-        if (plotDist >= 3.8) pool.push('amethyst_vein', 'bloodstone_vein', 'mithril_vein', 'titanium_vein', 'abyssal_crystal_vein');
+        pool.push('giant_tree', 'giant_tree', 'mushroom_node', 'mushroom_node', 'herb_patch', 'wild_crop_patch', 'iron_vein', 'silver_vein', 'jade_vein', 'amethyst_vein', 'abyssal_crystal_vein');
+        if (plotDist >= 2.4) pool.push('crystal_node', 'bloodstone_vein', 'mithril_vein', 'titanium_vein');
+      } else if (biome === 'tierras_volcanicas') {
+        pool.push('volcanic_rock', 'volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein', 'mithril_vein', 'titanium_vein', 'ruby_node', 'magma_core_vein', 'adamantite_vein', 'orichalcum_vein', 'diamond_vein');
+        if (plotDist >= 2.8) pool.push('orichalcum_vein', 'diamond_vein', 'meteor');
+      } else if (biome === 'archipielago_coral') {
+        pool.push('cactus', 'herb_patch', 'coral_abisal_node', 'coral_abisal_node', 'coral_abisal_node', 'perla_turquesa_node', 'perla_turquesa_node', 'star_sand_vein', 'amber_vein', 'gold_vein', 'sapphire_node', 'platinum_vein');
+      } else if (biome === 'cavernas_cristal') {
+        pool.push('tree', 'cuarzo_boreal_node', 'cuarzo_boreal_node', 'cuarzo_boreal_node', 'celestita_node', 'celestita_node', 'ice_crystal', 'sapphire_node', 'amethyst_vein', 'mithril_vein', 'titanium_vein', 'diamond_vein');
+      } else if (biome === 'selva_esmeralda') {
+        pool.push('giant_tree', 'madera_ferrea_node', 'madera_ferrea_node', 'madera_ferrea_node', 'jade_ancestral_node', 'jade_ancestral_node', 'bush', 'wild_crop_patch', 'emerald_vein', 'emerald_vein', 'jade_vein', 'adamantite_vein');
+      } else if (biome === 'caldera_ceniza') {
+        pool.push('volcanic_rock', 'escoria_caldera_node', 'escoria_caldera_node', 'escoria_caldera_node', 'cristal_carmesi_node', 'obsidian_vein', 'magma_core_vein', 'orichalcum_vein', 'ruby_node', 'sulfur_vein', 'titanium_vein', 'meteor');
+      } else if (biome === 'dinastia_arena') {
+        pool.push('cactus', 'pirita_solar_node', 'pirita_solar_node', 'pirita_solar_node', 'agata_roja_node', 'agata_roja_node', 'gold_vein', 'amber_vein', 'orichalcum_vein', 'diamond_vein', 'ruby_node', 'platinum_vein');
+      } else if (biome === 'glaciar_profundo') {
+        pool.push('hielo_eterno_node', 'hielo_eterno_node', 'hielo_eterno_node', 'bismuto_astral_node', 'bismuto_astral_node', 'cuarzo_boreal_node', 'azurite_vein', 'mithril_vein', 'titanium_vein', 'sapphire_node', 'platinum_vein', 'meteor');
+      } else if (biome === 'cienaga_putrida') {
+        pool.push('giant_tree', 'mushroom_node', 'resina_toxica_node', 'resina_toxica_node', 'resina_toxica_node', 'flor_pantano_node', 'flor_pantano_node', 'bloodstone_vein', 'adamantite_vein', 'emerald_vein', 'amethyst_vein');
+      } else if (biome === 'necropolis_osea') {
+        pool.push('hueso_fosil_node', 'hueso_fosil_node', 'hueso_fosil_node', 'plata_maldita_node', 'plata_maldita_node', 'abyssal_crystal_vein', 'bloodstone_vein', 'mithril_vein', 'obsidian_vein', 'silver_vein', 'diamond_vein');
       } else {
-        // tierras_volcanicas (outermost extreme biome)
-        pool.push('volcanic_rock', 'volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein', 'mithril_vein', 'titanium_vein');
-        if (plotDist >= 4.4) pool.push('ruby_node', 'bloodstone_vein', 'magma_core_vein', 'adamantite_vein', 'diamond_vein');
-        if (plotDist >= 5.0) pool.push('ruby_node', 'orichalcum_vein', 'orichalcum_vein', 'diamond_vein', 'adamantite_vein', 'magma_core_vein', 'meteor');
+        pool.push('cristal_carmesi_node', 'cristal_carmesi_node', 'cristal_carmesi_node', 'marmol_oscuro_node', 'marmol_oscuro_node', 'abyssal_crystal_vein', 'obsidian_vein', 'diamond_vein', 'magma_core_vein', 'orichalcum_vein', 'adamantite_vein', 'meteor');
       }
       const kind = pick(pool);
       return !!this.spawnNodeAtTile(tx, ty, kind, biome);
@@ -1702,31 +1854,26 @@
       const spot = this._pickFreePlotTile(gx, gy, occupiedBuildingTiles);
       if (!spot) return null;
       const [tx, ty] = spot;
-      const C = Balaclava.CONST.CENTER_PLOT || 4;
+      const C = Balaclava.CONST.CENTER_PLOT || 9;
       const plotDist = Math.hypot(gx - C, gy - C);
 
-      const pool = [];
-      if (biome === 'pradera') {
-        pool.push('rock', 'coal_vein', 'copper_vein', 'tin_vein', 'iron_vein');
-        if (plotDist >= 0.9) pool.push('malachite_vein', 'iron_vein', 'silver_vein');
-        if (plotDist >= 1.3) pool.push('silver_vein', 'gold_vein', 'jade_vein');
-      } else if (biome === 'desierto') {
-        pool.push('rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'sulfur_vein', 'gold_vein', 'malachite_vein');
-        if (plotDist >= 1.3) pool.push('silver_vein', 'amber_vein', 'platinum_vein', 'jade_vein');
-        if (plotDist >= 1.9) pool.push('crystal_node', 'platinum_vein', 'amber_vein');
-      } else if (biome === 'montanas_heladas') {
-        pool.push('rock', 'iron_vein', 'silver_vein', 'ice_crystal', 'gold_vein', 'platinum_vein', 'azurite_vein');
-        if (plotDist >= 2.2) pool.push('azurite_vein', 'crystal_node', 'sapphire_node', 'emerald_vein');
-        if (plotDist >= 2.6) pool.push('sapphire_node', 'mithril_vein', 'titanium_vein', 'emerald_vein');
-      } else if (biome === 'bosque_oscuro') {
-        pool.push('iron_vein', 'silver_vein', 'jade_vein', 'abyssal_crystal_vein', 'amethyst_vein');
-        if (plotDist >= 3.4) pool.push('crystal_node', 'bloodstone_vein', 'mithril_vein', 'amethyst_vein');
-        if (plotDist >= 3.8) pool.push('bloodstone_vein', 'mithril_vein', 'titanium_vein', 'abyssal_crystal_vein');
-      } else {
-        pool.push('volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'platinum_vein', 'obsidian_vein', 'mithril_vein', 'titanium_vein');
-        if (plotDist >= 4.4) pool.push('ruby_node', 'bloodstone_vein', 'magma_core_vein', 'adamantite_vein', 'diamond_vein');
-        if (plotDist >= 5.0) pool.push('orichalcum_vein', 'orichalcum_vein', 'diamond_vein', 'adamantite_vein');
-      }
+      const poolByBiome = {
+        pradera:            plotDist >= 1.2 ? ['rock', 'coal_vein', 'copper_vein', 'tin_vein', 'iron_vein', 'malachite_vein', 'silver_vein', 'gold_vein'] : ['rock', 'coal_vein', 'copper_vein', 'tin_vein', 'iron_vein', 'malachite_vein'],
+        desierto:           ['rock', 'copper_vein', 'tin_vein', 'star_sand_vein', 'sulfur_vein', 'gold_vein', 'amber_vein', 'platinum_vein', 'crystal_node'],
+        montanas_heladas:   ['iron_vein', 'silver_vein', 'ice_crystal', 'gold_vein', 'platinum_vein', 'azurite_vein', 'sapphire_node', 'emerald_vein', 'mithril_vein', 'titanium_vein'],
+        bosque_oscuro:      ['iron_vein', 'silver_vein', 'jade_vein', 'amethyst_vein', 'abyssal_crystal_vein', 'bloodstone_vein', 'mithril_vein', 'titanium_vein'],
+        tierras_volcanicas: ['volcanic_rock', 'sulfur_vein', 'coal_vein', 'gold_vein', 'obsidian_vein', 'titanium_vein', 'ruby_node', 'magma_core_vein', 'adamantite_vein', 'orichalcum_vein', 'diamond_vein'],
+        archipielago_coral: ['coral_abisal_node', 'coral_abisal_node', 'perla_turquesa_node', 'star_sand_vein', 'amber_vein', 'gold_vein', 'sapphire_node'],
+        cavernas_cristal:   ['cuarzo_boreal_node', 'cuarzo_boreal_node', 'celestita_node', 'ice_crystal', 'sapphire_node', 'amethyst_vein', 'mithril_vein', 'titanium_vein'],
+        selva_esmeralda:    ['jade_ancestral_node', 'jade_ancestral_node', 'emerald_vein', 'jade_vein', 'adamantite_vein', 'gold_vein', 'mithril_vein'],
+        caldera_ceniza:     ['escoria_caldera_node', 'escoria_caldera_node', 'cristal_carmesi_node', 'obsidian_vein', 'magma_core_vein', 'orichalcum_vein', 'ruby_node'],
+        dinastia_arena:     ['pirita_solar_node', 'pirita_solar_node', 'agata_roja_node', 'gold_vein', 'amber_vein', 'orichalcum_vein', 'diamond_vein'],
+        glaciar_profundo:   ['hielo_eterno_node', 'hielo_eterno_node', 'bismuto_astral_node', 'cuarzo_boreal_node', 'azurite_vein', 'mithril_vein', 'titanium_vein'],
+        cienaga_putrida:    ['resina_toxica_node', 'resina_toxica_node', 'bloodstone_vein', 'adamantite_vein', 'emerald_vein', 'amethyst_vein'],
+        necropolis_osea:    ['hueso_fosil_node', 'hueso_fosil_node', 'plata_maldita_node', 'abyssal_crystal_vein', 'bloodstone_vein', 'mithril_vein', 'diamond_vein'],
+        tierras_malditas:   ['cristal_carmesi_node', 'cristal_carmesi_node', 'marmol_oscuro_node', 'abyssal_crystal_vein', 'obsidian_vein', 'diamond_vein', 'orichalcum_vein', 'adamantite_vein']
+      };
+      const pool = poolByBiome[biome] || poolByBiome.pradera;
       return this.spawnNodeAtTile(tx, ty, pick(pool), biome);
     }
 
@@ -1887,7 +2034,7 @@
         } else if (roll < 35) {
           res = { kind: 'sprite', key: 'deco_fern_1', size: 20, ox, oy, sway: true };
         }
-      } else if (biome === 'tierras_volcanicas') {
+      } else if (biome === 'tierras_volcanicas' || biome === 'caldera_ceniza') {
         if (roll < 13) {
           res = { kind: 'blade', color: '#5c4138', highlight: '#e65100', ox, oy, sway: true };
         } else if (roll < 21) {
@@ -1896,6 +2043,39 @@
           res = { kind: 'sprite', key: 'deco_shroom_r', size: 17 + (h2 % 4), ox, oy, glow: true };
         } else if (roll < 31) {
           res = { kind: 'sprite', key: 'deco_pebble_1', size: 17 + (h2 % 4), ox, oy, sway: false };
+        }
+      } else if (biome === 'archipielago_coral' || biome === 'dinastia_arena') {
+        if (roll < 15) {
+          res = { kind: 'blade', color: biome === 'archipielago_coral' ? '#26a69a' : '#c76c32', highlight: biome === 'archipielago_coral' ? '#80cbc4' : '#ffab40', ox, oy, sway: true };
+        } else if (roll < 23) {
+          res = { kind: 'succulent', ox, oy };
+        } else if (roll < 30) {
+          res = { kind: 'sprite', key: 'deco_pebble_1', size: 16 + (h2 % 4), ox, oy, sway: false };
+        }
+      } else if (biome === 'cavernas_cristal' || biome === 'glaciar_profundo') {
+        if (roll < 16) {
+          res = { kind: 'blade', color: '#4589b0', highlight: '#80deea', ox, oy, sway: true };
+        } else if (roll < 27) {
+          res = { kind: 'sprite', key: 'deco_glow_shroom_b', size: 18 + (h2 % 4), ox, oy, glow: true };
+        } else if (roll < 34) {
+          res = { kind: 'sprite', key: 'deco_pebble_1', size: 16 + (h2 % 4), ox, oy, sway: false };
+        }
+      } else if (biome === 'selva_esmeralda' || biome === 'cienaga_putrida') {
+        if (roll < 22) {
+          res = { kind: 'tuft', col: h2 % 4, row: (h2 >>> 2) % 3, size: 19 + (h2 % 6), ox, oy, sway: true };
+        } else if (roll < 34) {
+          res = { kind: 'sprite', key: biome === 'selva_esmeralda' ? 'deco_fern_1' : 'deco_glow_shroom_g', size: 20 + (h2 % 5), ox, oy, glow: biome === 'cienaga_putrida', sway: true };
+        } else if (roll < 43) {
+          res = { kind: 'sprite', key: 'deco_shroom_p', size: 18 + (h2 % 4), ox, oy, glow: true };
+        }
+      } else if (biome === 'necropolis_osea' || biome === 'tierras_malditas') {
+        if (roll < 15) {
+          const uKeys = ['undead_bones', 'undead_dead_arm', 'undead_grave'];
+          res = { kind: 'sprite', key: uKeys[h2 % uKeys.length], size: 20 + (h2 % 5), ox, oy, sway: false };
+        } else if (roll < 26) {
+          res = { kind: 'sprite', key: biome === 'tierras_malditas' ? 'deco_shroom_r' : 'deco_shroom_p', size: 18 + (h2 % 4), ox, oy, glow: true };
+        } else if (roll < 32) {
+          res = { kind: 'sprite', key: 'deco_thorn_bush', size: 19 + (h2 % 4), ox, oy, sway: false };
         }
       }
 

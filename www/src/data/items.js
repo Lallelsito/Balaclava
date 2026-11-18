@@ -2465,15 +2465,15 @@
     // =========================================================
     singularidad: {
       id: 'singularidad', name: 'Singularidad', category: 'especiales', rarity: 'legendario',
-      sellValue: 2500, buyValue: 0, source: 'Prensa de Singularidades (10.000 recursos)',
-      uses: 'Forja de Lingote Omega, Reactores de Singularidad, Sobrecarga Infinita y Ascensión de Islas',
-      desc: 'Materia colapsada en un punto gravitatorio estable.', icon: 'singularidad'
+      sellValue: 4500, buyValue: 0, source: 'Prensa de Singularidades (25.000 recursos)',
+      uses: 'Forja de Lingote Omega, Reactores de Singularidad, Sobrecarga Infinita y Ascensión',
+      desc: 'Materia colapsada en un punto gravitatorio estable del endgame definitivo.', icon: 'singularidad'
     },
     lingote_omega: {
       id: 'lingote_omega', name: 'Lingote Omega', category: 'materiales', rarity: 'legendario',
-      sellValue: 900, buyValue: 0, source: 'Fundidora Omega',
-      uses: 'Forja de Equipamiento Tier 16 Omega y Sobrecarga Infinita',
-      desc: 'Aleación definitiva templada con singularidad y la esencia de los cinco biomas.', icon: 'lingote_omega'
+      sellValue: 1850, buyValue: 0, source: 'Fundidora Omega (Singularidad + Aleaciones de Zona IV)',
+      uses: 'Forja de Equipamiento Supremo Tier 16 Omega y Sobrecarga Infinita',
+      desc: 'Aleación definitiva templada con singularidad y minerales de los confines abisales.', icon: 'lingote_omega'
     },
     materia_comprimida: {
       id: 'materia_comprimida', name: 'Materia Comprimida', category: 'especiales', rarity: 'legendario',
@@ -2483,24 +2483,24 @@
     },
     casco_omega: {
       id: 'casco_omega', name: 'Yelmo de la Singularidad (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
-      sellValue: 1450, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Casco Solar + Lingote Omega)',
-      uses: 'Equipa en Casco (Tier 16): +62 Defensa, +280 Vida, +24% Daño, +25% Poder Mágico y -12% CD',
-      desc: 'Corona gravitatoria que amplifica la mente y blinda al portador.',
-      equipSlot: 'helm', stats: { def: 62, maxHp: 280, maxEnergy: 80, dmgPct: 0.24, spellPower: 0.25, spellCdRed: 0.12 }, icon: 'casco_omega'
+      sellValue: 2200, buyValue: 0, source: 'Yunque Rúnico (Casco Solar + Lingote Omega + Singularidad)',
+      uses: 'Equipa en Casco (Tier 16 Definitivo): +80 Defensa, +380 Vida, +34% Daño, +35% Poder Mágico y -16% CD',
+      desc: 'Corona gravitatoria definitiva que amplifica la mente y blinda al portador sobre cualquier armadura.',
+      equipSlot: 'helm', stats: { def: 80, maxHp: 380, maxEnergy: 120, dmgPct: 0.34, spellPower: 0.35, spellCdRed: 0.16 }, icon: 'casco_omega'
     },
     armadura_omega: {
       id: 'armadura_omega', name: 'Coraza Omega del Vacío (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
-      sellValue: 1850, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Armadura Celestial + Lingote Omega)',
-      uses: 'Equipa en Armadura (Tier 16): +110 Defensa, +500 Vida Máx, +38% Daño, +18% Vel. y +2.5 HP/s',
-      desc: 'Placas de horizonte de sucesos forjadas para resistir el Abismo Infinito.',
-      equipSlot: 'armor', stats: { def: 110, maxHp: 500, dmgPct: 0.38, speedPct: 0.18, regen: 2.5 }, icon: 'armadura_omega'
+      sellValue: 2800, buyValue: 0, source: 'Yunque Rúnico (Armadura Celestial + Lingote Omega + Singularidad)',
+      uses: 'Equipa en Armadura (Tier 16 Definitivo): +140 Defensa, +680 Vida Máx, +48% Daño, +22% Vel. y +4.5 HP/s',
+      desc: 'La armadura más poderosa de Balaclava, forjada en horizontes de sucesos para conquistar todo el Abismo.',
+      equipSlot: 'armor', stats: { def: 140, maxHp: 680, dmgPct: 0.48, speedPct: 0.22, regen: 4.5 }, icon: 'armadura_omega'
     },
     pantalones_omega: {
       id: 'pantalones_omega', name: 'Grebas Gravitatorias Omega (T16)', category: 'armaduras', rarity: 'legendario', tier: 16,
-      sellValue: 1550, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Pantalones Celestiales + Lingote Omega)',
-      uses: 'Equipa en Pantalones (Tier 16): +105 Defensa, +320 Vida, +18% Vel. y +20% Reducción',
-      desc: 'Articulaciones de aleación Omega y singularidad que anulan el retroceso y estabilizan la zancada.',
-      equipSlot: 'legs', stats: { def: 105, maxHp: 320, speedPct: 0.18, defPct: 0.20 }, icon: 'pantalones_omega'
+      sellValue: 2350, buyValue: 0, source: 'Yunque Rúnico (Pantalones Celestiales + Lingote Omega + Singularidad)',
+      uses: 'Equipa en Pantalones (Tier 16 Definitivo): +125 Defensa, +440 Vida, +22% Vel. y +26% Reducción de daño',
+      desc: 'Articulaciones de aleación Omega y singularidad que estabilizan la zancada y resisten cualquier golpe.',
+      equipSlot: 'legs', stats: { def: 125, maxHp: 440, speedPct: 0.22, defPct: 0.26 }, icon: 'pantalones_omega'
     },
     tuberias_conduit: {
       id: 'tuberias_conduit', name: 'Tuberías Conduit de Aleación', category: 'materiales', rarity: 'poco_comun',
@@ -2518,39 +2518,141 @@
     },
     escudo_omega: {
       id: 'escudo_omega', name: 'Égida del Horizonte Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
-      sellValue: 1400, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Baluarte Celestial + Lingote Omega)',
-      uses: 'Equipa en Escudo (Tier 16): +84 Defensa, +340 Vida, +24% Daño y +35% resist. mágica',
-      desc: 'Escudo de contención capaz de absorber descargas del Abismo.',
-      equipSlot: 'shield', stats: { def: 84, maxHp: 340, dmgPct: 0.24, spellResist: 0.35 }, icon: 'escudo_omega'
+      sellValue: 2200, buyValue: 0, source: 'Yunque Rúnico (Baluarte Celestial + Lingote Omega + Singularidad)',
+      uses: 'Equipa en Escudo (Tier 16 Definitivo): +108 Defensa, +460 Vida, +32% Daño y +45% resist. mágica',
+      desc: 'Escudo absoluto capaz de absorber los cortes del Espadachín Carmesí.',
+      equipSlot: 'shield', stats: { def: 108, maxHp: 460, dmgPct: 0.32, spellResist: 0.45 }, icon: 'escudo_omega'
     },
     botas_omega: {
       id: 'botas_omega', name: 'Botas de Salto Cuántico Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
-      sellValue: 1300, buyValue: 0, source: 'Forja Maestra / Yunque Rúnico (Botas Celestiales + Lingote Omega)',
-      uses: 'Equipa en Botas (Tier 16): +58 Defensa, +46% Velocidad, +260 Vida, +160 imán y -30% gasto energía',
+      sellValue: 2100, buyValue: 0, source: 'Yunque Rúnico (Botas Celestiales + Lingote Omega + Singularidad)',
+      uses: 'Equipa en Botas (Tier 16 Definitivo): +76 Defensa, +52% Velocidad, +360 Vida, +190 imán y -35% gasto',
       desc: 'Impulsan al portador mediante micro-distorsiones espaciales.',
-      equipSlot: 'boots', stats: { def: 58, speedPct: 0.46, maxHp: 260, magnetRadius: 160, energySave: 0.30 }, icon: 'botas_omega'
+      equipSlot: 'boots', stats: { def: 76, speedPct: 0.52, maxHp: 360, magnetRadius: 190, energySave: 0.35 }, icon: 'botas_omega'
     },
     hoja_singularidad: {
       id: 'hoja_singularidad', name: 'Hoja de la Singularidad (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
-      sellValue: 1950, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad)',
-      uses: 'Espada especial Tier 16: 135 daño, amplio corte cósmico con onda de choque',
-      desc: 'Filo monocristalino que desgarra la materia en cada tajo.',
-      weaponMelee: true, meleeStats: { dmg: 135, range: 112, cooldown: 0.24, color: '#e040fb', critChance: 0.22 }, icon: 'hoja_singularidad'
+      sellValue: 2950, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad + Materia Comprimida)',
+      uses: 'Espada definitiva Tier 16: 185 daño, corte cósmico amplio y +28% Crítico',
+      desc: 'El arma suprema de Balaclava: desgarra la realidad en cada estocada.',
+      isSpecialBlade: true,
+      weaponMelee: { dmg: 185, range: 118, speed: 0.22, arcColor: '#e040fb', critBonus: 0.28, cleave: true, archetype: 'sword' },
+      bladeStats: { dmg: 185, range: 118, arcColor: '#e040fb', cooldown: 0.22 },
+      icon: 'hoja_singularidad'
     },
     arco_omega: {
       id: 'arco_omega', name: 'Arco Gravitatorio Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
-      sellValue: 1900, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad)',
-      uses: 'Arma a distancia Tier 16: dispara proyectiles perforantes (98 daño, perfora 4)',
-      desc: 'Acelera virotes de energía comprimida a través de múltiples objetivos.',
-      isRangedWeapon: true, rangedStats: { dmg: 98, speed: 860, range: 560, cooldown: 0.24, color: '#e040fb', pierce: 4 }, icon: 'arco_omega'
+      sellValue: 2900, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad + Materia Comprimida)',
+      uses: 'Arma a distancia definitiva Tier 16: proyectiles perforantes (138 daño, perfora 5)',
+      desc: 'Acelera virotes de energía comprimida a través de filas enteras de enemigos.',
+      isRangedWeapon: true, rangedStats: { dmg: 138, speed: 920, range: 600, cooldown: 0.22, color: '#e040fb', pierce: 5 }, icon: 'arco_omega'
     },
     cetro_omega: {
       id: 'cetro_omega', name: 'Cetro del Colapso Omega (T16)', category: 'equipamiento', rarity: 'legendario', tier: 16,
-      sellValue: 1950, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad)',
-      uses: 'Báculo Tier 16: orbes de singularidad explosivos (95 daño en área, quema y ralentiza)',
+      sellValue: 2950, buyValue: 0, source: 'Yunque Rúnico (Lingote Omega + Singularidad + Materia Comprimida)',
+      uses: 'Báculo definitivo Tier 16: orbes de singularidad explosivos (132 daño en área, quema y ralentiza)',
       desc: 'Canaliza singularidades contenidas que detonan en racimos cósmicos.',
-      isStaffWeapon: true, staffStats: { dmg: 95, speed: 640, range: 520, cooldown: 0.25, energyCost: 7.5, color: '#e040fb', aoeRadius: 84, burnDmg: 18, slowDur: 2.0, staffMode: 'archmage_cluster', vfxKey: 'pvfx_arcane_orb_projectile' }, icon: 'cetro_omega'
-    }
+      isStaffWeapon: true, staffStats: { dmg: 132, speed: 680, range: 550, cooldown: 0.23, energyCost: 7.0, color: '#e040fb', aoeRadius: 96, burnDmg: 26, slowDur: 2.4, staffMode: 'archmage_cluster', vfxKey: 'sp_spell_absorb_violet' }, icon: 'cetro_omega'
+    },
+
+    // =========================================================
+    // BETA 1.3.0: MINERALES, LINGOTES, PLACAS, GEMAS Y POCIONES DE LOS 9 NUEVOS BIOMAS
+    // =========================================================
+    coral_roca:        { id: 'coral_roca',        name: 'Coral Mineral Abisal', category: 'minerales', rarity: 'raro', sellValue: 24, buyValue: 58, source: 'Archipiélago Coralino', uses: 'Fundir en Lingote Coralino', desc: 'Arrecife petrificado saturado de sales turquesa.', icon: 'coral_roca' },
+    lingote_coral:     { id: 'lingote_coral',     name: 'Lingote Coralino', category: 'minerales', rarity: 'raro', sellValue: 58, buyValue: 135, source: 'Horno / Fundidora', uses: 'Equipo Coralino (T9) y Placas', desc: 'Metal azulado resistente a la corrosión marina.', icon: 'lingote_coral' },
+    placa_coral:       { id: 'placa_coral',       name: 'Placa Reforzada Coralina', category: 'materiales', rarity: 'epico', sellValue: 115, buyValue: 260, source: 'Fundición', uses: 'Armaduras y escudos de arrecife', desc: 'Lámina marina forjada para soportar presiones abisales.', icon: 'placa_coral' },
+    perla_turquesa:    { id: 'perla_turquesa',    name: 'Perla Turquesa', category: 'gemas', rarity: 'epico', sellValue: 92, buyValue: 210, source: 'Archipiélago Coralino', uses: 'Joyería y elixires de marea', desc: 'Esfera nacarada que irradia frescor marino.', icon: 'perla_turquesa' },
+
+    madera_ferrea:     { id: 'madera_ferrea',     name: 'Tronco de Madera Férrea', category: 'minerales', rarity: 'raro', sellValue: 28, buyValue: 66, source: 'Selva Esmeralda', uses: 'Refinar en Lingote Selvano y armas naturales', desc: 'Madera densa como el acero que crece en la jungla sur.', icon: 'madera_ferrea' },
+    lingote_selvano:   { id: 'lingote_selvano',   name: 'Lingote Selvano', category: 'minerales', rarity: 'epico', sellValue: 68, buyValue: 155, source: 'Fundición', uses: 'Equipo Selvano (T12) y Placas', desc: 'Aleación orgánica verdosa de dureza asombrosa.', icon: 'lingote_selvano' },
+    placa_selvano:     { id: 'placa_selvano',     name: 'Placa Viva Selvana', category: 'materiales', rarity: 'epico', sellValue: 135, buyValue: 300, source: 'Fundición', uses: 'Corazas vivas y escudos de jade', desc: 'Placa regenerativa bañada en savia esmeralda.', icon: 'placa_selvano' },
+    jade_ancestral:    { id: 'jade_ancestral',    name: 'Laja de Jade Ancestral', category: 'gemas', rarity: 'epico', sellValue: 108, buyValue: 245, source: 'Selva Esmeralda', uses: 'Armaduras, reliquias y talismanes', desc: 'Piedra sagrada tallada por civilizaciones perdidas.', icon: 'jade_ancestral' },
+
+    cuarzo_boreal:     { id: 'cuarzo_boreal',     name: 'Cuarzo Boreal', category: 'minerales', rarity: 'raro', sellValue: 26, buyValue: 62, source: 'Cavernas de Cristal', uses: 'Fundir en Lingote Boreal', desc: 'Cristal hexagonal que resuena con energía ártica.', icon: 'cuarzo_boreal' },
+    lingote_boreal:    { id: 'lingote_boreal',    name: 'Lingote Boreal', category: 'minerales', rarity: 'epico', sellValue: 64, buyValue: 145, source: 'Horno / Fundidora', uses: 'Equipo Cristal Boreal (T11)', desc: 'Lingote translúcido de frío inalterable.', icon: 'lingote_boreal' },
+    placa_boreal:      { id: 'placa_boreal',      name: 'Placa Prismática Boreal', category: 'materiales', rarity: 'epico', sellValue: 128, buyValue: 285, source: 'Fundición', uses: 'Corazas y escudos prismáticos', desc: 'Refleja haces mágicos enemigos en un destello azulado.', icon: 'placa_boreal' },
+    celestita_cristal: { id: 'celestita_cristal', name: 'Cristal de Celestita', category: 'gemas', rarity: 'epico', sellValue: 105, buyValue: 240, source: 'Cavernas de Cristal', uses: 'Báculos, encantamientos y tecnología glacial', desc: 'Gema celeste pura extraída de geodas milenarias.', icon: 'celestita_cristal' },
+
+    escoria_caldera:   { id: 'escoria_caldera',   name: 'Mena de Escoria Ardiente', category: 'minerales', rarity: 'epico', sellValue: 34, buyValue: 78, source: 'Caldera de Ceniza', uses: 'Fundir en Lingote de Escoria', desc: 'Metal fundido enfriado sobre ceniza volcánica.', icon: 'escoria_caldera' },
+    lingote_escoria:   { id: 'lingote_escoria',   name: 'Lingote de Escoria', category: 'minerales', rarity: 'epico', sellValue: 78, buyValue: 175, source: 'Fundición', uses: 'Equipo de Caldera (T13)', desc: 'Barra incandescente que nunca pierde su calor.', icon: 'lingote_escoria' },
+    placa_escoria:     { id: 'placa_escoria',     name: 'Placa de Basalto Ígneo', category: 'materiales', rarity: 'epico', sellValue: 150, buyValue: 340, source: 'Fundición', uses: 'Armaduras pesadas de magma', desc: 'Blindaje volcánico forjado para resistir llamas eternas.', icon: 'placa_escoria' },
+    polvo_carmesi:     { id: 'polvo_carmesi',     name: 'Polvo Carmesí Volcánico', category: 'materiales', rarity: 'epico', sellValue: 64, buyValue: 145, source: 'Caldera / Tierras Malditas', uses: 'Alquimia ígnea y explosivos', desc: 'Ceniza sulfurosa de color escarlata vibrante.', icon: 'polvo_carmesi' },
+
+    pirita_solar:      { id: 'pirita_solar',      name: 'Mena de Pirita Solar', category: 'minerales', rarity: 'epico', sellValue: 40, buyValue: 92, source: 'Dinastía de Arena Roja', uses: 'Fundir en Lingote Solar', desc: 'Oro del desierto rojo imbuido con luz de sol implacable.', icon: 'pirita_solar' },
+    lingote_pirita:    { id: 'lingote_pirita',    name: 'Lingote Solar Faraónico', category: 'minerales', rarity: 'legendario', sellValue: 92, buyValue: 210, source: 'Fundición', uses: 'Equipo Faraón Solar (T14) y Omega', desc: 'Lingote dorado centelleante forjado en hornos solares.', icon: 'lingote_pirita' },
+    placa_pirita:      { id: 'placa_pirita',      name: 'Placa Imperial Solar', category: 'materiales', rarity: 'legendario', sellValue: 175, buyValue: 390, source: 'Fundición', uses: 'Corazas y escudos del Faraón', desc: 'Placa real grabada con cartuchos dorados antiguos.', icon: 'placa_pirita' },
+    agata_roja:        { id: 'agata_roja',        name: 'Ágata Imperial Roja', category: 'gemas', rarity: 'epico', sellValue: 118, buyValue: 265, source: 'Dinastía de Arena Roja', uses: 'Armas solares y pociones de furia', desc: 'Gema bandeada en tonos escarlata y ámbar.', icon: 'agata_roja' },
+
+    hielo_eterno:      { id: 'hielo_eterno',      name: 'Fragmento de Hielo Eterno', category: 'minerales', rarity: 'epico', sellValue: 44, buyValue: 98, source: 'Glaciar Profundo', uses: 'Equipo Glaciar Profundo (T15) y elixires', desc: 'Hielo milenario tan duro como el diamante que jamás se funde.', icon: 'hielo_eterno' },
+    bismuto_astral:    { id: 'bismuto_astral',    name: 'Cristal de Bismuto Astral', category: 'gemas', rarity: 'legendario', sellValue: 135, buyValue: 310, source: 'Glaciar Profundo', uses: 'Armamento glaciar avanzado y Omega', desc: 'Estructura escalonada iridiscente de brillo cósmico.', icon: 'bismuto_astral' },
+
+    resina_toxica:     { id: 'resina_toxica',     name: 'Resina Tóxica Concentrada', category: 'materiales', rarity: 'epico', sellValue: 46, buyValue: 105, source: 'Ciénaga Pútrida', uses: 'Armas de veneno y elixires mortales', desc: 'Ámbar verdoso saturado de toxinas de pantano.', icon: 'resina_toxica' },
+    flor_pantano:      { id: 'flor_pantano',      name: 'Flor Carnívora de Pantano', category: 'ingredientes', rarity: 'raro', sellValue: 32, buyValue: 74, source: 'Ciénaga Pútrida', uses: 'Alquimia y recetas del pantano', desc: 'Pétalos luminiscentes que atraen esporas arcanas.', icon: 'flor_pantano' },
+    polvo_veneno:      { id: 'polvo_veneno',      name: 'Polvo de Espora Letal', category: 'materiales', rarity: 'epico', sellValue: 58, buyValue: 132, source: 'Ciénaga Pútrida', uses: 'Encantamientos tóxicos y dagas', desc: 'Espora refinada capaz de corroer el hierro.', icon: 'polvo_veneno' },
+
+    hueso_fosil:       { id: 'hueso_fosil',       name: 'Hueso Fósil Petrificado', category: 'minerales', rarity: 'epico', sellValue: 48, buyValue: 110, source: 'Necrópolis Ósea', uses: 'Fundir en Lingote Óseo', desc: 'Resto mineralizado de leviatanes antiguos.', icon: 'hueso_fosil' },
+    lingote_hueso:     { id: 'lingote_hueso',     name: 'Lingote Óseo Antiguo', category: 'materiales', rarity: 'legendario', sellValue: 102, buyValue: 230, source: 'Horno / Fundidora', uses: 'Armamento de Necrópolis', desc: 'Aleación marfil liviana e irrompible.', icon: 'lingote_hueso' },
+    plata_maldita:     { id: 'plata_maldita',     name: 'Mena de Plata Maldita', category: 'minerales', rarity: 'legendario', sellValue: 56, buyValue: 128, source: 'Necrópolis Ósea', uses: 'Fundir en Lingote Maldito', desc: 'Metal violáceo impregnado con ecos espectrales.', icon: 'plata_maldita' },
+    lingote_maldito:   { id: 'lingote_maldito',   name: 'Lingote de Plata Maldita', category: 'minerales', rarity: 'legendario', sellValue: 120, buyValue: 275, source: 'Fundidora / Fundición', uses: 'Equipo Necrópolis/Eclipse (T15) y Omega', desc: 'Acero oscuro que canaliza magia sombría sin esfuerzo.', icon: 'lingote_maldito' },
+    placa_maldito:     { id: 'placa_maldito',     name: 'Placa Espectral Maldita', category: 'materiales', rarity: 'legendario', sellValue: 210, buyValue: 465, source: 'Fundición', uses: 'Armaduras del Abismo', desc: 'Blindaje nocturno que absorbe hechizos.', icon: 'placa_maldito' },
+    cristal_carmesi:   { id: 'cristal_carmesi',   name: 'Cristal Carmesí Abisal', category: 'gemas', rarity: 'legendario', sellValue: 165, buyValue: 375, source: 'Tierras Malditas Abisales', uses: 'Espadas abisales, báculos y Lingote Omega', desc: 'Rubí de eclipse que late como un corazón oscuro.', icon: 'cristal_carmesi' },
+    marmol_oscuro:     { id: 'marmol_oscuro',     name: 'Bloque de Mármol Abisal', category: 'minerales', rarity: 'epico', sellValue: 52, buyValue: 120, source: 'Tierras Malditas Abisales', uses: 'Construcciones épicas y forja oscura', desc: 'Roca veteada en oro negro de los confines del mapa.', icon: 'marmol_oscuro' },
+
+    // Pociones y Elixires de Bioma (v1.3.0)
+    pocion_coralina:   { id: 'pocion_coralina',   name: 'Poción de Marea Turquesa', category: 'pociones', rarity: 'raro', sellValue: 64, buyValue: 145, source: 'Alquimia', uses: '+90 HP, +65 Energía y +30% Velocidad 60s', desc: 'Refresca como una ola marina.', icon: 'potion_v13_3', healHp: 90, healEnergy: 65, buff: { type: 'speed', mult: 1.30, duration: 60 } },
+    pocion_selva:      { id: 'pocion_selva',      name: 'Néctar Vital de la Selva', category: 'pociones', rarity: 'epico', sellValue: 82, buyValue: 185, source: 'Alquimia', uses: '+140 HP, +80 Energía y +35% Fortuna 90s', desc: 'Savia esmeralda curativa.', icon: 'potion_v13_5', healHp: 140, healEnergy: 80, buff: { type: 'luck', mult: 1.35, duration: 90 } },
+    pocion_veneno_res: { id: 'pocion_veneno_res', name: 'Antídoto de Resina Áurea', category: 'pociones', rarity: 'epico', sellValue: 88, buyValue: 195, source: 'Alquimia', uses: '+130 HP y +38% Daño 75s', desc: 'Neutraliza toxinas y enciende la furia guerrera.', icon: 'elixir_v13_4', healHp: 130, healEnergy: 40, buff: { type: 'dmg', mult: 1.38, duration: 75 } },
+    elixir_solar_real: { id: 'elixir_solar_real', name: 'Elixir Solar de la Dinastía', category: 'pociones', rarity: 'legendario', sellValue: 155, buyValue: 350, source: 'Alquimia', uses: '+200 HP, +120 Energía y +45% Daño 90s', desc: 'Dorado néctar de los antiguos faraones.', icon: 'elixir_v13_7', healHp: 200, healEnergy: 120, buff: { type: 'dmg', mult: 1.45, duration: 90 } },
+    elixir_eclipse:    { id: 'elixir_eclipse',    name: 'Elixir Carmesí del Eclipse', category: 'pociones', rarity: 'legendario', sellValue: 220, buyValue: 495, source: 'Alquimia Suprema', uses: '+280 HP, +150 Energía y +50% Daño 120s', desc: 'Prepara el cuerpo para desafiar al Espadachín Carmesí.', icon: 'elixir_v13_0', healHp: 280, healEnergy: 150, buff: { type: 'dmg', mult: 1.50, duration: 120 } },
+
+    // =========================================================
+    // SETS DE EQUIPAMIENTO REGIONAL (T9..T15 — ESTRICTAMENTE INFERIORES A OMEGA T16)
+    // =========================================================
+    // Tier 9 - Coralino (Archipielago Coralino)
+    armadura_coral: { id: 'armadura_coral', name: 'Coraza del Arrecife Coralino (T9)', category: 'equipamiento', rarity: 'epico', tier: 9, sellValue: 240, buyValue: 540, source: 'Forja Coralina', uses: 'Equipa en Armadura (T9): +32 Defensa, +130 Vida Máx y +10% Velocidad', desc: 'Placas turquesa hidrodinámicas.', equipSlot: 'armor', stats: { def: 32, maxHp: 130, speedPct: 0.10 }, icon: 'armor_platino' },
+    casco_coral:    { id: 'casco_coral',    name: 'Yelmo de Perla Marina (T9)', category: 'equipamiento', rarity: 'epico', tier: 9, sellValue: 185, buyValue: 420, source: 'Forja Coralina', uses: 'Equipa en Casco (T9): +19 Defensa, +78 Vida y +10% Crítico', desc: 'Incrustado con perlas turquesa.', equipSlot: 'helm', stats: { def: 19, maxHp: 78, critBonus: 0.10 }, icon: 'helm_platinum' },
+    escudo_coral:   { id: 'escudo_coral',   name: 'Rodela Coralina (T9)', category: 'equipamiento', rarity: 'epico', tier: 9, sellValue: 210, buyValue: 480, source: 'Forja Coralina', uses: 'Equipa en Escudo (T9): +24 Defensa y +96 Vida Máx', desc: 'Desvía zarpazos en arrecifes.', equipSlot: 'shield', stats: { def: 24, maxHp: 96 }, icon: 'wep_coral_shield' },
+    espada_coral:   { id: 'espada_coral',   name: 'Sable Coralino de Marea', category: 'equipamiento', rarity: 'epico', tier: 9, sellValue: 260, buyValue: 590, source: 'Forja Coralina', uses: 'Espada (62 daño, amplio tajo acuático)', desc: 'Hoja azulada templada en sales marinas.', weaponMelee: { dmg: 62, range: 86, speed: 0.28, arcColor: '#4deeea', cleave: true, archetype: 'sword' }, icon: 'wep_coral_sword' },
+    lanza_coral:    { id: 'lanza_coral',    name: 'Tridente de Perla Abisal', category: 'equipamiento', rarity: 'epico', tier: 9, sellValue: 270, buyValue: 610, source: 'Forja Coralina', uses: 'Lanza larga (68 daño, alcance 110)', desc: 'Punzón marino que alcanza objetivos distantes.', weaponMelee: { dmg: 68, range: 110, speed: 0.30, arcColor: '#26c6da', archetype: 'spear' }, icon: 'wep_coral_spear' },
+    baculo_coral:   { id: 'baculo_coral',   name: 'Báculo de la Marea Turquesa', category: 'equipamiento', rarity: 'epico', tier: 9, sellValue: 275, buyValue: 620, source: 'Hechicería Coralina', uses: 'Báculo mágico (56 daño, ralentiza objetivos)', desc: 'Canaliza chorros arcanos de marea.', isStaffWeapon: true, staffStats: { dmg: 56, speed: 560, range: 440, cooldown: 0.30, energyCost: 6.0, color: '#4dd0e1', slowDur: 2.0, staffMode: 'frost_cone', vfxKey: 'sp_impact_blue' }, icon: 'wep_coral_staff' },
+    arco_coral:     { id: 'arco_coral',     name: 'Arco del Arrecife Vivo', category: 'equipamiento', rarity: 'epico', tier: 9, sellValue: 265, buyValue: 600, source: 'Forja Coralina', uses: 'Arco marino (58 daño, perfora 2)', desc: 'Tensa cuerdas marinas de gran impulso.', isRangedWeapon: true, rangedStats: { dmg: 58, speed: 700, range: 480, cooldown: 0.30, color: '#4deeea', pierce: 2 }, icon: 'wep_coral_bow' },
+
+    // Tier 11 - Cristal Boreal (Cavernas de Cristal)
+    armadura_boreal:{ id: 'armadura_boreal',name: 'Coraza Prismática Boreal (T11)', category: 'equipamiento', rarity: 'epico', tier: 11, sellValue: 330, buyValue: 740, source: 'Yunque Rúnico', uses: 'Equipa en Armadura (T11): +42 Defensa, +165 Vida Máx y +14% Daño', desc: 'Cristales boreales acoplados sobre placas metálicas.', equipSlot: 'armor', stats: { def: 42, maxHp: 165, dmgPct: 0.14 }, icon: 'armor_crystal' },
+    casco_boreal:   { id: 'casco_boreal',   name: 'Corona de Cuarzo Boreal (T11)', category: 'equipamiento', rarity: 'epico', tier: 11, sellValue: 245, buyValue: 550, source: 'Yunque Rúnico', uses: 'Equipa en Casco (T11): +25 Defensa, +102 Vida y +18% Poder Mágico', desc: 'Prisma que amplifica hechizos árticos.', equipSlot: 'helm', stats: { def: 25, maxHp: 102, spellPower: 0.18 }, icon: 'helm_crystal' },
+    escudo_boreal:  { id: 'escudo_boreal',  name: 'Pavés de Celestita (T11)', category: 'equipamiento', rarity: 'epico', tier: 11, sellValue: 275, buyValue: 620, source: 'Yunque Rúnico', uses: 'Equipa en Escudo (T11): +31 Defensa, +120 Vida y 15% resist. mágica', desc: 'Escudo espejado contra rayos enemigos.', equipSlot: 'shield', stats: { def: 31, maxHp: 120, spellResist: 0.15 }, icon: 'wep_glacial_shield' },
+    espada_boreal:  { id: 'espada_boreal',  name: 'Mandoble de Cuarzo Boreal', category: 'equipamiento', rarity: 'epico', tier: 11, sellValue: 340, buyValue: 770, source: 'Yunque Rúnico', uses: 'Espada cristalina (78 daño + impacto sónico)', desc: 'Filo de cuarzo que canta al cortar el aire.', weaponMelee: { dmg: 78, range: 90, speed: 0.27, arcColor: '#80deea', cleave: true, archetype: 'sword' }, icon: 'wep_glacial_sword' },
+    martillo_boreal:{ id: 'martillo_boreal',name: 'Martillo de Celestita Pura', category: 'equipamiento', rarity: 'epico', tier: 11, sellValue: 355, buyValue: 800, source: 'Yunque Rúnico', uses: 'Martillo sísmico (84 daño + 30% aturdimiento)', desc: 'Rompe escudos de gólems al primer impacto.', weaponMelee: { dmg: 84, range: 86, speed: 0.30, arcColor: '#a0e7ff', cleave: true, stunChance: 0.30, archetype: 'mace' }, icon: 'wep_glacial_hammer' },
+
+    // Tier 12 - Selva Esmeralda
+    armadura_selva: { id: 'armadura_selva', name: 'Cota Viva de Jade Selvano (T12)', category: 'equipamiento', rarity: 'epico', tier: 12, sellValue: 410, buyValue: 920, source: 'Forja de Jade', uses: 'Equipa en Armadura (T12): +48 Defensa, +195 Vida, +16% Daño y +1.2 HP/s', desc: 'Armadura forjada en madera férrea y jade ancestral.', equipSlot: 'armor', stats: { def: 48, maxHp: 195, dmgPct: 0.16, regen: 1.2 }, icon: 'armor_adamantite' },
+    escudo_selva:   { id: 'escudo_selva',   name: 'Baluarte de Madera Férrea (T12)', category: 'equipamiento', rarity: 'epico', tier: 12, sellValue: 330, buyValue: 740, source: 'Forja de Jade', uses: 'Equipa en Escudo (T12): +36 Defensa, +145 Vida y +12% Cosecha', desc: 'Láminas de jade invulnerables al musgo.', equipSlot: 'shield', stats: { def: 36, maxHp: 145, gatherBonus: 0.12 }, icon: 'wep_selva_shield' },
+    espada_selva:   { id: 'espada_selva',   name: 'Hoja Esmeralda del Tótem', category: 'equipamiento', rarity: 'epico', tier: 12, sellValue: 390, buyValue: 880, source: 'Yunque Rúnico', uses: 'Espada selvana (88 daño, regenera vida al golpear)', desc: 'Brilla con magia viva de la jungla.', weaponMelee: { dmg: 88, range: 92, speed: 0.26, arcColor: '#69f0ae', cleave: true, archetype: 'sword' }, icon: 'wep_selva_sword' },
+    hacha_selva:    { id: 'hacha_selva',    name: 'Gran Hacha de Madera Férrea', category: 'equipamiento', rarity: 'epico', tier: 12, sellValue: 400, buyValue: 900, source: 'Yunque Rúnico', uses: 'Hacha pesada (94 daño en arco amplio)', desc: 'Corta monstruos selváticos y troncos milenarios.', weaponMelee: { dmg: 94, range: 88, speed: 0.29, arcColor: '#00e676', cleave: true, archetype: 'axe' }, icon: 'wep_selva_axe' },
+    arco_selva:     { id: 'arco_selva',     name: 'Arco Cazador de la Selva', category: 'equipamiento', rarity: 'epico', tier: 12, sellValue: 385, buyValue: 870, source: 'Forja de Jade', uses: 'Arco veloz (72 daño, perfora 3)', desc: 'Dispara saetas de jade silenciosas.', isRangedWeapon: true, rangedStats: { dmg: 72, speed: 740, range: 500, cooldown: 0.28, color: '#69f0ae', pierce: 3 }, icon: 'wep_selva_bow' },
+
+    // Tier 13 - Caldera de Ceniza
+    armadura_caldera:{ id:'armadura_caldera', name: 'Coraza de Escoria Ardiente (T13)', category: 'equipamiento', rarity: 'legendario', tier: 13, sellValue: 495, buyValue: 1120, source: 'Yunque Ígneo', uses: 'Equipa en Armadura (T13): +54 Defensa, +225 Vida Máx y +21% Daño', desc: 'Placas volcánicas rodeadas de ascuas vivas.', equipSlot: 'armor', stats: { def: 54, maxHp: 225, dmgPct: 0.21 }, icon: 'armor_oricalco' },
+    escudo_caldera:  { id:'escudo_caldera',  name: 'Muro de Basalto de Caldera (T13)', category: 'equipamiento', rarity: 'legendario', tier: 13, sellValue: 395, buyValue: 890, source: 'Yunque Ígneo', uses: 'Equipa en Escudo (T13): +40 Defensa, +165 Vida y +14% Daño', desc: 'Irrompible incluso en lagos de magma.', equipSlot: 'shield', stats: { def: 40, maxHp: 165, dmgPct: 0.14 }, icon: 'wep_caldera_shield' },
+    espada_caldera:  { id:'espada_caldera',  name: 'Mandoble de la Caldera Ígnea', category: 'equipamiento', rarity: 'legendario', tier: 13, sellValue: 470, buyValue: 1060, source: 'Yunque Ígneo', uses: 'Espada ardiente (102 daño + onda de fuego)', desc: 'Forjada en llamas volcánicas de Zona III.', weaponMelee: { dmg: 102, range: 94, speed: 0.26, arcColor: '#ff6d00', cleave: true, archetype: 'sword' }, icon: 'wep_caldera_sword' },
+    baculo_caldera:  { id:'baculo_caldera',  name: 'Cetro Piroclástico de Ceniza', category: 'equipamiento', rarity: 'legendario', tier: 13, sellValue: 485, buyValue: 1090, source: 'Hechicería Suprema', uses: 'Báculo ígneo (84 daño explosivo, quema en área)', desc: 'Dispara bolas de magma comprimido.', isStaffWeapon: true, staffStats: { dmg: 84, speed: 600, range: 470, cooldown: 0.28, energyCost: 7.5, color: '#ff6d00', aoeRadius: 72, burnDmg: 16, staffMode: 'archmage_cluster', vfxKey: 'sp_epic_explosion_orange' }, icon: 'wep_caldera_staff' },
+
+    // Tier 14 - Dinastía de Arena Roja & Ciénaga Pútrida
+    armadura_faraon: { id:'armadura_faraon', name: 'Coraza Imperial del Faraón (T14)', category: 'equipamiento', rarity: 'legendario', tier: 14, sellValue: 610, buyValue: 1380, source: 'Yunque Solar', uses: 'Equipa en Armadura (T14): +62 Defensa, +260 Vida, +25% Daño y +14% Velocidad', desc: 'Cota real de pirita solar y ágata escarlata.', equipSlot: 'armor', stats: { def: 62, maxHp: 260, dmgPct: 0.25, speedPct: 0.14 }, icon: 'armor_paladin_gold' },
+    escudo_faraon:   { id:'escudo_faraon',   name: 'Égida Solar de la Dinastía (T14)', category: 'equipamiento', rarity: 'legendario', tier: 14, sellValue: 480, buyValue: 1080, source: 'Yunque Solar', uses: 'Equipa en Escudo (T14): +46 Defensa, +190 Vida y 24% resist. mágica', desc: 'Refleja la luz cegadora del desierto rojo.', equipSlot: 'shield', stats: { def: 46, maxHp: 190, dmgPct: 0.15, spellResist: 0.24 }, icon: 'wep_faraon_shield' },
+    espada_faraon:   { id:'espada_faraon',   name: 'Khopesh Real de Pirita Solar', category: 'equipamiento', rarity: 'legendario', tier: 14, sellValue: 560, buyValue: 1260, source: 'Yunque Solar', uses: 'Espada solar (116 daño + corte radiante)', desc: 'Reliquia bélica de los soberanos de Arena Roja.', weaponMelee: { dmg: 116, range: 96, speed: 0.25, arcColor: '#ffd54f', cleave: true, critBonus: 0.16, archetype: 'sword' }, icon: 'wep_faraon_sword' },
+    guadana_pantano: { id:'guadana_pantano', name: 'Guadaña Tóxica de la Ciénaga', category: 'equipamiento', rarity: 'legendario', tier: 14, sellValue: 575, buyValue: 1290, source: 'Yunque Rúnico', uses: 'Hoja segadora (112 daño + envenena objetivos)', desc: 'Empapada en resina tóxica y esporas pútridas.', weaponMelee: { dmg: 112, range: 98, speed: 0.25, arcColor: '#aeea00', cleave: true, archetype: 'sword' }, icon: 'wep_pantano_scythe' },
+    daga_pantano:    { id:'daga_pantano',    name: 'Daga de Resina Letal', category: 'equipamiento', rarity: 'epico', tier: 13, sellValue: 430, buyValue: 960, source: 'Yunque Rúnico', uses: 'Daga veloz (86 daño, ataque ultrarrápido 0.18s)', desc: 'Ideal para ráfagas críticas venenosas.', weaponMelee: { dmg: 86, range: 74, speed: 0.18, arcColor: '#76ff03', critBonus: 0.22, archetype: 'dagger' }, icon: 'wep_pantano_dagger' },
+
+    // Tier 15 - Glaciar Profundo & Necrópolis & Tierras Malditas (Pre-Omega Supremo!)
+    armadura_abismal:{ id:'armadura_abismal',name: 'Armadura Real del Eclipse Óseo (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 820, buyValue: 1850, source: 'Yunque Rúnico Supremo', uses: 'Equipa en Armadura (T15): +76 Defensa, +330 Vida, +32% Daño, +17% Vel. y +2.0 HP/s', desc: 'La defensa más poderosa antes de dominar las Singularidades Omega.', equipSlot: 'armor', stats: { def: 76, maxHp: 330, dmgPct: 0.32, speedPct: 0.17, regen: 2.0 }, icon: 'armor_legend' },
+    casco_abismal:   { id:'casco_abismal',   name: 'Yelmo de la Corona Ósea (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 640, buyValue: 1450, source: 'Yunque Rúnico Supremo', uses: 'Equipa en Casco (T15): +46 Defensa, +200 Vida, +22% Daño y +18% Crítico', desc: 'Forjado con plata maldita y cristal carmesí.', equipSlot: 'helm', stats: { def: 46, maxHp: 200, dmgPct: 0.22, critBonus: 0.18 }, icon: 'helm_legend' },
+    botas_abismal:   { id:'botas_abismal',   name: 'Botas del Caminante Glacial (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 610, buyValue: 1380, source: 'Yunque Rúnico Supremo', uses: 'Equipa en Botas (T15): +42 Defensa, +40% Velocidad, +195 Vida y +135 Imán', desc: 'Templadas en hielo eterno y bismuto astral.', equipSlot: 'boots', stats: { def: 42, speedPct: 0.40, maxHp: 195, magnetRadius: 135, energySave: 0.26 }, icon: 'boots_legendary' },
+    escudo_glaciar:  { id:'escudo_glaciar',  name: 'Muralla del Cero Absoluto (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 660, buyValue: 1490, source: 'Yunque Rúnico Supremo', uses: 'Equipa en Escudo (T15): +56 Defensa, +230 Vida, +20% Daño y 30% resist. mágica', desc: 'Hielo eterno indestructible bajo presión orbital.', equipSlot: 'shield', stats: { def: 56, maxHp: 230, dmgPct: 0.20, spellResist: 0.30 }, icon: 'wep_glacial_shield' },
+    espada_eclipse:  { id:'espada_eclipse',  name: 'Espada del Eclipse Carmesí (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 980, buyValue: 2200, source: 'Jefe Final / Yunque Rúnico Supremo', uses: 'Espada mítica T15 (142 daño, gran onda carmesí)', desc: 'Réplica forjada con el poder del Espadachín Carmesí Abisal (inferior únicamente a la Hoja de la Singularidad T16).', isSpecialBlade: true, weaponMelee: { dmg: 142, range: 108, speed: 0.24, arcColor: '#ff1744', critBonus: 0.22, cleave: true, archetype: 'sword' }, bladeStats: { dmg: 142, range: 108, arcColor: '#ff1744', cooldown: 0.24 }, icon: 'wep_eclipse_blade' },
+    guadana_necro:   { id:'guadana_necro',   name: 'Segadora de la Necrópolis (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 860, buyValue: 1950, source: 'Yunque Rúnico Supremo', uses: 'Guadaña de hueso fósil (132 daño, tajo amplio)', desc: 'Cosecha espíritus antiguos con filo espectral.', weaponMelee: { dmg: 132, range: 104, speed: 0.25, arcColor: '#ce93d8', cleave: true, critBonus: 0.20, archetype: 'sword' }, icon: 'wep_necro_scythe' },
+    baculo_necro:    { id:'baculo_necro',    name: 'Cetro del Liche Soberano (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 890, buyValue: 2020, source: 'Hechicería Suprema', uses: 'Báculo abisal (102 daño en racimo sombrío)', desc: 'Invoca descargas violetas que consumen escudos.', isStaffWeapon: true, staffStats: { dmg: 102, speed: 630, range: 500, cooldown: 0.26, energyCost: 7.5, color: '#ce93d8', aoeRadius: 78, burnDmg: 18, staffMode: 'archmage_cluster', vfxKey: 'sp_stylized_explosion_violet' }, icon: 'wep_necro_staff' },
+    arco_fenix_abisal:{ id:'arco_fenix_abisal', name: 'Arco Fénix del Ocaso (T15)', category: 'equipamiento', rarity: 'legendario', tier: 15, sellValue: 870, buyValue: 1980, source: 'Yunque Rúnico Supremo', uses: 'Arco legendario T15 (104 daño, perfora 4)', desc: 'Flechas envueltas en fuego carmesí de la frontera abisal.', isRangedWeapon: true, rangedStats: { dmg: 104, speed: 840, range: 550, cooldown: 0.25, color: '#ff5252', pierce: 4 }, icon: 'wep_phoenix_bow' }
   };
 
   Balaclava.ITEMS = ITEMS;

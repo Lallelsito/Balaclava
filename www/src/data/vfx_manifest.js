@@ -2579,4 +2579,27 @@
   "assets/icons_skills_v2/skill_44.png",
   "assets/icons_skills_v2/skill_45.png"
 ];
+
+  // Beta 1.3.0 Super Pixel Effects Gigapack VFX sheets
+  Object.assign(Balaclava.VFX_V2, {
+    sp_epic_explosion_orange:     { path: "assets/vfx_v13/sp_epic_explosion_orange.png",     fw: 128, fh: 128, cols: 13, rows: 1, frames: 13, dur: 0.78, px: 0.5, py: 0.55, loop: false },
+    sp_stylized_explosion_violet: { path: "assets/vfx_v13/sp_stylized_explosion_violet.png", fw: 96,  fh: 96,  cols: 10, rows: 1, frames: 10, dur: 0.60, px: 0.5, py: 0.55, loop: false },
+    sp_frost_explosion_cyan:      { path: "assets/vfx_v13/sp_frost_explosion_cyan.png",      fw: 96,  fh: 96,  cols: 10, rows: 1, frames: 10, dur: 0.60, px: 0.5, py: 0.55, loop: false },
+    sp_spell_absorb_violet:       { path: "assets/vfx_v13/sp_spell_absorb_violet.png",       fw: 128, fh: 128, cols: 31, rows: 1, frames: 31, dur: 1.24, px: 0.5, py: 0.72, loop: false },
+    sp_spell_death_red:           { path: "assets/vfx_v13/sp_spell_death_red.png",           fw: 64,  fh: 64,  cols: 50, rows: 1, frames: 50, dur: 1.50, px: 0.5, py: 0.70, loop: false },
+    sp_spell_attack_red:          { path: "assets/vfx_v13/sp_spell_attack_red.png",          fw: 128, fh: 128, cols: 18, rows: 1, frames: 18, dur: 0.90, px: 0.5, py: 0.75, loop: false },
+    sp_spell_defense_blue:        { path: "assets/vfx_v13/sp_spell_defense_blue.png",        fw: 128, fh: 128, cols: 18, rows: 1, frames: 18, dur: 0.90, px: 0.5, py: 0.75, loop: false },
+    sp_spell_haste_green:         { path: "assets/vfx_v13/sp_spell_haste_green.png",         fw: 128, fh: 128, cols: 29, rows: 1, frames: 29, dur: 1.16, px: 0.5, py: 0.75, loop: false },
+    sp_spell_heal_green:          { path: "assets/vfx_v13/sp_spell_heal_green.png",          fw: 128, fh: 128, cols: 16, rows: 1, frames: 16, dur: 0.88, px: 0.5, py: 0.75, loop: false },
+    sp_spell_poison_green:        { path: "assets/vfx_v13/sp_spell_poison_green.png",        fw: 128, fh: 128, cols: 17, rows: 1, frames: 17, dur: 0.85, px: 0.5, py: 0.72, loop: false },
+    sp_lightning_strike_violet:   { path: "assets/vfx_v13/sp_lightning_strike_violet.png",   fw: 128, fh: 128, cols: 7,  rows: 1, frames: 7,  dur: 0.49, px: 0.5, py: 0.88, loop: false },
+    sp_lightning_burst_violet:    { path: "assets/vfx_v13/sp_lightning_burst_violet.png",    fw: 96,  fh: 96,  cols: 10, rows: 1, frames: 10, dur: 0.55, px: 0.5, py: 0.55, loop: false },
+    sp_impact_blue:               { path: "assets/vfx_v13/sp_impact_blue.png",               fw: 96,  fh: 96,  cols: 10, rows: 1, frames: 10, dur: 0.45, px: 0.5, py: 0.50, loop: false },
+    sp_impact_violet:             { path: "assets/vfx_v13/sp_impact_violet.png",             fw: 80,  fh: 80,  cols: 6,  rows: 1, frames: 6,  dur: 0.36, px: 0.5, py: 0.50, loop: false },
+    sp_scifi_warp:                { path: "assets/vfx_v13/sp_scifi_warp.png",                fw: 128, fh: 128, cols: 10, rows: 1, frames: 10, dur: 0.65, px: 0.5, py: 0.75, loop: false },
+    sp_scifi_charge:              { path: "assets/vfx_v13/sp_scifi_charge.png",              fw: 96,  fh: 96,  cols: 12, rows: 1, frames: 12, dur: 0.72, px: 0.5, py: 0.70, loop: false },
+    sp_skull_smoke:               { path: "assets/vfx_v13/sp_skull_smoke.png",               fw: 64,  fh: 64,  cols: 12, rows: 1, frames: 12, dur: 0.66, px: 0.5, py: 0.65, loop: false },
+    sp_splatter_red:              { path: "assets/vfx_v13/sp_splatter_red.png",              fw: 64,  fh: 64,  cols: 10, rows: 1, frames: 10, dur: 0.50, px: 0.5, py: 0.55, loop: false },
+    sp_fire_loop_orange:          { path: "assets/vfx_v13/sp_fire_loop_orange.png",          fw: 80,  fh: 128, cols: 3,  rows: 2, frames: 5,  dur: 0.50, px: 0.5, py: 0.85, loop: true  }
+  });
 })();

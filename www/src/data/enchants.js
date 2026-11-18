@@ -760,6 +760,467 @@
       color: '#29b6f6',
       desc: 'Reliquia Secreta Legendaria: +35 Energía Máx, +2.0 Energía/s y -15% enfriamiento de hechizos.',
       effect: { maxEnergy: 35, energyRegen: 2.0, spellCdRed: 0.15 }
+    },
+    // ── Beta 1.3.0: 51 Reliquias Únicas de Mazmorras (Tiers 6–16 + Eclipse Final) ──
+    sello_cumbre_helada: {
+      id: 'sello_cumbre_helada',
+      name: 'Sello de la Cumbre Ventisquero',
+      icon: 'relic_v13_0',
+      source: 'Montañas Heladas (Cumbre del Ventisquero)',
+      color: '#80deea',
+      desc: '+22 Vida máx, +4 Defensa y +6% Probabilidad Crítica.',
+      effect: { maxHp: 22, def: 4, critChance: 0.06 }
+    },
+    amuleto_arrecife_coral: {
+      id: 'amuleto_arrecife_coral',
+      name: 'Amuleto del Arrecife Vivo',
+      icon: 'relic_v13_1',
+      source: 'Archipiélago Coral (Gruta del Arrecife)',
+      color: '#26c6da',
+      desc: '+8% Velocidad de movimiento y +8% Suerte en botín.',
+      effect: { moveSpeed: 0.08, luckBonus: 0.08 }
+    },
+    perla_sirena_azul: {
+      id: 'perla_sirena_azul',
+      name: 'Perla de la Sirena Abisal',
+      icon: 'relic_v13_2',
+      source: 'Archipiélago Coral (Santuario de la Perla)',
+      color: '#4dd0e1',
+      desc: '+18 Energía máx, +0.9 Energía/s y -8% Enfriamiento de hechizos.',
+      effect: { maxEnergy: 18, energyRegen: 0.9, spellCdRed: 0.08 }
+    },
+    tridente_fosa_marina: {
+      id: 'tridente_fosa_marina',
+      name: 'Emblema de la Fosa Marina',
+      icon: 'relic_v13_3',
+      source: 'Archipiélago Coral (Abismo de la Marea)',
+      color: '#00acc1',
+      desc: '+10% Daño global y +10% Velocidad de ataque.',
+      effect: { dmgBonus: 0.10, speedMult: 0.10 }
+    },
+    escama_leviatan_coral: {
+      id: 'escama_leviatan_coral',
+      name: 'Escama del Leviatán de Coral',
+      icon: 'relic_v13_4',
+      source: 'Archipiélago Coral (Bastión de Coral)',
+      color: '#0097a7',
+      desc: '+32 Vida máx, +5 Defensa y +5% Resistencia mágica.',
+      effect: { maxHp: 32, def: 5, spellResist: 0.05 }
+    },
+    corona_emperatriz_mar: {
+      id: 'corona_emperatriz_mar',
+      name: 'Corona de la Emperatriz Abisal',
+      icon: 'relic_v13_5',
+      source: 'Archipiélago Coral (Trono de Leviatán)',
+      color: '#18ffff',
+      desc: '+12% Doble Drop, +12% Monedas y +12% Potencia de recolección.',
+      effect: { doubleChance: 0.12, coinDropBonus: 0.12, powerMult: 0.12 }
+    },
+    prisma_geoda_viva: {
+      id: 'prisma_geoda_viva',
+      name: 'Prisma de la Geoda Viva',
+      icon: 'relic_v13_6',
+      source: 'Cavernas Cristalinas (Caverna de la Geoda)',
+      color: '#ce93d8',
+      desc: '+80 Radio de luz, +10% Suerte y +10% Poder de minería.',
+      effect: { lightRadius: 80, luckBonus: 0.10, gatherBonus: 0.10 }
+    },
+    espejo_cuarzo_astral: {
+      id: 'espejo_cuarzo_astral',
+      name: 'Espejo de Cuarzo Astral',
+      icon: 'relic_v13_7',
+      source: 'Cavernas Cristalinas (Galería de los Espejos)',
+      color: '#ba68c8',
+      desc: '+12% Poder de hechizos y +10% Resistencia a conjuros.',
+      effect: { spellPower: 0.12, spellResist: 0.10 }
+    },
+    diapason_amatista: {
+      id: 'diapason_amatista',
+      name: 'Diapasón de Amatista Resonante',
+      icon: 'relic_v13_8',
+      source: 'Cavernas Cristalinas (Cámara de Amatista)',
+      color: '#ab47bc',
+      desc: '+22 Energía máx y +10% Velocidad de ataque.',
+      effect: { maxEnergy: 22, speedMult: 0.10 }
+    },
+    lente_refraccion_pura: {
+      id: 'lente_refraccion_pura',
+      name: 'Lente de Refracción Pura',
+      icon: 'relic_v13_9',
+      source: 'Cavernas Cristalinas (Nexo Prismático)',
+      color: '#e040fb',
+      desc: '+8% Probabilidad Crítica y +12% Daño contra Jefes.',
+      effect: { critChance: 0.08, bossDmgBonus: 0.12 }
+    },
+    corazon_celestita_eterno: {
+      id: 'corazon_celestita_eterno',
+      name: 'Corazón de Celestita Eterna',
+      icon: 'relic_v13_11',
+      source: 'Cavernas Cristalinas (Corazón del Cristal)',
+      color: '#7c4dff',
+      desc: '+40 Vida máx, +1.0 Regeneración HP/s y +12% XP.',
+      effect: { maxHp: 40, regen: 1.0, xpBonus: 0.12 }
+    },
+    talisman_raices_antiguas: {
+      id: 'talisman_raices_antiguas',
+      name: 'Talismán de Raíces Antiguas',
+      icon: 'relic_v13_12',
+      source: 'Selva Esmeralda (Raíces Ancestrales)',
+      color: '#66bb6a',
+      desc: '+1 Fruto al cosechar, +10% Madera/Menaje y +26 Vida máx.',
+      effect: { harvestBonus: 1, gatherBonus: 0.10, maxHp: 26 }
+    },
+    mascara_serpiente_jade: {
+      id: 'mascara_serpiente_jade',
+      name: 'Máscara de la Serpiente de Jade',
+      icon: 'relic_v13_13',
+      source: 'Selva Esmeralda (Pirámide de Jade)',
+      color: '#26a69a',
+      desc: '+11% Daño global y +7% Crítico.',
+      effect: { dmgBonus: 0.11, critChance: 0.07 }
+    },
+    ambar_reina_esmeralda: {
+      id: 'ambar_reina_esmeralda',
+      name: 'Ámbar de la Reina Colmena',
+      icon: 'relic_v13_14',
+      source: 'Selva Esmeralda (Colmena Esmeralda)',
+      color: '#ffca28',
+      desc: '+1.2 Regeneración HP/s y +1.1 Energía/s.',
+      effect: { regen: 1.2, energyRegen: 1.1 }
+    },
+    pluma_quetzal_dorado: {
+      id: 'pluma_quetzal_dorado',
+      name: 'Pluma del Quetzal Dorado',
+      icon: 'relic_v13_15',
+      source: 'Selva Esmeralda (Templo del Dosel)',
+      color: '#00e676',
+      desc: '+10% Velocidad de movimiento y +90 Atracción de botín.',
+      effect: { moveSpeed: 0.10, magnetBonus: 90 }
+    },
+    semilla_corazon_selva: {
+      id: 'semilla_corazon_selva',
+      name: 'Semilla del Corazón Esmeralda',
+      icon: 'relic_v13_16',
+      source: 'Selva Esmeralda (Corazón de la Jungla)',
+      color: '#00c853',
+      desc: '+45 Vida máx, +6 Curación al matar y +5% Reducción de daño.',
+      effect: { maxHp: 45, killHeal: 6, defPct: 0.05 }
+    },
+    brasa_fumarola_oscura: {
+      id: 'brasa_fumarola_oscura',
+      name: 'Brasa de Fumarola Oscura',
+      icon: 'relic_v13_17',
+      source: 'Caldera de Ceniza (Pozo de Fumarolas)',
+      color: '#ff7043',
+      desc: '+12% Daño global y +10% Poder de hechizos.',
+      effect: { dmgBonus: 0.12, spellPower: 0.10 }
+    },
+    escoria_crater_ardiente: {
+      id: 'escoria_crater_ardiente',
+      name: 'Escoria del Cráter Ardiente',
+      icon: 'relic_v13_18',
+      source: 'Caldera de Ceniza (Cráter Ardiente)',
+      color: '#ff5722',
+      desc: '+7 Defensa fija y +38 Vida máxima.',
+      effect: { def: 7, maxHp: 38 }
+    },
+    yunque_basalto_rojo: {
+      id: 'yunque_basalto_rojo',
+      name: 'Yunque de Basalto Rojo',
+      icon: 'relic_v13_19',
+      source: 'Caldera de Ceniza (Fundición de Escoria)',
+      color: '#d84315',
+      desc: '+16% Potencia de minería y +12% Velocidad de ataque.',
+      effect: { powerMult: 0.16, speedMult: 0.12 }
+    },
+    colmillo_bestia_ceniza: {
+      id: 'colmillo_bestia_ceniza',
+      name: 'Colmillo de la Bestia Ígnea',
+      icon: 'relic_v13_20',
+      source: 'Caldera de Ceniza (Guarida de la Bestia)',
+      color: '#ff3d00',
+      desc: '+15% Daño contra Jefes y +8% Crítico.',
+      effect: { bossDmgBonus: 0.15, critChance: 0.08 }
+    },
+    corona_senor_caldera: {
+      id: 'corona_senor_caldera',
+      name: 'Corona del Señor de la Caldera',
+      icon: 'relic_v13_21',
+      source: 'Caldera de Ceniza (Ciudadela de la Caldera)',
+      color: '#ffab00',
+      desc: '+14% Daño global, +5% Reducción de daño y +10% Oro.',
+      effect: { dmgPct: 0.14, defPct: 0.05, coinDropBonus: 0.10 }
+    },
+    ankh_dinastia_dorada: {
+      id: 'ankh_dinastia_dorada',
+      name: 'Ankh de la Dinastía Dorada',
+      icon: 'relic_v13_22',
+      source: 'Dinastía de la Arena (Tumba de los Escribas)',
+      color: '#ffd54f',
+      desc: '+14% Experiencia, +14% Oro en cofres/jefes y +25 Vida máx.',
+      effect: { xpBonus: 0.14, coinDropBonus: 0.14, maxHp: 25 }
+    },
+    escarabajo_lapislazuli: {
+      id: 'escarabajo_lapislazuli',
+      name: 'Escarabajo de Lapislázuli',
+      icon: 'relic_v13_23',
+      source: 'Dinastía de la Arena (Bóveda del Escarabajo)',
+      color: '#42a5f5',
+      desc: '+12% Suerte, +12% Doble Drop y +80 Atracción de ítems.',
+      effect: { luckBonus: 0.12, doubleChance: 0.12, magnetBonus: 80 }
+    },
+    fragmento_obelisco_solar: {
+      id: 'fragmento_obelisco_solar',
+      name: 'Fragmento del Obelisco Solar',
+      icon: 'relic_v13_24',
+      source: 'Dinastía de la Arena (Obelisco de Hierro)',
+      color: '#ffb300',
+      desc: '+15% Poder mágico y -10% Enfriamiento de hechizos.',
+      effect: { spellPower: 0.15, spellCdRed: 0.10 }
+    },
+    balanza_juicio_eterno: {
+      id: 'balanza_juicio_eterno',
+      name: 'Balanza del Juicio Eterno',
+      icon: 'relic_v13_25',
+      source: 'Dinastía de la Arena (Cámara del Tesoro Real)',
+      color: '#ffe082',
+      desc: '+8 Defensa, +8% Resistencia mágica y +10% Ahorro de energía.',
+      effect: { def: 8, spellResist: 0.08, energySave: 0.10 }
+    },
+    cetro_sol_cenit: {
+      id: 'cetro_sol_cenit',
+      name: 'Cetro del Sol en el Cenit',
+      icon: 'relic_v13_26',
+      source: 'Dinastía de la Arena (Altar del Sol Eterno)',
+      color: '#ffca28',
+      desc: '+15% Daño global, +100 Luz nocturna y +1.2 Energía/s.',
+      effect: { dmgBonus: 0.15, lightRadius: 100, energyRegen: 1.2 }
+    },
+    nemes_faraon_inmortal: {
+      id: 'nemes_faraon_inmortal',
+      name: 'Nemes del Faraón Inmortal',
+      icon: 'relic_v13_27',
+      source: 'Dinastía de la Arena (Pirámide del Faraón)',
+      color: '#ff8f00',
+      desc: '+55 Vida máx, +18% Daño a Jefes y +10% Crítico.',
+      effect: { maxHp: 55, bossDmgBonus: 0.18, critChance: 0.10 }
+    },
+    esquirla_grieta_azul: {
+      id: 'esquirla_grieta_azul',
+      name: 'Esquirla de la Grieta Glacial',
+      icon: 'relic_v13_28',
+      source: 'Glaciar Profundo (Grieta Abisal)',
+      color: '#81d4fa',
+      desc: '-9% Enfriamiento de hechizos y +26 Energía máx.',
+      effect: { spellCdRed: 0.09, maxEnergy: 26 }
+    },
+    reliquia_mamut_congelado: {
+      id: 'reliquia_mamut_congelado',
+      name: 'Colmillo del Mamut Ancestral',
+      icon: 'relic_v13_29',
+      source: 'Glaciar Profundo (Vestigios Helados)',
+      color: '#4fc3f7',
+      desc: '+50 Vida máx y +9 Defensa física.',
+      effect: { maxHp: 50, def: 9 }
+    },
+    ojo_tormenta_polar: {
+      id: 'ojo_tormenta_polar',
+      name: 'Ojo de la Tormenta Polar',
+      icon: 'relic_v13_30',
+      source: 'Glaciar Profundo (Ojo del Ventisquero)',
+      color: '#29b6f6',
+      desc: '+9% Crítico, +12% Velocidad de ataque y +10% Visión nocturna.',
+      effect: { critChance: 0.09, speedMult: 0.12, nightVision: 0.10 }
+    },
+    runa_coloso_escarcha: {
+      id: 'runa_coloso_escarcha',
+      name: 'Runa del Coloso Glacial',
+      icon: 'relic_v13_31',
+      source: 'Glaciar Profundo (Sala del Coloso Glacial)',
+      color: '#039be5',
+      desc: '+6% Reducción de daño recibido y +14% Daño físico.',
+      effect: { defPct: 0.06, dmgPct: 0.14 }
+    },
+    caliz_hielo_inmaculado: {
+      id: 'caliz_hielo_inmaculado',
+      name: 'Cáliz de Hielo Inmaculado',
+      icon: 'relic_v13_32',
+      source: 'Glaciar Profundo (Sancta del Cero Absoluto)',
+      color: '#80d8ff',
+      desc: '+1.5 Energía/s, +1.5 Vida/s y +12% Ahorro de energía.',
+      effect: { energyRegen: 1.5, regen: 1.5, energySave: 0.12 }
+    },
+    corazon_cero_absoluto: {
+      id: 'corazon_cero_absoluto',
+      name: 'Corazón del Cero Absoluto',
+      icon: 'relic_v13_33',
+      source: 'Glaciar Profundo (Trono del Hielo Eterno)',
+      color: '#00b0ff',
+      desc: '+65 Vida máx, +18% Poder de hechizos y +16% Daño a Jefes.',
+      effect: { maxHp: 65, spellPower: 0.18, bossDmgBonus: 0.16 }
+    },
+    fetiche_manglar_negro: {
+      id: 'fetiche_manglar_negro',
+      name: 'Fetiche del Manglar Oscuro',
+      icon: 'relic_v13_34',
+      source: 'Ciénaga Pútrida (Raíces del Manglar)',
+      color: '#9ccc65',
+      desc: '+16% Recolección de recursos y +2 Frutos extra al cosechar.',
+      effect: { gatherBonus: 0.16, harvestBonus: 2 }
+    },
+    hongo_bioluminiscente: {
+      id: 'hongo_bioluminiscente',
+      name: 'Espora Bioluminiscente Eterna',
+      icon: 'relic_v13_35',
+      source: 'Ciénaga Pútrida (Gruta de las Esporas)',
+      color: '#aeea00',
+      desc: '+110 Luz en cuevas y +14% Suerte global.',
+      effect: { lightRadius: 110, luckBonus: 0.14 }
+    },
+    matraz_cieno_alquimico: {
+      id: 'matraz_cieno_alquimico',
+      name: 'Matraz de Cieno Alquímico',
+      icon: 'relic_v13_36',
+      source: 'Ciénaga Pútrida (Lago del Cieno Tóxico)',
+      color: '#76ff03',
+      desc: '+15% XP, +14% Doble Drop y +8 Curación al matar.',
+      effect: { xpBonus: 0.15, doubleChance: 0.14, killHeal: 8 }
+    },
+    linterna_cosecha_maldita: {
+      id: 'linterna_cosecha_maldita',
+      name: 'Linterna de Calabaza Espectral',
+      icon: 'relic_v13_37',
+      source: 'Ciénaga Pútrida (Pantano de las Calabazas)',
+      color: '#ff9100',
+      desc: '+10% Velocidad, +15% Visión nocturna y +10% Crítico.',
+      effect: { moveSpeed: 0.10, nightVision: 0.15, critChance: 0.10 }
+    },
+    totem_hidra_cienaga: {
+      id: 'totem_hidra_cienaga',
+      name: 'Tótem de la Hidra Pantanosa',
+      icon: 'relic_v13_38',
+      source: 'Ciénaga Pútrida (Bastión de la Plaga)',
+      color: '#64dd17',
+      desc: '+2.0 Regeneración HP/s y +55 Vida máx.',
+      effect: { regen: 2.0, maxHp: 55 }
+    },
+    ovulo_madre_putrida: {
+      id: 'ovulo_madre_putrida',
+      name: 'Núcleo de la Madre Pútrida',
+      icon: 'relic_v13_39',
+      source: 'Ciénaga Pútrida (Nido de la Madre Pútrida)',
+      color: '#aed581',
+      desc: '+18% Daño global, +10 Defensa y +12% Resistencia mágica.',
+      effect: { dmgBonus: 0.18, def: 10, spellResist: 0.12 }
+    },
+    osario_marfil_maldito: {
+      id: 'osario_marfil_maldito',
+      name: 'Relicario de Marfil Maldito',
+      icon: 'relic_v13_40',
+      source: 'Necrópolis Ósea (Osario de Marfil)',
+      color: '#e0e0e0',
+      desc: '+10 Curación al matar y +16% Daño físico.',
+      effect: { killHeal: 10, dmgBonus: 0.16 }
+    },
+    sello_cripta_silenciosa: {
+      id: 'sello_cripta_silenciosa',
+      name: 'Sello de la Cripta Silenciosa',
+      icon: 'relic_v13_42',
+      source: 'Necrópolis Ósea (Cripta de los Caídos)',
+      color: '#b0bec5',
+      desc: '+12 Defensa, +6% Reducción de daño y +12% Resistencia mágica.',
+      effect: { def: 12, defPct: 0.06, spellResist: 0.12 }
+    },
+    farol_almas_errantes: {
+      id: 'farol_almas_errantes',
+      name: 'Farol de Almas Errantes',
+      icon: 'relic_v13_43',
+      source: 'Necrópolis Ósea (Catacumbas del Lamento)',
+      color: '#80cbc4',
+      desc: '+32 Energía máx, +1.8 Energía/s y -12% Enfriamiento.',
+      effect: { maxEnergy: 32, energyRegen: 1.8, spellCdRed: 0.12 }
+    },
+    costilla_dragon_oseo: {
+      id: 'costilla_dragon_oseo',
+      name: 'Espina del Dragón Óseo',
+      icon: 'relic_v13_44',
+      source: 'Necrópolis Ósea (Foso de los Sacrificios)',
+      color: '#cfd8dc',
+      desc: '+22% Daño contra Jefes y +15% Velocidad de ataque.',
+      effect: { bossDmgBonus: 0.22, speedMult: 0.15 }
+    },
+    filacteria_archiliche: {
+      id: 'filacteria_archiliche',
+      name: 'Filacteria del Archiliche',
+      icon: 'relic_v13_45',
+      source: 'Necrópolis Ósea (Torre del Archiliche)',
+      color: '#b388ff',
+      desc: '+24% Poder de hechizos y +70 Vida máx.',
+      effect: { spellPower: 0.24, maxHp: 70 }
+    },
+    corona_soverano_huesos: {
+      id: 'corona_soverano_huesos',
+      name: 'Corona del Soberano de los Huesos',
+      icon: 'relic_v13_46',
+      source: 'Necrópolis Ósea (Trono de los Mil Huesos)',
+      color: '#ffd180',
+      desc: '+12% Crítico, +20% Daño global y +15% XP.',
+      effect: { critChance: 0.12, dmgPct: 0.20, xpBonus: 0.15 }
+    },
+    caliz_sangre_maldita: {
+      id: 'caliz_sangre_maldita',
+      name: 'Cáliz de Sangre Maldita',
+      icon: 'relic_v13_47',
+      source: 'Tierras Malditas (Sagrario de Sangre)',
+      color: '#e53935',
+      desc: '+14 Curación al matar, +2.5 HP/s y +80 Vida máx.',
+      effect: { killHeal: 14, regen: 2.5, maxHp: 80 }
+    },
+    corazon_abominacion_carnica: {
+      id: 'corazon_abominacion_carnica',
+      name: 'Corazón de la Abominación',
+      icon: 'relic_v13_48',
+      source: 'Tierras Malditas (Cámara de la Carne)',
+      color: '#d81b60',
+      desc: '+14 Defensa, +8% Reducción de daño y +95 Vida máx.',
+      effect: { def: 14, defPct: 0.08, maxHp: 95 }
+    },
+    crisol_almas_condenadas: {
+      id: 'crisol_almas_condenadas',
+      name: 'Crisol de Almas Condenadas',
+      icon: 'relic_v13_49',
+      source: 'Tierras Malditas (Forja de las Almas)',
+      color: '#ff6d00',
+      desc: '+25% Potencia de minería/tala y +20% Velocidad de ataque.',
+      effect: { powerMult: 0.25, speedMult: 0.20 }
+    },
+    efigie_rey_cosecha: {
+      id: 'efigie_rey_cosecha',
+      name: 'Efigie del Rey de la Cosecha',
+      icon: 'relic_v13_50',
+      source: 'Tierras Malditas (Santuario del Espantapájaros)',
+      color: '#ffab00',
+      desc: '+22% Doble Drop, +20% Suerte y +22% Oro.',
+      effect: { doubleChance: 0.22, luckBonus: 0.20, coinDropBonus: 0.22 }
+    },
+    ojo_abismo_singularity: {
+      id: 'ojo_abismo_singularity',
+      name: 'Ojo del Abismo Primordial',
+      icon: 'relic_v13_51',
+      source: 'Tierras Malditas (Portón del Abismo)',
+      color: '#aa00ff',
+      desc: '+26% Poder mágico, -15% Enfriamiento y +45 Energía máx.',
+      effect: { spellPower: 0.26, spellCdRed: 0.15, maxEnergy: 45 }
+    },
+    corazon_eclipse_carmesi: {
+      id: 'corazon_eclipse_carmesi',
+      tier: 'mitico',
+      name: 'Corazón del Eclipse Carmesí',
+      icon: 'relic_v13_52',
+      source: 'Tierras Malditas (Eclipse del Espadachín Carmesí)',
+      color: '#ff1744',
+      desc: 'Reliquia Suprema del Jefe Final: +150 Vida máx, +35% Daño global, +30% Daño a Jefes, +18% Crítico, +15% Reducción de daño y +3.5 HP/s.',
+      effect: { maxHp: 150, dmgBonus: 0.35, bossDmgBonus: 0.30, critChance: 0.18, defPct: 0.15, regen: 3.5 }
     }
   };
 

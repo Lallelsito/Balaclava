@@ -621,22 +621,527 @@
         xp: 2300
       },
       enemyTypes: ['flaming_skull', 'dark_lancer', 'crimson_jelly', 'magma']
+    },
+
+    // ── BIOMA MONTAÑAS HELADAS (Dungeon 5/5 para completar Zona II) ──
+    montanas_cumbre: {
+      id: 'montanas_cumbre', themeKey: 'montanas_heladas', chestTheme: 'frost',
+      name: 'Cumbre del Ventisquero Eterno',
+      floorColor: '#1f2d3d', wallColor: '#54738e', accentColor: '#80deea',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_knight',
+      bossRelicId: 'sello_cumbre_helada',
+      boss: { name: 'Valkiria de Escarcha Skadi', hp: 5600, dmg: 96, speed: 112, color: '#80deea', drops: { fragmentos_antiguos: 3, lingote_titanio: 4, zafiro: 3, llave_zafiro: 1 }, coins: 310, xp: 1480 },
+      enemyTypes: ['wolf', 'golem', 'slime_blue', 'ghastly_eye', 'enemy_glaciar_whelp']
+    },
+
+    // ── ZONA III: ARCHIPIÉLAGO CORAL (5 Dungeons, Tiers 9-10) ──
+    coral_arrecife: {
+      id: 'coral_arrecife', themeKey: 'archipielago_coral', chestTheme: 'frost',
+      name: 'Gruta del Arrecife Vivo',
+      floorColor: '#123342', wallColor: '#1d6278', accentColor: '#26c6da',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_goddess',
+      bossRelicId: 'amuleto_arrecife_coral',
+      boss: { name: 'Cangrejo Acorazado Karkinos', hp: 8200, dmg: 132, speed: 108, color: '#26c6da', drops: { coral_roca: 12, lingote_coral: 3, perla_turquesa: 2, fragmentos_antiguos: 4, llave_zafiro: 1 }, coins: 460, xp: 2550 },
+      enemyTypes: ['enemy_coral_crab', 'enemy_coral_cobra', 'slime_blue', 'cobra']
+    },
+    coral_perla: {
+      id: 'coral_perla', themeKey: 'archipielago_coral', chestTheme: 'frost',
+      name: 'Santuario de la Perla Abisal',
+      floorColor: '#103a47', wallColor: '#21718a', accentColor: '#4dd0e1',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_goddess',
+      bossRelicId: 'perla_sirena_azul',
+      boss: { name: 'Oráculo Sirena Thallasa', hp: 9000, dmg: 140, speed: 115, color: '#4dd0e1', drops: { coral_roca: 14, lingote_coral: 4, perla_turquesa: 3, fragmentos_antiguos: 4, llave_jefe: 1 }, coins: 510, xp: 2800 },
+      enemyTypes: ['enemy_coral_cobra', 'enemy_coral_crab', 'ghastly_eye', 'wisp']
+    },
+    coral_abismo: {
+      id: 'coral_abismo', themeKey: 'archipielago_coral', chestTheme: 'frost',
+      name: 'Fosa de la Marea Eterna',
+      floorColor: '#0e2d3b', wallColor: '#19546b', accentColor: '#00acc1',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_knight',
+      bossRelicId: 'tridente_fosa_marina',
+      boss: { name: 'Portador del Tridente Nereo', hp: 9800, dmg: 148, speed: 118, color: '#00acc1', drops: { lingote_coral: 5, placa_coral: 2, perla_turquesa: 3, fragmentos_antiguos: 5, llave_zafiro: 1 }, coins: 560, xp: 3100 },
+      enemyTypes: ['enemy_coral_crab', 'enemy_coral_cobra', 'enemy_abismo_wisp', 'golem']
+    },
+    coral_bastion: {
+      id: 'coral_bastion', themeKey: 'archipielago_coral', chestTheme: 'frost',
+      name: 'Bastión del Arrecife Sumergido',
+      floorColor: '#112f3d', wallColor: '#23647a', accentColor: '#0097a7',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_knight',
+      bossRelicId: 'escama_leviatan_coral',
+      boss: { name: 'Coloso Crustáceo Charybdis', hp: 10600, dmg: 156, speed: 110, color: '#0097a7', drops: { lingote_coral: 6, placa_coral: 3, perla_turquesa: 4, fragmentos_antiguos: 5, llave_jefe: 1 }, coins: 610, xp: 3400 },
+      enemyTypes: ['enemy_coral_crab', 'enemy_coral_cobra', 'golem', 'frost_jelly']
+    },
+    coral_trono: {
+      id: 'coral_trono', themeKey: 'archipielago_coral', chestTheme: 'frost',
+      name: 'Trono de la Emperatriz Leviatán',
+      floorColor: '#0a2634', wallColor: '#175e78', accentColor: '#18ffff',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_dragon',
+      bossRelicId: 'corona_emperatriz_mar',
+      boss: { name: 'Emperatriz Leviatán Coralina', hp: 11600, dmg: 165, speed: 122, color: '#18ffff', drops: { placa_coral: 4, perla_turquesa: 5, fragmentos_antiguos: 6, llave_maestra_mazmorra: 1, pocion_coralina: 2 }, coins: 680, xp: 3800 },
+      enemyTypes: ['enemy_coral_crab', 'enemy_coral_cobra', 'enemy_abismo_wisp', 'ghastly_eye']
+    },
+
+    // ── ZONA III: CAVERNAS CRISTALINAS (5 Dungeons, Tiers 10-11) ──
+    cristal_geoda: {
+      id: 'cristal_geoda', themeKey: 'cavernas_cristal', chestTheme: 'frost',
+      name: 'Caverna de la Geoda Viva',
+      floorColor: '#251a3b', wallColor: '#664599', accentColor: '#ce93d8',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_goddess',
+      bossRelicId: 'prisma_geoda_viva',
+      boss: { name: 'Gólem Prismático Geodus', hp: 11800, dmg: 168, speed: 105, color: '#ce93d8', drops: { cuarzo_boreal: 14, lingote_boreal: 4, celestita_cristal: 2, fragmentos_antiguos: 5, llave_zafiro: 1 }, coins: 690, xp: 3900 },
+      enemyTypes: ['enemy_cristal_eye', 'golem', 'floating_eye', 'mushroom_purple']
+    },
+    cristal_espejo: {
+      id: 'cristal_espejo', themeKey: 'cavernas_cristal', chestTheme: 'frost',
+      name: 'Galería de los Espejos Astrales',
+      floorColor: '#291c42', wallColor: '#7348ab', accentColor: '#ba68c8',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_goddess',
+      bossRelicId: 'espejo_cuarzo_astral',
+      boss: { name: 'Ilusionista de Cuarzo Mirage', hp: 12600, dmg: 176, speed: 124, color: '#ba68c8', drops: { cuarzo_boreal: 16, lingote_boreal: 4, celestita_cristal: 3, fragmentos_antiguos: 5, llave_jefe: 1 }, coins: 740, xp: 4200 },
+      enemyTypes: ['enemy_cristal_eye', 'ghost_spectral', 'wisp', 'ghastly_eye']
+    },
+    cristal_camara: {
+      id: 'cristal_camara', themeKey: 'cavernas_cristal', chestTheme: 'frost',
+      name: 'Cámara de Amatista Resonante',
+      floorColor: '#24173d', wallColor: '#6a3fa3', accentColor: '#ab47bc',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_gargoyle',
+      bossRelicId: 'diapason_amatista',
+      boss: { name: 'Cantor de Amatista Vael', hp: 13500, dmg: 184, speed: 120, color: '#ab47bc', drops: { lingote_boreal: 5, placa_boreal: 2, celestita_cristal: 3, fragmentos_antiguos: 6, llave_zafiro: 1 }, coins: 790, xp: 4550 },
+      enemyTypes: ['enemy_cristal_eye', 'enemy_abismo_wisp', 'skeleton_mage', 'golem']
+    },
+    cristal_nexo: {
+      id: 'cristal_nexo', themeKey: 'cavernas_cristal', chestTheme: 'frost',
+      name: 'Nexo Prismático Subterráneo',
+      floorColor: '#21153b', wallColor: '#5c3899', accentColor: '#e040fb',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_knight',
+      bossRelicId: 'lente_refraccion_pura',
+      boss: { name: 'Arconte de Refracción Luxor', hp: 14400, dmg: 192, speed: 126, color: '#e040fb', drops: { lingote_boreal: 6, placa_boreal: 3, celestita_cristal: 4, fragmentos_antiguos: 6, llave_jefe: 1 }, coins: 840, xp: 4850 },
+      enemyTypes: ['enemy_cristal_eye', 'enemy_glaciar_whelp', 'skel_mage_dark', 'floating_eye']
+    },
+    cristal_corazon: {
+      id: 'cristal_corazon', themeKey: 'cavernas_cristal', chestTheme: 'frost',
+      name: 'Corazón de Celestita Eterna',
+      floorColor: '#1a1133', wallColor: '#6c3fb8', accentColor: '#7c4dff',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_dragon',
+      bossRelicId: 'corazon_celestita_eterno',
+      boss: { name: 'Serafín de Cristal Aurelion', hp: 15600, dmg: 202, speed: 128, color: '#7c4dff', drops: { placa_boreal: 4, celestita_cristal: 5, bismuto_astral: 2, fragmentos_antiguos: 7, llave_maestra_mazmorra: 1 }, coins: 900, xp: 5250 },
+      enemyTypes: ['enemy_cristal_eye', 'enemy_abismo_wisp', 'enemy_glaciar_whelp', 'golem']
+    },
+
+    // ── ZONA III: SELVA ESMERALDA (5 Dungeons, Tiers 11-12) ──
+    selva_raices: {
+      id: 'selva_raices', themeKey: 'selva_esmeralda', chestTheme: 'gold',
+      name: 'Caverna de las Raíces Ancestrales',
+      floorColor: '#132b19', wallColor: '#2c6137', accentColor: '#66bb6a',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_sphinx',
+      bossRelicId: 'talisman_raices_antiguas',
+      boss: { name: 'Ent Guardián Sylvanus', hp: 15200, dmg: 198, speed: 108, color: '#66bb6a', drops: { madera_ferrea: 16, lingote_selvano: 4, jade_ancestral: 2, fragmentos_antiguos: 6, llave_dorada: 1 }, coins: 860, xp: 5050 },
+      enemyTypes: ['enemy_selva_plant', 'enemy_selva_spider', 'mushroom_mob', 'cobra']
+    },
+    selva_piramide: {
+      id: 'selva_piramide', themeKey: 'selva_esmeralda', chestTheme: 'gold',
+      name: 'Pirámide del Templo de Jade',
+      floorColor: '#15301d', wallColor: '#2b6e44', accentColor: '#26a69a',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_sphinx',
+      bossRelicId: 'mascara_serpiente_jade',
+      boss: { name: 'Sierpe Emplumada Quetzal', hp: 16200, dmg: 208, speed: 126, color: '#26a69a', drops: { madera_ferrea: 16, lingote_selvano: 5, jade_ancestral: 3, fragmentos_antiguos: 6, llave_jefe: 1 }, coins: 920, xp: 5400 },
+      enemyTypes: ['enemy_selva_spider', 'enemy_selva_plant', 'cobra', 'orc']
+    },
+    selva_colmena: {
+      id: 'selva_colmena', themeKey: 'selva_esmeralda', chestTheme: 'gold',
+      name: 'Colmena Reina Esmeralda',
+      floorColor: '#18331a', wallColor: '#3d7a36', accentColor: '#ffca28',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_goddess',
+      bossRelicId: 'ambar_reina_esmeralda',
+      boss: { name: 'Reina Avispa Vespira', hp: 17200, dmg: 218, speed: 132, color: '#ffca28', drops: { lingote_selvano: 5, placa_selvano: 2, jade_ancestral: 3, fragmentos_antiguos: 7, llave_jefe: 1 }, coins: 980, xp: 5750 },
+      enemyTypes: ['enemy_selva_spider', 'enemy_pantano_shroom', 'toxic_hound', 'plague_bat']
+    },
+    selva_dosel: {
+      id: 'selva_dosel', themeKey: 'selva_esmeralda', chestTheme: 'gold',
+      name: 'Santuario del Dosel Sagrado',
+      floorColor: '#112918', wallColor: '#28693e', accentColor: '#00e676',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_knight',
+      bossRelicId: 'pluma_quetzal_dorado',
+      boss: { name: 'Cazador Alfa Xbalanque', hp: 18400, dmg: 226, speed: 134, color: '#00e676', drops: { lingote_selvano: 6, placa_selvano: 3, jade_ancestral: 4, fragmentos_antiguos: 7, pocion_selva: 2 }, coins: 1040, xp: 6150 },
+      enemyTypes: ['enemy_selva_spider', 'enemy_selva_plant', 'dark_lancer', 'toxic_hound']
+    },
+    selva_corazon: {
+      id: 'selva_corazon', themeKey: 'selva_esmeralda', chestTheme: 'gold',
+      name: 'Corazón Vivo de la Jungla',
+      floorColor: '#0d2614', wallColor: '#1e703a', accentColor: '#00c853',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_dragon',
+      bossRelicId: 'semilla_corazon_selva',
+      boss: { name: 'Avatar Primordial Gaia-Viridis', hp: 19800, dmg: 236, speed: 128, color: '#00c853', drops: { placa_selvano: 4, jade_ancestral: 5, fragmentos_antiguos: 8, llave_maestra_mazmorra: 1, pocion_selva: 2 }, coins: 1120, xp: 6600 },
+      enemyTypes: ['enemy_selva_plant', 'enemy_selva_spider', 'enemy_pantano_slime', 'golem']
+    },
+
+    // ── ZONA III: CALDERA DE CENIZA (5 Dungeons, Tiers 12-13) ──
+    caldera_fumarola: {
+      id: 'caldera_fumarola', themeKey: 'caldera_ceniza', chestTheme: 'crimson',
+      name: 'Pozo de Fumarolas Oscuras',
+      floorColor: '#291512', wallColor: '#692a1e', accentColor: '#ff7043',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'banner_red', statueKey: 'statue_dragon',
+      bossRelicId: 'brasa_fumarola_oscura',
+      boss: { name: 'Espectro de Hollín Ignis', hp: 19400, dmg: 232, speed: 122, color: '#ff7043', drops: { escoria_caldera: 16, lingote_escoria: 4, polvo_carmesi: 3, fragmentos_antiguos: 7, llave_rubi: 1 }, coins: 1100, xp: 6450 },
+      enemyTypes: ['enemy_ember_bat', 'enemy_fire_slime', 'flaming_skull', 'beetle_fire']
+    },
+    caldera_crater: {
+      id: 'caldera_crater', themeKey: 'caldera_ceniza', chestTheme: 'crimson',
+      name: 'Cráter Ardiente del Basalto',
+      floorColor: '#2e1612', wallColor: '#7a2f1e', accentColor: '#ff5722',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'banner_red', statueKey: 'statue_dragon',
+      bossRelicId: 'escoria_crater_ardiente',
+      boss: { name: 'Titán de Escoria Vulkan', hp: 20800, dmg: 244, speed: 116, color: '#ff5722', drops: { escoria_caldera: 18, lingote_escoria: 5, polvo_carmesi: 4, fragmentos_antiguos: 7, llave_jefe: 1 }, coins: 1180, xp: 6900 },
+      enemyTypes: ['enemy_fire_slime', 'enemy_bomb_black', 'magma', 'fire_elem']
+    },
+    caldera_fundicion: {
+      id: 'caldera_fundicion', themeKey: 'caldera_ceniza', chestTheme: 'crimson',
+      name: 'Fundición Eterna de Basalto',
+      floorColor: '#331712', wallColor: '#85311c', accentColor: '#d84315',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_knight',
+      bossRelicId: 'yunque_basalto_rojo',
+      boss: { name: 'Maestro Herrero Surtur', hp: 22200, dmg: 256, speed: 120, color: '#d84315', drops: { lingote_escoria: 5, placa_escoria: 3, polvo_carmesi: 4, fragmentos_antiguos: 8, llave_rubi: 1 }, coins: 1250, xp: 7350 },
+      enemyTypes: ['enemy_bomb_black', 'enemy_biter_red', 'enemy_dragon_whelp', 'imp']
+    },
+    caldera_bestia: {
+      id: 'caldera_bestia', themeKey: 'caldera_ceniza', chestTheme: 'crimson',
+      name: 'Guarida de la Bestia de Ceniza',
+      floorColor: '#2e1210', wallColor: '#8c281c', accentColor: '#ff3d00',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'banner_red', statueKey: 'statue_dragon',
+      bossRelicId: 'colmillo_bestia_ceniza',
+      boss: { name: 'Quimera de Magma Typhon', hp: 23800, dmg: 268, speed: 132, color: '#ff3d00', drops: { lingote_escoria: 6, placa_escoria: 3, polvo_carmesi: 5, fragmentos_antiguos: 8, llave_jefe: 1 }, coins: 1320, xp: 7800 },
+      enemyTypes: ['enemy_dragon_whelp', 'enemy_bat_horned', 'enemy_ember_bat', 'crimson_jelly']
+    },
+    caldera_senor: {
+      id: 'caldera_senor', themeKey: 'caldera_ceniza', chestTheme: 'crimson',
+      name: 'Ciudadela del Señor de la Caldera',
+      floorColor: '#240d0c', wallColor: '#962216', accentColor: '#ffab00',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_dragon',
+      bossRelicId: 'corona_senor_caldera',
+      boss: { name: 'Archidemonio Ceniza Ragnaros', hp: 25500, dmg: 282, speed: 134, color: '#ffab00', drops: { placa_escoria: 4, polvo_carmesi: 6, fragmentos_antiguos: 9, llave_maestra_mazmorra: 1, materia_comprimida: 1 }, coins: 1420, xp: 8400 },
+      enemyTypes: ['enemy_dragon_whelp', 'enemy_bat_horned', 'enemy_biter_red', 'magma']
+    },
+
+    // ── ZONA IV: DINASTÍA DE LA ARENA (6 Dungeons, Tiers 13-14) ──
+    dinastia_tumbas: {
+      id: 'dinastia_tumbas', themeKey: 'dinastia_arena', chestTheme: 'gold',
+      name: 'Tumba de los Escribas Dorados',
+      floorColor: '#362b1a', wallColor: '#8c6e3d', accentColor: '#ffd54f',
+      carpetKey: 'carpetSandstone', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_sphinx',
+      bossRelicId: 'ankh_dinastia_dorada',
+      boss: { name: 'Sumo Escriba Imhotep', hp: 25000, dmg: 278, speed: 122, color: '#ffd54f', drops: { pirita_solar: 18, lingote_pirita: 4, agata_roja: 2, fragmentos_antiguos: 8, llave_dorada: 1 }, coins: 1380, xp: 8200 },
+      enemyTypes: ['sand_ghoul', 'cobra', 'skeleton_archer', 'royal_scarab']
+    },
+    dinastia_escarabajo: {
+      id: 'dinastia_escarabajo', themeKey: 'dinastia_arena', chestTheme: 'gold',
+      name: 'Bóveda del Escarabajo Sagrado',
+      floorColor: '#3a2e1c', wallColor: '#967642', accentColor: '#42a5f5',
+      carpetKey: 'carpetSandstone', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_sphinx',
+      bossRelicId: 'escarabajo_lapislazuli',
+      boss: { name: 'Coloso Khepri Dorado', hp: 26600, dmg: 292, speed: 126, color: '#42a5f5', drops: { pirita_solar: 20, lingote_pirita: 5, agata_roja: 3, fragmentos_antiguos: 8, llave_jefe: 1 }, coins: 1460, xp: 8700 },
+      enemyTypes: ['royal_scarab', 'beetle', 'enemy_coral_cobra', 'rock_golem']
+    },
+    dinastia_obelisco: {
+      id: 'dinastia_obelisco', themeKey: 'dinastia_arena', chestTheme: 'gold',
+      name: 'Obelisco de Hierro y Oro',
+      floorColor: '#382a17', wallColor: '#9e7834', accentColor: '#ffb300',
+      carpetKey: 'carpetSandstone', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'banner_red', statueKey: 'statue_goddess',
+      bossRelicId: 'fragmento_obelisco_solar',
+      boss: { name: 'Centinela del Obelisco Ra', hp: 28200, dmg: 306, speed: 128, color: '#ffb300', drops: { lingote_pirita: 5, placa_pirita: 3, agata_roja: 4, fragmentos_antiguos: 9, llave_dorada: 1 }, coins: 1540, xp: 9200 },
+      enemyTypes: ['enemy_abismo_wisp', 'royal_scarab', 'skeleton_mage', 'sand_ghoul']
+    },
+    dinastia_camara: {
+      id: 'dinastia_camara', themeKey: 'dinastia_arena', chestTheme: 'gold',
+      name: 'Cámara del Tesoro Real',
+      floorColor: '#3d2d16', wallColor: '#ab8032', accentColor: '#ffe082',
+      carpetKey: 'carpetSandstone', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_sphinx',
+      bossRelicId: 'balanza_juicio_eterno',
+      boss: { name: 'Juez de Almas Anubis', hp: 29800, dmg: 320, speed: 132, color: '#ffe082', drops: { lingote_pirita: 6, placa_pirita: 3, agata_roja: 4, fragmentos_antiguos: 9, elixir_solar_real: 2 }, coins: 1620, xp: 9700 },
+      enemyTypes: ['dark_lancer', 'royal_scarab', 'enemy_necro_skull', 'rock_golem']
+    },
+    dinastia_sol: {
+      id: 'dinastia_sol', themeKey: 'dinastia_arena', chestTheme: 'gold',
+      name: 'Altar del Sol Eterno',
+      floorColor: '#402c14', wallColor: '#b5842c', accentColor: '#ffca28',
+      carpetKey: 'carpetSandstone', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'banner_red', statueKey: 'statue_goddess',
+      bossRelicId: 'cetro_sol_cenit',
+      boss: { name: 'Sumo Sacerdote Solar Horus', hp: 31400, dmg: 334, speed: 136, color: '#ffca28', drops: { placa_pirita: 4, agata_roja: 5, fragmentos_antiguos: 10, llave_jefe: 1, elixir_solar_real: 2 }, coins: 1700, xp: 10200 },
+      enemyTypes: ['enemy_ember_bat', 'royal_scarab', 'fire_elem', 'enemy_cristal_eye']
+    },
+    dinastia_faraon: {
+      id: 'dinastia_faraon', themeKey: 'dinastia_arena', chestTheme: 'gold',
+      name: 'Pirámide del Faraón Inmortal',
+      floorColor: '#36220e', wallColor: '#bf8520', accentColor: '#ff8f00',
+      carpetKey: 'carpetSandstone', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_sphinx',
+      bossRelicId: 'nemes_faraon_inmortal',
+      boss: { name: 'Faraón Supremo Ramsés VII', hp: 33200, dmg: 348, speed: 138, color: '#ff8f00', drops: { placa_pirita: 5, agata_roja: 6, fragmentos_antiguos: 10, llave_maestra_mazmorra: 1, materia_comprimida: 1 }, coins: 1800, xp: 10800 },
+      enemyTypes: ['enemy_necro_skull', 'royal_scarab', 'dark_lancer', 'enemy_dragon_whelp']
+    },
+
+    // ── ZONA IV: GLACIAR PROFUNDO (6 Dungeons, Tiers 14-15) ──
+    glaciar_grieta: {
+      id: 'glaciar_grieta', themeKey: 'glaciar_profundo', chestTheme: 'frost',
+      name: 'Grieta Abisal del Hielo',
+      floorColor: '#132436', wallColor: '#305c85', accentColor: '#81d4fa',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_knight',
+      bossRelicId: 'esquirla_grieta_azul',
+      boss: { name: 'Acechador Polar Fenrir', hp: 32400, dmg: 340, speed: 136, color: '#81d4fa', drops: { hielo_eterno: 6, bismuto_astral: 3, lingote_boreal: 5, fragmentos_antiguos: 9, llave_zafiro: 1 }, coins: 1740, xp: 10500 },
+      enemyTypes: ['enemy_glaciar_whelp', 'shadow_wolf', 'frost_jelly', 'wolf']
+    },
+    glaciar_vestigios: {
+      id: 'glaciar_vestigios', themeKey: 'glaciar_profundo', chestTheme: 'frost',
+      name: 'Vestigios Helados del Norte',
+      floorColor: '#112233', wallColor: '#366591', accentColor: '#4fc3f7',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_knight',
+      bossRelicId: 'reliquia_mamut_congelado',
+      boss: { name: 'Mamut Milenario Behemot', hp: 34000, dmg: 352, speed: 120, color: '#4fc3f7', drops: { hielo_eterno: 7, bismuto_astral: 3, placa_boreal: 3, fragmentos_antiguos: 9, llave_jefe: 1 }, coins: 1820, xp: 11000 },
+      enemyTypes: ['enemy_glaciar_whelp', 'golem', 'cave_spider', 'slime_blue']
+    },
+    glaciar_ojo: {
+      id: 'glaciar_ojo', themeKey: 'glaciar_profundo', chestTheme: 'frost',
+      name: 'Ojo del Ventisquero Perpetuo',
+      floorColor: '#0e1f33', wallColor: '#2d5c8a', accentColor: '#29b6f6',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_goddess',
+      bossRelicId: 'ojo_tormenta_polar',
+      boss: { name: 'Heraldo de la Ventisca Boreas', hp: 35600, dmg: 364, speed: 138, color: '#29b6f6', drops: { hielo_eterno: 8, bismuto_astral: 4, placa_boreal: 4, fragmentos_antiguos: 10, llave_zafiro: 1 }, coins: 1900, xp: 11500 },
+      enemyTypes: ['enemy_cristal_eye', 'ghastly_eye', 'enemy_glaciar_whelp', 'skel_mage_dark']
+    },
+    glaciar_coloso: {
+      id: 'glaciar_coloso', themeKey: 'glaciar_profundo', chestTheme: 'frost',
+      name: 'Sala del Coloso Glacial',
+      floorColor: '#0c1c2e', wallColor: '#275380', accentColor: '#039be5',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_knight',
+      bossRelicId: 'runa_coloso_escarcha',
+      boss: { name: 'Titán de Permafrost Ymir', hp: 37200, dmg: 376, speed: 122, color: '#039be5', drops: { hielo_eterno: 9, bismuto_astral: 4, lingote_celestial: 4, fragmentos_antiguos: 10, llave_jefe: 1 }, coins: 1980, xp: 12000 },
+      enemyTypes: ['enemy_glaciar_whelp', 'golem', 'dark_lancer', 'frost_jelly']
+    },
+    glaciar_sancta: {
+      id: 'glaciar_sancta', themeKey: 'glaciar_profundo', chestTheme: 'frost',
+      name: 'Sancta del Cero Absoluto',
+      floorColor: '#0a192b', wallColor: '#214d7a', accentColor: '#80d8ff',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_goddess',
+      bossRelicId: 'caliz_hielo_inmaculado',
+      boss: { name: 'Sacerdotisa Glacial Freya', hp: 38800, dmg: 388, speed: 140, color: '#80d8ff', drops: { hielo_eterno: 10, bismuto_astral: 5, fragmentos_antiguos: 11, elixir_escarcha: 3, llave_jefe: 1 }, coins: 2060, xp: 12500 },
+      enemyTypes: ['enemy_cristal_eye', 'enemy_glaciar_whelp', 'skeleton_mage', 'wisp']
+    },
+    glaciar_abismo: {
+      id: 'glaciar_abismo', themeKey: 'glaciar_profundo', chestTheme: 'frost',
+      name: 'Trono del Hielo Eterno',
+      floorColor: '#071424', wallColor: '#1b4775', accentColor: '#00b0ff',
+      carpetKey: 'carpetBlue', torchKey: 'torch_blue', brazierKey: 'brazier_blue', bannerKey: 'banner_blue', statueKey: 'statue_dragon',
+      bossRelicId: 'corazon_cero_absoluto',
+      boss: { name: 'Emperador Cero Absoluto Glacies', hp: 40600, dmg: 400, speed: 142, color: '#00b0ff', drops: { hielo_eterno: 12, bismuto_astral: 6, fragmentos_antiguos: 12, llave_maestra_mazmorra: 1, materia_comprimida: 1 }, coins: 2150, xp: 13100 },
+      enemyTypes: ['enemy_glaciar_whelp', 'enemy_cristal_eye', 'dark_lancer', 'frost_jelly']
+    },
+
+    // ── ZONA IV: CIÉNAGA PÚTRIDA (6 Dungeons, Tiers 14-15) ──
+    pantano_raices: {
+      id: 'pantano_raices', themeKey: 'cienaga_putrida', chestTheme: 'gold',
+      name: 'Raíces del Manglar Maldito',
+      floorColor: '#182414', wallColor: '#3e542e', accentColor: '#9ccc65',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_gargoyle',
+      bossRelicId: 'fetiche_manglar_negro',
+      boss: { name: 'Chamán Putrefacto Vex', hp: 34800, dmg: 356, speed: 128, color: '#9ccc65', drops: { resina_toxica: 14, flor_pantano: 8, polvo_veneno: 4, fragmentos_antiguos: 9, llave_dorada: 1 }, coins: 1850, xp: 11200 },
+      enemyTypes: ['enemy_pantano_slime', 'enemy_pantano_shroom', 'slime_toxic', 'toxic_hound']
+    },
+    pantano_esporas: {
+      id: 'pantano_esporas', themeKey: 'cienaga_putrida', chestTheme: 'gold',
+      name: 'Gruta de las Esporas Tóxicas',
+      floorColor: '#1b2914', wallColor: '#445e2b', accentColor: '#aeea00',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_gargoyle',
+      bossRelicId: 'hongo_bioluminiscente',
+      boss: { name: 'Soberano Fúngico Mycelion', hp: 36400, dmg: 368, speed: 124, color: '#aeea00', drops: { resina_toxica: 15, flor_pantano: 9, polvo_veneno: 5, fragmentos_antiguos: 10, pocion_veneno_res: 2 }, coins: 1930, xp: 11700 },
+      enemyTypes: ['enemy_pantano_shroom', 'mushroom_purple', 'mushroom_mob', 'plague_bat']
+    },
+    pantano_cieno: {
+      id: 'pantano_cieno', themeKey: 'cienaga_putrida', chestTheme: 'gold',
+      name: 'Lago del Cieno Alquímico',
+      floorColor: '#162612', wallColor: '#3b5727', accentColor: '#76ff03',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_goddess',
+      bossRelicId: 'matraz_cieno_alquimico',
+      boss: { name: 'Amalgama Viscosa Oozath', hp: 38000, dmg: 380, speed: 122, color: '#76ff03', drops: { resina_toxica: 16, polvo_veneno: 6, fragmentos_antiguos: 10, llave_jefe: 1 }, coins: 2020, xp: 12200 },
+      enemyTypes: ['enemy_pantano_slime', 'slime_toxic', 'enemy_selva_spider', 'toxic_hound']
+    },
+    pantano_calabaza: {
+      id: 'pantano_calabaza', themeKey: 'cienaga_putrida', chestTheme: 'gold',
+      name: 'Pantano de las Calabazas Sombrías',
+      floorColor: '#1f2412', wallColor: '#544a22', accentColor: '#ff9100',
+      carpetKey: 'carpetGreen', torchKey: 'torch_orange', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_gargoyle',
+      bossRelicId: 'linterna_cosecha_maldita',
+      boss: { name: 'Segador Calabaza Samhain', hp: 39600, dmg: 392, speed: 136, color: '#ff9100', drops: { flor_pantano: 10, polvo_veneno: 6, fragmentos_antiguos: 11, pocion_veneno_res: 2, llave_jefe: 1 }, coins: 2100, xp: 12800 },
+      enemyTypes: ['enemy_pantano_shroom', 'enemy_dark_bat', 'ghost_spectral', 'plague_bat']
+    },
+    pantano_bastion: {
+      id: 'pantano_bastion', themeKey: 'cienaga_putrida', chestTheme: 'gold',
+      name: 'Bastión de la Hidra Pantanosa',
+      floorColor: '#132410', wallColor: '#355422', accentColor: '#64dd17',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_dragon',
+      bossRelicId: 'totem_hidra_cienaga',
+      boss: { name: 'Hidra Venenosa Lernae', hp: 41200, dmg: 404, speed: 132, color: '#64dd17', drops: { resina_toxica: 18, polvo_veneno: 8, fragmentos_antiguos: 11, llave_jefe: 1 }, coins: 2190, xp: 13400 },
+      enemyTypes: ['enemy_pantano_slime', 'enemy_selva_plant', 'enemy_pantano_shroom', 'cobra']
+    },
+    pantano_madre: {
+      id: 'pantano_madre', themeKey: 'cienaga_putrida', chestTheme: 'gold',
+      name: 'Nido de la Madre Pútrida',
+      floorColor: '#101f0d', wallColor: '#2e4d1e', accentColor: '#aed581',
+      carpetKey: 'carpetGreen', torchKey: 'torch_green', brazierKey: 'brazier_green', bannerKey: 'banner_green', statueKey: 'statue_dragon',
+      bossRelicId: 'ovulo_madre_putrida',
+      boss: { name: 'Madre Pútrida Morbida', hp: 43000, dmg: 416, speed: 130, color: '#aed581', drops: { resina_toxica: 20, polvo_veneno: 10, fragmentos_antiguos: 12, llave_maestra_mazmorra: 1, materia_comprimida: 1 }, coins: 2280, xp: 14000 },
+      enemyTypes: ['enemy_pantano_slime', 'enemy_pantano_shroom', 'enemy_selva_spider', 'slime_toxic']
+    },
+
+    // ── ZONA IV: NECRÓPOLIS ÓSEA (6 Dungeons, Tiers 15-16) ──
+    necro_osario: {
+      id: 'necro_osario', themeKey: 'necropolis_osea', chestTheme: 'crimson',
+      name: 'Osario de Marfil Maldito',
+      floorColor: '#1f1c24', wallColor: '#544e5e', accentColor: '#e0e0e0',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_gargoyle',
+      bossRelicId: 'osario_marfil_maldito',
+      boss: { name: 'Centurión Óseo Moros', hp: 41000, dmg: 398, speed: 132, color: '#e0e0e0', drops: { hueso_fosil: 16, lingote_hueso: 5, marmol_oscuro: 8, fragmentos_antiguos: 11, llave_esqueleto: 1 }, coins: 2180, xp: 13300 },
+      enemyTypes: ['enemy_necro_skull', 'skeleton', 'skeleton_archer', 'grave_revenant']
+    },
+    necro_cripta: {
+      id: 'necro_cripta', themeKey: 'necropolis_osea', chestTheme: 'crimson',
+      name: 'Cripta de los Caídos Eternos',
+      floorColor: '#1c1921', wallColor: '#4c4657', accentColor: '#b0bec5',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_knight',
+      bossRelicId: 'sello_cripta_silenciosa',
+      boss: { name: 'Caballero Muerto Thanatos', hp: 42800, dmg: 410, speed: 136, color: '#b0bec5', drops: { hueso_fosil: 18, lingote_hueso: 6, marmol_oscuro: 10, fragmentos_antiguos: 11, llave_jefe: 1 }, coins: 2260, xp: 13900 },
+      enemyTypes: ['enemy_necro_skull', 'dark_lancer', 'skeleton_mage', 'enemy_dark_bat']
+    },
+    necro_catacumba: {
+      id: 'necro_catacumba', themeKey: 'necropolis_osea', chestTheme: 'crimson',
+      name: 'Catacumbas del Lamento Oscuro',
+      floorColor: '#1a1721', wallColor: '#484154', accentColor: '#80cbc4',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_gargoyle',
+      bossRelicId: 'farol_almas_errantes',
+      boss: { name: 'Banshee Suprema Ereshkigal', hp: 44600, dmg: 422, speed: 142, color: '#80cbc4', drops: { lingote_hueso: 6, marmol_oscuro: 12, fragmentos_antiguos: 12, llave_esqueleto: 1 }, coins: 2340, xp: 14500 },
+      enemyTypes: ['enemy_necro_skull', 'ghost_spectral', 'grave_revenant', 'wisp']
+    },
+    necro_foso: {
+      id: 'necro_foso', themeKey: 'necropolis_osea', chestTheme: 'crimson',
+      name: 'Foso de los Sacrificios Óseos',
+      floorColor: '#18141f', wallColor: '#4a3d59', accentColor: '#cfd8dc',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_dragon',
+      bossRelicId: 'costilla_dragon_oseo',
+      boss: { name: 'Dracoliche Ancestral Sindragos', hp: 46500, dmg: 435, speed: 138, color: '#cfd8dc', drops: { hueso_fosil: 20, lingote_hueso: 7, marmol_oscuro: 12, fragmentos_antiguos: 12, llave_jefe: 1 }, coins: 2420, xp: 15100 },
+      enemyTypes: ['enemy_necro_skull', 'enemy_glaciar_whelp', 'skel_mage_dark', 'dark_lancer']
+    },
+    necro_torre: {
+      id: 'necro_torre', themeKey: 'necropolis_osea', chestTheme: 'crimson',
+      name: 'Torre del Archiliche Soberano',
+      floorColor: '#17121f', wallColor: '#4d3766', accentColor: '#b388ff',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_goddess',
+      bossRelicId: 'filacteria_archiliche',
+      boss: { name: 'Archiliche Nagash', hp: 48400, dmg: 448, speed: 140, color: '#b388ff', drops: { lingote_hueso: 8, plata_maldita: 6, fragmentos_antiguos: 13, elixir_eclipse: 2, llave_jefe: 1 }, coins: 2520, xp: 15800 },
+      enemyTypes: ['enemy_necro_skull', 'enemy_abismo_wisp', 'skel_mage_dark', 'ghost']
+    },
+    necro_trono: {
+      id: 'necro_trono', themeKey: 'necropolis_osea', chestTheme: 'crimson',
+      name: 'Trono de los Mil Huesos',
+      floorColor: '#120e1a', wallColor: '#52346e', accentColor: '#ffd180',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_knight',
+      bossRelicId: 'corona_soverano_huesos',
+      boss: { name: 'Soberano de los Huesos Kel-Thuz', hp: 50500, dmg: 462, speed: 144, color: '#ffd180', drops: { lingote_hueso: 10, plata_maldita: 8, fragmentos_antiguos: 14, llave_maestra_mazmorra: 1, materia_comprimida: 2 }, coins: 2650, xp: 16600 },
+      enemyTypes: ['enemy_necro_skull', 'dark_lancer', 'enemy_abismo_wisp', 'skeleton_mage']
+    },
+
+    // ── ZONA IV: TIERRAS MALDITAS (5 Dungeons + Eclipse Carmesí Final) ──
+    maldita_sangre: {
+      id: 'maldita_sangre', themeKey: 'tierras_malditas', chestTheme: 'crimson',
+      name: 'Sagrario de la Sangre Eterna',
+      floorColor: '#240b11', wallColor: '#73162a', accentColor: '#e53935',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_dragon',
+      bossRelicId: 'caliz_sangre_maldita',
+      boss: { name: 'Conde Carmesí Drakul', hp: 49500, dmg: 455, speed: 146, color: '#e53935', drops: { plata_maldita: 12, lingote_maldito: 5, cristal_carmesi: 3, fragmentos_antiguos: 13, llave_rubi: 1 }, coins: 2600, xp: 16200 },
+      enemyTypes: ['enemy_biter_red', 'enemy_dark_bat', 'vampire_bat', 'crimson_jelly']
+    },
+    maldita_carne: {
+      id: 'maldita_carne', themeKey: 'tierras_malditas', chestTheme: 'crimson',
+      name: 'Cámara de la Abominación',
+      floorColor: '#260b14', wallColor: '#7a1733', accentColor: '#d81b60',
+      carpetKey: 'carpetRed', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'pyr_banner_red', statueKey: 'statue_gargoyle',
+      bossRelicId: 'corazon_abominacion_carnica',
+      boss: { name: 'Carnicero Abisal Goremaw', hp: 51800, dmg: 470, speed: 132, color: '#d81b60', drops: { plata_maldita: 14, lingote_maldito: 6, cristal_carmesi: 4, fragmentos_antiguos: 14, llave_jefe: 1 }, coins: 2720, xp: 17000 },
+      enemyTypes: ['enemy_biter_red', 'enemy_abismo_goblin', 'enemy_bomb_black', 'dark_lancer']
+    },
+    maldita_forja: {
+      id: 'maldita_forja', themeKey: 'tierras_malditas', chestTheme: 'crimson',
+      name: 'Forja de las Almas Condenadas',
+      floorColor: '#240c0b', wallColor: '#821c14', accentColor: '#ff6d00',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'banner_red', statueKey: 'statue_dragon',
+      bossRelicId: 'crisol_almas_condenadas',
+      boss: { name: 'Herrero Demoníaco Hephaest-Abys', hp: 54200, dmg: 486, speed: 138, color: '#ff6d00', drops: { lingote_maldito: 7, placa_maldito: 3, cristal_carmesi: 5, fragmentos_antiguos: 15, llave_rubi: 1 }, coins: 2860, xp: 17900 },
+      enemyTypes: ['enemy_bat_horned', 'enemy_bomb_black', 'enemy_dragon_whelp', 'magma']
+    },
+    maldita_calabaza: {
+      id: 'maldita_calabaza', themeKey: 'tierras_malditas', chestTheme: 'crimson',
+      name: 'Santuario del Rey de la Cosecha',
+      floorColor: '#210b14', wallColor: '#70183a', accentColor: '#ffab00',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_gargoyle',
+      bossRelicId: 'efigie_rey_cosecha',
+      boss: { name: 'Espectro Espantapájaros Dullahan', hp: 56800, dmg: 502, speed: 148, color: '#ffab00', drops: { placa_maldito: 4, cristal_carmesi: 5, fragmentos_antiguos: 16, elixir_eclipse: 3, llave_jefe: 1 }, coins: 3000, xp: 18800 },
+      enemyTypes: ['enemy_abismo_goblin', 'enemy_abismo_wisp', 'enemy_dark_bat', 'ghost_spectral']
+    },
+    maldita_abismo: {
+      id: 'maldita_abismo', themeKey: 'tierras_malditas', chestTheme: 'crimson',
+      name: 'Portón del Abismo Primordial',
+      floorColor: '#1c0814', wallColor: '#69123c', accentColor: '#aa00ff',
+      carpetKey: 'carpetPurple', torchKey: 'torch_purple', brazierKey: 'brazier_purple', bannerKey: 'banner_purple', statueKey: 'statue_dragon',
+      bossRelicId: 'ojo_abismo_singularity',
+      boss: { name: 'Vigilante del Vacío Azathoth', hp: 59800, dmg: 520, speed: 148, color: '#aa00ff', drops: { placa_maldito: 5, cristal_carmesi: 6, fragmentos_antiguos: 18, materia_comprimida: 2, llave_maestra_mazmorra: 1 }, coins: 3200, xp: 20000 },
+      enemyTypes: ['enemy_abismo_wisp', 'enemy_abismo_goblin', 'enemy_bat_horned', 'enemy_biter_red']
+    },
+    eclipse_carmesi: {
+      id: 'eclipse_carmesi', isFinal: true, themeKey: 'tierras_malditas', chestTheme: 'crimson',
+      name: 'Eclipse del Espadachín Carmesí',
+      floorColor: '#140409', wallColor: '#8f0a22', accentColor: '#ff1744',
+      carpetKey: 'carpetRed', torchKey: 'torch_orange', brazierKey: 'brazier_orange', bannerKey: 'pyr_banner_red', statueKey: 'statue_dragon',
+      bossRelicId: 'corazon_eclipse_carmesi',
+      boss: {
+        name: 'Espadachín Carmesí Abisal',
+        hp: 72000, dmg: 580, speed: 158, color: '#ff1744',
+        drops: { cristal_carmesi: 10, placa_maldito: 8, fragmentos_antiguos: 24, materia_comprimida: 3, singularidad: 1, llave_maestra_mazmorra: 2, espada_eclipse: 1 },
+        coins: 4500, xp: 32000
+      },
+      enemyTypes: ['enemy_biter_red', 'enemy_bat_horned', 'enemy_abismo_wisp', 'enemy_abismo_goblin']
     }
   };
 
-  // Fixed multi-wing labyrinth blueprint: 75x39 tiles (24 unique dungeons across 5 biomes & 7 architectural layouts)
+  // Fixed multi-wing labyrinth blueprint: 75x39 tiles (75 unique dungeons across all 14 biomes & 7 architectural layouts)
   const DUNGEON_TIER_LIST = [
+    // Zona I & II (25)
     'pradera', 'pradera_profunda', 'pradera_madriguera', 'pradera_baston', 'pradera_bosquecillo',
     'desierto', 'desierto_piramide', 'desierto_oasis', 'desierto_catacumbas', 'desierto_solario',
-    'montanas_heladas', 'montanas_glaciar', 'montanas_mina', 'montanas_fortaleza',
+    'montanas_heladas', 'montanas_glaciar', 'montanas_mina', 'montanas_fortaleza', 'montanas_cumbre',
     'bosque_oscuro', 'bosque_necro', 'bosque_laboratorio', 'bosque_arana', 'bosque_pantano',
-    'tierras_volcanicas', 'volcan_abismo', 'volcan_fragua', 'volcan_caldera', 'volcan_trono_ceniza'
+    'tierras_volcanicas', 'volcan_abismo', 'volcan_fragua', 'volcan_caldera', 'volcan_trono_ceniza',
+    // Zona III (20)
+    'coral_arrecife', 'coral_perla', 'coral_abismo', 'coral_bastion', 'coral_trono',
+    'cristal_geoda', 'cristal_espejo', 'cristal_camara', 'cristal_nexo', 'cristal_corazon',
+    'selva_raices', 'selva_piramide', 'selva_colmena', 'selva_dosel', 'selva_corazon',
+    'caldera_fumarola', 'caldera_crater', 'caldera_fundicion', 'caldera_bestia', 'caldera_senor',
+    // Zona IV (30)
+    'dinastia_tumbas', 'dinastia_escarabajo', 'dinastia_obelisco', 'dinastia_camara', 'dinastia_sol', 'dinastia_faraon',
+    'glaciar_grieta', 'glaciar_vestigios', 'glaciar_ojo', 'glaciar_coloso', 'glaciar_sancta', 'glaciar_abismo',
+    'pantano_raices', 'pantano_esporas', 'pantano_cieno', 'pantano_calabaza', 'pantano_bastion', 'pantano_madre',
+    'necro_osario', 'necro_cripta', 'necro_catacumba', 'necro_foso', 'necro_torre', 'necro_trono',
+    'maldita_sangre', 'maldita_carne', 'maldita_forja', 'maldita_calabaza', 'maldita_abismo', 'eclipse_carmesi'
   ];
 
   const LATE_BIOME_DUNGEONS = new Set([
     'bosque_oscuro', 'bosque_necro', 'bosque_laboratorio', 'bosque_arana', 'bosque_pantano',
-    'montanas_heladas', 'montanas_glaciar', 'montanas_mina', 'montanas_fortaleza',
-    'tierras_volcanicas', 'volcan_abismo', 'volcan_fragua', 'volcan_caldera', 'volcan_trono_ceniza'
+    'montanas_heladas', 'montanas_glaciar', 'montanas_mina', 'montanas_fortaleza', 'montanas_cumbre',
+    'tierras_volcanicas', 'volcan_abismo', 'volcan_fragua', 'volcan_caldera', 'volcan_trono_ceniza',
+    'coral_arrecife', 'coral_perla', 'coral_abismo', 'coral_bastion', 'coral_trono',
+    'cristal_geoda', 'cristal_espejo', 'cristal_camara', 'cristal_nexo', 'cristal_corazon',
+    'selva_raices', 'selva_piramide', 'selva_colmena', 'selva_dosel', 'selva_corazon',
+    'caldera_fumarola', 'caldera_crater', 'caldera_fundicion', 'caldera_bestia', 'caldera_senor',
+    'dinastia_tumbas', 'dinastia_escarabajo', 'dinastia_obelisco', 'dinastia_camara', 'dinastia_sol', 'dinastia_faraon',
+    'glaciar_grieta', 'glaciar_vestigios', 'glaciar_ojo', 'glaciar_coloso', 'glaciar_sancta', 'glaciar_abismo',
+    'pantano_raices', 'pantano_esporas', 'pantano_cieno', 'pantano_calabaza', 'pantano_bastion', 'pantano_madre',
+    'necro_osario', 'necro_cripta', 'necro_catacumba', 'necro_foso', 'necro_torre', 'necro_trono',
+    'maldita_sangre', 'maldita_carne', 'maldita_forja', 'maldita_calabaza', 'maldita_abismo', 'eclipse_carmesi'
   ]);
 
   // Unique attack movesets for each of the 24 dungeon bosses (expanded to 5 signature attacks for late biomes 3, 4, 5)
@@ -760,6 +1265,262 @@
       modes1: ['cataclysmic_stomp', 'ashen_obliteration_ray', 'cinder_cyclone', 'ash_emperor_dominion_wave', 'cinder_execution_cleave'],
       modes2: ['ashen_obliteration_ray', 'ash_emperor_dominion_wave', 'cinder_cyclone', 'cinder_execution_cleave', 'cataclysmic_stomp'],
       modes3: ['cinder_cyclone', 'cinder_execution_cleave', 'ashen_obliteration_ray', 'ash_emperor_dominion_wave', 'cataclysmic_stomp']
+    },
+    // ── Beta 1.3.0: Montañas Cumbre + Zonas III & IV (50 Jefes + Espadachín Carmesí Abisal) ──
+    montanas_cumbre: {
+      modes1: ['glaciar_blizzard_rings', 'glaciar_ice_spire_cross', 'glaciar_permafrost_dash'],
+      modes2: ['glaciar_blizzard_rings', 'glaciar_ice_spire_cross', 'glaciar_polar_shatter', 'glaciar_permafrost_dash'],
+      modes3: ['glaciar_absolute_zero', 'glaciar_blizzard_rings', 'glaciar_ice_spire_cross', 'glaciar_polar_shatter', 'glaciar_permafrost_dash']
+    },
+    coral_arrecife: {
+      modes1: ['coral_tidal_surge', 'coral_pearl_barrage', 'coral_whirlpool_vortex'],
+      modes2: ['coral_tidal_surge', 'coral_whirlpool_vortex', 'coral_depth_charge', 'coral_pearl_barrage'],
+      modes3: ['coral_leviathan_rush', 'coral_tidal_surge', 'coral_whirlpool_vortex', 'coral_depth_charge', 'coral_pearl_barrage']
+    },
+    coral_perla: {
+      modes1: ['coral_pearl_barrage', 'coral_whirlpool_vortex', 'coral_tidal_surge'],
+      modes2: ['coral_pearl_barrage', 'coral_whirlpool_vortex', 'coral_depth_charge', 'coral_leviathan_rush'],
+      modes3: ['coral_whirlpool_vortex', 'coral_pearl_barrage', 'coral_leviathan_rush', 'coral_depth_charge', 'coral_tidal_surge']
+    },
+    coral_abismo: {
+      modes1: ['coral_depth_charge', 'coral_tidal_surge', 'coral_pearl_barrage'],
+      modes2: ['coral_depth_charge', 'coral_leviathan_rush', 'coral_whirlpool_vortex', 'coral_tidal_surge'],
+      modes3: ['coral_leviathan_rush', 'coral_depth_charge', 'coral_whirlpool_vortex', 'coral_pearl_barrage', 'coral_tidal_surge']
+    },
+    coral_bastion: {
+      modes1: ['coral_leviathan_rush', 'coral_tidal_surge', 'coral_depth_charge'],
+      modes2: ['coral_leviathan_rush', 'coral_whirlpool_vortex', 'coral_pearl_barrage', 'coral_depth_charge'],
+      modes3: ['coral_leviathan_rush', 'coral_whirlpool_vortex', 'coral_tidal_surge', 'coral_depth_charge', 'coral_pearl_barrage']
+    },
+    coral_trono: {
+      modes1: ['coral_whirlpool_vortex', 'coral_leviathan_rush', 'coral_depth_charge', 'coral_pearl_barrage'],
+      modes2: ['coral_leviathan_rush', 'coral_tidal_surge', 'coral_whirlpool_vortex', 'coral_pearl_barrage', 'coral_depth_charge'],
+      modes3: ['coral_leviathan_rush', 'coral_whirlpool_vortex', 'coral_depth_charge', 'coral_tidal_surge', 'coral_pearl_barrage']
+    },
+    cristal_geoda: {
+      modes1: ['cristal_geode_shards', 'cristal_prism_beam', 'cristal_resonance_pulse'],
+      modes2: ['cristal_geode_shards', 'cristal_mirror_nova', 'cristal_prism_beam', 'cristal_resonance_pulse'],
+      modes3: ['cristal_astral_singularity', 'cristal_mirror_nova', 'cristal_prism_beam', 'cristal_geode_shards', 'cristal_resonance_pulse']
+    },
+    cristal_espejo: {
+      modes1: ['cristal_mirror_nova', 'cristal_prism_beam', 'cristal_geode_shards'],
+      modes2: ['cristal_mirror_nova', 'cristal_prism_beam', 'cristal_resonance_pulse', 'cristal_astral_singularity'],
+      modes3: ['cristal_astral_singularity', 'cristal_mirror_nova', 'cristal_prism_beam', 'cristal_resonance_pulse', 'cristal_geode_shards']
+    },
+    cristal_camara: {
+      modes1: ['cristal_resonance_pulse', 'cristal_geode_shards', 'cristal_mirror_nova'],
+      modes2: ['cristal_resonance_pulse', 'cristal_prism_beam', 'cristal_mirror_nova', 'cristal_astral_singularity'],
+      modes3: ['cristal_resonance_pulse', 'cristal_astral_singularity', 'cristal_mirror_nova', 'cristal_prism_beam', 'cristal_geode_shards']
+    },
+    cristal_nexo: {
+      modes1: ['cristal_prism_beam', 'cristal_astral_singularity', 'cristal_mirror_nova'],
+      modes2: ['cristal_prism_beam', 'cristal_mirror_nova', 'cristal_astral_singularity', 'cristal_resonance_pulse'],
+      modes3: ['cristal_astral_singularity', 'cristal_prism_beam', 'cristal_mirror_nova', 'cristal_geode_shards', 'cristal_resonance_pulse']
+    },
+    cristal_corazon: {
+      modes1: ['cristal_astral_singularity', 'cristal_prism_beam', 'cristal_mirror_nova', 'cristal_resonance_pulse'],
+      modes2: ['cristal_astral_singularity', 'cristal_mirror_nova', 'cristal_prism_beam', 'cristal_geode_shards', 'cristal_resonance_pulse'],
+      modes3: ['cristal_astral_singularity', 'cristal_prism_beam', 'cristal_resonance_pulse', 'cristal_mirror_nova', 'cristal_geode_shards']
+    },
+    selva_raices: {
+      modes1: ['selva_root_snare', 'selva_venom_thorns', 'selva_pollen_cloud'],
+      modes2: ['selva_root_snare', 'selva_jade_fissure', 'selva_venom_thorns', 'selva_canopy_dive'],
+      modes3: ['selva_jade_fissure', 'selva_root_snare', 'selva_canopy_dive', 'selva_pollen_cloud', 'selva_venom_thorns']
+    },
+    selva_piramide: {
+      modes1: ['selva_venom_thorns', 'selva_jade_fissure', 'selva_canopy_dive'],
+      modes2: ['selva_venom_thorns', 'selva_canopy_dive', 'selva_jade_fissure', 'selva_pollen_cloud'],
+      modes3: ['selva_canopy_dive', 'selva_jade_fissure', 'selva_venom_thorns', 'selva_root_snare', 'selva_pollen_cloud']
+    },
+    selva_colmena: {
+      modes1: ['selva_pollen_cloud', 'selva_venom_thorns', 'selva_canopy_dive'],
+      modes2: ['selva_pollen_cloud', 'selva_canopy_dive', 'selva_venom_thorns', 'selva_root_snare'],
+      modes3: ['selva_pollen_cloud', 'selva_venom_thorns', 'selva_jade_fissure', 'selva_canopy_dive', 'selva_root_snare']
+    },
+    selva_dosel: {
+      modes1: ['selva_canopy_dive', 'selva_venom_thorns', 'selva_jade_fissure'],
+      modes2: ['selva_canopy_dive', 'selva_jade_fissure', 'selva_venom_thorns', 'selva_pollen_cloud'],
+      modes3: ['selva_canopy_dive', 'selva_jade_fissure', 'selva_root_snare', 'selva_venom_thorns', 'selva_pollen_cloud']
+    },
+    selva_corazon: {
+      modes1: ['selva_jade_fissure', 'selva_root_snare', 'selva_canopy_dive', 'selva_pollen_cloud'],
+      modes2: ['selva_jade_fissure', 'selva_canopy_dive', 'selva_root_snare', 'selva_venom_thorns', 'selva_pollen_cloud'],
+      modes3: ['selva_jade_fissure', 'selva_pollen_cloud', 'selva_canopy_dive', 'selva_root_snare', 'selva_venom_thorns']
+    },
+    caldera_fumarola: {
+      modes1: ['caldera_smoke_ring', 'caldera_magma_eruption', 'caldera_slag_bombard'],
+      modes2: ['caldera_smoke_ring', 'caldera_magma_eruption', 'caldera_molten_cleave', 'caldera_slag_bombard'],
+      modes3: ['caldera_inferno_tempest', 'caldera_magma_eruption', 'caldera_smoke_ring', 'caldera_molten_cleave', 'caldera_slag_bombard']
+    },
+    caldera_crater: {
+      modes1: ['caldera_magma_eruption', 'caldera_slag_bombard', 'caldera_molten_cleave'],
+      modes2: ['caldera_magma_eruption', 'caldera_inferno_tempest', 'caldera_slag_bombard', 'caldera_smoke_ring'],
+      modes3: ['caldera_inferno_tempest', 'caldera_magma_eruption', 'caldera_molten_cleave', 'caldera_slag_bombard', 'caldera_smoke_ring']
+    },
+    caldera_fundicion: {
+      modes1: ['caldera_molten_cleave', 'caldera_slag_bombard', 'caldera_smoke_ring'],
+      modes2: ['caldera_molten_cleave', 'caldera_magma_eruption', 'caldera_slag_bombard', 'caldera_inferno_tempest'],
+      modes3: ['caldera_molten_cleave', 'caldera_inferno_tempest', 'caldera_magma_eruption', 'caldera_slag_bombard', 'caldera_smoke_ring']
+    },
+    caldera_bestia: {
+      modes1: ['caldera_molten_cleave', 'caldera_inferno_tempest', 'caldera_magma_eruption'],
+      modes2: ['caldera_molten_cleave', 'caldera_inferno_tempest', 'caldera_smoke_ring', 'caldera_slag_bombard'],
+      modes3: ['caldera_inferno_tempest', 'caldera_molten_cleave', 'caldera_magma_eruption', 'caldera_slag_bombard', 'caldera_smoke_ring']
+    },
+    caldera_senor: {
+      modes1: ['caldera_inferno_tempest', 'caldera_molten_cleave', 'caldera_magma_eruption', 'caldera_slag_bombard'],
+      modes2: ['caldera_inferno_tempest', 'caldera_magma_eruption', 'caldera_molten_cleave', 'caldera_smoke_ring', 'caldera_slag_bombard'],
+      modes3: ['caldera_inferno_tempest', 'caldera_molten_cleave', 'caldera_slag_bombard', 'caldera_magma_eruption', 'caldera_smoke_ring']
+    },
+    dinastia_tumbas: {
+      modes1: ['dinastia_scarab_swarm', 'dinastia_sand_vortex', 'dinastia_solar_obelisk'],
+      modes2: ['dinastia_scarab_swarm', 'dinastia_sand_vortex', 'dinastia_sun_disk_barrage', 'dinastia_solar_obelisk'],
+      modes3: ['dinastia_pharaoh_decree', 'dinastia_sand_vortex', 'dinastia_scarab_swarm', 'dinastia_sun_disk_barrage', 'dinastia_solar_obelisk']
+    },
+    dinastia_escarabajo: {
+      modes1: ['dinastia_scarab_swarm', 'dinastia_sun_disk_barrage', 'dinastia_sand_vortex'],
+      modes2: ['dinastia_scarab_swarm', 'dinastia_pharaoh_decree', 'dinastia_sun_disk_barrage', 'dinastia_solar_obelisk'],
+      modes3: ['dinastia_scarab_swarm', 'dinastia_sand_vortex', 'dinastia_pharaoh_decree', 'dinastia_sun_disk_barrage', 'dinastia_solar_obelisk']
+    },
+    dinastia_obelisco: {
+      modes1: ['dinastia_solar_obelisk', 'dinastia_sun_disk_barrage', 'dinastia_sand_vortex'],
+      modes2: ['dinastia_solar_obelisk', 'dinastia_pharaoh_decree', 'dinastia_sun_disk_barrage', 'dinastia_scarab_swarm'],
+      modes3: ['dinastia_solar_obelisk', 'dinastia_pharaoh_decree', 'dinastia_sand_vortex', 'dinastia_sun_disk_barrage', 'dinastia_scarab_swarm']
+    },
+    dinastia_camara: {
+      modes1: ['dinastia_pharaoh_decree', 'dinastia_solar_obelisk', 'dinastia_sun_disk_barrage'],
+      modes2: ['dinastia_pharaoh_decree', 'dinastia_sand_vortex', 'dinastia_solar_obelisk', 'dinastia_scarab_swarm'],
+      modes3: ['dinastia_pharaoh_decree', 'dinastia_sun_disk_barrage', 'dinastia_solar_obelisk', 'dinastia_sand_vortex', 'dinastia_scarab_swarm']
+    },
+    dinastia_sol: {
+      modes1: ['dinastia_sun_disk_barrage', 'dinastia_solar_obelisk', 'dinastia_pharaoh_decree'],
+      modes2: ['dinastia_sun_disk_barrage', 'dinastia_solar_obelisk', 'dinastia_sand_vortex', 'dinastia_pharaoh_decree'],
+      modes3: ['dinastia_sun_disk_barrage', 'dinastia_pharaoh_decree', 'dinastia_solar_obelisk', 'dinastia_sand_vortex', 'dinastia_scarab_swarm']
+    },
+    dinastia_faraon: {
+      modes1: ['dinastia_pharaoh_decree', 'dinastia_sun_disk_barrage', 'dinastia_solar_obelisk', 'dinastia_sand_vortex'],
+      modes2: ['dinastia_pharaoh_decree', 'dinastia_solar_obelisk', 'dinastia_sun_disk_barrage', 'dinastia_scarab_swarm', 'dinastia_sand_vortex'],
+      modes3: ['dinastia_pharaoh_decree', 'dinastia_sun_disk_barrage', 'dinastia_sand_vortex', 'dinastia_solar_obelisk', 'dinastia_scarab_swarm']
+    },
+    glaciar_grieta: {
+      modes1: ['glaciar_permafrost_dash', 'glaciar_blizzard_rings', 'glaciar_ice_spire_cross'],
+      modes2: ['glaciar_permafrost_dash', 'glaciar_polar_shatter', 'glaciar_blizzard_rings', 'glaciar_ice_spire_cross'],
+      modes3: ['glaciar_absolute_zero', 'glaciar_permafrost_dash', 'glaciar_polar_shatter', 'glaciar_blizzard_rings', 'glaciar_ice_spire_cross']
+    },
+    glaciar_vestigios: {
+      modes1: ['glaciar_polar_shatter', 'glaciar_ice_spire_cross', 'glaciar_permafrost_dash'],
+      modes2: ['glaciar_polar_shatter', 'glaciar_absolute_zero', 'glaciar_ice_spire_cross', 'glaciar_blizzard_rings'],
+      modes3: ['glaciar_absolute_zero', 'glaciar_polar_shatter', 'glaciar_permafrost_dash', 'glaciar_ice_spire_cross', 'glaciar_blizzard_rings']
+    },
+    glaciar_ojo: {
+      modes1: ['glaciar_blizzard_rings', 'glaciar_polar_shatter', 'glaciar_absolute_zero'],
+      modes2: ['glaciar_blizzard_rings', 'glaciar_absolute_zero', 'glaciar_ice_spire_cross', 'glaciar_polar_shatter'],
+      modes3: ['glaciar_blizzard_rings', 'glaciar_absolute_zero', 'glaciar_polar_shatter', 'glaciar_ice_spire_cross', 'glaciar_permafrost_dash']
+    },
+    glaciar_coloso: {
+      modes1: ['glaciar_ice_spire_cross', 'glaciar_polar_shatter', 'glaciar_permafrost_dash'],
+      modes2: ['glaciar_ice_spire_cross', 'glaciar_absolute_zero', 'glaciar_polar_shatter', 'glaciar_permafrost_dash'],
+      modes3: ['glaciar_absolute_zero', 'glaciar_ice_spire_cross', 'glaciar_polar_shatter', 'glaciar_blizzard_rings', 'glaciar_permafrost_dash']
+    },
+    glaciar_sancta: {
+      modes1: ['glaciar_absolute_zero', 'glaciar_blizzard_rings', 'glaciar_polar_shatter'],
+      modes2: ['glaciar_absolute_zero', 'glaciar_blizzard_rings', 'glaciar_ice_spire_cross', 'glaciar_polar_shatter'],
+      modes3: ['glaciar_absolute_zero', 'glaciar_polar_shatter', 'glaciar_blizzard_rings', 'glaciar_ice_spire_cross', 'glaciar_permafrost_dash']
+    },
+    glaciar_abismo: {
+      modes1: ['glaciar_absolute_zero', 'glaciar_ice_spire_cross', 'glaciar_polar_shatter', 'glaciar_permafrost_dash'],
+      modes2: ['glaciar_absolute_zero', 'glaciar_polar_shatter', 'glaciar_blizzard_rings', 'glaciar_permafrost_dash', 'glaciar_ice_spire_cross'],
+      modes3: ['glaciar_absolute_zero', 'glaciar_blizzard_rings', 'glaciar_polar_shatter', 'glaciar_ice_spire_cross', 'glaciar_permafrost_dash']
+    },
+    pantano_raices: {
+      modes1: ['pantano_miasma_nova', 'pantano_spore_rain', 'pantano_sludge_eruption'],
+      modes2: ['pantano_miasma_nova', 'pantano_spore_rain', 'pantano_hydra_snap', 'pantano_sludge_eruption'],
+      modes3: ['pantano_miasma_nova', 'pantano_pumpkin_curse', 'pantano_spore_rain', 'pantano_sludge_eruption', 'pantano_hydra_snap']
+    },
+    pantano_esporas: {
+      modes1: ['pantano_spore_rain', 'pantano_miasma_nova', 'pantano_sludge_eruption'],
+      modes2: ['pantano_spore_rain', 'pantano_miasma_nova', 'pantano_pumpkin_curse', 'pantano_sludge_eruption'],
+      modes3: ['pantano_spore_rain', 'pantano_miasma_nova', 'pantano_hydra_snap', 'pantano_pumpkin_curse', 'pantano_sludge_eruption']
+    },
+    pantano_cieno: {
+      modes1: ['pantano_sludge_eruption', 'pantano_miasma_nova', 'pantano_hydra_snap'],
+      modes2: ['pantano_sludge_eruption', 'pantano_spore_rain', 'pantano_miasma_nova', 'pantano_hydra_snap'],
+      modes3: ['pantano_sludge_eruption', 'pantano_hydra_snap', 'pantano_miasma_nova', 'pantano_spore_rain', 'pantano_pumpkin_curse']
+    },
+    pantano_calabaza: {
+      modes1: ['pantano_pumpkin_curse', 'pantano_spore_rain', 'pantano_hydra_snap'],
+      modes2: ['pantano_pumpkin_curse', 'pantano_miasma_nova', 'pantano_hydra_snap', 'pantano_spore_rain'],
+      modes3: ['pantano_pumpkin_curse', 'pantano_hydra_snap', 'pantano_miasma_nova', 'pantano_spore_rain', 'pantano_sludge_eruption']
+    },
+    pantano_bastion: {
+      modes1: ['pantano_hydra_snap', 'pantano_sludge_eruption', 'pantano_miasma_nova'],
+      modes2: ['pantano_hydra_snap', 'pantano_miasma_nova', 'pantano_spore_rain', 'pantano_sludge_eruption'],
+      modes3: ['pantano_hydra_snap', 'pantano_miasma_nova', 'pantano_pumpkin_curse', 'pantano_spore_rain', 'pantano_sludge_eruption']
+    },
+    pantano_madre: {
+      modes1: ['pantano_miasma_nova', 'pantano_hydra_snap', 'pantano_spore_rain', 'pantano_sludge_eruption'],
+      modes2: ['pantano_miasma_nova', 'pantano_spore_rain', 'pantano_sludge_eruption', 'pantano_hydra_snap', 'pantano_pumpkin_curse'],
+      modes3: ['pantano_hydra_snap', 'pantano_miasma_nova', 'pantano_pumpkin_curse', 'pantano_spore_rain', 'pantano_sludge_eruption']
+    },
+    necro_osario: {
+      modes1: ['necro_bone_prison', 'necro_soul_scythe', 'necro_lich_bolt_fan'],
+      modes2: ['necro_bone_prison', 'necro_soul_scythe', 'necro_phylactery_nova', 'necro_lich_bolt_fan'],
+      modes3: ['necro_spectral_legion', 'necro_soul_scythe', 'necro_bone_prison', 'necro_phylactery_nova', 'necro_lich_bolt_fan']
+    },
+    necro_cripta: {
+      modes1: ['necro_soul_scythe', 'necro_bone_prison', 'necro_lich_bolt_fan'],
+      modes2: ['necro_soul_scythe', 'necro_spectral_legion', 'necro_bone_prison', 'necro_phylactery_nova'],
+      modes3: ['necro_soul_scythe', 'necro_spectral_legion', 'necro_phylactery_nova', 'necro_bone_prison', 'necro_lich_bolt_fan']
+    },
+    necro_catacumba: {
+      modes1: ['necro_phylactery_nova', 'necro_spectral_legion', 'necro_lich_bolt_fan'],
+      modes2: ['necro_phylactery_nova', 'necro_spectral_legion', 'necro_soul_scythe', 'necro_lich_bolt_fan'],
+      modes3: ['necro_spectral_legion', 'necro_phylactery_nova', 'necro_soul_scythe', 'necro_bone_prison', 'necro_lich_bolt_fan']
+    },
+    necro_foso: {
+      modes1: ['necro_bone_prison', 'necro_phylactery_nova', 'necro_soul_scythe'],
+      modes2: ['necro_bone_prison', 'necro_soul_scythe', 'necro_phylactery_nova', 'necro_spectral_legion'],
+      modes3: ['necro_bone_prison', 'necro_spectral_legion', 'necro_soul_scythe', 'necro_phylactery_nova', 'necro_lich_bolt_fan']
+    },
+    necro_torre: {
+      modes1: ['necro_lich_bolt_fan', 'necro_phylactery_nova', 'necro_spectral_legion'],
+      modes2: ['necro_lich_bolt_fan', 'necro_phylactery_nova', 'necro_spectral_legion', 'necro_bone_prison'],
+      modes3: ['necro_phylactery_nova', 'necro_lich_bolt_fan', 'necro_spectral_legion', 'necro_soul_scythe', 'necro_bone_prison']
+    },
+    necro_trono: {
+      modes1: ['necro_spectral_legion', 'necro_phylactery_nova', 'necro_soul_scythe', 'necro_bone_prison'],
+      modes2: ['necro_spectral_legion', 'necro_soul_scythe', 'necro_phylactery_nova', 'necro_lich_bolt_fan', 'necro_bone_prison'],
+      modes3: ['necro_phylactery_nova', 'necro_spectral_legion', 'necro_soul_scythe', 'necro_bone_prison', 'necro_lich_bolt_fan']
+    },
+    maldita_sangre: {
+      modes1: ['maldita_blood_ritual', 'maldita_crimson_flail', 'maldita_void_collapse'],
+      modes2: ['maldita_blood_ritual', 'maldita_crimson_flail', 'maldita_abyss_hellfire', 'maldita_void_collapse'],
+      modes3: ['maldita_blood_ritual', 'maldita_crimson_flail', 'maldita_abyss_hellfire', 'maldita_void_collapse', 'maldita_harvest_scythes']
+    },
+    maldita_carne: {
+      modes1: ['maldita_crimson_flail', 'maldita_blood_ritual', 'maldita_abyss_hellfire'],
+      modes2: ['maldita_crimson_flail', 'maldita_void_collapse', 'maldita_blood_ritual', 'maldita_harvest_scythes'],
+      modes3: ['maldita_crimson_flail', 'maldita_abyss_hellfire', 'maldita_blood_ritual', 'maldita_void_collapse', 'maldita_harvest_scythes']
+    },
+    maldita_forja: {
+      modes1: ['maldita_abyss_hellfire', 'maldita_crimson_flail', 'maldita_void_collapse'],
+      modes2: ['maldita_abyss_hellfire', 'maldita_crimson_flail', 'maldita_blood_ritual', 'maldita_void_collapse'],
+      modes3: ['maldita_abyss_hellfire', 'maldita_void_collapse', 'maldita_crimson_flail', 'maldita_blood_ritual', 'maldita_harvest_scythes']
+    },
+    maldita_calabaza: {
+      modes1: ['maldita_harvest_scythes', 'maldita_void_collapse', 'maldita_crimson_flail'],
+      modes2: ['maldita_harvest_scythes', 'maldita_blood_ritual', 'maldita_void_collapse', 'maldita_abyss_hellfire'],
+      modes3: ['maldita_harvest_scythes', 'maldita_abyss_hellfire', 'maldita_blood_ritual', 'maldita_void_collapse', 'maldita_crimson_flail']
+    },
+    maldita_abismo: {
+      modes1: ['maldita_void_collapse', 'maldita_abyss_hellfire', 'maldita_blood_ritual', 'maldita_harvest_scythes'],
+      modes2: ['maldita_void_collapse', 'maldita_blood_ritual', 'maldita_abyss_hellfire', 'maldita_crimson_flail', 'maldita_harvest_scythes'],
+      modes3: ['maldita_void_collapse', 'maldita_abyss_hellfire', 'maldita_harvest_scythes', 'maldita_blood_ritual', 'maldita_crimson_flail']
+    },
+    eclipse_carmesi: {
+      modes1: ['abyssal_crimson_stance_slash', 'abyssal_vortex_whirlwind', 'abyssal_scarlet_aura_burst', 'abyssal_phantom_cross_step'],
+      modes2: ['abyssal_crimson_stance_slash', 'abyssal_vortex_whirlwind', 'abyssal_phantom_cross_step', 'abyssal_scarlet_aura_burst', 'abyssal_eclipse_judgement'],
+      modes3: ['abyssal_eclipse_judgement', 'abyssal_vortex_whirlwind', 'abyssal_phantom_cross_step', 'abyssal_crimson_stance_slash', 'abyssal_scarlet_aura_burst']
     }
   };
 
@@ -1706,6 +2467,470 @@
         dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 200, y2: b.y + Math.sin(tAng) * 200, halfW: 24, delay: 0.44, duration: 1.8, timer: 0, dmg: b.dmg * 1.3, color: '#ff1744', vfxKey: 'pvfx_fire_pillar', status: { kind: 'burn', dur: 3.0 } });
         return true;
 
+      // ── Beta 1.3.0: Arquetipos de Bioma (Zonas III y IV) con Gigapack VFX ──
+      // Archipiélago Coral
+      case 'coral_tidal_surge':
+        Balaclava.Audio.play('splash');
+        game.spawnFx('sp_impact_blue', b.x, b.y, tAng, 0.55, 1.8, 0.95, { blend: 'lighter' });
+        for (let k = -3; k <= 3; k++) {
+          const a = tAng + k * 0.14;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 290, Math.sin(a) * 290, Math.round(b.dmg * 0.92), '#26c6da', projCfg(false, { radius: 8 }));
+        }
+        return true;
+
+      case 'coral_whirlpool_vortex':
+        Balaclava.Audio.play('cast');
+        game.spawnShockwave(b.x, b.y, 175, '#4dd0e1');
+        game.spawnFx('sp_spell_defense_blue', b.x, b.y, 0, 0.75, 1.9, 0.95, { blend: 'lighter' });
+        for (let k = 0; k < 10; k++) {
+          const a = (k / 10) * Math.PI * 2 + (b.phaseCycle || 0) * 0.35;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 235, Math.sin(a) * 235, Math.round(b.dmg * 0.88), '#00e5ff', projCfg(true));
+        }
+        return true;
+
+      case 'coral_pearl_barrage':
+        Balaclava.Audio.play('cast');
+        game.spawnFx('sp_frost_explosion_cyan', b.x, b.y, tAng, 0.5, 1.5, 0.9, { blend: 'lighter' });
+        for (let k = -2; k <= 2; k++) {
+          const a = tAng + k * 0.22;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 330, Math.sin(a) * 330, Math.round(b.dmg * 1.0), '#80deea', projCfg(true));
+        }
+        return true;
+
+      case 'coral_depth_charge':
+        Balaclava.Audio.play('bomb');
+        game.spawnFx('sp_impact_blue', px, py, 0, 0.65, 1.9, 0.95);
+        for (let k = 0; k < 3; k++) {
+          const oa = ang + (k - 1) * 0.9;
+          const distO = k === 0 ? 0 : 95;
+          dung.hazardZones.push({ kind: 'meteor', x: px + Math.cos(oa) * distO, y: py + Math.sin(oa) * distO, radius: 66, delay: 0.75, duration: 0.5, timer: 0, dmg: Math.round(b.dmg * 1.25), color: '#26c6da', vfxKey: 'sp_frost_explosion_cyan' });
+        }
+        return true;
+
+      case 'coral_leviathan_rush':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_spell_defense_blue', b.x, b.y, tAng, 0.5, 1.6, 0.95);
+        b.dashTimer = 0.42;
+        b.dashVx = Math.cos(tAng) * 520;
+        b.dashVy = Math.sin(tAng) * 520;
+        b.dashCharges = 1;
+        return true;
+
+      // Cavernas Cristalinas
+      case 'cristal_prism_beam':
+        Balaclava.Audio.play('thunder');
+        game.spawnFx('sp_lightning_strike_violet', b.x, b.y, tAng, 0.65, 1.9, 1.0, { blend: 'lighter' });
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 340, y2: b.y + Math.sin(tAng) * 340, halfW: 24, delay: 0.55, duration: 1.4, timer: 0, dmg: Math.round(b.dmg * 1.32), color: '#e040fb', vfxKey: 'sp_impact_violet' });
+        return true;
+
+      case 'cristal_geode_shards':
+        Balaclava.Audio.play('cast');
+        game.spawnFx('sp_scifi_charge', b.x, b.y, 0, 0.55, 1.6, 0.95, { blend: 'lighter' });
+        for (let k = 0; k < 12; k++) {
+          const a = (k / 12) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 265, Math.sin(a) * 265, Math.round(b.dmg * 0.9), '#ce93d8', projCfg(true));
+        }
+        return true;
+
+      case 'cristal_mirror_nova':
+        Balaclava.Audio.play('thunder');
+        game.spawnShockwave(b.x, b.y, 190, '#e040fb');
+        game.spawnFx('sp_stylized_explosion_violet', b.x, b.y, 0, 0.75, 2.0, 1.0, { blend: 'lighter' });
+        for (let k = 0; k < 8; k++) {
+          const a = tAng + (k / 8) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 310, Math.sin(a) * 310, Math.round(b.dmg * 1.05), '#ba68c8', projCfg(false));
+        }
+        return true;
+
+      case 'cristal_resonance_pulse':
+        Balaclava.Audio.play('curse');
+        game.spawnFx('sp_lightning_burst_violet', b.x, b.y, 0, 0.6, 1.85, 0.95, { blend: 'lighter' });
+        if (d < 165) game.damagePlayer(Math.round(b.dmg * 1.2), { status: theme.status });
+        return true;
+
+      case 'cristal_astral_singularity':
+        Balaclava.Audio.play('meteor');
+        game.spawnFx('sp_scifi_warp', px, py, 0, 0.75, 1.9, 1.0, { blend: 'lighter' });
+        dung.hazardZones.push({ kind: 'meteor', x: px, y: py, radius: 78, delay: 0.8, duration: 0.6, timer: 0, dmg: Math.round(b.dmg * 1.4), color: '#7c4dff', vfxKey: 'sp_stylized_explosion_violet' });
+        return true;
+
+      // Selva Esmeralda
+      case 'selva_venom_thorns':
+        Balaclava.Audio.play('cast');
+        game.spawnFx('sp_spell_poison_green', b.x, b.y, tAng, 0.5, 1.65, 0.95, { blend: 'lighter' });
+        for (let k = -3; k <= 3; k++) {
+          const a = tAng + k * 0.16;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 285, Math.sin(a) * 285, Math.round(b.dmg * 0.92), '#00e676', projCfg(false, { status: { kind: 'poison', dur: 3.5 } }));
+        }
+        return true;
+
+      case 'selva_canopy_dive':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_spell_haste_green', b.x, b.y, 0, 0.45, 1.7, 0.95, { blend: 'lighter' });
+        b.leapStartX = b.x; b.leapStartY = b.y;
+        b.targetX = px; b.targetY = py;
+        b.leapDur = 0.42; b.leapProg = 0;
+        return true;
+
+      case 'selva_pollen_cloud':
+        Balaclava.Audio.play('curse');
+        game.spawnFx('sp_spell_poison_green', px, py, 0, 0.75, 2.0, 0.95);
+        dung.hazardZones.push({ kind: 'pool', x: px, y: py, radius: 74, delay: 0.45, duration: 3.2, timer: 0, dmg: Math.round(b.dmg * 0.72), color: '#66bb6a', vfxKey: 'sp_spell_poison_green', status: { kind: 'poison', dur: 3.0 } });
+        return true;
+
+      case 'selva_jade_fissure':
+        Balaclava.Audio.play('bomb');
+        game.spawnFx('sp_spell_heal_green', b.x, b.y, tAng, 0.65, 1.8, 0.95, { blend: 'lighter' });
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 310, y2: b.y + Math.sin(tAng) * 310, halfW: 25, delay: 0.65, duration: 1.5, timer: 0, dmg: Math.round(b.dmg * 1.28), color: '#00c853', vfxKey: 'sp_spell_poison_green' });
+        return true;
+
+      case 'selva_root_snare':
+        Balaclava.Audio.play('hit');
+        game.spawnFx('sp_spell_haste_green', b.x, b.y, 0, 0.6, 1.85, 0.95);
+        if (d < 150) game.damagePlayer(Math.round(b.dmg * 1.15), { status: { kind: 'poison', dur: 2.5 } });
+        return true;
+
+      // Caldera de Ceniza
+      case 'caldera_magma_eruption':
+        Balaclava.Audio.play('bomb');
+        game.shake(0.35, 9);
+        game.spawnShockwave(b.x, b.y, 175, '#ff5722');
+        game.spawnFx('sp_epic_explosion_orange', b.x, b.y, 0, 0.7, 2.1, 1.0, { blend: 'lighter' });
+        for (let k = 0; k < 10; k++) {
+          const a = (k / 10) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 285, Math.sin(a) * 285, Math.round(b.dmg * 0.96), '#ff7043', projCfg(true, { status: { kind: 'burn', dur: 3.0 } }));
+        }
+        return true;
+
+      case 'caldera_slag_bombard':
+        Balaclava.Audio.play('meteor');
+        for (let k = 0; k < 4; k++) {
+          const a = (k / 4) * Math.PI * 2 + ang;
+          const distM = k === 0 ? 0 : 88;
+          dung.hazardZones.push({ kind: 'meteor', x: px + Math.cos(a) * distM, y: py + Math.sin(a) * distM, radius: 64, delay: 0.72, duration: 0.5, timer: 0, dmg: Math.round(b.dmg * 1.25), color: '#ff3d00', vfxKey: 'sp_epic_explosion_orange', status: { kind: 'burn', dur: 2.5 } });
+        }
+        return true;
+
+      case 'caldera_smoke_ring':
+        Balaclava.Audio.play('fire');
+        game.spawnFx('sp_fire_loop_orange', b.x, b.y, 0, 0.7, 1.9, 0.95, { blend: 'lighter' });
+        for (let k = -2; k <= 2; k++) {
+          const a = tAng + k * 0.2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 320, Math.sin(a) * 320, Math.round(b.dmg * 0.95), '#ff9100', projCfg(false));
+        }
+        return true;
+
+      case 'caldera_molten_cleave':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_spell_attack_red', b.x, b.y, tAng, 0.5, 1.9, 1.0, { blend: 'lighter' });
+        b.dashTimer = 0.36; b.dashVx = Math.cos(tAng) * 560; b.dashVy = Math.sin(tAng) * 560; b.dashCharges = 1;
+        return true;
+
+      case 'caldera_inferno_tempest':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.42, 10);
+        game.spawnFx('sp_epic_explosion_orange', b.x, b.y, 0, 0.8, 2.3, 1.0, { blend: 'lighter' });
+        for (let off of [0, Math.PI / 2]) {
+          const fa = tAng + off;
+          dung.hazardZones.push({ kind: 'fissure', x: b.x - Math.cos(fa) * 180, y: b.y - Math.sin(fa) * 180, x2: b.x + Math.cos(fa) * 180, y2: b.y + Math.sin(fa) * 180, halfW: 26, delay: 0.65, duration: 1.6, timer: 0, dmg: Math.round(b.dmg * 1.35), color: '#ff3d00', vfxKey: 'sp_fire_loop_orange' });
+        }
+        return true;
+
+      // Dinastía de la Arena
+      case 'dinastia_solar_obelisk':
+        Balaclava.Audio.play('thunder');
+        game.spawnFx('sp_scifi_charge', px, py, 0, 0.7, 1.85, 0.95, { blend: 'lighter' });
+        dung.hazardZones.push({ kind: 'meteor', x: px, y: py, radius: 74, delay: 0.7, duration: 0.6, timer: 0, dmg: Math.round(b.dmg * 1.35), color: '#ffca28', vfxKey: 'sp_epic_explosion_orange' });
+        return true;
+
+      case 'dinastia_scarab_swarm':
+        Balaclava.Audio.play('cast');
+        game.spawnFx('sp_spell_attack_red', b.x, b.y, tAng, 0.5, 1.7, 0.95);
+        for (let k = -4; k <= 4; k++) {
+          const a = tAng + k * 0.13;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 305, Math.sin(a) * 305, Math.round(b.dmg * 0.85), '#ffd54f', projCfg(true));
+        }
+        return true;
+
+      case 'dinastia_sand_vortex':
+        Balaclava.Audio.play('cast');
+        game.spawnShockwave(b.x, b.y, 185, '#ffb300');
+        game.spawnFx('sp_epic_explosion_orange', b.x, b.y, 0, 0.65, 1.8, 0.95, { blend: 'lighter' });
+        for (let k = 0; k < 14; k++) {
+          const a = (k / 14) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 260, Math.sin(a) * 260, Math.round(b.dmg * 0.9), '#ffa726', projCfg(false));
+        }
+        return true;
+
+      case 'dinastia_pharaoh_decree':
+        Balaclava.Audio.play('curse');
+        game.shake(0.35, 9);
+        game.spawnFx('sp_scifi_charge', b.x, b.y, tAng, 0.6, 2.0, 1.0, { blend: 'lighter' });
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 360, y2: b.y + Math.sin(tAng) * 360, halfW: 28, delay: 0.6, duration: 1.6, timer: 0, dmg: Math.round(b.dmg * 1.42), color: '#ffca28', vfxKey: 'sp_epic_explosion_orange' });
+        return true;
+
+      case 'dinastia_sun_disk_barrage':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_epic_explosion_orange', b.x, b.y, tAng, 0.55, 1.75, 0.95, { blend: 'lighter' });
+        for (let k = -2; k <= 2; k++) {
+          const a = tAng + k * 0.18;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 360, Math.sin(a) * 360, Math.round(b.dmg * 1.05), '#ffca28', projCfg(true));
+        }
+        return true;
+
+      // Glaciar Profundo & Cumbre
+      case 'glaciar_absolute_zero':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.4, 10);
+        game.spawnShockwave(b.x, b.y, 200, '#00b0ff');
+        game.spawnFx('sp_frost_explosion_cyan', b.x, b.y, 0, 0.8, 2.25, 1.0, { blend: 'lighter' });
+        if (d < 185) game.damagePlayer(Math.round(b.dmg * 1.35), { status: { kind: 'freeze', dur: 2.0 } });
+        for (let k = 0; k < 12; k++) {
+          const a = (k / 12) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 280, Math.sin(a) * 280, Math.round(b.dmg * 0.92), '#80d8ff', projCfg(true));
+        }
+        return true;
+
+      case 'glaciar_blizzard_rings':
+        Balaclava.Audio.play('cast');
+        game.spawnFx('sp_spell_defense_blue', b.x, b.y, 0, 0.65, 1.9, 0.95, { blend: 'lighter' });
+        for (let k = 0; k < 14; k++) {
+          const a = (k / 14) * Math.PI * 2 + (b.phaseCycle || 0) * 0.3;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 295, Math.sin(a) * 295, Math.round(b.dmg * 0.9), '#4fc3f7', projCfg(false));
+        }
+        return true;
+
+      case 'glaciar_ice_spire_cross':
+        Balaclava.Audio.play('bomb');
+        for (let off of [0, Math.PI / 4]) {
+          const fa = tAng + off;
+          dung.hazardZones.push({ kind: 'fissure', x: b.x - Math.cos(fa) * 190, y: b.y - Math.sin(fa) * 190, x2: b.x + Math.cos(fa) * 190, y2: b.y + Math.sin(fa) * 190, halfW: 25, delay: 0.62, duration: 1.5, timer: 0, dmg: Math.round(b.dmg * 1.32), color: '#29b6f6', vfxKey: 'sp_frost_explosion_cyan' });
+        }
+        return true;
+
+      case 'glaciar_polar_shatter':
+        Balaclava.Audio.play('cast');
+        game.spawnFx('sp_impact_blue', b.x, b.y, tAng, 0.55, 1.9, 1.0, { blend: 'lighter' });
+        for (let k = -3; k <= 3; k++) {
+          const a = tAng + k * 0.14;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 340, Math.sin(a) * 340, Math.round(b.dmg * 0.98), '#81d4fa', projCfg(true));
+        }
+        return true;
+
+      case 'glaciar_permafrost_dash':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_frost_explosion_cyan', b.x, b.y, tAng, 0.5, 1.65, 0.95);
+        b.dashTimer = 0.38; b.dashVx = Math.cos(tAng) * 570; b.dashVy = Math.sin(tAng) * 570; b.dashCharges = 1;
+        return true;
+
+      // Ciénaga Pútrida
+      case 'pantano_miasma_nova':
+        Balaclava.Audio.play('curse');
+        game.spawnShockwave(b.x, b.y, 180, '#76ff03');
+        game.spawnFx('sp_spell_poison_green', b.x, b.y, 0, 0.75, 2.1, 1.0, { blend: 'lighter' });
+        for (let k = 0; k < 12; k++) {
+          const a = (k / 12) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 260, Math.sin(a) * 260, Math.round(b.dmg * 0.92), '#aeea00', projCfg(true, { status: { kind: 'poison', dur: 3.5 } }));
+        }
+        return true;
+
+      case 'pantano_spore_rain':
+        Balaclava.Audio.play('cast');
+        for (let k = 0; k < 4; k++) {
+          const oa = ang + (k / 4) * Math.PI * 2;
+          const distP = k === 0 ? 0 : 95;
+          dung.hazardZones.push({ kind: 'pool', x: px + Math.cos(oa) * distP, y: py + Math.sin(oa) * distP, radius: 68, delay: 0.5, duration: 3.0, timer: 0, dmg: Math.round(b.dmg * 0.75), color: '#76ff03', vfxKey: 'sp_spell_poison_green', status: { kind: 'poison', dur: 3.0 } });
+        }
+        return true;
+
+      case 'pantano_sludge_eruption':
+        Balaclava.Audio.play('bomb');
+        game.spawnFx('sp_skull_smoke', b.x, b.y, 0, 0.7, 1.95, 0.95);
+        for (let k = -3; k <= 3; k++) {
+          const a = tAng + k * 0.16;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 300, Math.sin(a) * 300, Math.round(b.dmg * 0.98), '#9ccc65', projCfg(false));
+        }
+        return true;
+
+      case 'pantano_pumpkin_curse':
+        Balaclava.Audio.play('curse');
+        game.spawnFx('sp_skull_smoke', px, py, 0, 0.75, 1.85, 0.95);
+        dung.hazardZones.push({ kind: 'meteor', x: px, y: py, radius: 75, delay: 0.7, duration: 0.55, timer: 0, dmg: Math.round(b.dmg * 1.32), color: '#ff9100', vfxKey: 'sp_epic_explosion_orange' });
+        return true;
+
+      case 'pantano_hydra_snap':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_spell_haste_green', b.x, b.y, tAng, 0.48, 1.85, 0.95, { blend: 'lighter' });
+        b.dashTimer = 0.36; b.dashVx = Math.cos(tAng) * 580; b.dashVy = Math.sin(tAng) * 580; b.dashCharges = 2;
+        return true;
+
+      // Necrópolis Ósea
+      case 'necro_soul_scythe':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_lightning_strike_violet', b.x, b.y, tAng, 0.55, 1.95, 1.0, { blend: 'lighter' });
+        for (let k = -3; k <= 3; k++) {
+          const a = tAng + k * 0.15;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 335, Math.sin(a) * 335, Math.round(b.dmg * 1.02), '#ce93d8', projCfg(true));
+        }
+        return true;
+
+      case 'necro_bone_prison':
+        Balaclava.Audio.play('curse');
+        game.spawnFx('sp_skull_smoke', px, py, 0, 0.75, 1.9, 0.95);
+        for (let k = 0; k < 4; k++) {
+          const a = (k / 4) * Math.PI * 2;
+          dung.hazardZones.push({ kind: 'meteor', x: px + Math.cos(a) * 78, y: py + Math.sin(a) * 78, radius: 58, delay: 0.68, duration: 0.55, timer: 0, dmg: Math.round(b.dmg * 1.26), color: '#e0e0e0', vfxKey: 'sp_skull_smoke' });
+        }
+        return true;
+
+      case 'necro_phylactery_nova':
+        Balaclava.Audio.play('thunder');
+        game.shake(0.38, 10);
+        game.spawnShockwave(b.x, b.y, 195, '#b388ff');
+        game.spawnFx('sp_spell_absorb_violet', b.x, b.y, 0, 0.75, 2.15, 1.0, { blend: 'lighter' });
+        for (let k = 0; k < 14; k++) {
+          const a = (k / 14) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 285, Math.sin(a) * 285, Math.round(b.dmg * 0.94), '#b388ff', projCfg(false));
+        }
+        return true;
+
+      case 'necro_lich_bolt_fan':
+        Balaclava.Audio.play('cast');
+        game.spawnFx('sp_lightning_burst_violet', b.x, b.y, tAng, 0.6, 1.85, 0.95, { blend: 'lighter' });
+        for (let k = -4; k <= 4; k++) {
+          const a = tAng + k * 0.12;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 320, Math.sin(a) * 320, Math.round(b.dmg * 0.92), '#80cbc4', projCfg(true));
+        }
+        return true;
+
+      case 'necro_spectral_legion':
+        Balaclava.Audio.play('curse');
+        game.spawnFx('sp_scifi_warp', b.x, b.y, 0, 0.65, 1.9, 0.95, { blend: 'lighter' });
+        dung.hazardZones.push({ kind: 'fissure', x: b.x, y: b.y, x2: b.x + Math.cos(tAng) * 350, y2: b.y + Math.sin(tAng) * 350, halfW: 26, delay: 0.6, duration: 1.5, timer: 0, dmg: Math.round(b.dmg * 1.38), color: '#b388ff', vfxKey: 'sp_lightning_burst_violet' });
+        return true;
+
+      // Tierras Malditas
+      case 'maldita_blood_ritual':
+        Balaclava.Audio.play('curse');
+        game.shake(0.4, 10);
+        game.spawnFx('sp_spell_death_red', b.x, b.y, 0, 0.75, 2.2, 1.0, { blend: 'lighter' });
+        for (let k = 0; k < 14; k++) {
+          const a = (k / 14) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 305, Math.sin(a) * 305, Math.round(b.dmg * 0.98), '#ff1744', projCfg(true, { status: { kind: 'burn', dur: 3.0 } }));
+        }
+        return true;
+
+      case 'maldita_void_collapse':
+        Balaclava.Audio.play('thunder');
+        game.spawnFx('sp_stylized_explosion_violet', px, py, 0, 0.75, 2.1, 1.0, { blend: 'lighter' });
+        dung.hazardZones.push({ kind: 'meteor', x: px, y: py, radius: 84, delay: 0.72, duration: 0.6, timer: 0, dmg: Math.round(b.dmg * 1.48), color: '#aa00ff', vfxKey: 'sp_stylized_explosion_violet' });
+        return true;
+
+      case 'maldita_crimson_flail':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_splatter_red', b.x, b.y, tAng, 0.55, 1.9, 1.0);
+        b.dashTimer = 0.36; b.dashVx = Math.cos(tAng) * 610; b.dashVy = Math.sin(tAng) * 610; b.dashCharges = 2;
+        return true;
+
+      case 'maldita_harvest_scythes':
+        Balaclava.Audio.play('slash');
+        game.spawnFx('sp_spell_attack_red', b.x, b.y, tAng, 0.55, 2.0, 1.0, { blend: 'lighter' });
+        for (let k = -4; k <= 4; k++) {
+          const a = tAng + k * 0.14;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 355, Math.sin(a) * 355, Math.round(b.dmg * 1.04), '#ff5252', projCfg(false));
+        }
+        return true;
+
+      case 'maldita_abyss_hellfire':
+        Balaclava.Audio.play('meteor');
+        game.shake(0.45, 11);
+        for (let off of [0, Math.PI / 3, -Math.PI / 3]) {
+          const fa = tAng + off;
+          dung.hazardZones.push({ kind: 'fissure', x: b.x - Math.cos(fa) * 185, y: b.y - Math.sin(fa) * 185, x2: b.x + Math.cos(fa) * 185, y2: b.y + Math.sin(fa) * 185, halfW: 26, delay: 0.62, duration: 1.5, timer: 0, dmg: Math.round(b.dmg * 1.4), color: '#ff1744', vfxKey: 'sp_epic_explosion_orange' });
+        }
+        return true;
+
+      // ═══════════════════════════════════════════════════════════════
+      // JEFE FINAL SUPREMO (#75): ESPADACHÍN CARMESÍ ABISAL (Sword.png 14x8)
+      // ═══════════════════════════════════════════════════════════════
+      case 'abyssal_crimson_stance_slash':
+        Balaclava.Audio.play('slash');
+        b.animRow = 5; b.animFrames = 7; b.animFps = 16; b.animLock = 0.55; b.animTimer = 0;
+        game.shake(0.32, 8);
+        game.spawnFx('sp_spell_attack_red', b.x, b.y, tAng, 0.55, 2.2, 1.0, { blend: 'lighter' });
+        game.spawnFx('sp_splatter_red', b.x, b.y, tAng, 0.5, 1.9, 0.95);
+        b.dashTimer = 0.34;
+        b.dashVx = Math.cos(tAng) * 680;
+        b.dashVy = Math.sin(tAng) * 680;
+        b.dashCharges = b.phase >= 2 ? 1 : 0;
+        for (let k = -3; k <= 3; k++) {
+          const a = tAng + k * 0.13;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 390, Math.sin(a) * 390, Math.round(b.dmg * 1.06), '#ff1744', projCfg(false, { radius: 9 }));
+        }
+        return true;
+
+      case 'abyssal_vortex_whirlwind':
+        Balaclava.Audio.play('thunder');
+        b.animRow = 4; b.animFrames = 14; b.animFps = 18; b.animLock = 0.85; b.animTimer = 0;
+        game.shake(0.48, 12);
+        game.spawnShockwave(b.x, b.y, 230, '#ff1744');
+        game.spawnFx('sp_spell_death_red', b.x, b.y, 0, 0.85, 2.45, 1.0, { blend: 'lighter' });
+        if (d < 175) game.damagePlayer(Math.round(b.dmg * 1.42), { status: { kind: 'burn', dur: 3.0 } });
+        for (let k = 0; k < 14; k++) {
+          const a = (k / 14) * Math.PI * 2 + (b.phaseCycle || 0) * 0.25;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 320, Math.sin(a) * 320, Math.round(b.dmg * 0.98), '#ff1744', projCfg(true));
+        }
+        return true;
+
+      case 'abyssal_scarlet_aura_burst':
+        Balaclava.Audio.play('meteor');
+        b.animRow = 3; b.animFrames = 7; b.animFps = 12; b.animLock = 0.70; b.animTimer = 0;
+        game.shake(0.45, 11);
+        game.spawnFx('sp_epic_explosion_orange', b.x, b.y, 0, 0.75, 2.35, 1.0, { blend: 'lighter' });
+        game.spawnFx('sp_lightning_strike_violet', px, py, 0, 0.7, 2.0, 1.0, { blend: 'lighter' });
+        for (let k = 0; k < 4; k++) {
+          const fa = tAng + (k / 4) * Math.PI;
+          dung.hazardZones.push({ kind: 'fissure', x: b.x - Math.cos(fa) * 210, y: b.y - Math.sin(fa) * 210, x2: b.x + Math.cos(fa) * 210, y2: b.y + Math.sin(fa) * 210, halfW: 26, delay: 0.6, duration: 1.6, timer: 0, dmg: Math.round(b.dmg * 1.45), color: '#ff1744', vfxKey: 'sp_spell_death_red' });
+        }
+        return true;
+
+      case 'abyssal_phantom_cross_step': {
+        Balaclava.Audio.play('slash');
+        b.animRow = 6; b.animFrames = 2; b.animFps = 14; b.animLock = 0.22; b.animTimer = 0;
+        game.spawnFx('sp_scifi_warp', b.x, b.y, 0, 0.45, 1.8, 0.95, { blend: 'lighter' });
+        const destX = px + Math.cos(ang) * 96;
+        const destY = py + Math.sin(ang) * 96;
+        if (isBossWalkable(destX, destY)) { b.x = destX; b.y = destY; }
+        const retAng = Math.atan2(py - b.y, px - b.x);
+        b.facing = px >= b.x ? 1 : -1;
+        b.animRow = 5; b.animFrames = 7; b.animFps = 16; b.animLock = 0.55; b.animTimer = 0;
+        game.spawnFx('sp_impact_violet', b.x, b.y, retAng, 0.55, 2.0, 1.0, { blend: 'lighter' });
+        for (let k = -2; k <= 2; k++) {
+          const a = retAng + k * 0.2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 380, Math.sin(a) * 380, Math.round(b.dmg * 1.12), '#ff5252', projCfg(true));
+        }
+        return true;
+      }
+
+      case 'abyssal_eclipse_judgement':
+        Balaclava.Audio.play('meteor');
+        Balaclava.Audio.play('thunder');
+        b.animRow = 4; b.animFrames = 14; b.animFps = 16; b.animLock = 0.90; b.animTimer = 0;
+        game.shake(0.65, 14);
+        game.spawnShockwave(b.x, b.y, 260, '#ff1744');
+        game.spawnFx('sp_spell_death_red', b.x, b.y, 0, 0.95, 2.6, 1.0, { blend: 'lighter' });
+        game.spawnFx('sp_lightning_burst_violet', b.x, b.y, 0, 0.85, 2.4, 1.0, { blend: 'lighter' });
+        for (let k = 0; k < 16; k++) {
+          const a = (k / 16) * Math.PI * 2;
+          game.spawnEnemyProjectile(b.x, b.y, Math.cos(a) * 340, Math.sin(a) * 340, Math.round(b.dmg * 1.05), '#ff1744', projCfg(true, { status: { kind: 'burn', dur: 3.5 } }));
+        }
+        for (let m = 0; m < 5; m++) {
+          const ma = (m / 5) * Math.PI * 2 + ang;
+          const mDist = m === 0 ? 0 : 110;
+          dung.hazardZones.push({ kind: 'meteor', x: px + Math.cos(ma) * mDist, y: py + Math.sin(ma) * mDist, radius: 72, delay: 0.72, duration: 0.65, timer: 0, dmg: Math.round(b.dmg * 1.55), color: '#ff1744', vfxKey: 'sp_stylized_explosion_violet' });
+        }
+        return true;
+
       default:
         return false;
     }
@@ -2508,6 +3733,11 @@
         targetX: null,
         targetY: null,
         targetAngle: null,
+        animRow: 0,
+        animTimer: 0,
+        animLock: 0,
+        animFps: 8,
+        animFrames: 7,
         hitFlash: 0,
         drops: bossDrops,
         coins: Math.round(b.coins * (this.isCorrupted ? 15 : 1)),
@@ -3353,6 +4583,10 @@
     }
 
     update(dt, game) {
+      if (this.deadBossGhost) {
+        this.deadBossGhost.timer += dt;
+        if (this.deadBossGhost.timer >= this.deadBossGhost.dur) this.deadBossGhost = null;
+      }
       this.trapTimer += dt;
       if (this.trapTimer >= 1.85) {
         this.trapTimer = 0;
@@ -3519,6 +4753,10 @@
       }
 
       // Dungeon garrison & Mini-Boss AI
+      if (game.freezeAI) {
+        if (this.boss) this.boss.animTimer = (this.boss.animTimer || 0) + dt;
+        return;
+      }
       const canWalkPx = (wx, wy) => Number.isFinite(wx) && Number.isFinite(wy) && this.isTileWalkable(Math.floor(wx / TILE_SIZE), Math.floor(wy / TILE_SIZE));
       for (let i = this.enemies.length - 1; i >= 0; i--) {
         const e = this.enemies[i];
@@ -3665,6 +4903,10 @@
           game.spawnShockwave(b.x, b.y, 175, bossCol);
           game.spawnFx(theme.phaseVfx || 'pvfx_fire_nova', b.x, b.y - 6, 0, 0.85, 1.5, 1.0, { blend: 'lighter' });
           game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y + 4, 0, 0.95, 1.6, 0.9, { blend: 'lighter' });
+          if (this.id === 'eclipse_carmesi') {
+            b.animRow = 3; b.animFrames = 7; b.animFps = 12; b.animLock = 0.85; b.animTimer = 0;
+            game.spawnFx('sp_spell_death_red', b.x, b.y, 0, 0.9, 2.3, 1.0, { blend: 'lighter' });
+          }
           game.spawnParticles(b.x, b.y, bossCol, 28);
           game.addFloatingText(b.x, b.y - 56, T('dungeon.phase2Float'), '#ffd54f');
           const ay = this.bossArenaCenter ? this.bossArenaCenter.ty : 19;
@@ -3695,6 +4937,11 @@
           game.spawnFx(theme.phaseVfx || 'pvfx_big_explosion', b.x, b.y - 6, 0, 0.95, 1.7, 1.0, { blend: 'lighter' });
           game.spawnFx(theme.pillarVfx || 'pvfx_fire_pillar', b.x, b.y - 12, 0, 0.9, 1.45, 0.96, { blend: 'lighter' });
           game.spawnFx(theme.castVfx || 'pvfx_magic_circle', b.x, b.y + 4, 0, 1.05, 1.85, 0.95, { blend: 'lighter' });
+          if (this.id === 'eclipse_carmesi') {
+            b.animRow = 3; b.animFrames = 7; b.animFps = 14; b.animLock = 0.95; b.animTimer = 0;
+            game.spawnFx('sp_spell_death_red', b.x, b.y, 0, 1.0, 2.5, 1.0, { blend: 'lighter' });
+            game.spawnFx('sp_lightning_burst_violet', b.x, b.y, 0, 0.9, 2.3, 1.0, { blend: 'lighter' });
+          }
           game.spawnParticles(b.x, b.y, bossCol, 36);
           game.addFloatingText(b.x, b.y - 62, T('dungeon.phase3Float'), '#ff5252');
           const ay = this.bossArenaCenter ? this.bossArenaCenter.ty : 19;
@@ -3705,6 +4952,22 @@
         const d = Balaclava.Utils.dist(b.x, b.y, game.player.x, game.player.y);
         const ang = Math.atan2(game.player.y - b.y, game.player.x - b.x);
         b.facing = game.player.x >= b.x ? 1 : -1;
+        b.animTimer = (b.animTimer || 0) + dt;
+        if ((b.animLock || 0) > 0) b.animLock -= dt;
+        const _bMeta = Balaclava.BOSS_SPRITE_PATHS && Balaclava.BOSS_SPRITE_PATHS[this.id];
+        if (_bMeta && _bMeta.multiRow && (b.animLock || 0) <= 0) {
+          if ((b.dashTimer || 0) > 0) {
+            if (b.animRow !== 5) { b.animRow = 5; b.animFrames = 7; b.animFps = 16; b.animTimer = 0; }
+          } else if ((b.telegraph || 0) > 0) {
+            const windRow = (b.telegraphMode === 'abyssal_scarlet_aura_burst' || b.telegraphMode === 'abyssal_eclipse_judgement' || b.telegraphMode === 'abyssal_vortex_whirlwind') ? 3 : 1;
+            const windFrames = windRow === 3 ? 7 : 4;
+            if (b.animRow !== windRow) { b.animRow = windRow; b.animFrames = windFrames; b.animFps = 11; b.animTimer = 0; }
+          } else if (d > 68) {
+            if (b.animRow !== 2) { b.animRow = 2; b.animFrames = 8; b.animFps = 11; b.animTimer = 0; }
+          } else {
+            if (b.animRow !== 0) { b.animRow = 0; b.animFrames = 7; b.animFps = 8; b.animTimer = 0; }
+          }
+        }
 
         if ((b.dashTimer || 0) > 0) {
           b.dashTimer -= dt;

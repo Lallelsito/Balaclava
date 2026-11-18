@@ -326,12 +326,22 @@
     }
 
     biomeIcon(biomeId, size = 26) {
+      const pngMap = Balaclava.ITEM_PNG_MAP || {};
       const urlMap = {
         pradera: Balaclava.UI_URLS.biomePradera,
         desierto: Balaclava.UI_URLS.biomeDesierto,
         bosque_oscuro: Balaclava.UI_URLS.biomeBosque,
         montanas_heladas: Balaclava.UI_URLS.biomeHielo,
-        tierras_volcanicas: Balaclava.UI_URLS.biomeVolcan
+        tierras_volcanicas: Balaclava.UI_URLS.biomeVolcan,
+        archipielago_coral: pngMap.perla_turquesa,
+        cavernas_cristal: pngMap.celestita_cristal,
+        selva_esmeralda: pngMap.jade_ancestral,
+        caldera_ceniza: pngMap.escoria_caldera,
+        dinastia_arena: pngMap.agata_roja,
+        glaciar_profundo: pngMap.hielo_eterno,
+        cienaga_putrida: pngMap.flor_pantano,
+        necropolis_osea: pngMap.hueso_fosil,
+        tierras_malditas: pngMap.cristal_carmesi
       };
       const url = urlMap[biomeId] || Balaclava.UI_URLS.biomePradera;
       if (url) {
@@ -1044,19 +1054,19 @@
         type: 'button',
         class: 'title-patch-notes-btn',
         'data-tip-text': isEnTitle
-          ? 'View recent changes and new content in Beta 1.2.1'
-          : 'Ver todos los cambios recientes y contenido nuevo de la Beta 1.2.1',
+          ? 'View recent changes and new content in Beta 1.3.0'
+          : 'Ver todos los cambios recientes y contenido nuevo de la Beta 1.3.0',
         onclick: () => this.openModal('patch_notes')
       }, [
         this.el('img', { class: 'pixel-img', src: 'assets/icons/scroll_map.png', width: 18, height: 18, alt: '' }),
         this.el('span', { class: 'title-patch-notes-label' }, isEnTitle ? 'Patch Notes' : 'Cambios recientes'),
-        this.el('span', { class: 'title-patch-notes-badge' }, 'Beta 1.2.1')
+        this.el('span', { class: 'title-patch-notes-badge' }, 'Beta 1.3.0')
       ]);
       box.appendChild(patchBtn);
 
       const verEl = document.querySelector('#title-screen .title-version');
       if (verEl) {
-        verEl.textContent = 'Balaclava Beta v1.2.1';
+        verEl.textContent = 'Balaclava Beta v1.3.0';
         verEl.style.pointerEvents = 'auto';
         verEl.style.cursor = 'pointer';
         verEl.onclick = () => this.openModal('patch_notes');
@@ -3822,7 +3832,10 @@
         title_settings: tr('settings.title'),
         controls: tr('settings.title'),
         credits: tr('credits.title'),
-        patch_notes: (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') ? 'Patch Notes — Beta 1.2.1' : 'Cambios Recientes — Beta 1.2.1',
+        relics: (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') ? 'Permanent Relics Vault' : 'Cofre de Reliquias',
+        patch_notes: (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en')
+          ? `Patch Notes — Beta ${this._activePatchVer || '1.3.0'}`
+          : `Cambios Recientes — Beta ${this._activePatchVer || '1.3.0'}`,
         quit_confirm: tr('quit.title'),
         quit_web_fallback: tr('quit.webFallbackTitle'),
         discord_fallback: tr('title.discord'),
@@ -3850,6 +3863,7 @@
       if (titles[this.activeModal]) titleEl.textContent = titles[this.activeModal];
 
       if (this.activeModal === 'inventory') this.renderInventory(body);
+      else if (this.activeModal === 'relics') this.renderRelicsModal(body);
       else if (this.activeModal === 'stats') this.renderStats(body);
       else if (this.activeModal === 'crafting') {
         const bType = this.modalData && this.modalData.building && this.modalData.building.type;
@@ -4513,37 +4527,110 @@
       ]);
       rightCol.appendChild(eqPanel);
 
-      // Permanent Boss & Secret Relics showcase
+      // Permanent Boss & Secret Relics button (opens compact Chest-Grid Relics modal)
       const relics = Balaclava.PERMANENT_RELICS ? Object.values(Balaclava.PERMANENT_RELICS) : [];
       if (relics.length) {
-        const relStrip = this.el('div', { class: 'relic-strip' });
-        relics.forEach(rel => {
-          const owned = g.hasPermanentRelic(rel.id);
-          const isSec = !!rel.isSecret || !rel.bossName;
-          const bLabel = (rel.biome && BIOMES[rel.biome] && BIOMES[rel.biome].name) || rel.biome || tr('inv.archipelago');
-          const lockTitle = isSec
-            ? tr('inv.secretChestLockTitle')
-            : tr('inv.bossLockTitle', { boss: rel.bossName, biome: bLabel });
-          const lockName = isSec ? tr('inv.secretLockName') : `??? (${rel.bossName})`;
-          const pill = this.el('div', {
-            class: 'relic-pill',
-            style: owned ? '' : 'opacity:0.42;filter:grayscale(0.9);border-color:#69503d;',
-            title: owned ? `${rel.name}: ${rel.desc}` : lockTitle
-          }, [
-            this.itemIcon(rel.icon, 22),
-            this.el('span', {}, owned ? rel.name : lockName)
-          ]);
-          relStrip.appendChild(pill);
-        });
-        rightCol.appendChild(this.el('div', { class: 'card' }, [
-          this.el('strong', { style: 'color:#ffd54f;font-size:16px;' }, tr('inv.permRelicsCount', { cur: (g.permanentRelics || []).length, total: relics.length })),
-          relStrip
+        const ownedCount = relics.filter(rel => g.hasPermanentRelic(rel.id)).length;
+        const isEnInv = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+        rightCol.appendChild(this.el('div', { class: 'card', style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;' }, [
+          this.el('div', {}, [
+            this.el('strong', { style: 'color:#ffd54f;font-size:15px;display:block;' }, tr('inv.permRelicsCount', { cur: ownedCount, total: relics.length })),
+            this.el('span', { style: 'font-size:12px;color:#b8d4ec;' }, isEnInv ? 'Inspect all passive relics in vault grid' : 'Explora todas tus reliquias en cuadros de cofre')
+          ]),
+          this.el('button', {
+            id: 'btn-open-relics-modal',
+            type: 'button',
+            class: 'btn btn-gold',
+            style: 'white-space:nowrap;flex-shrink:0;',
+            onclick: () => this.openModal('relics')
+          }, isEnInv ? 'Relics' : 'Reliquias')
         ]));
       }
       }
 
       layout.appendChild(rightCol);
       body.appendChild(layout);
+    }
+
+    renderRelicsModal(body) {
+      const g = this.game;
+      const relics = Balaclava.PERMANENT_RELICS ? Object.values(Balaclava.PERMANENT_RELICS) : [];
+      const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
+      const ownedCount = relics.filter(r => g.hasPermanentRelic(r.id)).length;
+      if (!this._selectedRelicId || !relics.some(r => r.id === this._selectedRelicId)) {
+        const firstOwned = relics.find(r => g.hasPermanentRelic(r.id));
+        this._selectedRelicId = (firstOwned && firstOwned.id) || (relics[0] && relics[0].id) || null;
+      }
+
+      const wrap = this.el('div', { class: 'relic-chest-modal' });
+      const topRow = this.el('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;' }, [
+        this.el('strong', { style: 'color:#ffd54f;font-size:16px;' }, tr('inv.permRelicsCount', { cur: ownedCount, total: relics.length })),
+        this.el('button', {
+          id: 'btn-relics-back-inv',
+          type: 'button',
+          class: 'btn btn-stone btn-sm',
+          onclick: () => this.openModal('inventory')
+        }, isEn ? 'Back to Inventory' : 'Volver al Inventario')
+      ]);
+      wrap.appendChild(topRow);
+
+      const detailSlot = this.el('div', { class: 'relic-detail-card' });
+      const renderDetail = () => {
+        detailSlot.innerHTML = '';
+        const rel = relics.find(r => r.id === this._selectedRelicId) || relics[0];
+        if (!rel) return;
+        const owned = g.hasPermanentRelic(rel.id);
+        const isSec = !!rel.isSecret;
+        const srcText = rel.source || (rel.bossName ? `${rel.bossName}` : tr('inv.archipelago'));
+        const dispName = owned ? rel.name : (isSec ? tr('inv.secretLockName') : `${rel.name}`);
+        const statusBadge = owned
+          ? (isEn ? 'Obtained (Active)' : 'Obtenida (Activa)')
+          : (isEn ? 'Locked' : 'Bloqueada');
+        detailSlot.appendChild(this.el('div', {
+          class: 'relic-detail-icon-box',
+          style: owned ? '' : 'filter:grayscale(0.92);opacity:0.65;'
+        }, [this.itemIcon(rel.icon, 40)]));
+        detailSlot.appendChild(this.el('div', { class: 'relic-detail-info' }, [
+          this.el('div', { class: 'relic-detail-name' }, dispName),
+          this.el('div', { class: 'relic-detail-meta' }, [
+            this.el('span', { style: `font-weight:800;color:${owned ? '#86efac' : '#ffab91'};` }, statusBadge),
+            this.el('span', {}, ` · ${isEn ? 'Source' : 'Origen'}: ${srcText}`)
+          ]),
+          this.el('div', { class: 'relic-detail-desc' }, owned
+            ? rel.desc
+            : (isSec ? tr('inv.secretChestLockTitle') : `${rel.desc} (${isEn ? 'Locked until defeated' : 'Bloqueada hasta derrotar al jefe'})`))
+        ]));
+      };
+
+      const gridEl = this.el('div', { class: 'relic-chest-grid' });
+      const cellMap = new Map();
+      relics.forEach(rel => {
+        const owned = g.hasPermanentRelic(rel.id);
+        const isSel = rel.id === this._selectedRelicId;
+        const cell = this.el('button', {
+          type: 'button',
+          class: 'relic-chest-cell' + (owned ? ' owned' : ' locked') + (isSel ? ' selected' : ''),
+          title: owned ? rel.name : (rel.source || rel.name),
+          onclick: () => {
+            if (cellMap.has(this._selectedRelicId)) {
+              cellMap.get(this._selectedRelicId).classList.remove('selected');
+            }
+            this._selectedRelicId = rel.id;
+            cell.classList.add('selected');
+            renderDetail();
+          }
+        }, [
+          this.itemIcon(rel.icon, 36),
+          owned ? this.el('span', { class: 'relic-chest-cell-badge' }, '✓') : null
+        ]);
+        cellMap.set(rel.id, cell);
+        gridEl.appendChild(cell);
+      });
+
+      renderDetail();
+      wrap.appendChild(detailSlot);
+      wrap.appendChild(gridEl);
+      body.appendChild(wrap);
     }
 
     renderChestModal(titleEl, body, b) {
@@ -7374,7 +7461,7 @@
         if (tut && typeof tut.getRecommendedFirstPlot === 'function') {
           return tut.getRecommendedFirstPlot(g);
         }
-        return [4, 3];
+        return [CENTER_PLOT !== undefined ? CENTER_PLOT : 9, Math.max(0, (CENTER_PLOT !== undefined ? CENTER_PLOT : 9) - 1)];
       };
       const initialRecPlot = getTutorialRecommendedPlot();
       if (!this.selectedMapPlot || (initialRecPlot && this.selectedMapPlot[0] === pGx && this.selectedMapPlot[1] === pGy && g.world.isPlotUnlocked(pGx, pGy))) {
@@ -7605,7 +7692,7 @@
               this.el('strong', { style: 'color:#ea80fc;display:block;' }, '[OMEGA] ISLA ASCENDIDA (PRESTIGIO OMEGA)'),
               this.el('div', {}, 'Enemigos: 10x HP / 10x Daño (Sueltan Materia Comprimida) · Extractores: 2x Velocidad')
             ]));
-          } else if (g.clearedDungeons && g.clearedDungeons.length >= 24) {
+          } else if (g.clearedDungeons && g.clearedDungeons.length >= ((g.omega.UNLOCK_THRESHOLDS && g.omega.UNLOCK_THRESHOLDS.ascensionUnlockDungeons) || 55)) {
             card.appendChild(this.el('button', {
               class: 'btn btn-primary',
               style: 'margin-top:6px;background:linear-gradient(90deg, #4a148c, #7b1fa2);border:1px solid #e040fb;color:#fff;font-weight:bold;',
@@ -7633,8 +7720,8 @@
           defs.forEach(dDef => {
             const gateEntry = Array.isArray(gatesObj) ? gatesObj.find(gt => gt.id === dDef.id) : gatesObj[dDef.id];
             const resolvedPlot = (g.world.dungeonGatePlots && g.world.dungeonGatePlots[dDef.id]) || (gateEntry && gateEntry.plot);
-            const gx = resolvedPlot ? resolvedPlot[0] : 4;
-            const gy = resolvedPlot ? resolvedPlot[1] : 4;
+            const gx = resolvedPlot ? resolvedPlot[0] : (CENTER_PLOT !== undefined ? CENTER_PLOT : 9);
+            const gy = resolvedPlot ? resolvedPlot[1] : (CENTER_PLOT !== undefined ? CENTER_PLOT : 9);
             const cleared = Array.isArray(g.clearedDungeons) && g.clearedDungeons.includes(dDef.id);
             const dmBiome = BIOMES[dDef.themeKey || dDef.biomeId] || BIOMES.pradera;
             atlasBox.appendChild(this.el('div', {
@@ -8476,13 +8563,13 @@
         this.el('button', {
           class: 'btn ' + (this.mapShowGrid ? 'btn-gold' : 'btn-sm'),
           style: 'padding:3px 8px;font-size:13px;',
-          title: 'Alternar cuadrícula de parcelas',
+          title: (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') ? 'Toggle plot grid' : 'Alternar cuadrícula de parcelas',
           onclick: (e) => {
             this.mapShowGrid = !this.mapShowGrid;
             e.currentTarget.className = 'btn ' + (this.mapShowGrid ? 'btn-gold' : 'btn-sm');
             drawMapCanvas();
           }
-        }, [this.el('span', {}, 'Cuadrícula')]),
+        }, [this.el('span', {}, (Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en') ? 'Grid' : 'Cuadrícula')]),
         this.el('button', {
           class: 'btn ' + (this.showDungeonAtlas ? 'btn-gold' : 'btn-primary') + ' btn-sm',
           onclick: () => { this.showDungeonAtlas = !this.showDungeonAtlas; renderInspector(); }
@@ -9860,7 +9947,8 @@
 
     renderPatchNotesModal(body) {
       const isEn = Balaclava.I18n && Balaclava.I18n.getLanguage && Balaclava.I18n.getLanguage() === 'en';
-      const sections = isEn ? [
+      if (!this._activePatchVer) this._activePatchVer = '1.3.0';
+      const sections121 = isEn ? [
         {
           badge: 'BETA 1.2.1',
           color: '#ffd54f',
@@ -10034,19 +10122,144 @@
         }
       ];
 
+      const sections130 = isEn ? [
+        {
+          badge: 'BETA 1.3.0',
+          color: '#ff1744',
+          icon: 'espada_eclipse',
+          title: 'Final Boss: Abyssal Crimson Swordsman (#75)',
+          items: [
+            'Brand-new climax encounter in the Cursed Lands finale Dungeon: Eclipse of the Crimson Swordsman.',
+            'Full multi-row combat animations (Stance Guard, Stalk Run, Scarlet Aura Charge, 14-frame 360 Whirlwind, Cross-Step Blink, Dash Slash Lunge & 9-frame Particle Dissolve Death).',
+            'Drops Cosmic Singularities, Cursed Plates, Crimson Crystals, the Eclipse Blade and the Sovereign Relic Heart of the Crimson Eclipse.'
+          ]
+        },
+        {
+          badge: 'WORLD 19x19',
+          color: '#4fc3f7',
+          icon: 'mapa_tesoro',
+          title: '361 Directional Islands, 14 Biomes & 4 Zones',
+          items: [
+            'Expanded archipelago from 10x10 (100 islands) to 19x19 (361 islands) anchored around Zone I (Central Emerald Meadow 3x3).',
+            'Directional climate layout keeps Snow strictly East and Lava strictly West (North Desert, South Jungle & Swamp), preventing jarring climate clashes.',
+            'Strict Zone I -> II -> III -> IV progression lock across 9 brand-new biomes (Coral Archipelago, Crystal Cavern, Emerald Jungle, Ash Caldera, Sand Dynasty, Deep Glacier, Putrid Swamp, Bone Necropolis & Cursed Lands). Automatic 10x10 -> 19x19 save migration included.'
+          ]
+        },
+        {
+          badge: '75 DUNGEONS',
+          color: '#ffd54f',
+          icon: 'llave_maestra_mazmorra',
+          title: '75 Unique Dungeons, 75 Boss Relics & Vault Grid UI',
+          items: [
+            'Added 51 new tiered dungeons (75 total) with biome-specific tilesets, 18 new enemies, Gigapack sp_* VFX and 51 unique boss relics.',
+            'Inventory right column now features a compact "Reliquias" button opening a Chest-Grid Relics Vault where clicking any relic square reveals its effects and source.'
+          ]
+        },
+        {
+          badge: 'BALANCE & ART',
+          color: '#e040fb',
+          icon: 'singularidad',
+          title: 'Omega Endgame Rebalance, Texture Overhaul & Trailer Studio',
+          items: [
+            'Buffed T16 Omega Armor & fixed Singularity Blade melee scaling so Omega gear stays strictly stronger than all T9-T15 sets; raised Omega Research & Ascension thresholds.',
+            'Rebuilt dozens of machine sprites (T1/T2 Furnaces, Anvils, Crushers, Omega Extractors, Void Nexus) and removed duplicate crafting recipes.',
+            'Added /boss, /spawnboss, /hud, /spectator, /freezeai, /zoom, /vfx, /clearmobs and /trailer commands in Shift+F9 console for rapid trailer capture.'
+          ]
+        }
+      ] : [
+        {
+          badge: 'BETA 1.3.0',
+          color: '#ff1744',
+          icon: 'espada_eclipse',
+          title: 'Jefe Final Supremo: Espadachin Carmesi Abisal (#75)',
+          items: [
+            'Nuevo jefe final en la mazmorra numero 75: Eclipse del Espadachin Carmesi en Tierras Malditas.',
+            'Animacion completa fila por fila (Guardia, Carrera, Carga de Aura, Torbellino 360 de 14 frames, Paso Espectral, Estocada Carmesi y Disolucion en particulas al morir).',
+            'Otorga Singularidades Cosmicas, Espada del Eclipse Carmesi y la reliquia suprema Corazon del Eclipse Carmesi.'
+          ]
+        },
+        {
+          badge: 'MUNDO 19x19',
+          color: '#4fc3f7',
+          icon: 'mapa_tesoro',
+          title: '361 Islas Direccionales, 14 Biomas y 4 Zonas',
+          items: [
+            'Mapa expandido a 19x19 (361 islas) centrado en la Zona I (Pradera Esmeralda 3x3).',
+            'Distribucion climatica por orientacion: Lava al Oeste, Nieve/Hielo al Este, Desierto al Norte y Selva/Pantanales al Sur (la nieve nunca toca la lava).',
+            'Bloqueo secuencial Zona I -> II -> III -> IV con 9 biomas nuevos, 17 vetas minerales nuevas y migracion automatica de partidas 10x10 anteriores.'
+          ]
+        },
+        {
+          badge: '75 MAZMORRAS',
+          color: '#ffd54f',
+          icon: 'llave_maestra_mazmorra',
+          title: '75 Dungeons Unicas, 75 Reliquias de Jefe y Boton Reliquias',
+          items: [
+            '51 mazmorras nuevas (75 en total) con escenografia por bioma, 18 enemigos nuevos, VFX Gigapack sp_* en combates y 51 reliquias unicas.',
+            'Nuevo boton "Reliquias" en el Inventario que abre una cuadricula compacta estilo cofre: selecciona cualquier reliquia para ver su origen y estadisticas.'
+          ]
+        },
+        {
+          badge: 'BALANCE Y TRAILER',
+          color: '#e040fb',
+          icon: 'singularidad',
+          title: 'Omega Endgame, Texturas Renovadas y Comandos de Trailer',
+          items: [
+            'Armadura Omega T16 y Hoja de la Singularidad reforzadas por encima de todo el equipo T9-T15; requisitos de ascension y Singularidades ajustados para seguir siendo verdadero endgame.',
+            'Redibujo completo de maquinas, hornos, yunques, edificios Omega y eliminacion de recetas duplicadas o atajos de crafteo.',
+            'Consola Shift+F9 ampliada con /boss, /spawnboss, /hud, /spectator, /freezeai, /zoom, /vfx, /clearmobs y /trailer para grabar capturas y trailers rapidamente.'
+          ]
+        }
+      ];
+
+      const patchVersions = [
+        {
+          id: '1.3.0',
+          label: 'Beta 1.3.0',
+          pill: 'BETA v1.3.0',
+          subtitle: isEn ? '361-Island Expansion & Crimson Abyss' : 'Gran Expansion Beta 1.3.0',
+          heroTitle: isEn ? 'BALACLAVA — Beta 1.3.0 Release Notes' : 'BALACLAVA — Notas de la Version Beta 1.3.0',
+          heroSub: isEn
+            ? 'Complete summary of all 14 biomes, 75 dungeons, Omega balance, texture overhaul, Chest Relics UI and trailer debug tools.'
+            : 'Resumen completo de las 361 islas, 14 biomas, 75 mazmorras, Jefe Final Carmesi Abisal, balance Omega y herramientas de trailer.',
+          sections: sections130
+        },
+        {
+          id: '1.2.1',
+          label: 'Beta 1.2.1',
+          pill: 'BETA v1.2.1',
+          subtitle: isEn ? 'Chests (1,000 Stacks) & Storage Fix' : 'Cofres (Stacks de 1000) y Correcciones',
+          heroTitle: isEn ? 'BALACLAVA — Beta 1.2.1 Release Notes' : 'BALACLAVA — Notas de la Version Beta 1.2.1',
+          heroSub: isEn
+            ? 'Previous release notes kept for reference: 1,000 stack chests, storage durability, combat scaling and UI refinements.'
+            : 'Historial de cambios de la version anterior Beta 1.2.1.',
+          sections: sections121
+        }
+      ];
+      const activeVer = patchVersions.find(v => v.id === this._activePatchVer) || patchVersions[0];
+      const sections = activeVer.sections;
+
       const wrap = this.el('div', { class: 'patch-notes-wrap' });
+      const verTabs = this.el('div', { class: 'patch-version-tabs' });
+      patchVersions.forEach(ver => {
+        verTabs.appendChild(this.el('button', {
+          type: 'button',
+          class: 'patch-ver-btn' + (ver.id === activeVer.id ? ' active' : ''),
+          onclick: () => {
+            this._activePatchVer = ver.id;
+            this.renderModal();
+          }
+        }, ver.label));
+      });
+      wrap.appendChild(verTabs);
 
       wrap.appendChild(this.el('div', { class: 'parchment-box patch-notes-hero' }, [
         this.el('div', { class: 'patch-notes-hero-top' }, [
-          this.el('span', { class: 'patch-version-pill' }, 'BETA v1.2.1'),
-          this.el('span', { class: 'patch-notes-date' }, isEn ? 'Major Content & Systems Update' : 'Actualizacion Mayor de Contenido y Sistemas')
+          this.el('span', { class: 'patch-version-pill' }, activeVer.pill),
+          this.el('span', { class: 'patch-notes-date' }, activeVer.subtitle)
         ]),
-        this.el('div', { class: 'patch-notes-hero-title' }, isEn
-          ? 'BALACLAVA — Beta 1.2.1 Release Notes'
-          : 'BALACLAVA — Notas de la Version Beta 1.2.1'),
-        this.el('div', { class: 'patch-notes-hero-sub' }, isEn
-          ? 'Complete summary of all new gameplay systems, structures, dungeons, and progression changes introduced in this update.'
-          : 'Resumen completo de todos los sistemas, estructuras, mazmorras, energia Omega y mejoras de progresion implementados en esta version.')
+        this.el('div', { class: 'patch-notes-hero-title' }, activeVer.heroTitle),
+        this.el('div', { class: 'patch-notes-hero-sub' }, activeVer.heroSub)
       ]));
 
       const list = this.el('div', { class: 'patch-notes-list' });
@@ -12010,7 +12223,7 @@
       const raw = this._cmdInputEl.value || '';
       const hasTrailSpace = /\s$/.test(raw);
       const parts = raw.trim().split(/\s+/).filter(Boolean);
-      const cmds = ['/help', '/give', '/tool', '/armor', '/money', '/xp', '/level', '/sp', '/godmode', '/heal', '/stat', '/unlock', '/time', '/tp', '/clear'];
+      const cmds = ['/help', '/give', '/tool', '/armor', '/money', '/xp', '/level', '/sp', '/godmode', '/heal', '/stat', '/unlock', '/time', '/tp', '/boss', '/spawnboss', '/hud', '/photo', '/spectator', '/freezeai', '/zoom', '/vfx', '/clearmobs', '/trailer', '/clear'];
 
       if (parts.length <= 1 && !hasTrailSpace) {
         const prefix = (parts[0] || '/').replace(/^\/?/, '/').toLowerCase();
@@ -12119,6 +12332,15 @@
           '/unlock <plots|skills|spells|all> - Desbloquear islas, árbol o hechizos',
           '/time <dawn|day|dusk|night|0..1>  - Cambiar hora del día',
           '/tp <camp | tx ty>          - Teletransporte a campamento o tile',
+          '/boss <id|next|final|list>  - Ir directo a la arena del jefe (/boss eclipse_carmesi)',
+          '/spawnboss <id>             - Invocar jefe en tu posición actual',
+          '/hud [on|off]               - Ocultar/mostrar HUD para capturas (/photo)',
+          '/spectator [on|off]         - Cámara libre invisible e inmortal (WASD)',
+          '/freezeai [on|off]          - Congelar/reanudar IA de enemigos y jefes',
+          '/zoom <0.4..2.5|reset>      - Ajustar zoom cinematográfico',
+          '/vfx <key|list>             - Lanzar efecto visual Gigapack sobre ti',
+          '/clearmobs                  - Limpiar enemigos menores y proyectiles',
+          '/trailer [eclipse|camp|off] - Preparar escena épica de trailer al instante',
           '/clear                      - Limpiar pantalla'
         ].forEach(line => this._pushCmdLog(line, 'info'));
         return { ok: true, message: 'help' };
@@ -12530,7 +12752,7 @@
         const dst = this._normCmdStr(args[0]);
         if (dst === 'camp' || dst === 'home' || dst === 'base') {
           if (g.activeDungeon && typeof g.exitDungeon === 'function') g.exitDungeon(true);
-          const C = CENTER_PLOT || 4;
+          const C = CENTER_PLOT !== undefined ? CENTER_PLOT : 9;
           const cx = (C * PLOT_TILES + 6.5) * TILE_SIZE;
           const cy = (C * PLOT_TILES + 6.5) * TILE_SIZE;
           const spawn = typeof g.findSafeOverworldSpawn === 'function'
@@ -12553,6 +12775,162 @@
         g.camera.x = g.player.x;
         g.camera.y = g.player.y;
         return succeed(`Teletransportado al tile (${clampedX}, ${clampedY}).`);
+      }
+
+      if (cmd === 'boss' || cmd === 'dungeon') {
+        const dList = Balaclava.DUNGEON_TIER_LIST || Object.keys(Balaclava.DUNGEON_DEFS || {});
+        const arg = args[0] ? this._normCmdStr(args[0]) : 'final';
+        if (arg === 'list') {
+          return succeed(`75 Bosses: ${dList.slice(0, 8).join(', ')} ... ${dList.slice(-8).join(', ')} (usa /boss final o /boss <id>).`, 'info');
+        }
+        let targetId = arg;
+        if (arg === 'final' || arg === 'last' || arg === 'eclipse') {
+          targetId = 'eclipse_carmesi';
+        } else if (arg === 'next') {
+          const cleared = new Set(g.clearedDungeons || []);
+          targetId = dList.find(id => !cleared.has(id)) || dList[dList.length - 1];
+        } else if (!Balaclava.DUNGEON_DEFS || !Balaclava.DUNGEON_DEFS[targetId]) {
+          const match = dList.find(id => id.includes(arg) || (Balaclava.DUNGEON_DEFS[id] && this._normCmdStr(Balaclava.DUNGEON_DEFS[id].name).includes(arg)));
+          if (match) targetId = match;
+        }
+        if (!Balaclava.DUNGEON_DEFS || !Balaclava.DUNGEON_DEFS[targetId]) {
+          return fail(`Mazmorra/Jefe desconocido "${args[0]}". Usa /boss list.`);
+        }
+        if (g.activeDungeon && typeof g.exitDungeon === 'function') g.exitDungeon(true);
+        g.enterDungeon(targetId, false, { directArena: true, forceNormal: true });
+        this.toggleSecretConsole(false);
+        return succeed(`Entrando directo a la arena de ${Balaclava.DUNGEON_DEFS[targetId].boss ? Balaclava.DUNGEON_DEFS[targetId].boss.name : targetId}!`);
+      }
+
+      if (cmd === 'spawnboss' || cmd === 'summonboss') {
+        const dList = Balaclava.DUNGEON_TIER_LIST || Object.keys(Balaclava.DUNGEON_DEFS || {});
+        const arg = args[0] ? this._normCmdStr(args[0]) : 'eclipse_carmesi';
+        let targetId = arg === 'final' ? 'eclipse_carmesi' : arg;
+        if (!Balaclava.DUNGEON_DEFS || !Balaclava.DUNGEON_DEFS[targetId]) {
+          targetId = dList.find(id => id.includes(arg)) || 'eclipse_carmesi';
+        }
+        const def = Balaclava.DUNGEON_DEFS[targetId];
+        if (!def) return fail(`Def no encontrada: ${targetId}`);
+        const tier = Math.max(0, dList.indexOf(targetId));
+        const stats = (Balaclava.DungeonInstance && Balaclava.DungeonInstance.computeBossStats)
+          ? Balaclava.DungeonInstance.computeBossStats(def, tier, g.player.level || 1)
+          : { hp: def.boss.hp * 30, maxHp: def.boss.hp * 30, dmg: def.boss.dmg * 10 };
+        const bossMob = {
+          id: (g.combat ? g.combat.nextId++ : Math.floor(Math.random() * 99999)),
+          isBoss: true,
+          type: 'boss_' + targetId,
+          name: def.boss.name,
+          biome: def.themeKey || 'tierras_malditas',
+          x: g.player.x + 150,
+          y: g.player.y - 20,
+          vx: 0, vy: 0,
+          hp: stats.hp,
+          maxHp: stats.maxHp,
+          dmg: stats.dmg,
+          speed: def.boss.speed || 120,
+          color: def.boss.color || '#ff1744',
+          facing: -1,
+          radius: 34, hitW: 78, hitH: 86, bodyOffY: 30,
+          phase: 1, phaseCycle: 0, attackTimer: 1.5,
+          animRow: 0, animTimer: 0, animLock: 0, animFps: 8, animFrames: 7
+        };
+        if (g.activeDungeon) g.activeDungeon.boss = bossMob;
+        else if (g.combat && Array.isArray(g.combat.enemies)) g.combat.enemies.push(bossMob);
+        if (typeof g.spawnFx === 'function') g.spawnFx('sp_spell_death_red', bossMob.x, bossMob.y, 0, 0.85, 2.2, 1.0, { blend: 'lighter' });
+        return succeed(`Invocado jefe ${def.boss.name} (${targetId}) cerca de ti.`);
+      }
+
+      if (cmd === 'hud' || cmd === 'photo') {
+        const sub = args[0] ? this._normCmdStr(args[0]) : '';
+        if (sub === 'on' || sub === 'show') {
+          if (g.photoMode) this.togglePhotoMode();
+        } else if (sub === 'off' || sub === 'hide') {
+          if (!g.photoMode) this.togglePhotoMode();
+        } else {
+          this.togglePhotoMode();
+        }
+        return succeed(`HUD ${g.photoMode ? 'OCULTO (Modo Foto/Trailer)' : 'VISIBLE'}.`);
+      }
+
+      if (cmd === 'spectator' || cmd === 'spec') {
+        const sub = args[0] ? this._normCmdStr(args[0]) : '';
+        g.spectatorMode = sub === 'on' ? true : (sub === 'off' ? false : !g.spectatorMode);
+        return succeed(`Modo Espectador ${g.spectatorMode ? 'ACTIVADO (invisible, invulnerable, camara libre WASD + Shift)' : 'DESACTIVADO'}.`);
+      }
+
+      if (cmd === 'freezeai' || cmd === 'freeze') {
+        const sub = args[0] ? this._normCmdStr(args[0]) : '';
+        g.freezeAI = sub === 'on' ? true : (sub === 'off' ? false : !g.freezeAI);
+        return succeed(`IA de enemigos y jefes ${g.freezeAI ? 'CONGELADA' : 'REANUDADA'}.`);
+      }
+
+      if (cmd === 'zoom') {
+        if (!args.length || this._normCmdStr(args[0]) === 'reset') {
+          g.debugZoomOverride = 0;
+          g.camera.zoom = 1.26;
+          return succeed('Zoom restaurado (1.26x).');
+        }
+        const zv = Number(args[0]);
+        if (!Number.isFinite(zv) || zv < 0.25 || zv > 3.0) return fail('Uso: /zoom <0.25..3.0 | reset>');
+        g.debugZoomOverride = zv;
+        g.camera.zoom = zv;
+        return succeed(`Zoom fijado en ${zv.toFixed(2)}x.`);
+      }
+
+      if (cmd === 'vfx') {
+        const keys = Object.keys(Balaclava.VFX_V2 || {}).filter(k => k.startsWith('sp_'));
+        if (!args.length || this._normCmdStr(args[0]) === 'list') {
+          return succeed(`VFX sp_*: ${keys.join(', ')}`, 'info');
+        }
+        const key = args[0].trim();
+        if (typeof g.spawnFx === 'function') {
+          g.spawnFx(key, g.player.x, g.player.y - 16, 0, 0.9, 2.2, 1.0, { blend: 'lighter' });
+        }
+        return succeed(`VFX lanzado: ${key}`);
+      }
+
+      if (cmd === 'clearmobs') {
+        if (g.activeDungeon) g.activeDungeon.enemies = [];
+        else if (g.combat) g.combat.enemies = [];
+        g.enemyProjectiles = [];
+        g.thrownBombs = [];
+        g.laserBeams = [];
+        return succeed('Mobs menores y proyectiles eliminados de escena.');
+      }
+
+      if (cmd === 'trailer') {
+        const preset = args[0] ? this._normCmdStr(args[0]) : 'eclipse';
+        if (preset === 'off' || preset === 'reset') {
+          if (g.photoMode) this.togglePhotoMode();
+          g.spectatorMode = false;
+          g.freezeAI = false;
+          g.player.godMode = false;
+          g.debugZoomOverride = 0;
+          g.camera.zoom = 1.26;
+          return succeed('Modo Trailer desactivado y camara/HUD restaurados.');
+        }
+        g.player.godMode = true;
+        g.player.hp = g.player.maxHp;
+        g.player.energy = g.player.maxEnergy;
+        ['casco_omega', 'armadura_omega', 'escudo_omega', 'botas_omega', 'hoja_singularidad'].forEach(id => {
+          if (Balaclava.ITEMS && Balaclava.ITEMS[id]) g.addItem(id, 1);
+        });
+        if (preset === 'camp') {
+          if (g.activeDungeon && typeof g.exitDungeon === 'function') g.exitDungeon(true);
+          g.spectatorMode = true;
+          g.debugZoomOverride = 0.85;
+          g.camera.zoom = 0.85;
+          if (!g.photoMode) this.togglePhotoMode();
+          this.toggleSecretConsole(false);
+          return succeed('Escena Trailer Campamento lista (HUD oculto, camara libre 0.85x).');
+        }
+        if (g.activeDungeon && typeof g.exitDungeon === 'function') g.exitDungeon(true);
+        g.enterDungeon('eclipse_carmesi', false, { directArena: true, forceNormal: true });
+        g.debugZoomOverride = 1.15;
+        g.camera.zoom = 1.15;
+        if (!g.photoMode) this.togglePhotoMode();
+        this.toggleSecretConsole(false);
+        return succeed('Escena Trailer Final Boss: Espadachin Carmesi Abisal! (Usa /spectator o /freezeai para tomas libres).');
       }
 
       return fail(`Comando desconocido "/${cmd}". Escribe /help.`);

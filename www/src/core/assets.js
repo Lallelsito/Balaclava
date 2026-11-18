@@ -111,6 +111,15 @@
     tile_2: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Tilemap_color2.png',
     tile_5: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Tilemap_color5.png',
     tile_flat: BASE + 'Tiny Swords/Tiny Swords (Update 010)/Terrain/Ground/Tilemap_Flat.png',
+    biome_archipielago_coral: ROOT + 'assets/sprites_v13/biomes/archipielago_coral.png',
+    biome_selva_esmeralda:    ROOT + 'assets/sprites_v13/biomes/selva_esmeralda.png',
+    biome_cavernas_cristal:   ROOT + 'assets/sprites_v13/biomes/cavernas_cristal.png',
+    biome_caldera_ceniza:     ROOT + 'assets/sprites_v13/biomes/caldera_ceniza.png',
+    biome_cienaga_putrida:    ROOT + 'assets/sprites_v13/biomes/cienaga_putrida.png',
+    biome_dinastia_arena:     ROOT + 'assets/sprites_v13/biomes/dinastia_arena.png',
+    biome_glaciar_profundo:   ROOT + 'assets/sprites_v13/biomes/glaciar_profundo.png',
+    biome_necropolis_osea:    ROOT + 'assets/sprites_v13/biomes/necropolis_osea.png',
+    biome_tierras_malditas:   ROOT + 'assets/sprites_v13/biomes/tierras_malditas.png',
     water_bg: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Water Background color.png',
     water_foam: BASE + 'Tiny Swords (Free Pack)/Tiny Swords (Free Pack)/Terrain/Tileset/Water Foam.png',
     bridge: BASE + 'Tiny Swords/Tiny Swords (Update 010)/Terrain/Bridge/Bridge_All.png',
@@ -332,12 +341,20 @@
       const t5 = this.images.tile_5;
       const flat = this.images.tile_flat;
 
-      // 3x3 64px tile blocks = 192x192
+      // 3x3 64px tile blocks = 192x192 (all 14 biomes)
       this.biomeTiles.pradera = makeSheet(t1, 0, 0, 192, 192, null);
       this.biomeTiles.desierto = flat ? makeSheet(flat, 320, 0, 192, 192, null) : makeSheet(t1, 0, 0, 192, 192, 'rgba(235, 190, 95, 0.55)');
       this.biomeTiles.bosque_oscuro = makeSheet(t5 || t1, 0, 0, 192, 192, 'rgba(38, 24, 72, 0.36)');
       this.biomeTiles.montanas_heladas = makeSheet(t5 || t1, 0, 0, 192, 192, 'rgba(218, 245, 255, 0.65)');
       this.biomeTiles.tierras_volcanicas = makeSheet(t2 || t1, 0, 0, 192, 192, 'rgba(42, 18, 22, 0.66)');
+      const v13Biomes = [
+        'archipielago_coral', 'selva_esmeralda', 'cavernas_cristal', 'caldera_ceniza',
+        'cienaga_putrida', 'dinastia_arena', 'glaciar_profundo', 'necropolis_osea', 'tierras_malditas'
+      ];
+      for (const b of v13Biomes) {
+        const img = this.images['biome_' + b];
+        if (img) this.biomeTiles[b] = makeSheet(img, 0, 0, 192, 192, null);
+      }
     }
 
     // Crisp 24x24 pixel-art item icons cached as data canvases/DOM clones.

@@ -24,6 +24,42 @@
       tierras_volcanicas: {
         name: 'Volcanic Lands',
         desc: 'Basalt terrain and lava rivers rich in diamonds, ancient shards, and fiery monsters.'
+      },
+      archipielago_coral: {
+        name: 'Coral Archipelago',
+        desc: 'Northern luminous atolls teeming with abyssal coral, turquoise pearls and reef guardians.'
+      },
+      cavernas_cristal: {
+        name: 'Crystal Caverns',
+        desc: 'Eastern geode caverns humming with astral quartz, celestite and prism refraction.'
+      },
+      selva_esmeralda: {
+        name: 'Emerald Jungle',
+        desc: 'Southern ancient canopy guarding ironwood, ancestral jade and venomous temples.'
+      },
+      caldera_ceniza: {
+        name: 'Ash Caldera',
+        desc: 'Western volcanic crucible forged with molten slag, crimson powder and fire drakes.'
+      },
+      dinastia_arena: {
+        name: 'Sand Dynasty',
+        desc: 'Outer northern dunes of solar pyrite, red agate, royal tombs and eternal pharaohs.'
+      },
+      glaciar_profundo: {
+        name: 'Deep Glacier',
+        desc: 'Eastern absolute-zero frontier of eternal ice, astral bismuth and polar titans.'
+      },
+      cienaga_putrida: {
+        name: 'Putrid Swamp',
+        desc: 'Outer southern mangroves saturated with toxic resin, swamp blooms and plague hydras.'
+      },
+      necropolis_osea: {
+        name: 'Bone Necropolis',
+        desc: 'Bleak crypts of fossil bone, dark marble and sovereign archliches.'
+      },
+      tierras_malditas: {
+        name: 'Cursed Lands',
+        desc: 'Westernmost abyssal frontier of cursed silver, crimson crystal and the Final Eclipse.'
       }
     },
 
@@ -903,6 +939,51 @@
           name: 'Volcanic Lands',
           minerals: 'Adamantite, Raw Obsidian, Orichalcum & Living Magma Core',
           desc: 'Incandescent basalt and red ash around the primordial crater. Here form the mythic ores needed to reach Celestial tier.'
+        },
+        archipielago_coral: {
+          name: 'Coral Archipelago',
+          minerals: 'Abyssal Coral, Turquoise Pearl & Coral Ingots',
+          desc: 'Northern Zone III atolls protected by armored crabs and siren oracles.'
+        },
+        cavernas_cristal: {
+          name: 'Crystal Caverns',
+          minerals: 'Boreal Quartz & Prismatic Celestite',
+          desc: 'Eastern Zone III geode caves resonating with pure arcane frequencies.'
+        },
+        selva_esmeralda: {
+          name: 'Emerald Jungle',
+          minerals: 'Ironwood, Ancestral Jade & Resin',
+          desc: 'Dense southern rainforest housing jade pyramids, giant hives and predatory flora.'
+        },
+        caldera_ceniza: {
+          name: 'Ash Caldera',
+          minerals: 'Caldera Slag & Crimson Powder',
+          desc: 'Western molten forge tempering extreme-heat alloys.'
+        },
+        dinastia_arena: {
+          name: 'Sand Dynasty',
+          minerals: 'Solar Pyrite & Red Agate',
+          desc: 'Zone IV northern desert concealing solar obelisks and immortal pharaohs.'
+        },
+        glaciar_profundo: {
+          name: 'Deep Glacier',
+          minerals: 'Eternal Ice & Astral Bismuth',
+          desc: 'Eastern absolute-zero expanse where glacial colossi and frost dragons slumber.'
+        },
+        cienaga_putrida: {
+          name: 'Putrid Swamp',
+          minerals: 'Toxic Resin & Swamp Bloom',
+          desc: 'Southern Zone IV mangroves haunted by alchemical spores and swamp hydras.'
+        },
+        necropolis_osea: {
+          name: 'Bone Necropolis',
+          minerals: 'Fossil Bone & Dark Marble',
+          desc: 'Ancient bone sanctum ruled by archliches and spectral legions.'
+        },
+        tierras_malditas: {
+          name: 'Cursed Lands',
+          minerals: 'Cursed Silver, Crimson Crystal & Omega Singularities',
+          desc: 'Ultimate western frontier housing the Eclipse of the Abyssal Crimson Swordsman.'
         }
       }
     },

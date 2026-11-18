@@ -66,7 +66,7 @@
         playerSnapshot.invuln = 0;
       }
       return {
-        version: 1,
+        version: 2,
         savedAt: new Date().toLocaleString('es-ES'),
         savedAtTs: Date.now(),
         savedSeq: SaveSystem._saveCounter,
@@ -216,18 +216,72 @@
       }
     }
 
-    applySaveData(game, data) {
+    applySaveData(game, rawData) {
+      let data = rawData;
+      const gridN = Balaclava.CONST.GRID_PLOTS || 19;
+      const centerPlot = Balaclava.CONST.CENTER_PLOT || 9;
+      const plotTiles = Balaclava.CONST.PLOT_TILES || 12;
+      const tileSize = Balaclava.CONST.TILE_SIZE || 48;
+      const isLegacyV1 = data && (
+        (Number(data.version) || 1) < 2 ||
+        (Array.isArray(data.plotBiomes) && data.plotBiomes.length > 0 && data.plotBiomes.length < gridN)
+      );
+      if (isLegacyV1) {
+        data = JSON.parse(JSON.stringify(data));
+        const oldGrid = (Array.isArray(data.plotBiomes) && data.plotBiomes.length > 0) ? data.plotBiomes.length : 10;
+        const oldCenter = oldGrid === 10 ? 4 : Math.floor((oldGrid - 1) / 2);
+        const pShift = centerPlot - oldCenter;
+        const tShift = pShift * plotTiles;
+        const pxShift = tShift * tileSize;
+        if (data.player) {
+          if (Number.isFinite(data.player.x)) data.player.x += pxShift;
+          if (Number.isFinite(data.player.y)) data.player.y += pxShift;
+        }
+        if (Array.isArray(data.unlockedPlots)) {
+          data.unlockedPlots = data.unlockedPlots.map(([gx, gy]) => [gx + pShift, gy + pShift]);
+        }
+        if (Array.isArray(data.terraformedTiles)) {
+          data.terraformedTiles = data.terraformedTiles.map(([tx, ty]) => [tx + tShift, ty + tShift]);
+        }
+        if (Array.isArray(data.worldTilesOverrides)) {
+          data.worldTilesOverrides = data.worldTilesOverrides.map(([tx, ty, v]) => [tx + tShift, ty + tShift, v]);
+        }
+        if (Array.isArray(data.nodes)) {
+          data.nodes = data.nodes
+            .filter(n => n && n.kind !== 'dungeon_gate' && n.kind !== 'altar_shrine' && n.kind !== 'easter_egg' && n.kind !== 'secret_chest' && n.kind !== 'puzzle_pillar')
+            .map(n => ({ ...n, tx: (n.tx || 0) + tShift, ty: (n.ty || 0) + tShift, x: (n.x || 0) + pxShift, y: (n.y || 0) + pxShift }));
+        }
+        if (Array.isArray(data.crops)) {
+          data.crops = data.crops.map(c => ({ ...c, tx: (c.tx || 0) + tShift, ty: (c.ty || 0) + tShift }));
+        }
+        if (Array.isArray(data.sheep)) {
+          data.sheep = data.sheep.map(s => ({ ...s, x: (s.x || 0) + pxShift, y: (s.y || 0) + pxShift }));
+        }
+        if (Array.isArray(data.buildings)) {
+          data.buildings = data.buildings.map(b => ({
+            ...b,
+            tx: Number.isFinite(b.tx) ? b.tx + tShift : b.tx,
+            ty: Number.isFinite(b.ty) ? b.ty + tShift : b.ty,
+            x: Number.isFinite(b.x) ? b.x + pxShift : b.x,
+            y: Number.isFinite(b.y) ? b.y + pxShift : b.y
+          }));
+        }
+        if (Array.isArray(data.drops)) {
+          data.drops = data.drops.map(d => ({ ...d, x: (d.x || 0) + pxShift, y: (d.y || 0) + pxShift }));
+        }
+        data._migratedFromV1 = true;
+      }
+
       game.world.initNewWorld(data.worldSeed || null);
-      const gridN = Balaclava.CONST.GRID_PLOTS || 10;
       if (Array.isArray(data.plotBiomes) && data.plotBiomes.length === gridN) game.world.plotBiomes = data.plotBiomes;
       if (Array.isArray(data.plotElevation) && data.plotElevation.length === gridN) game.world.plotElevation = data.plotElevation;
-      if (data.dungeonGatePlots) game.world.dungeonGatePlots = data.dungeonGatePlots;
-      if (data.altarPlots) game.world.altarPlots = data.altarPlots;
-      if (data.easterEggPlots) game.world.easterEggPlots = data.easterEggPlots;
-      if (data.secretChestPlots) game.world.secretChestPlots = data.secretChestPlots;
-      if (Array.isArray(data.skeletonKingPlot)) game.world.skeletonKingPlot = [...data.skeletonKingPlot];
-      if (data.npcPlots) game.world.npcPlots = data.npcPlots;
-      if (data.npcOffsets) game.world.npcOffsets = data.npcOffsets;
+      if (data.dungeonGatePlots && !data._migratedFromV1) game.world.dungeonGatePlots = data.dungeonGatePlots;
+      if (data.altarPlots && !data._migratedFromV1) game.world.altarPlots = data.altarPlots;
+      if (data.easterEggPlots && !data._migratedFromV1) game.world.easterEggPlots = data.easterEggPlots;
+      if (data.secretChestPlots && !data._migratedFromV1) game.world.secretChestPlots = data.secretChestPlots;
+      if (Array.isArray(data.skeletonKingPlot) && !data._migratedFromV1) game.world.skeletonKingPlot = [...data.skeletonKingPlot];
+      if (data.npcPlots && !data._migratedFromV1) game.world.npcPlots = data.npcPlots;
+      if (data.npcOffsets && !data._migratedFromV1) game.world.npcOffsets = data.npcOffsets;
       game.world.terraformedTiles = Array.isArray(data.terraformedTiles) ? data.terraformedTiles.map(p => [...p]) : [];
       game.unlockedPlots = [];
       if (Array.isArray(data.unlockedPlots)) {
@@ -237,6 +291,10 @@
             game.unlockedPlots.push([gx, gy]);
           }
         }
+      }
+      if (!game.world.plotUnlocked[centerPlot]?.[centerPlot]) {
+        game.world.plotUnlocked[centerPlot][centerPlot] = true;
+        game.unlockedPlots.push([centerPlot, centerPlot]);
       }
       if (Array.isArray(data.worldTilesOverrides)) {
         for (const [x, y, v] of data.worldTilesOverrides) {
@@ -255,6 +313,27 @@
         game.world.ensureNpcLandPads();
       }
       if (Array.isArray(data.nodes)) game.world.nodes = data.nodes;
+      if (data._migratedFromV1) {
+        for (const [ugx, ugy] of game.unlockedPlots) {
+          const bId = game.world.plotBiomes?.[ugy]?.[ugx] || 'pradera';
+          const ox = ugx * plotTiles, oy = ugy * plotTiles;
+          const gate = game.world.getDungeonGateForPlot ? game.world.getDungeonGateForPlot(ugx, ugy) : null;
+          if (gate && !game.world.nodes.some(n => n.kind === 'dungeon_gate' && n.dungeonId === gate.id)) {
+            game.world.tiles[oy + 5][ox + 5] = 1;
+            game.world.spawnSpecialNode(ox + 5, oy + 5, 'dungeon_gate', bId, { dungeonId: gate.id, name: gate.name, recLevel: gate.recLevel });
+          }
+          const aId = game.world.altarPlots && game.world.altarPlots[`${ugx},${ugy}`];
+          if (aId && Balaclava.ALTAR_DEFS?.[aId] && !game.world.nodes.some(n => n.kind === 'altar_shrine' && Math.floor(n.tx / plotTiles) === ugx && Math.floor(n.ty / plotTiles) === ugy)) {
+            game.world.tiles[oy + 6][ox + 6] = 1;
+            game.world.spawnSpecialNode(ox + 6, oy + 6, 'altar_shrine', bId, { altarId: aId, name: Balaclava.ALTAR_DEFS[aId].name, cooldownLeft: 0 });
+          }
+          const eeId = game.world.easterEggPlots && game.world.easterEggPlots[`${ugx},${ugy}`];
+          if (eeId && Balaclava.EASTER_EGG_DEFS?.[eeId] && !game.world.nodes.some(n => n.kind === 'easter_egg' && n.eeId === eeId)) {
+            game.world.tiles[oy + 6][ox + 5] = 1;
+            game.world.spawnSpecialNode(ox + 6, oy + 5, 'easter_egg', bId, { eeId, name: Balaclava.EASTER_EGG_DEFS[eeId].name, claimed: false });
+          }
+        }
+      }
       if (typeof game.world.normalizeMineralNodeHardness === 'function') {
         game.world.normalizeMineralNodeHardness();
       }
