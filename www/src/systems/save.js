@@ -140,6 +140,13 @@
         dailyChallenges: game.events.dailyChallenges.map(c => ({ ...c })),
         craftQueue: Array.isArray(game.craftQueue) ? game.craftQueue.map(q => ({ ...q })) : [],
         craftReady: Array.isArray(game.craftReady) ? game.craftReady.map(r => ({ ...r })) : [],
+        drops: Array.isArray(game.drops) ? game.drops.slice(0, 600).map(d => ({
+          x: Math.round(d.x),
+          y: Math.round(d.y),
+          itemId: d.itemId,
+          qty: d.qty
+        })) : [],
+        inventoryOverflowMigrated: !!game.inventoryOverflowMigrated,
         market: game.economy ? {
           stock: (game.economy.marketStock || []).slice(0, 5),
           sellContracts: (game.economy.sellContracts || []).slice(0, 5),
@@ -421,6 +428,24 @@
       game.activeDungeon = null;
       if (typeof game.resetAmbientParticles === 'function') game.resetAmbientParticles();
       game.recomputeModifiers();
+      if (game.player && typeof game.getNextXpForLevel === 'function') {
+        game.player.nextXp = game.getNextXpForLevel(game.player.level || 1);
+      }
+      game.drops = Array.isArray(data.drops)
+        ? data.drops.filter(d => d && d.itemId && d.qty > 0).map(d => ({
+            x: Number(d.x) || game.player.x,
+            y: Number(d.y) || game.player.y,
+            itemId: d.itemId,
+            qty: Number(d.qty) || 1,
+            life: 1.0,
+            vx: 0,
+            vy: 0
+          }))
+        : [];
+      game.inventoryOverflowMigrated = !!data.inventoryOverflowMigrated;
+      if (typeof game.migrateLegacyInventoryOverflow === 'function') {
+        game.migrateLegacyInventoryOverflow(!data.inventoryOverflowMigrated);
+      }
     }
 
     exportJSON(game) {

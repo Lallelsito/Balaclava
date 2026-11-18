@@ -611,6 +611,108 @@
       return (freeInHotbar + spaceInPartial + (freeSlots * maxStack)) >= qty;
     }
 
+    migrateLegacyInventoryOverflow(isFirstPostUpdateLoad = false) {
+      if (!this.inventory || typeof this.inventory !== 'object') return false;
+      const maxSlots = this.getMaxInventorySlots();
+      const maxStack = this.getMaxStackSize();
+
+      let toolSlotsUsed = 0;
+      if (this.toolTiers) {
+        for (const tId of Object.keys(Balaclava.TOOLS || {})) {
+          if (this.toolTiers[tId]) {
+            const inHotbar = (this.hotbar || []).some(s => s && s.kind === 'tool' && s.id === tId);
+            if (!inHotbar) toolSlotsUsed += 1;
+          }
+        }
+      }
+      let remainingMainSlots = Math.max(0, maxSlots - toolSlotsUsed);
+
+      const RARITY_SCORE = { legendario: 50, epico: 40, raro: 30, poco_comun: 20, comun: 10 };
+      const CHEST_MATS = new Set(['tablon', 'madera', 'lingote_hierro', 'piedra', 'lingote_oro', 'lingote_acero', 'diamantes', 'flecha']);
+      const entries = Object.entries(this.inventory).filter(([id, count]) => count > 0 && Balaclava.ITEMS[id]);
+      entries.sort(([idA], [idB]) => {
+        const cA = CHEST_MATS.has(idA) ? 100 : 0;
+        const cB = CHEST_MATS.has(idB) ? 100 : 0;
+        if (cA !== cB) return cB - cA;
+        const rA = RARITY_SCORE[(Balaclava.ITEMS[idA] && Balaclava.ITEMS[idA].rarity) || 'comun'] || 10;
+        const rB = RARITY_SCORE[(Balaclava.ITEMS[idB] && Balaclava.ITEMS[idB].rarity) || 'comun'] || 10;
+        return rB - rA;
+      });
+
+      const overflowDrops = [];
+      for (const [id, totalCount] of entries) {
+        const hbSlots = (this.hotbar || []).filter(s => s && s.kind === 'item' && s.id === id).length;
+        const hbCap = hbSlots * maxStack;
+        const keptInHotbar = Math.min(totalCount, hbCap);
+        const remAfterHb = Math.max(0, totalCount - keptInHotbar);
+        const neededStacks = Math.ceil(remAfterHb / maxStack);
+        const allowedStacks = Math.min(remainingMainSlots, neededStacks);
+        remainingMainSlots -= allowedStacks;
+        const keptInMain = Math.min(remAfterHb, allowedStacks * maxStack);
+        const finalKept = keptInHotbar + keptInMain;
+        const excess = totalCount - finalKept;
+
+        if (finalKept > 0) {
+          this.inventory[id] = finalKept;
+        } else {
+          delete this.inventory[id];
+        }
+        if (excess > 0) {
+          overflowDrops.push({ itemId: id, qty: excess });
+        }
+      }
+
+      this.inventoryOverflowMigrated = true;
+
+      if (overflowDrops.length > 0 || isFirstPostUpdateLoad) {
+        if (overflowDrops.length > 0) {
+          // Teleport player to the Main Central Island (4, 4) so all dropped excess items are right around them
+          const C = (Balaclava.CONST && Balaclava.CONST.CENTER_PLOT) || 4;
+          const campX = (C * PLOT_TILES + 6.5) * TILE_SIZE;
+          const campY = (C * PLOT_TILES + 6.5) * TILE_SIZE;
+          const safe = typeof this.findSafeOverworldSpawn === 'function'
+            ? this.findSafeOverworldSpawn(campX, campY, { maxRadius: 8 })
+            : { x: campX, y: campY };
+          this.player.x = safe.x;
+          this.player.y = safe.y;
+          this.camera.x = safe.x;
+          this.camera.y = safe.y;
+
+          // Scatter excess items in neat walkable rings around the player on the main island
+          if (!Array.isArray(this.drops)) this.drops = [];
+          let dropIdx = 0;
+          for (const entry of overflowDrops) {
+            let rem = entry.qty;
+            while (rem > 0) {
+              const chunkQty = Math.min(rem, 100);
+              rem -= chunkQty;
+              const ring = Math.floor(dropIdx / 12);
+              const ang = ((dropIdx % 12) / 12) * Math.PI * 2 + ring * 0.28;
+              const rad = 54 + Math.min(4, ring) * 26;
+              let dx = safe.x + Math.cos(ang) * rad;
+              let dy = safe.y + Math.sin(ang) * rad;
+              const dtx = Math.floor(dx / TILE_SIZE);
+              const dty = Math.floor(dy / TILE_SIZE);
+              if (this.world && typeof this.world.isTileWalkable === 'function' && !this.world.isTileWalkable(dtx, dty)) {
+                const nearSafe = this.findSafeOverworldSpawn(dx, dy, { maxRadius: 4 });
+                dx = nearSafe.x;
+                dy = nearSafe.y;
+              }
+              this.drops.push({ x: dx, y: dy, itemId: entry.itemId, qty: chunkQty, life: 1.0, vx: 0, vy: 0 });
+              dropIdx++;
+            }
+          }
+
+          const msg = 'Se han tirado al suelo en la Isla Principal los objetos que tenias de mas en el inventario. Abre el menu de Construccion con la letra [R] y craftea Cofres para almacenarlos.';
+          this.showWarning(msg, 14.0);
+          this.toast(msg, 'warn');
+          this.uiDirty = true;
+          return true;
+        }
+      }
+      return false;
+    }
+
     getToolEnchantBonuses(toolId) {
       const out = { gatherMult: 0, speedMult: 0, doubleChance: 0, gemChance: 0, dmgBonus: 0, critChance: 0, autoSmelt: false, fireDmg: 0, reachBonus: 0 };
       const map = this.toolEnchants && this.toolEnchants[toolId];
@@ -887,6 +989,17 @@
       this.uiDirty = true;
     }
 
+    getNextXpForLevel(lv) {
+      const level = Math.max(1, Number(lv) || 1);
+      const base = 42 + level * 28 + Math.pow(level, 1.65) * 16;
+      const mult = level >= 300 ? 20
+                 : level >= 200 ? 10
+                 : level >= 100 ? 4
+                 : level >= 50  ? 2
+                 : 1;
+      return Math.round(base * mult);
+    }
+
     gainXp(baseXp) {
       const T = (k, v) => (Balaclava.I18n ? Balaclava.I18n.t(k, v) : k);
       const mult = 1 + (this.mods.xpBonus || 0);
@@ -916,7 +1029,7 @@
         this.player.level++;
         this.player.skillPoints += 1;
         const lv = this.player.level;
-        this.player.nextXp = Math.round(42 + lv * 28 + Math.pow(lv, 1.65) * 16);
+        this.player.nextXp = this.getNextXpForLevel(lv);
         this.recomputeModifiers();
         this.player.hp = this.player.maxHp;
         this.player.energy = this.player.maxEnergy;
@@ -6338,12 +6451,13 @@
           d.vy += 190 * dt;
         }
         const distP = dist(d.x, d.y, this.player.x, this.player.y);
-        if (distP < magRadius && d.life > 0.25) {
+        const canPick = d.itemId === '_coin' || this.canAddItem(d.itemId, 1);
+        if (canPick && distP < magRadius && d.life > 0.25) {
           const ang = Math.atan2(this.player.y - d.y, this.player.x - d.x);
           d.x += Math.cos(ang) * 320 * dt;
           d.y += Math.sin(ang) * 320 * dt;
         }
-        if (distP < 24 && d.life > 0.22) {
+        if (canPick && distP < 24 && d.life > 0.22) {
           if (d.itemId === '_coin') {
             this.addCoins(d.qty);
             Balaclava.Audio.play('coin');
@@ -6354,6 +6468,11 @@
             this.spawnFx('pvfx_star_burst_pickup', d.x, d.y - 6, 0, 0.36, 0.85, 0.85, { blend: 'lighter' });
           }
           this.drops.splice(i, 1);
+        } else if (!canPick && distP < 24 && d.life > 0.6) {
+          if (!this._lastFullInvToast || this.time - this._lastFullInvToast > 3.0) {
+            this._lastFullInvToast = this.time;
+            this.toast(`Inventario lleno (${this.getUsedInventorySlots()}/${this.getMaxInventorySlots()} slots). Abre [R] y craftea cofres para guardar objetos.`, 'warn');
+          }
         }
       }
 

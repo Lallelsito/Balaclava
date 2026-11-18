@@ -11527,7 +11527,9 @@
         return { ok: true, message: msg };
       };
 
-      const calcNextXp = (lv) => Math.round(22 + lv * 18 + Math.pow(lv, 1.5) * 10);
+      const calcNextXp = (lv) => (typeof g.getNextXpForLevel === 'function')
+        ? g.getNextXpForLevel(lv)
+        : Math.round((42 + lv * 28 + Math.pow(lv, 1.65) * 16) * (lv >= 300 ? 20 : lv >= 200 ? 10 : lv >= 100 ? 4 : lv >= 50 ? 2 : 1));
 
       if (cmd === 'help' || cmd === '?' || cmd === 'cmds') {
         [
