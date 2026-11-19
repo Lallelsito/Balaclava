@@ -1,10 +1,10 @@
 [package]
-name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+name = "balaclava"
+version = "1.3.0"
+description = "Balaclava — 2D Pixel-Art Survival & Fantasy RPG"
+authors = ["Vice Studios <00lallel@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/Lallelsito/Balaclava"
 edition = "2024"
 rust-version = "1.90"
 
